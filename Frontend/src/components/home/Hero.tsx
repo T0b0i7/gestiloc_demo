@@ -1,6 +1,26 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Star, ArrowUpRight } from "lucide-react";
+import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+
+// Hook pour détecter si on est sur mobile
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
+
+  return isMobile;
+};
 
 /* ------------------------------------------------------------
    Illustration SVG bleue - Formulaire "Nouveau bien"
@@ -254,75 +274,210 @@ function HeroIllustrationBlue() {
   );
 }
 
+// Typing Text Component
+function TypingText({ text, delay = 0 }: { text: string; delay?: number }) {
+  const [displayText, setDisplayText] = useState('');
+  const [isComplete, setIsComplete] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i < text.length) {
+          setDisplayText(text.slice(0, i + 1));
+          i++;
+        } else {
+          setIsComplete(true);
+          clearInterval(interval);
+        }
+      }, 50);
+
+      return () => clearInterval(interval);
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [text, delay]);
+
+  return (
+    <span>
+      {displayText}
+      {!isComplete && <motion.span
+        animate={{ opacity: [1, 0] }}
+        transition={{ duration: 0.5, repeat: Infinity }}
+        className="text-primary"
+      >
+        |
+      </motion.span>}
+    </span>
+  );
+}
+
 /* ------------------------------------------------------------
-                     COMPOSANT HERO
+                      COMPOSANT HERO
 ------------------------------------------------------------ */
 
 export function Hero() {
+  const isMobile = useIsMobile();
+
   return (
-    <section className="relative py-10 md:py-12 lg:py-16 overflow-hidden">
+    <section className="relative py-8 sm:py-10 md:py-12 lg:py-16 overflow-hidden">
       {/* Fond bleu doux sur toute la largeur */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-sky-50 via-sky-50/70 to-white" />
 
       {/* Contenu centré dans la grille */}
       <div className="container">
         {/* Ligne d'avis tout en haut, centrée comme Rentila */}
-        <div className="mb-6 flex justify-center">
-          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm">
+        <motion.div
+          className="mb-6 flex justify-center"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <motion.div
+            className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.2,
+                },
+              },
+            }}
+          >
             {[
               "Tellement utile et pratique !",
               "Incontournable pour le bailleur",
               "Logiciel merveilleux !",
             ].map((txt, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className="flex gap-1 text-yellow-400">
+              <motion.div
+                key={i}
+                className="flex items-center gap-3"
+                variants={{
+                  hidden: { x: -30, opacity: 0 },
+                  visible: { x: 0, opacity: 1 },
+                }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+              >
+                <motion.div
+                  className="flex gap-1 text-yellow-400"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.4, delay: 0.1 + i * 0.2 }}
+                >
                   {[...Array(5)].map((_, k) => (
-                    <Star key={k} className="h-4 w-4 fill-yellow-400" />
+                    <motion.div
+                      key={k}
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{
+                        duration: 0.3,
+                        delay: 0.2 + i * 0.2 + k * 0.1,
+                      }}
+                    >
+                      <Star className="h-4 w-4 fill-yellow-400" />
+                    </motion.div>
                   ))}
-                </div>
-                <span className="font-medium">{txt}</span>
-              </div>
+                </motion.div>
+                <motion.span
+                  className="font-medium"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.4, delay: 0.4 + i * 0.2 }}
+                >
+                  {txt}
+                </motion.span>
+              </motion.div>
             ))}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Contenu principal : texte + illustration */}
         <div className="grid gap-12 lg:grid-cols-[1.1fr_1fr] items-center">
           {/* COLONNE GAUCHE */}
           <div className="space-y-8">
             {/* Tag compteur */}
-            <div className="inline-flex items-center gap-3 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-900">
-              <div className="flex items-center gap-1 rounded-full bg-primary px-2 py-1 text-white">
+            <motion.div
+              className="inline-flex items-center gap-3 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-900"
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.8 }}
+            >
+              <motion.div
+                className="flex items-center gap-1 rounded-full bg-primary px-2 py-1 text-white"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.4, delay: 1.0, type: "spring", stiffness: 200 }}
+              >
                 <ArrowUpRight className="h-3 w-3" />
-                <span>1 250</span>
-              </div>
-              <span>propriétaires béninois inscrits ce mois-ci !</span>
-            </div>
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3, delay: 1.2 }}
+                >
+                  1 250
+                </motion.span>
+              </motion.div>
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.4, delay: 1.4 }}
+              >
+                propriétaires béninois inscrits ce mois-ci !
+              </motion.span>
+            </motion.div>
 
             {/* Titre */}
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold max-w-xl leading-tight">
+            <motion.h1
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold max-w-xl leading-tight"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 1.6 }}
+            >
               Gérez vos biens immobiliers avec le{" "}
               <span className="relative text-primary home-hero-underline-one">
-                meilleur logiciel gratuit
+                <TypingText text="meilleur logiciel gratuit" delay={2000} />
               </span>{" "}
               de gestion locative immobilière
-            </h1>
+            </motion.h1>
 
             {/* Description */}
-            <p className="text-base text-muted-foreground md:text-lg max-w-xl">
+            <motion.p
+              className="text-base text-muted-foreground md:text-lg max-w-xl"
+              initial={{ x: 30, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 2.5 }}
+            >
               GestiLoc est le meilleur logiciel de gestion locative immobilière en
               ligne. Suivi des loyers et charges, comptabilité, aide à la
               déclaration des revenus fonciers… Toutes les étapes de la vie du
               contrat de location sont couvertes par notre plateforme.
-            </p>
+            </motion.p>
 
             {/* CTA */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 pt-2">
-              <Button asChild size="lg" className="text-base px-8">
-                <Link to="/register">Ouvrir un compte gratuit</Link>
-              </Button>
+            <motion.div
+              className="flex flex-col sm:flex-row sm:items-center gap-4 pt-2"
+              initial={{ x: 30, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 2.8 }}
+            >
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button asChild size="lg" className="text-base px-8">
+                  <Link to="/register">Ouvrir un compte gratuit</Link>
+                </Button>
+              </motion.div>
 
-              <p className="text-sm text-muted-foreground">
+              <motion.p
+                className="text-sm text-muted-foreground"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.4, delay: 3.2 }}
+              >
                 Déjà client ?{" "}
                 <Link
                   to="/login"
@@ -330,34 +485,107 @@ export function Hero() {
                 >
                   Cliquez ici
                 </Link>
-              </p>
-            </div>
+              </motion.p>
+            </motion.div>
 
             {/* App Stores */}
-            <div className="flex flex-wrap items-center gap-4 pt-4 text-sm text-muted-foreground">
-              <span>Disponible sur</span>
+            <motion.div
+              className="flex flex-wrap items-center gap-4 pt-4 text-sm text-muted-foreground"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 3.4 }}
+            >
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.4, delay: 3.6 }}
+              >
+                Disponible sur
+              </motion.span>
 
-              <a className="h-9 rounded-md border bg-background px-3 flex items-center shadow-sm">
+              <motion.a
+                className="h-9 rounded-md border bg-background px-3 flex items-center shadow-sm"
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ duration: 0.4, delay: 3.8 }}
+              >
                 <span className="text-xs font-medium">App Store</span>
-              </a>
+              </motion.a>
 
-              <div className="h-5 w-px bg-border/70" />
+              <motion.div
+                className="h-5 w-px bg-border/70"
+                initial={{ scaleY: 0 }}
+                animate={{ scaleY: 1 }}
+                transition={{ duration: 0.3, delay: 4.0 }}
+              />
 
-              <a className="h-9 rounded-md border bg-background px-3 flex items-center shadow-sm">
+              <motion.a
+                className="h-9 rounded-md border bg-background px-3 flex items-center shadow-sm"
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ x: 20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ duration: 0.4, delay: 4.2 }}
+              >
                 <span className="text-xs font-medium">Google Play</span>
-              </a>
-            </div>
+              </motion.a>
+            </motion.div>
           </div>
 
           {/* COLONNE DROITE : ILLUSTRATION AGRANDIE */}
-          <div className="relative flex justify-center lg:justify-end">
-            <div className="absolute -top-10 -left-8 h-32 w-32 bg-primary/10 blur-3xl rounded-full" />
-            <div className="absolute -bottom-16 -right-10 h-44 w-44 bg-blue-100/70 blur-3xl rounded-full" />
+          <motion.div
+            className="relative flex justify-center lg:justify-end"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 1.0 }}
+          >
+            {!isMobile && (
+              <>
+                <motion.div
+                  className="absolute -top-10 -left-8 h-32 w-32 bg-primary/10 blur-3xl rounded-full"
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    opacity: [0.3, 0.6, 0.3],
+                  }}
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
+                <motion.div
+                  className="absolute -bottom-16 -right-10 h-44 w-44 bg-blue-100/70 blur-3xl rounded-full"
+                  animate={{
+                    scale: [1, 1.3, 1],
+                    opacity: [0.4, 0.8, 0.4],
+                  }}
+                  transition={{
+                    duration: 6,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: 1,
+                  }}
+                />
+              </>
+            )}
 
-            <div className="relative w-full max-w-xl lg:max-w-2xl translate-y-2">
+            <motion.div
+              className="relative w-full max-w-xl lg:max-w-2xl translate-y-2"
+              animate={{
+                y: [2, -5, 2],
+                rotate: [0, 1, 0, -1, 0],
+              }}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            >
               <HeroIllustrationBlue />
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
     </section>

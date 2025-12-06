@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 import {
   User,
   Building2,
@@ -68,73 +69,176 @@ const categories = [
 export default function Help() {
   return (
     <div className="pb-16">
-      <section className="bg-background py-16 md:py-24">
+      <section className="bg-background py-12 sm:py-16 md:py-24">
         <div className="container text-center">
-          <h1 className="text-4xl font-bold mb-4 md:text-5xl text-primary">
+          <motion.h1
+            className="text-3xl sm:text-4xl font-bold mb-4 md:text-5xl text-primary"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
             Centre d'aide
-          </h1>
-          <p className="text-lg max-w-2xl mx-auto mb-8 text-foreground">
+          </motion.h1>
+          <motion.p
+            className="text-base sm:text-lg max-w-2xl mx-auto mb-8 text-foreground"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             Trouvez rapidement des réponses à vos questions
-          </p>
-          <div className="max-w-2xl mx-auto">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          </motion.p>
+          <motion.div
+            className="max-w-2xl mx-auto"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <motion.div
+              className="relative"
+              whileHover={{ scale: 1.02 }}
+              transition={{ duration: 0.2 }}
+            >
+              <motion.div
+                initial={{ x: -10, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ duration: 0.4, delay: 0.6 }}
+              >
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              </motion.div>
               <Input
                 type="search"
                 placeholder="Rechercher dans l'aide..."
                 className="pl-10 bg-background border-input"
               />
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
       <section className="container py-16">
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <motion.div
+          className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.1,
+                delayChildren: 0.2,
+              },
+            },
+          }}
+        >
           {categories.map((category, index) => {
             const Icon = category.icon;
             return (
-              <Link key={index} to={`/help/${category.slug}`}>
-                <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
-                  <CardHeader>
-                    <div className="flex items-center gap-4 mb-2">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                        <Icon className="h-5 w-5 text-primary" />
-                      </div>
-                      <CardTitle className="text-xl">{category.title}</CardTitle>
-                    </div>
-                    <CardDescription>{category.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      {category.articles} articles
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
+              <motion.div
+                key={index}
+                variants={{
+                  hidden: { opacity: 0, y: 30, scale: 0.9 },
+                  visible: { opacity: 1, y: 0, scale: 1 },
+                }}
+                transition={{ duration: 0.5 }}
+                whileHover={{ y: -5, scale: 1.02 }}
+              >
+                <Link to={`/help/${category.slug}`}>
+                  <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                    <CardHeader>
+                      <motion.div
+                        className="flex items-center gap-4 mb-2"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.4, delay: 0.1 }}
+                      >
+                        <motion.div
+                          className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"
+                          whileHover={{ rotate: 5, scale: 1.1 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <Icon className="h-5 w-5 text-primary" />
+                        </motion.div>
+                        <CardTitle className="text-xl">{category.title}</CardTitle>
+                      </motion.div>
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.4, delay: 0.2 }}
+                      >
+                        <CardDescription>{category.description}</CardDescription>
+                      </motion.div>
+                    </CardHeader>
+                    <CardContent>
+                      <motion.p
+                        className="text-sm text-muted-foreground"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.4, delay: 0.3 }}
+                      >
+                        {category.articles} articles
+                      </motion.p>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       </section>
 
-      <section className="container">
+      <motion.section
+        className="container"
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.6 }}
+      >
         <Card className="bg-muted/50 text-center p-8 md:p-12">
-          <h2 className="text-2xl font-bold mb-4">
+          <motion.h2
+            className="text-2xl font-bold mb-4"
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
             Vous ne trouvez pas ce que vous cherchez ?
-          </h2>
-          <p className="text-muted-foreground mb-6">
+          </motion.h2>
+          <motion.p
+            className="text-muted-foreground mb-6"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
             Notre équipe support est là pour vous aider
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild>
-              <Link to="/contact">Nous contacter</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link to="/help/faq">Voir la FAQ</Link>
-            </Button>
-          </div>
+          </motion.p>
+          <motion.div
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button asChild>
+                <Link to="/contact">Nous contacter</Link>
+              </Button>
+            </motion.div>
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button asChild variant="outline">
+                <Link to="/help/faq">Voir la FAQ</Link>
+              </Button>
+            </motion.div>
+          </motion.div>
         </Card>
-      </section>
+      </motion.section>
     </div>
   );
 }
