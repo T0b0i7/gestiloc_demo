@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FeatureMockup } from "@/components/tour/FeatureMockup";
+import { motion } from "framer-motion";
 import {
   Building2,
   Users,
@@ -153,14 +154,24 @@ const features = [
 export default function Tour() {
   return (
     <div className="pb-16">
-      <section className="bg-background py-16 md:py-24">
+      <section className="bg-background py-12 sm:py-16 md:py-24">
         <div className="container text-center">
-          <h1 className="text-4xl font-bold mb-4 md:text-5xl text-primary">
+          <motion.h1
+            className="text-3xl sm:text-4xl font-bold mb-4 md:text-5xl text-primary"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
             Toutes les fonctionnalités en détail
-          </h1>
-          <p className="text-lg max-w-2xl mx-auto text-foreground">
+          </motion.h1>
+          <motion.p
+            className="text-base sm:text-lg max-w-2xl mx-auto text-foreground"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             Découvrez comment GestiLoc simplifie chaque aspect de votre gestion locative
-          </p>
+          </motion.p>
         </div>
       </section>
 
@@ -171,49 +182,124 @@ export default function Tour() {
             const isEven = index % 2 === 0;
 
             return (
-              <div
+              <motion.div
                 key={index}
                 className={`grid gap-12 lg:grid-cols-2 lg:gap-16 items-center ${
                   isEven ? "" : "lg:flex-row-reverse"
                 }`}
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-100px" }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
               >
-                <div className={`space-y-6 ${isEven ? "" : "lg:order-2"}`}>
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                <motion.div
+                  className={`space-y-6 ${isEven ? "" : "lg:order-2"}`}
+                  initial={{ opacity: 0, x: isEven ? -30 : 30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.6, delay: 0.2 + index * 0.1 }}
+                >
+                  <motion.div
+                    className="flex items-center gap-4"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
+                  >
+                    <motion.div
+                      className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10"
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      transition={{ duration: 0.2 }}
+                    >
                       <Icon className="h-6 w-6 text-primary" />
-                    </div>
+                    </motion.div>
                     <h2 className="text-3xl font-bold">{feature.title}</h2>
-                  </div>
-                  <p className="text-lg text-muted-foreground">{feature.description}</p>
-                  <ul className="space-y-3">
+                  </motion.div>
+                  <motion.p
+                    className="text-lg text-muted-foreground"
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.4 + index * 0.1 }}
+                  >
+                    {feature.description}
+                  </motion.p>
+                  <motion.ul
+                    className="space-y-3"
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true }}
+                    variants={{
+                      hidden: { opacity: 0 },
+                      visible: {
+                        opacity: 1,
+                        transition: {
+                          staggerChildren: 0.1,
+                          delayChildren: 0.5 + index * 0.1,
+                        },
+                      },
+                    }}
+                  >
                     {feature.benefits.map((benefit, i) => (
-                      <li key={i} className="flex items-start gap-3">
-                        <div className="mt-1 h-5 w-5 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
+                      <motion.li
+                        key={i}
+                        className="flex items-start gap-3"
+                        variants={{
+                          hidden: { opacity: 0, x: -20 },
+                          visible: { opacity: 1, x: 0 },
+                        }}
+                        transition={{ duration: 0.4 }}
+                      >
+                        <motion.div
+                          className="mt-1 h-5 w-5 shrink-0 rounded-full bg-primary/10 flex items-center justify-center"
+                          whileHover={{ scale: 1.2 }}
+                          transition={{ duration: 0.2 }}
+                        >
                           <div className="h-2 w-2 rounded-full bg-primary"></div>
-                        </div>
+                        </motion.div>
                         <span>{benefit}</span>
-                      </li>
+                      </motion.li>
                     ))}
-                  </ul>
-                </div>
-                <div className={isEven ? "" : "lg:order-1"}>
-                  <div className="aspect-video rounded-2xl overflow-hidden shadow-xl">
+                  </motion.ul>
+                </motion.div>
+                <motion.div
+                  className={isEven ? "" : "lg:order-1"}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.6, delay: 0.3 + index * 0.1 }}
+                >
+                  <motion.div
+                    className="aspect-video rounded-2xl overflow-hidden shadow-xl"
+                    whileHover={{ scale: 1.02, y: -5 }}
+                    transition={{ duration: 0.3 }}
+                  >
                     <FeatureMockup type={feature.mockupType} />
-                  </div>
-                </div>
-              </div>
+                  </motion.div>
+                </motion.div>
+              </motion.div>
             );
           })}
         </div>
       </div>
 
-      <section className="sticky bottom-0 border-t bg-background/95 backdrop-blur py-4">
+      <motion.section
+        className="sticky bottom-0 border-t bg-background/95 backdrop-blur py-4"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 1 }}
+      >
         <div className="container flex justify-center">
-          <Button asChild size="lg">
-            <Link to="/register">Essayer gratuitement</Link>
-          </Button>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button asChild size="lg">
+              <Link to="/register">Essayer gratuitement</Link>
+            </Button>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
     </div>
   );
 }

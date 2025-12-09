@@ -156,13 +156,13 @@ function AssistIllustrationBlue() {
       role="img"
       aria-hidden="true"
     >
-      <rect x="0" y="0" width="480" height="260" rx="32" fill="#f8fafc" />
+      <rect x="0" y="0" width="480" height="260" rx="32" fill="#f7f8fa" />
 
       {/* écran */}
       <g
         transform="translate(180, 90)"
         fill="none"
-        stroke="#020617"
+        stroke="#0f172a"
         strokeWidth="3"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -178,7 +178,7 @@ function AssistIllustrationBlue() {
           stroke="none"
         />
         <path d="M70 30 L84 58 L77 54 L73 66" />
-        <path d="M105 72 L118 86 L112 86 L112 94" stroke="#1d4ed8" />
+        <path d="M105 72 L118 86 L112 86 L112 94" stroke="#1e40af" />
       </g>
 
       {/* flux */}
@@ -203,64 +203,64 @@ function AssistIllustrationBlue() {
 
       {/* avatar locataire gauche */}
       <g transform="translate(70, 120)">
-        <circle cx="0" cy="0" r="32" fill="#e0f2fe" />
+        <circle cx="0" cy="0" r="32" fill="#dbeafe" />
         <circle
           cx="0"
           cy="0"
           r="30"
           fill="none"
-          stroke="#020617"
+          stroke="#0f172a"
           strokeWidth="2.4"
         />
-        <circle cx="0" cy="-4" r="10" fill="#ffffff" stroke="#020617" />
-        <path d="M-5 -6 q5 -6 10 0" fill="none" stroke="#020617" />
-        <path d="M-4 -2 q4 4 8 0" fill="none" stroke="#020617" />
+        <circle cx="0" cy="-4" r="10" fill="#ffffff" stroke="#0f172a" />
+        <path d="M-5 -6 q5 -6 10 0" fill="none" stroke="#0f172a" />
+        <path d="M-4 -2 q4 4 8 0" fill="none" stroke="#0f172a" />
         <path
           d="M-10 10 a12 9 0 0 1 20 0 v4 a4 4 0 0 1 -4 4 h-12 a4 4 0 0 1 -4 -4 z"
-          fill="#bfdbfe"
-          stroke="#020617"
+          fill="#93c5fd"
+          stroke="#0f172a"
         />
       </g>
 
       {/* avatar haut */}
       <g transform="translate(340, 60)">
-        <circle cx="0" cy="0" r="26" fill="#e0ecff" />
+        <circle cx="0" cy="0" r="26" fill="#dbeafe" />
         <circle
           cx="0"
           cy="0"
           r="24"
           fill="none"
-          stroke="#020617"
+          stroke="#0f172a"
           strokeWidth="2.2"
         />
-        <circle cx="0" cy="-4" r="8" fill="#ffffff" stroke="#020617" />
-        <path d="M-4 -6 q4 -5 8 0" fill="none" stroke="#020617" />
-        <path d="M-3 -2 q3 3 6 0" fill="none" stroke="#020617" />
+        <circle cx="0" cy="-4" r="8" fill="#ffffff" stroke="#0f172a" />
+        <path d="M-4 -6 q4 -5 8 0" fill="none" stroke="#0f172a" />
+        <path d="M-3 -2 q3 3 6 0" fill="none" stroke="#0f172a" />
         <path
           d="M-8 8 a10 8 0 0 1 16 0 v3 a3.5 3.5 0 0 1 -3.5 3.5 h-9 a3.5 3.5 0 0 1 -3.5 -3.5 z"
-          fill="#dbeafe"
-          stroke="#020617"
+          fill="#93c5fd"
+          stroke="#0f172a"
         />
       </g>
 
       {/* avatar droite */}
       <g transform="translate(410, 150)">
-        <circle cx="0" cy="0" r="26" fill="#e0f2fe" />
+        <circle cx="0" cy="0" r="26" fill="#dbeafe" />
         <circle
           cx="0"
           cy="0"
           r="24"
           fill="none"
-          stroke="#020617"
+          stroke="#0f172a"
           strokeWidth="2.2"
         />
-        <circle cx="0" cy="-4" r="8" fill="#ffffff" stroke="#020617" />
-        <path d="M-4 -6 q4 -5 8 0" fill="none" stroke="#020617" />
-        <path d="M-3 -2 q3 3 6 0" fill="none" stroke="#020617" />
+        <circle cx="0" cy="-4" r="8" fill="#ffffff" stroke="#0f172a" />
+        <path d="M-4 -6 q4 -5 8 0" fill="none" stroke="#0f172a" />
+        <path d="M-3 -2 q3 3 6 0" fill="none" stroke="#0f172a" />
         <path
           d="M-8 8 a10 8 0 0 1 16 0 v3 a3.5 3.5 0 0 1 -3.5 3.5 h-9 a3.5 3.5 0 0 1 -3.5 -3.5 z"
-          fill="#bfdbfe"
-          stroke="#020617"
+          fill="#93c5fd"
+          stroke="#0f172a"
         />
       </g>
 
@@ -268,12 +268,12 @@ function AssistIllustrationBlue() {
       <g
         transform="translate(360, 20)"
         fill="none"
-        stroke="#020617"
+        stroke="#0f172a"
         strokeWidth="2.3"
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        <circle cx="0" cy="0" r="16" fill="#e5f0ff" />
+        <circle cx="0" cy="0" r="16" fill="#dbeafe" />
         <path d="M-6 4 h12 v-8 l-6 -4 -6 4 z" />
         <path d="M-2 4 v-4" />
         <path d="M2 4 v-4" />
@@ -283,12 +283,12 @@ function AssistIllustrationBlue() {
       <g
         transform="translate(340, 210)"
         fill="none"
-        stroke="#020617"
+        stroke="#0f172a"
         strokeWidth="2.3"
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        <circle cx="0" cy="0" r="18" fill="#e0f2fe" />
+        <circle cx="0" cy="0" r="18" fill="#dbeafe" />
         <path d="M-7 5 h14 v-8 l-7 -5 -7 5 z" />
         <path d="M-2 5 v-4" />
         <path d="M2 5 v-4" />
@@ -311,7 +311,7 @@ function FeatureSvgCard1() {
         <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-white shadow-sm mt-auto">
           {/* mini chart / dashboard illustration */}
           <svg viewBox="0 0 320 240" className="w-full h-full">
-            <rect x="0" y="0" width="320" height="240" fill="#f9fafb" />
+            <rect x="0" y="0" width="320" height="240" fill="#f7f8fa" />
             <rect
               x="24"
               y="26"
@@ -324,10 +324,10 @@ function FeatureSvgCard1() {
             <rect x="40" y="46" width="80" height="8" rx="4" fill="#e5e7eb" />
             <rect x="40" y="62" width="60" height="6" rx="3" fill="#e5e7eb" />
             {/* barres */}
-            <rect x="60" y="150" width="24" height="40" rx="6" fill="#bfdbfe" />
-            <rect x="110" y="130" width="24" height="60" rx="6" fill="#60a5fa" />
-            <rect x="160" y="110" width="24" height="80" rx="6" fill="#3b82f6" />
-            <rect x="210" y="140" width="24" height="50" rx="6" fill="#93c5fd" />
+            <rect x="60" y="150" width="24" height="40" rx="6" fill="#93c5fd" />
+            <rect x="110" y="130" width="24" height="60" rx="6" fill="#3b82f6" />
+            <rect x="160" y="110" width="24" height="80" rx="6" fill="#1e40af" />
+            <rect x="210" y="140" width="24" height="50" rx="6" fill="#dbeafe" />
             {/* courbe */}
             <path
               d="M60 110 C90 80 130 90 160 70 C190 50 220 70 250 60"
@@ -353,7 +353,7 @@ function FeatureSvgCard2() {
         <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-white shadow-sm mt-auto">
           {/* illustration mobile / paiement */}
           <svg viewBox="0 0 320 240" className="w-full h-full">
-            <rect x="0" y="0" width="320" height="240" fill="#eff6ff" />
+            <rect x="0" y="0" width="320" height="240" fill="#dbeafe" />
             {/* téléphone */}
             <rect
               x="96"
@@ -366,9 +366,9 @@ function FeatureSvgCard2() {
               strokeWidth="3"
             />
             <rect x="120" y="52" width="80" height="10" rx="5" fill="#e5e7eb" />
-            <rect x="114" y="80" width="92" height="20" rx="10" fill="#e5f0ff" />
-            <rect x="114" y="112" width="92" height="20" rx="10" fill="#e5f0ff" />
-            <rect x="114" y="144" width="92" height="20" rx="10" fill="#e5f0ff" />
+            <rect x="114" y="80" width="92" height="20" rx="10" fill="#dbeafe" />
+            <rect x="114" y="112" width="92" height="20" rx="10" fill="#dbeafe" />
+            <rect x="114" y="144" width="92" height="20" rx="10" fill="#dbeafe" />
             {/* bouton payer */}
             <rect
               x="114"
@@ -376,13 +376,13 @@ function FeatureSvgCard2() {
               width="92"
               height="28"
               rx="14"
-              fill="#1d4ed8"
+              fill="#1e40af"
             />
             <circle cx="160" cy="208" r="4" fill="#0f172a" />
             {/* cercles moyens de paiement */}
-            <circle cx="60" cy="90" r="18" fill="#e0f2fe" />
-            <circle cx="260" cy="70" r="18" fill="#e0f2fe" />
-            <circle cx="260" cy="160" r="18" fill="#e0f2fe" />
+            <circle cx="60" cy="90" r="18" fill="#dbeafe" />
+            <circle cx="260" cy="70" r="18" fill="#dbeafe" />
+            <circle cx="260" cy="160" r="18" fill="#dbeafe" />
             <path
               d="M52 90 h16"
               stroke="#0f172a"

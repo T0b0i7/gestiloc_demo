@@ -23,7 +23,7 @@ const navigation = [
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ id?: number; name?: string; email?: string; roles?: string[] } | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -128,7 +128,12 @@ export function Header() {
 
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild className="lg:hidden">
-              <Button variant="ghost" size="icon" aria-label="Menu de navigation">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Menu de navigation"
+                className="min-h-[44px] min-w-[44px] touch-manipulation"
+              >
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
@@ -144,7 +149,7 @@ export function Header() {
                   <Link
                     key={item.name}
                     to={item.href}
-                    className="px-3 py-2.5 text-base font-medium hover:bg-accent rounded-lg transition-colors"
+                    className="px-3 py-3 text-base font-medium hover:bg-accent rounded-lg transition-colors touch-manipulation min-h-[44px] flex items-center"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {item.name}
@@ -153,9 +158,9 @@ export function Header() {
                 <div className="pt-4 mt-4 border-t flex flex-col gap-2">
                   {isAuthenticated ? (
                     <>
-                      <Button 
-                        variant="outline" 
-                        size="default" 
+                      <Button
+                        variant="outline"
+                        size="default"
                         className="w-full justify-start gap-2"
                         onClick={handleLogout}
                       >
@@ -165,10 +170,10 @@ export function Header() {
                     </>
                   ) : (
                     <>
-                      <Button 
-                        asChild 
-                        variant="outline" 
-                        size="default" 
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="default"
                         className="w-full justify-start gap-2"
                       >
                         <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
@@ -176,9 +181,9 @@ export function Header() {
                           Connexion
                         </Link>
                       </Button>
-                      <Button 
-                        asChild 
-                        size="default" 
+                      <Button
+                        asChild
+                        size="default"
                         className="w-full gap-2"
                       >
                         <Link to="/register" onClick={() => setMobileMenuOpen(false)}>

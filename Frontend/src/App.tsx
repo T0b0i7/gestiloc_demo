@@ -4,11 +4,19 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
+
+interface User {
+  id?: number;
+  email?: string;
+  role?: string;
+  roles?: string[];
+  first_name?: string;
+  last_name?: string;
+}
 import { AppShell } from "@/components/layout/AppShell";
 import { authService } from "@/services/api";
 import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Auth from "./pages/Auth";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
@@ -35,7 +43,7 @@ const queryClient = new QueryClient();
 
 // Composant pour les routes protégées
 const useAuth = () => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -122,8 +130,8 @@ const ProtectedRoute = ({ children, roles = [] }: { children: JSX.Element, roles
   const normalizedRoles = roles.map(role => role.toLowerCase());
   
   // Récupération des rôles de l'utilisateur
-  const userRoles = Array.isArray(user?.roles) 
-    ? user.roles.map((r: any) => r.toLowerCase())
+  const userRoles = Array.isArray(user?.roles)
+    ? user.roles.map((r: string) => r.toLowerCase())
     : [];
   
   const userRole = user?.role?.toLowerCase();
@@ -147,12 +155,12 @@ const ProtectedRoute = ({ children, roles = [] }: { children: JSX.Element, roles
     
     // Redirection vers la page par défaut en fonction du rôle de l'utilisateur
     let defaultPath = '/';
-    
+
     if (userRole === 'admin') {
       defaultPath = '/admin';
-    } else if (['proprietaire', 'landlord'].includes(userRole)) {
+    } else if (userRole && ['proprietaire', 'landlord'].includes(userRole)) {
       defaultPath = '/proprietaire';
-    } else if (['locataire', 'tenant'].includes(userRole)) {
+    } else if (userRole && ['locataire', 'tenant'].includes(userRole)) {
       defaultPath = '/locataire';
     }
     
@@ -192,8 +200,8 @@ const AppContent = () => {
   return (
     <Routes>
       {/* Routes publiques */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route path="/login" element={<Auth />} />
+      <Route path="/register" element={<Auth />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/verify-email" element={<VerifyEmail />} />

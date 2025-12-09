@@ -45,12 +45,12 @@ function StepFormCard({ variant }: { variant: StepVariant }) {
         </div>
         
         {/* Body - Scrollable */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 text-xs" style={{scrollbarWidth: 'thin', scrollbarColor: '#2563eb #e0e7ff'}}>
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 text-xs" style={{scrollbarWidth: 'thin', scrollbarColor: '#3b82f6 #dbeafe'}}>
           <style>{`
             div::-webkit-scrollbar { width: 10px; }
-            div::-webkit-scrollbar-track { background: #e0e7ff; border-radius: 5px; }
-            div::-webkit-scrollbar-thumb { background: #2563eb; border-radius: 5px; }
-            div::-webkit-scrollbar-thumb:hover { background: #1d4ed8; }
+            div::-webkit-scrollbar-track { background: #dbeafe; border-radius: 5px; }
+            div::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 5px; }
+            div::-webkit-scrollbar-thumb:hover { background: #1e40af; }
           `}</style>
 
           {/* Document Section - Buttons */}
@@ -181,7 +181,7 @@ export function Steps() {
           background: linear-gradient(
             90deg,
             rgba(59,130,246,0.05),
-            rgba(37,99,235,0.18),
+            rgba(30,64,175,0.18),
             rgba(59,130,246,0.05)
           );
           transform-origin: left;
@@ -190,11 +190,11 @@ export function Steps() {
         }
 
         @keyframes buttonPulseClick {
-          0%   { transform: scale(1); box-shadow: 0 0 0 0 rgba(37,99,235,0); }
-          30%  { transform: scale(1.07); box-shadow: 0 0 0 8px rgba(37,99,235,0.18); }
-          45%  { transform: scale(0.97); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
-          60%  { transform: scale(1.04); box-shadow: 0 0 0 6px rgba(37,99,235,0.14); }
-          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+          0%   { transform: scale(1); box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+          30%  { transform: scale(1.07); box-shadow: 0 0 0 8px rgba(30,64,175,0.18); }
+          45%  { transform: scale(0.97); box-shadow: 0 0 0 3px rgba(30,64,175,0.12); }
+          60%  { transform: scale(1.04); box-shadow: 0 0 0 6px rgba(30,64,175,0.14); }
+          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59,130,246,0); }
         }
         .step-submit-btn {
           animation: buttonPulseClick 3s ease-in-out infinite;

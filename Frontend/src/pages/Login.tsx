@@ -68,20 +68,22 @@ export default function Login() {
         throw new Error('Réponse du serveur invalide');
       }
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur de connexion :', error);
       let errorMessage = 'Email ou mot de passe incorrect';
-      
-      if (error.response) {
-        if (error.response.data?.message) {
-          errorMessage = error.response.data.message;
-        } else if (error.response.data?.errors) {
-          errorMessage = Object.values(error.response.data.errors).flat().join('\n');
+
+      const err = error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } }; request?: unknown; message?: string };
+
+      if (err.response) {
+        if (err.response.data?.message) {
+          errorMessage = err.response.data.message;
+        } else if (err.response.data?.errors) {
+          errorMessage = Object.values(err.response.data.errors).flat().join('\n');
         }
-      } else if (error.request) {
+      } else if (err.request) {
         errorMessage = 'Le serveur ne répond pas. Vérifiez votre connexion.';
-      } else if (error.message) {
-        errorMessage = error.message;
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       
       setError(errorMessage);
@@ -92,33 +94,33 @@ export default function Login() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary to-primary-light dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary to-primary-light flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo/Titre */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">GestiLoc</h1>
-          <p className="text-blue-100 dark:text-slate-300">
+          <p className="text-blue-100">
             Gestion Immobilière Intelligente
           </p>
         </div>
 
         {/* Formulaire */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 mb-6">
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-6">
+        <div className="bg-white rounded-2xl shadow-xl p-8 mb-6">
+          <h2 className="text-2xl font-bold text-slate-800 mb-6">
             Connexion
           </h2>
 
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6 flex items-center gap-3">
-              <AlertCircle size={20} className="text-red-600 dark:text-red-400" />
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-center gap-3">
+              <AlertCircle size={20} className="text-red-600" />
+              <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
                 Email
               </label>
               <div className="relative">
@@ -131,7 +133,7 @@ export default function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="votre@email.fr"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition"
                   required
                 />
               </div>
@@ -139,7 +141,7 @@ export default function Login() {
 
             {/* Mot de passe */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
                 Mot de passe
               </label>
               <div className="relative">
@@ -152,13 +154,13 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition"
+                  className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                  className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600"
                 >
                   {showPassword ? (
                     <EyeOff size={18} />

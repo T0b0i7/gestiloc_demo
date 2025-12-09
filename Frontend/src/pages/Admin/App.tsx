@@ -110,9 +110,9 @@ const AppContent: React.FC = () => {
 
           <div className="flex items-center gap-3">
              {/* Language Toggle */}
-             <button 
+             <button
                onClick={() => setLanguage(language === 'fr' ? 'en' : 'fr')}
-               className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 transition-colors flex items-center gap-1"
+               className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-sky-500 dark:text-sky-400 transition-colors flex items-center gap-1"
                title="Change Language"
              >
                <Languages size={20} />

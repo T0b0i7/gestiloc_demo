@@ -10,7 +10,7 @@ export const Card: React.FC<CardProps> = ({ children, className = '', delay = 0 
   return (
     <div 
       className={`
-        bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm 
+        bg-card text-card-foreground rounded-xl border border-border shadow-sm
         hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-out
         animate-fade-in-up
         ${className}

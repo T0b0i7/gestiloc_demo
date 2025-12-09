@@ -295,6 +295,10 @@ const styles = `
     margin-bottom: 1.25rem;
   }
 
+  .empty-text-margin {
+    margin-top: 0.75rem;
+  }
+
   .loading-icon {
     animation: spin 1s linear infinite;
   }
@@ -506,6 +510,10 @@ const styles = `
     box-shadow: 0 10px 30px rgba(99,102,241,0.5);
   }
 
+  .hidden-input {
+    display: none;
+  }
+
   @media (max-width: 640px) {
     .modal-dialog {
       margin: 0 1rem;
@@ -579,10 +587,11 @@ export const MesBiens: React.FC = () => {
         setError(null);
         const response = await propertyService.listProperties();
         setData(response);
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const error = err as { message?: string };
         console.error('Erreur chargement propriétés:', err);
         setError(
-          err?.message ||
+          error?.message ||
             "Impossible de charger vos biens. Veuillez réessayer dans quelques instants."
         );
       } finally {
@@ -593,14 +602,14 @@ export const MesBiens: React.FC = () => {
     fetchProperties();
   }, []);
 
-  const properties = data?.data ?? [];
+  const properties = useMemo(() => data?.data ?? [], [data]);
 
   // 🔎 Filtre côté frontend : nom, adresse, ville, référence
   const filtered = useMemo(() => {
     if (!search.trim()) return properties;
     const term = search.toLowerCase();
 
-    return properties.filter((p) => {
+    return (properties ?? []).filter((p) => {
       return (
         (p.name && p.name.toLowerCase().includes(term)) ||
         (p.address && p.address.toLowerCase().includes(term)) ||
@@ -670,7 +679,7 @@ export const MesBiens: React.FC = () => {
     try {
       setIsSaving(true);
 
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         type: selectedProperty.type,
         title: editName || selectedProperty.name || 'Bien immobilier',
         name: editName || selectedProperty.name,
@@ -715,13 +724,14 @@ export const MesBiens: React.FC = () => {
 
       alert('✅ Bien mis à jour avec succès.');
       handleCloseModal();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { errors?: Record<string, unknown[]>; message?: string } } };
       console.error('Erreur mise à jour bien:', err);
-      if (err?.response?.data?.errors) {
-        const msgs = Object.values(err.response.data.errors).flat().join('\n');
+      if (error?.response?.data?.errors) {
+        const msgs = Object.values(error.response?.data?.errors ?? {}).flat().join('\n');
         alert('❌ Erreur de validation :\n' + msgs);
-      } else if (err?.response?.data?.message) {
-        alert('❌ ' + err.response.data.message);
+      } else if (error?.response?.data?.message) {
+        alert('❌ ' + error.response.data.message);
       } else {
         alert("❌ Une erreur est survenue lors de l'enregistrement.");
       }
@@ -774,7 +784,7 @@ export const MesBiens: React.FC = () => {
           {isLoading && (
             <div className="loading-state">
               <Loader2 className="loading-icon" size={32} />
-              <p className="empty-text" style={{ marginTop: '0.75rem' }}>
+              <p className="empty-text empty-text-margin">
                 Chargement de vos biens en cours...
               </p>
             </div>
@@ -933,6 +943,7 @@ export const MesBiens: React.FC = () => {
                 className="modal-close-btn"
                 type="button"
                 onClick={handleCloseModal}
+                aria-label="Fermer la modale"
               >
                 <X size={18} />
               </button>
@@ -958,7 +969,7 @@ export const MesBiens: React.FC = () => {
                     <input
                       type="file"
                       accept="image/*"
-                      style={{ display: 'none' }}
+                      className="hidden-input"
                       onChange={handlePhotoChange}
                       disabled={isUploadingPhoto}
                     />
@@ -971,18 +982,21 @@ export const MesBiens: React.FC = () => {
                 <p className="modal-section-label">Informations principales</p>
                 <div className="modal-grid">
                   <div className="modal-field">
-                    <label className="modal-label">Nom / Titre du bien</label>
+                    <label className="modal-label" htmlFor="edit-name">Nom / Titre du bien</label>
                     <input
+                      id="edit-name"
                       className="modal-input"
                       type="text"
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       placeholder="Ex: Appartement T3 centre-ville"
+                      aria-label="Nom / Titre du bien"
                     />
                   </div>
                   <div className="modal-field">
-                    <label className="modal-label">Statut</label>
+                    <label className="modal-label" htmlFor="edit-status">Statut</label>
                     <select
+                      id="edit-status"
                       className="modal-select"
                       value={editStatus}
                       onChange={(e) => setEditStatus(e.target.value)}
@@ -1001,39 +1015,47 @@ export const MesBiens: React.FC = () => {
                 <p className="modal-section-label">Adresse</p>
                 <div className="modal-grid">
                   <div className="modal-field">
-                    <label className="modal-label">Adresse</label>
+                    <label className="modal-label" htmlFor="edit-address">Adresse</label>
                     <input
+                      id="edit-address"
                       className="modal-input"
                       type="text"
                       value={editAddress}
                       onChange={(e) => setEditAddress(e.target.value)}
+                      title="Adresse"
                     />
                   </div>
                   <div className="modal-field">
-                    <label className="modal-label">Ville</label>
+                    <label className="modal-label" htmlFor="edit-city">Ville</label>
                     <input
+                      id="edit-city"
                       className="modal-input"
                       type="text"
                       value={editCity}
                       onChange={(e) => setEditCity(e.target.value)}
+                      title="Ville"
                     />
                   </div>
                   <div className="modal-field">
-                    <label className="modal-label">Code postal</label>
+                    <label className="modal-label" htmlFor="edit-zip">Code postal</label>
                     <input
+                      id="edit-zip"
                       className="modal-input"
                       type="text"
                       value={editZip}
                       onChange={(e) => setEditZip(e.target.value)}
+                      title="Code postal"
                     />
                   </div>
                   <div className="modal-field">
-                    <label className="modal-label">Quartier</label>
+                    <label className="modal-label" htmlFor="edit-district">Quartier</label>
                     <input
+                      id="edit-district"
                       className="modal-input"
                       type="text"
                       value={editDistrict}
                       onChange={(e) => setEditDistrict(e.target.value)}
+                      title="Quartier"
                     />
                   </div>
                 </div>
@@ -1044,25 +1066,29 @@ export const MesBiens: React.FC = () => {
                 <p className="modal-section-label">Caractéristiques</p>
                 <div className="modal-grid">
                   <div className="modal-field">
-                    <label className="modal-label">Surface (m²)</label>
+                    <label className="modal-label" htmlFor="edit-surface">Surface (m²)</label>
                     <input
+                      id="edit-surface"
                       className="modal-input"
                       type="number"
                       min={0}
                       step={0.01}
                       value={editSurface}
                       onChange={(e) => setEditSurface(e.target.value)}
+                      title="Surface (m²)"
                     />
                   </div>
                   <div className="modal-field">
-                    <label className="modal-label">Loyer mensuel (€)</label>
+                    <label className="modal-label" htmlFor="edit-rent">Loyer mensuel (€)</label>
                     <input
+                      id="edit-rent"
                       className="modal-input"
                       type="number"
                       min={0}
                       step={1}
                       value={editRent}
                       onChange={(e) => setEditRent(e.target.value)}
+                      title="Loyer mensuel (€)"
                     />
                   </div>
                 </div>
