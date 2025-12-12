@@ -1,0 +1,22 @@
+{
+  "info": {
+    "name": "Test API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "12345-abcde"
+  },
+  "item": [
+    {
+      "name": "Ping",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/ping",
+          "host": ["{{base_url}}"],
+          "path": ["ping"]
+        }
+      },
+      "response": []
+    }
+  ]
+}

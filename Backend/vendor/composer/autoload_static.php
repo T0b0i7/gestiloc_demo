@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit0b491ad5f67b8aec8dd81052c6a6f497
+class ComposerStaticInitc42279388a56fab344a7d2d9dc8dc696
 {
     public static $files = array (
         '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
@@ -571,11 +571,14 @@ class ComposerStaticInit0b491ad5f67b8aec8dd81052c6a6f497
         'App\\Http\\Controllers\\Api\\Landlord\\LeaseController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/Landlord/LeaseController.php',
         'App\\Http\\Controllers\\Api\\Landlord\\PropertyController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/Landlord/PropertyController.php',
         'App\\Http\\Controllers\\Api\\LeaseController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/LeaseController.php',
+        'App\\Http\\Controllers\\Api\\PropertyConditionReportController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/PropertyConditionReportController.php',
         'App\\Http\\Controllers\\Api\\PropertyController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/PropertyController.php',
         'App\\Http\\Controllers\\Api\\TenantController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/TenantController.php',
         'App\\Http\\Controllers\\Api\\Tenant\\MyLeaseController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/Tenant/MyLeaseController.php',
         'App\\Http\\Controllers\\Api\\Tenant\\TicketController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/Tenant/TicketController.php',
+        'App\\Http\\Controllers\\Api\\UploadController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/UploadController.php',
         'App\\Http\\Controllers\\Controller' => __DIR__ . '/../..' . '/app/Http/Controllers/Controller.php',
+        'App\\Http\\Middleware\\RoleMiddleware' => __DIR__ . '/../..' . '/app/Http/Middleware/RoleMiddleware.php',
         'App\\Http\\Requests\\InviteTenantRequest' => __DIR__ . '/../..' . '/app/Http/Requests/InviteTenantRequest.php',
         'App\\Http\\Requests\\LoginRequest' => __DIR__ . '/../..' . '/app/Http/Requests/LoginRequest.php',
         'App\\Http\\Requests\\SetPasswordRequest' => __DIR__ . '/../..' . '/app/Http/Requests/SetPasswordRequest.php',
@@ -590,6 +593,8 @@ class ComposerStaticInit0b491ad5f67b8aec8dd81052c6a6f497
         'App\\Models\\Landlord' => __DIR__ . '/../..' . '/app/Models/Landlord.php',
         'App\\Models\\Lease' => __DIR__ . '/../..' . '/app/Models/Lease.php',
         'App\\Models\\Property' => __DIR__ . '/../..' . '/app/Models/Property.php',
+        'App\\Models\\PropertyConditionPhoto' => __DIR__ . '/../..' . '/app/Models/PropertyConditionPhoto.php',
+        'App\\Models\\PropertyConditionReport' => __DIR__ . '/../..' . '/app/Models/PropertyConditionReport.php',
         'App\\Models\\PropertyDiagnostic' => __DIR__ . '/../..' . '/app/Models/PropertyDiagnostic.php',
         'App\\Models\\PropertyEquipment' => __DIR__ . '/../..' . '/app/Models/PropertyEquipment.php',
         'App\\Models\\PropertyInventory' => __DIR__ . '/../..' . '/app/Models/PropertyInventory.php',
@@ -601,6 +606,7 @@ class ComposerStaticInit0b491ad5f67b8aec8dd81052c6a6f497
         'App\\Models\\Utility' => __DIR__ . '/../..' . '/app/Models/Utility.php',
         'App\\Notifications\\TenantInvitationNotification' => __DIR__ . '/../..' . '/app/Notifications/TenantInvitationNotification.php',
         'App\\Policies\\LeasePolicy' => __DIR__ . '/../..' . '/app/Policies/LeasePolicy.php',
+        'App\\Policies\\PropertyConditionReportPolicy' => __DIR__ . '/../..' . '/app/Policies/PropertyConditionReportPolicy.php',
         'App\\Policies\\PropertyPolicy' => __DIR__ . '/../..' . '/app/Policies/PropertyPolicy.php',
         'App\\Providers\\AppServiceProvider' => __DIR__ . '/../..' . '/app/Providers/AppServiceProvider.php',
         'App\\Providers\\AuthServiceProvider' => __DIR__ . '/../..' . '/app/Providers/AuthServiceProvider.php',
@@ -7036,9 +7042,9 @@ class ComposerStaticInit0b491ad5f67b8aec8dd81052c6a6f497
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit0b491ad5f67b8aec8dd81052c6a6f497::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit0b491ad5f67b8aec8dd81052c6a6f497::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit0b491ad5f67b8aec8dd81052c6a6f497::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitc42279388a56fab344a7d2d9dc8dc696::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitc42279388a56fab344a7d2d9dc8dc696::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInitc42279388a56fab344a7d2d9dc8dc696::$classMap;
 
         }, null, ClassLoader::class);
     }

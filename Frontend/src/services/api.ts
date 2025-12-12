@@ -682,5 +682,201 @@ export const leaseService = {
   },
 };
 
+// ================= ETATS DES LIEUX (PROPERTY CONDITION REPORTS) =================
+
+// Statut de condition d’une photo
+export type ConditionStatus = 'good' | 'satisfactory' | 'poor' | 'damaged';
+
+export interface PropertyConditionPhoto {
+  id: number;
+  report_id: number;
+  path: string;
+  original_filename: string | null;
+  mime_type: string | null;
+  size: number;
+  condition_status: ConditionStatus | null;
+  condition_notes?: string | null;
+  taken_at: string;
+  caption?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PropertyConditionReport {
+  id: number;
+  property_id: number;
+  lease_id: number;
+  created_by: number;
+  type: 'entry' | 'exit' | 'intermediate';
+  report_date: string;
+  notes?: string | null;
+  signature_data?: string | null;
+  signed_by?: string | null;
+  signed_at?: string | null;
+
+  photos?: PropertyConditionPhoto[];
+  lease?: any | null;      // ← ton backend peut renvoyer lease + tenant, on garde souple
+  property?: any | null;
+}
+
+// Item photo côté form
+export type CreateConditionReportPhotoItem = {
+  file: File;
+  condition_status?: ConditionStatus; // (info front pour UI)
+  condition_notes?: string;           // (info front pour UI)
+  caption?: string;                   // ✅ si tu veux l’envoyer au backend
+  taken_at?: string;                  // optionnel : sinon on utilise report_date
+};
+
+export interface CreateConditionReportPayload {
+  lease_id: number;
+  type: 'entry' | 'exit' | 'intermediate';
+  report_date: string; // 'YYYY-MM-DD'
+  notes?: string | null;
+  photos: CreateConditionReportPhotoItem[];
+  signature_data?: string;
+  signed_by?: string; // ✅ requis si signature_data est présent côté backend
+}
+
+export const conditionReportService = {
+  /**
+   * GET /properties/{property}/condition-reports
+   * Backend renvoie un tableau direct
+   */
+  listForProperty: async (
+    propertyId: number | string
+  ): Promise<PropertyConditionReport[]> => {
+    await initializeCsrfToken();
+
+    const response = await api.get<PropertyConditionReport[]>(
+      `/properties/${propertyId}/condition-reports`
+    );
+
+    return response.data;
+  },
+
+  /**
+   * GET /properties/{property}/condition-reports/{report}
+   * Pour ouvrir le détail (photos + lease + tenant...)
+   */
+  getForProperty: async (
+    propertyId: number | string,
+    reportId: number | string
+  ): Promise<PropertyConditionReport> => {
+    await initializeCsrfToken();
+
+    const response = await api.get<PropertyConditionReport>(
+      `/properties/${propertyId}/condition-reports/${reportId}`
+    );
+
+    return response.data;
+  },
+
+  /**
+   * POST /properties/{property}/condition-reports
+   * Champs attendus backend (store):
+   * - lease_id
+   * - type
+   * - report_date
+   * - notes (nullable)
+   * - photos[] (required array)
+   * - photo_dates[] (required array, same size)
+   * - photo_captions[] (optional)
+   * - signature_data (optional) + signed_by (required_with)
+   */
+  createForProperty: async (
+    propertyId: number | string,
+    payload: CreateConditionReportPayload
+  ): Promise<PropertyConditionReport> => {
+    await initializeCsrfToken();
+
+    const formData = new FormData();
+
+    formData.append('lease_id', String(payload.lease_id));
+    formData.append('type', payload.type);
+    formData.append('report_date', payload.report_date);
+
+    if (payload.notes) formData.append('notes', payload.notes);
+
+    if (payload.signature_data) {
+      formData.append('signature_data', payload.signature_data);
+      // ⚠️ backend: signed_by required_with signature_data
+      formData.append('signed_by', payload.signed_by || 'Signature');
+    }
+
+    payload.photos.forEach((p, index) => {
+      if (!(p?.file instanceof File)) {
+        throw new Error(`Photo invalide à l’index ${index} (file manquant).`);
+      }
+
+      // ✅ Laravel: photos.* => image
+      formData.append(`photos[${index}]`, p.file);
+
+      // ✅ Laravel: photo_dates required array size = photos count
+      formData.append(
+        `photo_dates[${index}]`,
+        (p.taken_at || payload.report_date) as string
+      );
+
+      // ✅ optionnel si tu veux l’utiliser côté backend
+      if (p.caption) {
+        formData.append(`photo_captions[${index}]`, p.caption);
+      }
+    });
+
+    const response = await api.post(
+      `/properties/${propertyId}/condition-reports`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+
+    // ton store renvoie { message, report }
+    const data: any = response.data;
+    return data.report ?? data.data ?? data;
+  },
+
+  /**
+   * POST /properties/{property}/condition-reports/{report}/photos
+   * Pour ajouter des photos plus tard (optionnel).
+   * Backend attend:
+   * - photos[]
+   * - photo_dates[]
+   * - photo_captions[] (optional)
+   * - condition_status[] (optional, selon ton controller)
+   * - condition_notes[] (optional)
+   */
+  addPhotos: async (
+    propertyId: number | string,
+    reportId: number | string,
+    items: CreateConditionReportPhotoItem[],
+    defaultDate?: string
+  ): Promise<{ message: string; photos: PropertyConditionPhoto[] }> => {
+    await initializeCsrfToken();
+
+    const formData = new FormData();
+
+    items.forEach((p, index) => {
+      if (!(p?.file instanceof File)) {
+        throw new Error(`Photo invalide à l’index ${index} (file manquant).`);
+      }
+
+      formData.append(`photos[${index}]`, p.file);
+      formData.append(`photo_dates[${index}]`, p.taken_at || defaultDate || new Date().toISOString().slice(0, 10));
+
+      if (p.caption) formData.append(`photo_captions[${index}]`, p.caption);
+      if (p.condition_status) formData.append(`condition_status[${index}]`, p.condition_status);
+      if (p.condition_notes) formData.append(`condition_notes[${index}]`, p.condition_notes);
+    });
+
+    const response = await api.post(
+      `/properties/${propertyId}/condition-reports/${reportId}/photos`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+
+    return response.data;
+  },
+
+};
 
 export default api;

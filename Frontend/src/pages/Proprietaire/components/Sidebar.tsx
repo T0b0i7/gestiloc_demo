@@ -1,24 +1,54 @@
 import React from 'react';
-import { LayoutDashboard, Building, Users, Wallet, FileText, Wrench, Settings, LogOut, X, ChevronRight, ChevronDown, CreditCard, MessageSquare, Bell, Menu, Briefcase, Package, FileCheck, DollarSign, BookOpen, PenTool, Zap, Trash2, Plus, UserPlus, FilePlus } from 'lucide-react';
+import { 
+  LayoutDashboard, 
+  Building, 
+  Users, 
+  FileText, 
+  CreditCard, 
+  ChevronDown,
+  X, 
+  Package, 
+  FileCheck, 
+  DollarSign, 
+  PenTool, 
+  Zap, 
+  Plus, 
+  UserPlus, 
+  FilePlus, 
+  Settings as SettingsIcon, 
+  LogOut 
+} from 'lucide-react';
 import { Tab } from '../types';
+import { useAppContext } from '../../../context/AppContext';
 
 interface SidebarProps {
   activeTab: Tab;
   onNavigate: (tab: Tab) => void;
   isOpen: boolean;
-  setIsOpen: (isOpen: boolean) => void;
+  onClose: () => void;
   onLogout: () => void;
 }
 
 interface MenuItem {
-  id: Tab | string;
+  id: string;
   label: string;
   icon: React.ElementType;
-  submenu?: MenuItem[];
+  submenu: {
+    id: string;
+    label: string;
+    icon: React.ElementType;
+  }[];
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onNavigate, isOpen, setIsOpen, onLogout }) => {
-  const [expandedMenus, setExpandedMenus] = React.useState<string[]>(['main']);
+export const Sidebar: React.FC<SidebarProps> = ({ 
+  activeTab, 
+  onNavigate, 
+  isOpen, 
+  onClose, 
+  onLogout 
+}) => {
+  const { t } = useAppContext();
+  const [expandedMenus, setExpandedMenus] = React.useState<string[]>([]);
 
   const toggleMenu = (menuId: string) => {
     setExpandedMenus(prev =>
@@ -28,173 +58,273 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onNavigate, isOpen,
     );
   };
 
-  const essentialMenuItems: MenuItem[] = [
+  const menuItems: MenuItem[] = [
     { 
       id: 'dashboard', 
-      label: 'Tableau de Bord Propriétaire', 
-      icon: Briefcase,
+      label: t('sidebar.dashboard', 'Tableau de Bord'), 
+      icon: LayoutDashboard,
       submenu: []
     },
     { 
       id: 'properties', 
-      label: 'Biens', 
+      label: t('sidebar.properties', 'Biens'), 
       icon: Building,
       submenu: [
-        { id: 'add-property', label: 'Ajouter un bien', icon: Plus }, 
-        { id: 'my-properties', label: 'Mes biens', icon: Building },
-        { id: 'properties-lots', label: 'Lots', icon: Building },
-        { id: 'properties-buildings', label: 'Immeubles', icon: Building }
+        { 
+          id: 'add-property', 
+          label: t('sidebar.addProperty', 'Ajouter un bien'), 
+          icon: Plus 
+        },
+        { 
+          id: 'my-properties', 
+          label: t('sidebar.myProperties', 'Mes biens'), 
+          icon: Building 
+        },
+        { 
+          id: 'properties-lots', 
+          label: t('sidebar.lots', 'Lots'), 
+          icon: Building 
+        },
+        { 
+          id: 'properties-buildings', 
+          label: t('sidebar.buildings', 'Immeubles'), 
+          icon: Building 
+        }
       ]
     },
     { 
       id: 'tenants', 
-      label: 'Locataires', 
+      label: t('sidebar.tenants', 'Locataires'), 
       icon: Users,
       submenu: [
-        { id: 'add-tenant', label: 'Ajouter un locataire', icon: UserPlus },
-        { id: 'list-tenants', label: 'Liste des locataires', icon: Users }
+        { 
+          id: 'add-tenant', 
+          label: t('sidebar.addTenant', 'Ajouter un locataire'), 
+          icon: UserPlus 
+        },
+        { 
+          id: 'list-tenants', 
+          label: t('sidebar.tenantsList', 'Liste des locataires'), 
+          icon: Users 
+        }
       ]
     },
     { 
       id: 'rentals', 
-      label: 'Locations', 
+      label: t('sidebar.rentals', 'Locations'), 
       icon: FileText,
       submenu: [
-        { id: 'new-rental', label: 'Nouvelle location', icon: FilePlus },
-        { id: 'list-rentals', label: 'Liste des locations', icon: FileText }
+        { 
+          id: 'new-rental', 
+          label: t('sidebar.newRental', 'Nouvelle location'), 
+          icon: FilePlus 
+        },
+        { 
+          id: 'list-rentals', 
+          label: t('sidebar.rentalsList', 'Liste des locations'), 
+          icon: FileText 
+        }
       ]
     },
     { 
       id: 'inventory', 
-      label: 'Inventaires', 
+      label: t('sidebar.inventory', 'Inventaires'), 
       icon: Package,
       submenu: []
     },
     { 
       id: 'inspection', 
-      label: 'Etat des lieux', 
+      label: t('sidebar.inspection', 'État des lieux'), 
       icon: FileCheck,
       submenu: []
     },
     { 
       id: 'finances', 
-      label: 'Finances', 
+      label: t('sidebar.finances', 'Finances'), 
       icon: DollarSign,
       submenu: [
-        { id: 'finances-overview', label: 'Finances', icon: DollarSign },
-        { id: 'finances-loans', label: 'Prêts', icon: CreditCard },
-        { id: 'finances-summary', label: 'Bilan', icon: FileText },
-        { id: 'finances-tax', label: 'Déclarations fiscales', icon: FileText }
+        { 
+          id: 'finances-overview', 
+          label: t('sidebar.financesOverview', 'Aperçu'), 
+          icon: DollarSign 
+        },
+        { 
+          id: 'finances-loans', 
+          label: t('sidebar.loans', 'Prêts'), 
+          icon: CreditCard 
+        },
+        { 
+          id: 'finances-summary', 
+          label: t('sidebar.summary', 'Bilan'), 
+          icon: FileText 
+        },
+        { 
+          id: 'finances-tax', 
+          label: t('sidebar.taxDeclarations', 'Déclarations fiscales'), 
+          icon: FileText 
+        }
       ]
     },
     { 
       id: 'documents', 
-      label: 'Documents', 
+      label: t('sidebar.documents', 'Documents'), 
       icon: FileText,
       submenu: [
-        { id: 'my-documents', label: 'Mes documents', icon: FileText },
-        { id: 'e-signature', label: 'Signature électronique', icon: PenTool },
-        { id: 'letter-templates', label: 'Modèles de lettres', icon: FileText },
-        { id: 'onboarding', label: 'Démarrer l\'utilisation', icon: Zap }
+        { 
+          id: 'my-documents', 
+          label: t('sidebar.myDocuments', 'Mes documents'), 
+          icon: FileText 
+        },
+        { 
+          id: 'e-signature', 
+          label: t('sidebar.eSignature', 'Signature électronique'), 
+          icon: PenTool 
+        },
+        { 
+          id: 'letter-templates', 
+          label: t('sidebar.letterTemplates', 'Modèles de lettres'), 
+          icon: FileText 
+        },
+        { 
+          id: 'onboarding', 
+          label: t('sidebar.gettingStarted', 'Démarrer l\'utilisation'), 
+          icon: Zap 
+        }
       ]
     },
   ];
 
+  // Vérifie si un élément du sous-menu est actif
+  const isSubmenuItemActive = (submenu: { id: string }[]) => {
+    return submenu.some(item => item.id === activeTab);
+  };
+
   return (
     <>
-      {/* Mobile Backdrop */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
+      {/* Overlay pour mobile */}
+      <div 
+        className={`fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 transition-opacity duration-300 md:hidden ${
+          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={onClose}
+        aria-hidden={!isOpen}
+      />
 
-      {/* Sidebar */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none lg:static lg:translate-x-0
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        {/* Logo Area */}
-        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm shrink-0">
-              <Building className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-lg font-bold text-primary-dark dark:text-slate-100 tracking-tight leading-tight whitespace-nowrap">GestiLoc</span>
+      {/* Conteneur de la barre latérale */}
+      <div 
+        className={`
+          fixed md:static inset-y-0 left-0 z-50 w-72 bg-white dark:bg-slate-900 
+          border-r border-slate-200 dark:border-slate-800 flex flex-col shadow-xl 
+          md:shadow-none transform transition-transform duration-300 ease-out
+          ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}
+      >
+        {/* Zone du logo */}
+        <div className="h-20 flex items-center px-8 border-b border-slate-100 dark:border-slate-800">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-violet-600 rounded-lg mr-3 shadow-lg shadow-blue-200 dark:shadow-none animate-pulse-glow flex items-center justify-center">
+            <span className="text-white font-bold text-lg">G</span>
           </div>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">
+            GESTILOC
+          </h1>
           <button 
-            onClick={() => setIsOpen(false)} 
-            className="lg:hidden text-slate-400 hover:text-slate-600"
-            title="Fermer le menu"
-            aria-label="Fermer le menu de navigation"
+            onClick={onClose} 
+            className="ml-auto md:hidden text-slate-400 hover:text-slate-600"
+            aria-label="Fermer le menu"
           >
             <X size={24} />
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
-          {essentialMenuItems.map((item) => {
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 px-4">
+            {t('sidebar.mainMenu', 'Menu Principal')}
+          </div>
+          
+          {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            const hasSubmenu = item.submenu && item.submenu.length > 0;
-            const isExpanded = expandedMenus.includes(item.id as string);
+            const isActive = activeTab === item.id || (item.submenu.length > 0 && isSubmenuItemActive(item.submenu));
+            const hasSubmenu = item.submenu.length > 0;
+            const isExpanded = expandedMenus.includes(item.id) || isActive;
 
             return (
-              <div key={item.id}>
+              <div key={item.id} className="space-y-1">
                 <button
                   onClick={() => {
                     if (hasSubmenu) {
-                      toggleMenu(item.id as string);
+                      toggleMenu(item.id);
                     } else {
                       onNavigate(item.id as Tab);
-                      setIsOpen(false);
+                      onClose();
                     }
                   }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 
-                    ${isActive 
-                      ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light' 
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-200'
+                  className={`
+                    w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all 
+                    duration-200 group relative overflow-hidden
+                    ${
+                      isActive
+                        ? 'bg-blue-50 dark:bg-slate-800 text-blue-700 dark:text-blue-400 font-semibold shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200'
                     }`}
-                  title={item.label}
-                  aria-label={item.label}
+                  aria-expanded={hasSubmenu ? isExpanded : undefined}
+                  aria-controls={hasSubmenu ? `submenu-${item.id}` : undefined}
                 >
-                  <div className="flex items-center gap-3">
-                    <Icon size={20} className={isActive ? 'text-primary dark:text-primary-light' : 'text-slate-400 dark:text-slate-500'} />
-                    {item.label}
-                  </div>
+                  {isActive && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-l-xl animate-fadeIn" />
+                  )}
+                  <Icon 
+                    size={20} 
+                    className={`transition-transform duration-300 ${
+                      isActive ? 'scale-110' : 'group-hover:scale-110'
+                    }`} 
+                  />
+                  <span className="text-left">{item.label}</span>
                   {hasSubmenu && (
                     <ChevronDown 
                       size={18} 
-                      className={`text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
+                      className={`ml-auto transition-transform duration-300 ${
+                        isExpanded ? 'rotate-180' : ''
+                      } text-slate-400`}
                     />
                   )}
                 </button>
 
-                {/* Submenu */}
+                {/* Sous-menu */}
                 {hasSubmenu && isExpanded && (
-                  <div className="mt-1.5 ml-6 space-y-1 border-l border-slate-200 pl-4">
-                    {item.submenu!.map((subitem) => {
+                  <div 
+                    id={`submenu-${item.id}`}
+                    className="mt-1 ml-6 space-y-1 border-l-2 border-slate-100 dark:border-slate-700 pl-4 py-1"
+                  >
+                    {item.submenu.map((subitem) => {
                       const SubIcon = subitem.icon;
                       const isSubActive = activeTab === subitem.id;
+                      
                       return (
                         <button
                           key={subitem.id}
                           onClick={() => {
                             onNavigate(subitem.id as Tab);
-                            setIsOpen(false);
+                            onClose();
                           }}
-                          className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-all duration-200 ${
-                            isSubActive
-                              ? 'bg-blue-50/80 text-primary font-medium'
-                              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
-                          }`}
-                          title={subitem.label}
-                          aria-label={subitem.label}
+                          className={`
+                            w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm 
+                            transition-all duration-200
+                            ${
+                              isSubActive
+                                ? 'bg-blue-50/80 text-blue-600 dark:bg-slate-800/80 dark:text-blue-400 font-medium'
+                                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200'
+                            }`}
                         >
-                          <SubIcon size={16} className={isSubActive ? 'text-primary' : 'text-slate-400'} />
-                          {subitem.label}
+                          <SubIcon 
+                            size={16} 
+                            className={`${
+                              isSubActive 
+                                ? 'text-blue-600 dark:text-blue-400' 
+                                : 'text-slate-400'
+                            }`} 
+                          />
+                          <span>{subitem.label}</span>
                         </button>
                       );
                     })}
@@ -203,71 +333,62 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onNavigate, isOpen,
               </div>
             );
           })}
-
-          <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-700">
-            <p className="px-3 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Administration</p>
-            
-            {/* Bureau */}
-            <button 
-              onClick={() => {
-                onNavigate('settings' as Tab);
-                setIsOpen(false);
-              }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200
-              ${(activeTab as string) === 'settings' 
-                ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light' 
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-200'
+          
+          <div className="my-4 border-t border-slate-100 dark:border-slate-800 mx-4" />
+          
+          <button
+            onClick={() => {
+              onNavigate('settings' as Tab);
+              onClose();
+            }}
+            className={`
+              w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all 
+              duration-200 group
+              ${
+                activeTab === 'settings'
+                  ? 'bg-blue-50 dark:bg-slate-800 text-blue-700 dark:text-blue-400 font-semibold'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200'
               }`}
-              title="Bureau"
-              aria-label="Bureau"
-            >
-              <Briefcase size={20} className={(activeTab as string) === 'settings' ? 'text-primary dark:text-primary-light' : 'text-slate-400 dark:text-slate-500'} />
-              Bureau
-            </button>
-
-            {/* Paramètres */}
-            <button 
-              onClick={() => {
-                onNavigate('profile' as Tab);
-                setIsOpen(false);
-              }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200
-              ${(activeTab as string) === 'profile' 
-                ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary-light' 
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-200'
-              }`}
-              title="Paramètres"
-              aria-label="Paramètres"
-            >
-              <Settings size={20} className={(activeTab as string) === 'profile' ? 'text-primary dark:text-primary-light' : 'text-slate-400 dark:text-slate-500'} />
-              Paramètres
-            </button>
-          </div>
+          >
+            <SettingsIcon size={20} />
+            <span>{t('sidebar.settings', 'Paramètres')}</span>
+          </button>
         </nav>
 
-        {/* User Profile Footer */}
-        <div className="p-4 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
-          <div className="flex items-center gap-3">
-            <img 
-              src="https://picsum.photos/100/100" 
-              alt="Utilisateur" 
-              className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-600"
-            />
+        {/* Profil utilisateur en bas */}
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800">
+          <div 
+            className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            onClick={() => {
+              onNavigate('profile' as Tab);
+              onClose();
+            }}
+          >
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+              {t('user.initials', 'PM')}
+            </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-900 dark:text-slate-200 truncate">Propriétaire</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Mon compte</p>
+              <p className="text-sm font-bold text-slate-800 dark:text-white truncate">
+                {t('user.name', 'Propriétaire')}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                {t('user.role', 'Propriétaire')}
+              </p>
             </div>
             <button 
-              onClick={onLogout}
-              className="p-1.5 text-slate-400 hover:text-rose-600 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-              title="Déconnexion"
-              aria-label="Se déconnecter"
+              onClick={(e) => {
+                e.stopPropagation();
+                onLogout();
+              }}
+              className="text-slate-400 hover:text-red-500 transition-colors"
+              title={t('auth.logout', 'Déconnexion')}
+              aria-label={t('auth.logout', 'Déconnexion')}
             >
               <LogOut size={18} />
             </button>
           </div>
         </div>
-      </aside>
+      </div>
     </>
   );
 };

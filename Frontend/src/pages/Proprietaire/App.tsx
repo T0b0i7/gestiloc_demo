@@ -19,6 +19,7 @@ import { TenantsList } from './components/TenantsList';
 import { Onboarding } from './components/Onboarding';
 import { MesBiens } from './components/MesBiens';
 import { Lease } from './components/Lease';
+import EtatsLieux from '../Admin/components/EtatsLieux';
 import { 
   Biens, Locataires, Locations, Inventaires, EtatDesLieux, 
   Finances, Carnet, Candidats, Outils, Corbeille 
@@ -240,6 +241,19 @@ const ProprietaireApp: React.FC = () => {
             <Payments notify={notify} />
           </Layout>
         } />
+
+        <Route path="etats-des-lieux/*" element={
+          <Layout
+            activeTab="etats-des-lieux"
+            onNavigate={handleNavigation}
+            toasts={toasts}
+            removeToast={removeToast}
+            onLogout={handleLogout}
+          >
+            <EtatsLieux notify={notify} />
+          </Layout>
+        } />
+
         <Route path="documents/*" element={
           <Layout
             activeTab="documents"

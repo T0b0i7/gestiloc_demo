@@ -1,0 +1,326 @@
+{
+  "info": {
+    "name": "Cheptel Auth API",
+    "description": "Collection to test auth flows (register/login/invite/set-password) for the Cheptel API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "cheptel-auth-collection-001"
+  },
+  "item": [
+    {
+      "name": "Env: Setup",
+      "item": [
+        {
+          "name": "Set base_url variable (manual)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/ping",
+              "host": ["{{base_url}}"],
+              "path": ["ping"]
+            }
+          },
+          "event": []
+        }
+      ]
+    },
+    {
+      "name": "Auth - Register Landlord",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"landlord@example.com\",\n  \"password\": \"StrongP@ss1\",\n  \"password_confirmation\": \"StrongP@ss1\",\n  \"phone\": \"+22960123456\",\n  \"first_name\": \"Jean\",\n  \"last_name\": \"Dupont\",\n  \"company_name\": \"Exploitation Dupont\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/register/landlord",
+          "host": ["{{base_url}}"],
+          "path": ["auth","register","landlord"]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 201\", function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "// If returned user, store email for convenience",
+              "var json = pm.response.json();",
+              "if (json.user && json.user.email) {",
+              "    pm.environment.set('landlord_email', json.user.email);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth - Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"landlord@example.com\",\n  \"password\": \"StrongP@ss1\",\n  \"role\": \"landlord\",\n  \"device_name\": \"postman\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["auth","login"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var j = pm.response.json();",
+              "if (j.access_token) {",
+              "    pm.environment.set('token', j.access_token);",
+              "    pm.environment.set('auth_header', 'Bearer ' + j.access_token);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth - Accept Invitation (simulate signed route)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/tenant/accept-invitation/{{invitation_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["auth","tenant","accept-invitation","{{invitation_id}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200 or 403/404 handled\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200,403,404]);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth - Set Password (tenant)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"SAMPLE_INVITATION_TOKEN\",\n  \"password\": \"TenantP@ss1\",\n  \"password_confirmation\": \"TenantP@ss1\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/tenant/set-password",
+          "host": ["{{base_url}}"],
+          "path": ["auth","tenant","set-password"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200 or 201\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200,201,204]);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Protected - Get Invoices (requires token)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "{{auth_header}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/invoices",
+          "host": ["{{base_url}}"],
+          "path": ["invoices"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Protected route responds (200 or 401 if token invalid)\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200,401,403]);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Landlord - Invite Tenant",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "{{auth_header}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"tenant@example.com\",\n  \"name\": \"Marie Tenant\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/tenants/invite",
+          "host": ["{{base_url}}"],
+          "path": ["tenants","invite"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Invite endpoint returns 200/201/403\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200,201,403]);",
+              "});",
+              "",
+              "var j = pm.response.json();",
+              "if (j.token) {",
+              "    pm.environment.set('invitation_token', j.token);",
+              "}",
+              "if (j.invitation && j.invitation.id) {",
+              "    pm.environment.set('invitation_id', j.invitation.id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Landlord - List Tenants",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "{{auth_header}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/tenants",
+          "host": ["{{base_url}}"],
+          "path": ["tenants"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Tenants list (200/403)\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200,403]);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "auth_header",
+      "value": ""
+    },
+    {
+      "key": "invitation_token",
+      "value": ""
+    },
+    {
+      "key": "invitation_id",
+      "value": ""
+    }
+  ]
+}

@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { TrendingUp, TrendingDown, Home, AlertCircle, Users, DollarSign, Building, Zap, ChevronRight, MapPin, CheckCircle, Clock, Plus, UserPlus, FileSignature } from 'lucide-react';
+import { TrendingUp, TrendingDown, Home, AlertCircle, Users, DollarSign, Building, Zap, ChevronRight, MapPin, CheckCircle, Clock, Plus, UserPlus, FileSignature, FileText } from 'lucide-react';
+import EtatsLieux from '@/pages/Admin/components/EtatsLieux';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Skeleton } from './ui/Skeleton';
@@ -217,6 +218,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, notify }) => {
             </div>
           </Link>
         </div>
+      </div>
+
+      {/* Section États des lieux */}
+      <div className="mt-10">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">États des lieux</h2>
+          <Link 
+            to="/proprietaire/documents/etats-des-lieux"
+            className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center"
+          >
+            Voir tout <ChevronRight className="ml-1 h-4 w-4" />
+          </Link>
+        </div>
+        <Card className="p-6">
+          <div className="border rounded-lg overflow-hidden">
+            <EtatsLieux propertyId="1" /> {/* Remplacez "1" par l'ID du bien actuel ou la logique appropriée */}
+          </div>
+        </Card>
       </div>
 
       {/* KPIs Grid */}
