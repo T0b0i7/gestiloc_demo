@@ -73,17 +73,18 @@ export default function Register() {
       } else {
         throw new Error(response?.message || "Erreur lors de l'inscription");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur lors de l\'inscription :', error);
       let errorMessage = "Une erreur est survenue lors de l'inscription";
       
-      if (error.response?.data?.errors) {
-        const validationErrors = Object.values(error.response.data.errors).flat();
+      const apiError = error as { response?: { data?: { errors?: Record<string, string[]>; message?: string } }; message?: string };
+      if (apiError.response?.data?.errors) {
+        const validationErrors = Object.values(apiError.response.data.errors).flat();
         errorMessage = validationErrors.join('\n');
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
+      } else if (apiError.response?.data?.message) {
+        errorMessage = apiError.response.data.message;
+      } else if (apiError.message) {
+        errorMessage = apiError.message;
       }
       
       toast.error(errorMessage);

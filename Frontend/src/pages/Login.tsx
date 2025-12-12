@@ -1,8 +1,22 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, AlertCircle, Home, Users, FileText, BarChart3, Zap } from 'lucide-react';
-import { authService } from '@/services/api';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { authService } from '@/services/api';
+
+const loginSchema = z.object({
+  email: z.string().email("Email invalide"),
+  password: z.string().min(1, "Mot de passe requis"),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const navigate = useNavigate();
@@ -11,21 +25,21 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedTab, setSelectedTab] = useState<'login' | 'demo-proprietaire' | 'demo-locataire' | 'demo-admin'>('login');
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    
-    if (!email || !password) {
-      setError('Veuillez remplir tous les champs');
-      return;
+  const loginForm = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
     }
-    
+  });
+
+  const handleLogin = async (data: LoginFormData) => {
+    setError('');
     try {
       setIsLoading(true);
-      
-      const response = await authService.login(email, password);
+
+      const response = await authService.login(data.email, data.password);
       
       if (response && response.data && response.data.user) {
         const { user } = response.data;
@@ -93,378 +107,291 @@ export default function Login() {
     }
   };
 
-  const DemoCard = ({ title, description, features, icon: Icon, color }: { title: string; description: string; features: string[]; icon: React.ReactNode; color: string }) => (
-    <div className={`${color} rounded-2xl p-6 text-white`}>
-      <div className="flex items-center gap-3 mb-4">
-        {Icon}
-        <h3 className="text-xl font-bold">{title}</h3>
-      </div>
-      <p className="text-sm opacity-90 mb-4">{description}</p>
-      <div className="space-y-2">
-        {features.map((feature, i) => (
-          <div key={i} className="flex items-center gap-2 text-sm">
-            <div className="w-1.5 h-1.5 rounded-full bg-white opacity-70" />
-            <span>{feature}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-primary to-slate-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-white mb-2">GestiLoc</h1>
-          <p className="text-blue-100 text-lg">Gestion Immobilière Intelligente</p>
-        </div>
+    <div className="min-h-screen flex">
+      {/* Left side - Image */}
+      <motion.div
+        className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary to-primary-light items-center justify-center p-12 relative overflow-hidden"
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+      >
+        {/* Animated background elements */}
+        <motion.div
+          className="absolute top-10 left-10 w-20 h-20 bg-white/10 rounded-full"
+          animate={{
+            y: [0, -20, 0],
+            rotate: [0, 180, 360],
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute bottom-20 right-10 w-16 h-16 bg-white/10 rounded-full"
+          animate={{
+            y: [0, 20, 0],
+            rotate: [360, 180, 0],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1,
+          }}
+        />
+        <motion.div
+          className="absolute top-1/2 left-1/4 w-12 h-12 bg-white/10 rounded-full"
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.5, 1, 0.5],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 2,
+          }}
+        />
 
-        {/* Tabs */}
-        <div className="flex gap-2 mb-8 justify-center flex-wrap">
-          {[
-            { id: 'login', label: '🔐 Connexion' },
-            { id: 'demo-proprietaire', label: '🏠 Propriétaire' },
-            { id: 'demo-locataire', label: '👤 Locataire' },
-            { id: 'demo-admin', label: '⚙️ Admin' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setSelectedTab(tab.id as any)}
-              className={`px-6 py-3 rounded-lg font-medium transition-all ${
-                selectedTab === tab.id
-                  ? 'bg-white text-primary shadow-lg'
-                  : 'bg-white/10 text-white hover:bg-white/20'
-              }`}
+        <motion.div
+          className="max-w-md relative z-10"
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+        >
+          <motion.img
+            src="/src/assets/p.jpeg"
+            alt="GestiLoc Illustration"
+            className="w-full h-auto rounded-2xl shadow-2xl"
+            animate={{
+              y: [0, -10, 0],
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+          <motion.div
+            className="mt-8 text-center"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+          >
+            <motion.h1
+              className="text-4xl font-bold text-white mb-4"
+              animate={{
+                textShadow: [
+                  "0 0 0px rgba(255,255,255,0)",
+                  "0 0 20px rgba(255,255,255,0.5)",
+                  "0 0 0px rgba(255,255,255,0)",
+                ],
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
             >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+              GestiLoc
+            </motion.h1>
+            <motion.p
+              className="text-blue-100 text-lg"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.7 }}
+            >
+              Gestion Immobilière Intelligente
+            </motion.p>
+            <motion.p
+              className="text-blue-100 mt-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.9 }}
+            >
+              Simplifiez la gestion de vos biens immobiliers avec notre plateforme moderne.
+            </motion.p>
+          </motion.div>
+        </motion.div>
+      </motion.div>
 
-        {/* Content */}
-        <div>
-          {/* Formulaire de connexion */}
-          {selectedTab === 'login' && (
-            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md mx-auto">
-              <h2 className="text-2xl font-bold text-slate-800 mb-6">Connexion</h2>
+      {/* Right side - Forms */}
+      <div className="flex-1 flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100 lg:bg-gradient-to-br lg:from-white lg:to-slate-50/50">
+        <div className="w-full max-w-md">
+          {/* Mobile Logo */}
+          <motion.div
+            className="text-center mb-8 lg:hidden"
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <motion.h1
+              className="text-4xl font-bold bg-gradient-to-r from-primary to-primary-light bg-clip-text text-transparent mb-2"
+              animate={{
+                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            >
+              GestiLoc
+            </motion.h1>
+            <p className="text-slate-600 font-medium">
+              Gestion Immobilière Intelligente
+            </p>
+          </motion.div>
 
+          {/* Login Form */}
+          <motion.div
+            className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-slate-200/50"
+            initial={{ y: 20, opacity: 0, scale: 0.95 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
+            whileHover={{ y: -2, transition: { duration: 0.2 } }}
+          >
+            <motion.h2
+              className="text-2xl font-bold text-slate-800 mb-6"
+              initial={{ y: -10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+            >
+              Connexion à votre compte
+            </motion.h2>
+
+            <AnimatePresence>
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-center gap-3">
-                  <AlertCircle size={20} className="text-red-600" />
-                  <p className="text-sm text-red-600">{error}</p>
-                </div>
+                <motion.div
+                  className="bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-200/50 rounded-xl p-4 mb-6 flex items-center gap-3 shadow-lg"
+                  initial={{ opacity: 0, scale: 0.9, y: -20, rotateX: -15 }}
+                  animate={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: -20, rotateX: -15 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                >
+                  <motion.div
+                    animate={{ rotate: [0, 10, -10, 0] }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                  >
+                    <AlertCircle size={20} className="text-red-600" />
+                  </motion.div>
+                  <p className="text-sm text-red-700 font-medium">{error}</p>
+                </motion.div>
               )}
+            </AnimatePresence>
 
-              <form onSubmit={handleLogin} className="space-y-4">
-                {/* Email */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Email
-                  </label>
-                  <div className="relative">
-                    <Mail
-                      size={18}
-                      className="absolute left-3 top-3.5 text-slate-400"
-                    />
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="votre@email.fr"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition"
-                      required
-                    />
-                  </div>
+            <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-6">
+              <motion.div
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ duration: 0.4, delay: 0.3 }}
+              >
+                <Label htmlFor="login-email" className="text-slate-700 font-medium">
+                  Adresse email
+                </Label>
+                <div className="relative mt-2">
+                  <Mail size={18} className="absolute left-3 top-3.5 text-slate-400" />
+                  <Input
+                    id="login-email"
+                    type="email"
+                    placeholder="votre@email.fr"
+                    {...loginForm.register("email")}
+                    className="pl-10 h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
+                  />
                 </div>
+                {loginForm.formState.errors.email && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {loginForm.formState.errors.email.message}
+                  </p>
+                )}
+              </motion.div>
 
-                {/* Mot de passe */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Mot de passe
-                  </label>
-                  <div className="relative">
-                    <Lock
-                      size={18}
-                      className="absolute left-3 top-3.5 text-slate-400"
-                    />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600"
-                    >
-                      {showPassword ? (
-                        <EyeOff size={18} />
-                      ) : (
-                        <Eye size={18} />
-                      )}
-                    </button>
-                  </div>
+              <motion.div
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ duration: 0.4, delay: 0.4 }}
+              >
+                <Label htmlFor="login-password" className="text-slate-700 font-medium">
+                  Mot de passe
+                </Label>
+                <div className="relative mt-2">
+                  <Lock size={18} className="absolute left-3 top-3.5 text-slate-400" />
+                  <Input
+                    id="login-password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    {...loginForm.register("password")}
+                    className="pl-10 pr-10 h-12 border-slate-300/50 focus:border-primary focus:ring-4 focus:ring-primary/10 bg-slate-50/50 transition-all duration-300"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
+                {loginForm.formState.errors.password && (
+                  <p className="text-sm text-red-600 mt-1">
+                    {loginForm.formState.errors.password.message}
+                  </p>
+                )}
+              </motion.div>
 
-                {/* Bouton Connexion */}
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-primary hover:bg-primary-light text-white font-medium py-2.5 rounded-lg transition-colors disabled:opacity-50 cursor-disabled mt-6"
-                >
-                  {isLoading ? 'Connexion en cours...' : 'Se connecter'}
-                </button>
-              </form>
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.4, delay: 0.5 }}
+              >
+                <Button type="submit" className="w-full h-12 text-lg font-medium relative overflow-hidden" disabled={isLoading}>
+                  <motion.div
+                    className="flex items-center justify-center gap-2"
+                    animate={isLoading ? { scale: [1, 1.05, 1] } : {}}
+                    transition={{ duration: 1.5, repeat: isLoading ? Infinity : 0 }}
+                  >
+                    {isLoading && (
+                      <motion.div
+                        className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      />
+                    )}
+                    {isLoading ? 'Connexion en cours...' : 'Se connecter'}
+                  </motion.div>
+                </Button>
+              </motion.div>
+            </form>
 
-              {/* Retour */}
-              <div className="text-center mt-6">
-                <button
-                  onClick={() => navigate('/')}
-                  className="text-slate-500 hover:text-slate-700 text-sm font-medium transition-colors"
-                >
-                  ← Retour à l'accueil
-                </button>
-              </div>
-            </div>
-          )}
+            <motion.div
+              className="mt-6 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.6 }}
+            >
+              <motion.a
+                href="/forgot-password"
+                className="text-primary hover:text-primary-light font-medium text-sm transition-colors duration-200"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Mot de passe oublié ?
+              </motion.a>
+            </motion.div>
+          </motion.div>
 
-          {/* Demo Propriétaire */}
-          {selectedTab === 'demo-proprietaire' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <DemoCard
-                title="Mes Biens"
-                description="Gérez tous vos propriétés"
-                features={[
-                  '📸 Galerie photos détaillée',
-                  '💰 Suivi des loyers',
-                  '📍 Localisation GPS',
-                  '⚡ Statut en temps réel',
-                ]}
-                icon={<Home size={24} />}
-                color="bg-gradient-to-br from-blue-500 to-blue-600"
-              />
-              <DemoCard
-                title="Mes Locataires"
-                description="Gestion complète des locataires"
-                features={[
-                  '👥 Profils détaillés',
-                  '📄 Contrats de bail',
-                  '✉️ Communications',
-                  '🔗 Liaisons propriété',
-                ]}
-                icon={<Users size={24} />}
-                color="bg-gradient-to-br from-emerald-500 to-emerald-600"
-              />
-              <DemoCard
-                title="Finances"
-                description="Suivi des loyers et charges"
-                features={[
-                  '💵 Historique loyers',
-                  '📊 Rapports mensuels',
-                  '🧾 Factures automati',
-                  '📈 Statistiques',
-                ]}
-                icon={<BarChart3 size={24} />}
-                color="bg-gradient-to-br from-amber-500 to-amber-600"
-              />
-              <DemoCard
-                title="Documents"
-                description="Archivage numérique sécurisé"
-                features={[
-                  '📁 Contrats signés',
-                  '📸 Photos diagnostics',
-                  '📋 États des lieux',
-                  '🔐 Sécurisé & accessible',
-                ]}
-                icon={<FileText size={24} />}
-                color="bg-gradient-to-br from-purple-500 to-purple-600"
-              />
-              <DemoCard
-                title="Interventions"
-                description="Suivi des maintenance"
-                features={[
-                  '🔧 Demandes de travaux',
-                  '✅ Suivi progression',
-                  '💰 Devis & factures',
-                  '🎯 Historique complet',
-                ]}
-                icon={<Zap size={24} />}
-                color="bg-gradient-to-br from-rose-500 to-rose-600"
-              />
-              <DemoCard
-                title="Tableau de Bord"
-                description="Vue d'ensemble complète"
-                features={[
-                  '📊 Statistiques clés',
-                  '🎯 Revenus totaux',
-                  '⚠️ Alertes importantes',
-                  '📅 Événements à venir',
-                ]}
-                icon={<BarChart3 size={24} />}
-                color="bg-gradient-to-br from-indigo-500 to-indigo-600"
-              />
-            </div>
-          )}
-
-          {/* Demo Locataire */}
-          {selectedTab === 'demo-locataire' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <DemoCard
-                title="Mon Bail"
-                description="Consultation du contrat"
-                features={[
-                  '📄 Téléchargement PDF',
-                  '📅 Durée & dates',
-                  '💰 Montant du loyer',
-                  '✍️ Signataires',
-                ]}
-                icon={<FileText size={24} />}
-                color="bg-gradient-to-br from-blue-500 to-blue-600"
-              />
-              <DemoCard
-                title="Mes Paiements"
-                description="Historique et suivi des loyers"
-                features={[
-                  '💳 Paiements effectués',
-                  '📊 Calendrier de paiement',
-                  '✅ Quittances PDF',
-                  '⏰ Prochaines échéances',
-                ]}
-                icon={<BarChart3 size={24} />}
-                color="bg-gradient-to-br from-emerald-500 to-emerald-600"
-              />
-              <DemoCard
-                title="Ma Propriété"
-                description="Informations du logement"
-                features={[
-                  '🏠 Description complète',
-                  '📸 Photos & plan',
-                  '📍 Localisation',
-                  '📋 Caractéristiques',
-                ]}
-                icon={<Home size={24} />}
-                color="bg-gradient-to-br from-amber-500 to-amber-600"
-              />
-              <DemoCard
-                title="Demandes d'Intervention"
-                description="Signaler des problèmes"
-                features={[
-                  '🔧 Créer des demandes',
-                  '✅ Suivre progressio',
-                  '💬 Communiquer',
-                  '📸 Photos & pièces jointes',
-                ]}
-                icon={<Zap size={24} />}
-                color="bg-gradient-to-br from-purple-500 to-purple-600"
-              />
-              <DemoCard
-                title="Documents"
-                description="États des lieux & diagnostics"
-                features={[
-                  '📁 États des lieux',
-                  '🔍 Photos diagnostics',
-                  '📋 Checklists",
-                  '🔐 Accès sécurisé',
-                ]}
-                icon={<FileText size={24} />}
-                color="bg-gradient-to-br from-rose-500 to-rose-600"
-              />
-              <DemoCard
-                title="Tableau de Bord"
-                description="Informations essentielles"
-                features={[
-                  '📊 Résumé du bail',
-                  '💰 Solde dues',
-                  '⚠️ Alertes importantes',
-                  '📞 Contact propriétaire',
-                ]}
-                icon={<BarChart3 size={24} />}
-                color="bg-gradient-to-br from-indigo-500 to-indigo-600"
-              />
-            </div>
-          )}
-
-          {/* Demo Admin */}
-          {selectedTab === 'demo-admin' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <DemoCard
-                title="Gestion Utilisateurs"
-                description="Créer et gérer tous les comptes"
-                features={[
-                  '👥 Liste utilisateurs",
-                  '⚙️ Rôles & permissions',
-                  '✏️ Modifier profils',
-                  '🚫 Désactiver comptes',
-                ]}
-                icon={<Users size={24} />}
-                color="bg-gradient-to-br from-blue-500 to-blue-600"
-              />
-              <DemoCard
-                title="Tableau de Bord"
-                description="Statistiques globales"
-                features={[
-                  '📊 Utilisateurs actifs',
-                  '💰 Revenus totaux',
-                  '🏠 Propriétés enregistrées',
-                  '📈 Graphiques',
-                ]}
-                icon={<BarChart3 size={24} />}
-                color="bg-gradient-to-br from-emerald-500 to-emerald-600"
-              />
-              <DemoCard
-                title="Support Tickets"
-                description="Gérer les demandes d'aide"
-                features={[
-                  '🎫 Tickets en attente',
-                  '🏷️ Catégorisation',
-                  '💬 Messages & réponses',
-                  '✅ Clôturer tickets',
-                ]}
-                icon={<Zap size={24} />}
-                color="bg-gradient-to-br from-amber-500 to-amber-600"
-              />
-              <DemoCard
-                title="Rapports"
-                description="Analyses détaillées"
-                features={[
-                  '📄 Rapports PDF',
-                  '📊 Statistiques mensuel',
-                  '🎯 Tendances',
-                  '📥 Export données',
-                ]}
-                icon={<FileText size={24} />}
-                color="bg-gradient-to-br from-purple-500 to-purple-600"
-              />
-              <DemoCard
-                title="Paramètres"
-                description="Configuration système"
-                features={[
-                  '⚙️ Paramètres généraux',
-                  '🔐 Sécurité',
-                  '📧 E-mails & notifications',
-                  '💾 Sauvegardes',
-                ]}
-                icon={<Zap size={24} />}
-                color="bg-gradient-to-br from-rose-500 to-rose-600"
-              />
-              <DemoCard
-                title="Audit & Logs"
-                description="Suivi des actions"
-                features={[
-                  '📋 Historique complet',
-                  '👤 Qui a fait quoi',
-                  '⏰ Quand & où',
-                  '🔍 Recherche avancée',
-                ]}
-                icon={<FileText size={24} />}
-                color="bg-gradient-to-br from-indigo-500 to-indigo-600"
-              />
-            </div>
-          )}
+          {/* Retour */}
+          <div className="text-center mt-8">
+            <button
+              onClick={() => navigate('/')}
+              className="text-slate-600 hover:text-primary text-sm font-medium transition-colors"
+            >
+              ← Retour à l'accueil
+            </button>
+          </div>
         </div>
       </div>
     </div>

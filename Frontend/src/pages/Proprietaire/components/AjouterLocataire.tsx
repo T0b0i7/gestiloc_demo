@@ -473,13 +473,14 @@ Le locataire recevra un email pour créer son mot de passe et activer son compte
     );
 
     navigate('/proprietaire');
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erreur lors de l'invitation du locataire :", error);
 
+    const apiError = error as { message?: string; error?: string; errors?: Record<string, string[]> };
     const msg =
-      error?.message ||
-      error?.error ||
-      (error?.errors && Object.values(error.errors)[0]?.[0]) ||
+      apiError?.message ||
+      apiError?.error ||
+      (apiError?.errors && Object.values(apiError.errors)[0]?.[0]) ||
       "Une erreur est survenue lors de l'invitation du locataire.";
 
     alert(msg);

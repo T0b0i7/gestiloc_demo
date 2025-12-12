@@ -59,6 +59,7 @@ export default function Blog() {
     <div className="pb-16">
       <section className="bg-gradient-primary text-primary-foreground py-16 md:py-24">
         <div className="container text-center">
+          <div className="page-subtitle text-primary-foreground/80">Blog</div>
           <h1 className="text-4xl font-bold mb-4 md:text-5xl">Blog</h1>
           <p className="text-lg opacity-90 max-w-2xl mx-auto">
             Conseils, guides et actualités pour bien gérer vos biens locatifs

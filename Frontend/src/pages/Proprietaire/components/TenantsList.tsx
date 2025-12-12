@@ -79,10 +79,11 @@ export const TenantsList: React.FC<LocatairesProps> = ({ notify }) => {
         const mapped = res.tenants.map(mapTenantApiToLocataire);
         setLocataires(mapped);
 
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Erreur chargement locataires:', err);
+        const apiError = err as { message?: string };
         const message =
-          err?.message || "Impossible de charger les locataires";
+          apiError?.message || "Impossible de charger les locataires";
         setError(message);
         notify(message, 'error');
       } finally {
@@ -91,6 +92,7 @@ export const TenantsList: React.FC<LocatairesProps> = ({ notify }) => {
     };
 
     fetchTenants();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ============================

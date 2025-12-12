@@ -32,7 +32,7 @@ export const Lease: React.FC<LeaseProps> = ({ notify }) => {
       if (data.length > 0) {
         setSelectedLease(data[0]);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur lors du chargement des baux :', error);
       notify(
         "Impossible de charger vos baux pour le moment. Veuillez réessayer.",
@@ -45,6 +45,7 @@ export const Lease: React.FC<LeaseProps> = ({ notify }) => {
 
   useEffect(() => {
     fetchLeases();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleDownload = () => {
@@ -71,7 +72,7 @@ export const Lease: React.FC<LeaseProps> = ({ notify }) => {
       await leaseService.terminateLease(lease.uuid);
       notify('Le bail a été terminé avec succès.', 'success');
       await fetchLeases();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur lors de la terminaison du bail :', error);
       notify(
         "Une erreur est survenue lors de la terminaison du bail.",
@@ -420,8 +421,8 @@ export const Lease: React.FC<LeaseProps> = ({ notify }) => {
                         </p>
                         <p className="text-slate-500 text-xs">
                           {/* terms peut être une string ou un tableau selon ton backend */}
-                          {Array.isArray((selectedLease as any).terms)
-                            ? (selectedLease as any).terms.join(' • ')
+                          {Array.isArray((selectedLease as { terms?: string | string[] }).terms)
+                            ? ((selectedLease as { terms: string[] }).terms).join(' • ')
                             : selectedLease.terms || 'Aucune condition ajoutée'}
                         </p>
                       </div>

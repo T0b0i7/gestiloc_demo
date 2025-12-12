@@ -374,7 +374,7 @@ export const AjouterBien = () => {
 
     try {
       // 1️⃣ Upload des photos si présentes
-      let uploadedPhotoUrls: string[] = [];
+      const uploadedPhotoUrls: string[] = [];
 
       if (photos.length > 0) {
         for (const file of photos) {
@@ -421,16 +421,17 @@ export const AjouterBien = () => {
       console.log('Property created:', property);
       alert('✅ Le bien a été ajouté avec succès !');
       navigate('/proprietaire/biens');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erreur lors de l'ajout du bien:", error);
 
       // Erreurs de validation Laravel
-      if (error?.errors) {
-        const messages = Object.values(error.errors).flat().join('\n');
+      const apiError = error as { errors?: Record<string, string[]>; message?: string };
+      if (apiError?.errors) {
+        const messages = Object.values(apiError.errors).flat().join('\n');
         alert('❌ Erreur de validation :\n' + messages);
       } else {
         const errorMessage =
-          error?.message || "Une erreur est survenue lors de l'ajout du bien.";
+          apiError?.message || "Une erreur est survenue lors de l'ajout du bien.";
         alert(`❌ ${errorMessage}`);
       }
     } finally {

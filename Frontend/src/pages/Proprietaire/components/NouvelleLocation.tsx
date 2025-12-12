@@ -354,10 +354,10 @@ export const NouvelleLocation: React.FC = () => {
   ) => {
     const { name, value } = e.target;
 
-    setFormData((prev) => {
+      setFormData((prev) => {
       const updated: FormData = {
         ...prev,
-        [name]: value as any,
+        [name]: value,
       };
 
       // Si on change de bien, on pré-remplit le loyer si vide
@@ -394,14 +394,14 @@ export const NouvelleLocation: React.FC = () => {
 
       console.log("Payload envoyé à /leases:", payload);
 
-      await leaseService.createLease(payload as any);
+      await leaseService.createLease(payload);
 
       alert("Le bail a été créé avec succès !");
       navigate("/proprietaire");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erreur API createLease:", error);
 
-      const backend = error;
+      const backend = error as { errors?: BackendErrors; message?: string };
       if (backend?.errors) {
         setApiErrors(backend.errors);
       }

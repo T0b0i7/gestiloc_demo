@@ -12,7 +12,7 @@ interface Intervention {
   status: string;
   date: string;
   provider: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string; size?: number }>;
   description?: string;
 }
 

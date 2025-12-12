@@ -49,12 +49,13 @@ export const TenantActivation: React.FC = () => {
       setTimeout(() => {
         navigate('/locataire'); // ou '/locataire/dashboard' selon tes routes
       }, 1500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
+      const apiError = err as { message?: string; error?: string; errors?: Record<string, string[]> };
       const msg =
-        err?.message ||
-        err?.error ||
-        (err?.errors && Object.values(err.errors)[0]?.[0]) ||
+        apiError?.message ||
+        apiError?.error ||
+        (apiError?.errors && Object.values(apiError.errors)[0]?.[0]) ||
         'Une erreur est survenue lors de la création de votre compte.';
       setError(msg);
     } finally {

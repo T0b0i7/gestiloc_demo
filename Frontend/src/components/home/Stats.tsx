@@ -29,7 +29,7 @@ const cards: WhyCard[] = [
     textColor: "#052e16",    // texte vert foncé par ex.
     rotationClass: "-rotate-6",
     side: "left",
-    top: "55%",
+    top: "5%",
     left: "0%",
     delay: "0s",
   },
@@ -37,30 +37,30 @@ const cards: WhyCard[] = [
     id: "c2",
     kind: "quote",
     bigText:
-      "“Ce site est un vrai bonheur pour les particuliers bailleurs et m’aide énormément ! À recommander !!”",
+      '"Ce site est un vrai bonheur pour les particuliers bailleurs et m\'aide énormément ! À recommander !!"',
     author: "Pierre",
     location: "Cotonou, Bénin",
     bgColor: "#ECFDF5",      // emerald-50
     textColor: "#022c22",
     rotationClass: "rotate-4",
     side: "right",
-    top: "40%",
-    right: "2%",
+    top: "8%",
+    right: "0%",
     delay: "0.15s",
   },
   {
     id: "c3",
     kind: "quote",
     bigText:
-      "“Je tiens à vous dire un grand merci pour votre site. J’y ai appris énormément de choses. Bravo !”",
+      '"Je tiens à vous dire un grand merci pour votre site. J\'y ai appris énormément de choses. Bravo !"',
     author: "Francine",
     location: "Porto-Novo, Bénin",
     bgColor: "#ECFDF5",      // emerald-50
     textColor: "#022c22",
     rotationClass: "-rotate-2",
     side: "left",
-    top: "15%",
-    left: "12%",
+    top: "45%",
+    left: "5%",
     delay: "0.3s",
   },
   {
@@ -73,8 +73,8 @@ const cards: WhyCard[] = [
     textColor: "#FFFFFF",    // texte blanc
     rotationClass: "rotate-5",
     side: "right",
-    top: "68%",
-    right: "8%",
+    top: "50%",
+    right: "5%",
     delay: "0.45s",
   },
   {
@@ -86,11 +86,64 @@ const cards: WhyCard[] = [
     textColor: "#ECFDF5",    // texte clair
     rotationClass: "-rotate-4",
     side: "left",
-    top: "82%",
-    left: "28%",
+    top: "85%",
+    left: "35%",
     delay: "0.6s",
   },
 ];
+
+/* CSS pour animations avancées */
+const animationStyles = `
+  @keyframes bounceInCard {
+    0% {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    60% {
+      opacity: 1;
+      transform: translateY(-8px);
+    }
+    80% {
+      transform: translateY(2px);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes floatParallax {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+
+  .card-animated {
+    animation: bounceInCard 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  .card-floating {
+    animation: floatParallax 3s ease-in-out infinite;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-12px) !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  .card-hover {
+    transition: all 0.3s ease;
+  }
+`;
+
+// Injecter les styles
+if (typeof document !== "undefined") {
+  const style = document.createElement("style");
+  style.textContent = animationStyles;
+  document.head.appendChild(style);
+}
 
 /* -----------------------------
    Wrapper d'animation pour carte
@@ -133,6 +186,8 @@ function FloatingCard({ children, side, delay, style }: FloatingCardProps) {
       className={[
         "absolute max-w-md px-0 py-0",
         "transition-all duration-700 ease-out",
+        visible ? "card-animated" : "",
+        visible ? "card-floating" : "",
         visible
           ? "opacity-100 translate-x-0"
           : side === "left"
@@ -161,10 +216,7 @@ export function Stats() {
           </h2>
           <p className="text-base md:text-lg text-muted-foreground">
             Nous sommes accessibles, modernes et pensés pour les propriétaires
-            béninois. GestiLoc est noté{" "}
-            <strong className="text-foreground">4,8 / 5</strong> d&apos;après
-            plus de{" "}
-            <strong className="text-foreground">1&nbsp;000 utilisateurs</strong>.
+            béninois.
           </p>
         </div>
 
@@ -188,6 +240,7 @@ export function Stats() {
                 <div
                   className={[
                     "rounded-3xl shadow-xl px-8 py-6",
+                    "card-hover",
                     card.rotationClass,
                   ].join(" ")}
                   style={{

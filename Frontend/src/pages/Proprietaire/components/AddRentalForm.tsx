@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/Dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/Dialog';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Label } from './ui/Label';
@@ -50,6 +50,9 @@ export const AddRentalForm: React.FC<AddRentalFormProps> = ({ onSuccess }) => {
       <DialogContent className="sm:max-w-[650px]">
         <DialogHeader>
           <DialogTitle>Créer un nouveau contrat de bail</DialogTitle>
+          <DialogDescription>
+            Sélectionnez le bien, le locataire et les paramètres du bail avant la création.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

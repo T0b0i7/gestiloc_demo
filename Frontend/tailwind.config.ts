@@ -107,6 +107,14 @@ export default {
             transform: "translateY(0)",
           },
         },
+        "float": {
+          from: {
+            transform: "translateY(0px)",
+          },
+          to: {
+            transform: "translateY(-10px)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.3s ease-out",
@@ -116,6 +124,22 @@ export default {
       },
       fontFamily: {
         sans: ["Manrope", "system-ui", "sans-serif"],
+        serif: ["Merriweather", "Georgia", "serif"],
+      },
+      fontSize: {
+        "h1-mobile": ["2.125rem", { lineHeight: "2.625rem", letterSpacing: "0px" }],
+        "h1": ["2.75rem", { lineHeight: "3.19rem", letterSpacing: "-0.04125rem" }],
+        "h2-mobile": ["2rem", { lineHeight: "2.5rem", letterSpacing: "0px" }],
+        "h2": ["2.5rem", { lineHeight: "2.9rem", letterSpacing: "-0.0125rem" }],
+        "h3-mobile": ["2rem", { lineHeight: "2.5rem", letterSpacing: "0.005rem" }],
+        "h3": ["2.15rem", { lineHeight: "2.61rem", letterSpacing: "0px" }],
+        "h4-mobile": ["1.75rem", { lineHeight: "2.25rem", letterSpacing: "0rem" }],
+        "h4": ["2rem", { lineHeight: "2.32rem", letterSpacing: "-0.02rem" }],
+        "h5-mobile": ["1.5rem", { lineHeight: "1.875rem", letterSpacing: "0rem" }],
+        "h5": ["1.5rem", { lineHeight: "1.74rem", letterSpacing: "-0.015rem" }],
+        "h6-mobile": ["1.25rem", { lineHeight: "1.75rem", letterSpacing: "0px" }],
+        "h6": ["1.125rem", { lineHeight: "1.35rem", letterSpacing: "0.00169rem" }],
+        "body": ["1rem", { lineHeight: "1.6" }],
       },
     },
   },

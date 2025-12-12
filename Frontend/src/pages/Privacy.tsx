@@ -6,6 +6,7 @@ export default function Privacy() {
     <div className="pb-16">
       <section className="bg-primary py-16 md:py-20">
         <div className="container text-center">
+          <div className="page-subtitle text-primary-foreground/80">Légal</div>
           <h1 className="text-4xl font-bold mb-4 md:text-5xl text-primary-foreground">
             Politique de Confidentialité
           </h1>

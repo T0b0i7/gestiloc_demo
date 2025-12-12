@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, LogIn, UserPlus, LogOut, User, Home } from "lucide-react";
+import { Menu, LogOut, User, Home } from "lucide-react";
 import { authService } from "@/services/api";
 import {
   DropdownMenu,
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 
 const navigation = [
   { name: "Accueil", href: "/" },
@@ -24,6 +24,7 @@ const navigation = [
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<{ id?: number; name?: string; email?: string; roles?: string[] } | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -40,6 +41,17 @@ export function Header() {
     }
   }, []);
 
+  // Détecteur de scroll pour l'effet morphing
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      setIsScrolled(scrollTop > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const isAuthenticated = !!user?.id;
 
   const handleLogout = () => {
@@ -49,8 +61,21 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border/40">
-      <nav className="container flex h-16 items-center justify-between" aria-label="Navigation principale">
+    <header 
+      className={`${isScrolled ? 'fixed' : 'sticky'} top-0 z-50 w-full transition-all duration-300 ${
+        isScrolled 
+          ? 'left-1/2 right-auto w-[90%] max-w-[1000px] -translate-x-1/2 rounded-full bg-background/85 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70 border border-border/40 mx-auto my-3 shadow-lg' 
+          : 'w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border/40 rounded-none'
+      }`}
+    >
+      <nav 
+        className={`flex h-16 items-center justify-between transition-all duration-300 ${
+          isScrolled 
+            ? 'px-6' 
+            : 'container'
+        }`}
+        aria-label="Navigation principale"
+      >
         <Link to="/" className="flex items-center gap-2 group">
           <div className="relative">
             <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center group-hover:scale-105 transition-transform">
@@ -67,7 +92,7 @@ export function Header() {
             <Link
               key={item.name}
               to={item.href}
-              className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-colors"
+              className="px-4 py-2 text-base font-semibold text-black hover:text-foreground hover:bg-accent/50 rounded-lg transition-colors"
             >
               {item.name}
             </Link>
@@ -110,17 +135,15 @@ export function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2">
               <Button variant="outline" size="sm" asChild>
                 <Link to="/login">
-                  <LogIn className="mr-2 h-4 w-4" />
                   Connexion
                 </Link>
               </Button>
               <Button size="sm" asChild>
                 <Link to="/register">
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Créer un compte
+                  Inscription
                 </Link>
               </Button>
             </div>
@@ -138,6 +161,12 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px]">
+              <SheetHeader className="sr-only">
+                <SheetTitle>Menu principal</SheetTitle>
+                <SheetDescription>
+                  Navigation vers les pages Accueil, Fonctionnalités, Tarifs et Aide.
+                </SheetDescription>
+              </SheetHeader>
               <div className="flex items-center gap-2 mb-8">
                 <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center">
                   <span className="text-lg font-bold text-primary-foreground">GL</span>
@@ -177,7 +206,6 @@ export function Header() {
                         className="w-full justify-start gap-2"
                       >
                         <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                          <LogIn className="h-4 w-4" />
                           Connexion
                         </Link>
                       </Button>
@@ -187,8 +215,7 @@ export function Header() {
                         className="w-full gap-2"
                       >
                         <Link to="/register" onClick={() => setMobileMenuOpen(false)}>
-                          <UserPlus className="h-4 w-4" />
-                          Créer un compte
+                          Inscription
                         </Link>
                       </Button>
                     </>

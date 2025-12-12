@@ -32,7 +32,7 @@ export interface RegisterResponse {
   data?: {
     token: string;
     user: User;
-    landlord?: any;
+    landlord?: Record<string, unknown>;
   };
   token?: string;
   user?: User;
@@ -69,7 +69,7 @@ export interface Property {
 
   amenities: string[] | null;
   photos: string[] | null;
-  meta: Record<string, any> | null;
+  meta: Record<string, unknown> | null;
 
   created_at: string;
   updated_at: string;
@@ -111,7 +111,7 @@ export interface CreatePropertyPayload {
   reference_code?: string | null;
   amenities?: string[] | null;
   photos?: string[] | null;
-  meta?: Record<string, any> | null;
+  meta?: Record<string, unknown> | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -169,10 +169,10 @@ initializeCsrfToken().catch(console.error);
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
+    const originalRequest = error.config as typeof error.config & { _retry?: boolean };
 
     if (error.response?.status === 419 && !originalRequest._retry) {
-      (originalRequest as any)._retry = true;
+      originalRequest._retry = true;
       await getCsrfToken();
       return api(originalRequest);
     }
@@ -226,34 +226,46 @@ export const authService = {
       }
 
       // 2️⃣ Cas fallback : backend renvoie { token, user } à la racine
-      if ((response.data as any).token) {
-        const anyData: any = response.data;
-        localStorage.setItem('token', anyData.token);
-        if (anyData.user) {
-          localStorage.setItem('user', JSON.stringify(anyData.user));
+      const fallbackData = response.data as { token?: string; user?: User };
+      if (fallbackData.token) {
+        localStorage.setItem('token', fallbackData.token);
+        if (fallbackData.user) {
+          localStorage.setItem('user', JSON.stringify(fallbackData.user));
         }
       }
 
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
+      const apiError = error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } }; message?: string };
 
-      if (error.response?.data?.message) {
-        throw new Error(error.response.data.message);
-      } else if (error.response?.data?.errors) {
+      if (apiError.response?.data?.message) {
+        throw new Error(apiError.response.data.message);
+      } else if (apiError.response?.data?.errors) {
         const validationErrors = Object.values(
-          error.response.data.errors
+          apiError.response.data.errors
         ).flat();
-        throw new Error(validationErrors[0] || 'Erreur de validation');
+        throw new Error(validationErrors[0] || 'Érreur de validation');
       } else {
         throw new Error(
-          error.message || 'Une erreur est survenue lors de la connexion'
+          apiError.message || 'Une erreur est survenue lors de la connexion'
         );
       }
     }
   },
 
-  register: async (userData: any): Promise<RegisterResponse> => {
+  register: async (userData: {
+    first_name?: string;
+    firstName?: string;
+    last_name?: string;
+    lastName?: string;
+    email: string;
+    phone: string;
+    password: string;
+    password_confirmation?: string;
+    confirmPassword?: string;
+    role?: string;
+  }): Promise<RegisterResponse> => {
     try {
       await initializeCsrfToken();
 
@@ -284,34 +296,33 @@ export const authService = {
       }
 
       return responseData;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('API - Register error:', error);
+      const apiError = error as { response?: { data?: { errors?: Record<string, string[]>; message?: string }; status?: number; statusText?: string } };
 
-      if (error.response) {
-        if (error.response.data) {
-          if (error.response.data.errors) {
+      if (apiError.response) {
+        if (apiError.response.data) {
+          if (apiError.response.data.errors) {
             const validationErrors = Object.values(
-              error.response.data.errors
+              apiError.response.data.errors
             ).flat();
             const errorMessage =
               validationErrors && validationErrors.length > 0
                 ? (validationErrors as string[]).join('\n')
                 : 'Une erreur de validation est survenue';
-            const errorWithResponse = new Error(errorMessage);
-            (errorWithResponse as any).response = error.response;
+            const errorWithResponse = Object.assign(new Error(errorMessage), { response: apiError.response });
             throw errorWithResponse;
           }
-          if (error.response.data.message) {
-            const errorWithResponse = new Error(error.response.data.message);
-            (errorWithResponse as any).response = error.response;
+          if (apiError.response.data.message) {
+            const errorWithResponse = Object.assign(new Error(apiError.response.data.message), { response: apiError.response });
             throw errorWithResponse;
           }
         }
 
-        const statusError = new Error(
-          `Erreur ${error.response.status}: ${error.response.statusText}`
+        const statusError = Object.assign(
+          new Error(`Erreur ${apiError.response.status}: ${apiError.response.statusText}`),
+          { response: apiError.response }
         );
-        (statusError as any).response = error.response;
         throw statusError;
       }
 
@@ -381,9 +392,10 @@ export const propertyService = {
 
       const response = await api.post<Property>('/properties', safePayload);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur API createProperty:', error);
-      if (error.response?.data) throw error.response.data;
+      const apiError = error as { response?: { data?: unknown } };
+      if (apiError.response?.data) throw apiError.response.data;
       throw error;
     }
   },
@@ -415,9 +427,10 @@ export const propertyService = {
         safePayload
       );
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur API updateProperty:', error);
-      if (error.response?.data) throw error.response.data;
+      const apiError = error as { response?: { data?: unknown } };
+      if (apiError.response?.data) throw apiError.response.data;
       throw error;
     }
   },
@@ -427,9 +440,10 @@ export const propertyService = {
     try {
       await initializeCsrfToken();
       await api.delete(`/properties/${id}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur API deleteProperty:', error);
-      if (error.response?.data) throw error.response.data;
+      const apiError = error as { response?: { data?: unknown } };
+      if (apiError.response?.data) throw apiError.response.data;
       throw error;
     }
   },
@@ -455,8 +469,8 @@ export const uploadService = {
         }
       );
       return response.data;
-    } catch (error: any) {
-      console.error('Erreur API uploadPhoto:', error.response?.data || error);
+    } catch (error: unknown) {
+      console.error('Erreur API uploadPhoto:', (error as { response?: { data?: unknown } }).response?.data || error);
       throw error;
     }
   },
@@ -534,11 +548,12 @@ export const tenantService = {
 
       const response = await api.post('/tenants/invite', payload);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur API inviteTenant:', error);
+      const apiError = error as { response?: { data?: unknown } };
 
-      if (error.response?.data) {
-        throw error.response.data;
+      if (apiError.response?.data) {
+        throw apiError.response.data;
       }
       throw error;
     }
@@ -550,11 +565,12 @@ export const tenantService = {
 
       const response = await api.get<TenantIndexResponse>('/tenants');
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur API listTenants:', error);
+      const apiError = error as { response?: { data?: unknown } };
 
-      if (error.response?.data) {
-        throw error.response.data;
+      if (apiError.response?.data) {
+        throw apiError.response.data;
       }
       throw error;
     }
@@ -565,7 +581,7 @@ export const tenantService = {
   ): Promise<{
     message: string;
     token: string;
-    user: any;
+    user: User;
   }> => {
     try {
       await initializeCsrfToken();
@@ -584,11 +600,12 @@ export const tenantService = {
       }
 
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur API completeTenantRegistration:', error);
+      const apiError = error as { response?: { data?: unknown } };
 
-      if (error.response?.data) {
-        throw error.response.data;
+      if (apiError.response?.data) {
+        throw apiError.response.data;
       }
       throw error;
     }
@@ -639,9 +656,10 @@ export const leaseService = {
 
       const response = await api.post<Lease>('/leases', payload);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur API createLease:', error);
-      if (error.response?.data) throw error.response.data;
+      const apiError = error as { response?: { data?: unknown } };
+      if (apiError.response?.data) throw apiError.response.data;
       throw error;
     }
   },
@@ -650,9 +668,10 @@ export const leaseService = {
     try {
       const response = await api.get<Lease[]>('/leases');
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur API listLeases:', error);
-      if (error.response?.data) throw error.response.data;
+      const apiError = error as { response?: { data?: unknown } };
+      if (apiError.response?.data) throw apiError.response.data;
       throw error;
     }
   },
@@ -661,9 +680,10 @@ export const leaseService = {
     try {
       const response = await api.get<Lease>(`/leases/${id}`);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur API getLease:', error);
-      if (error.response?.data) throw error.response.data;
+      const apiError = error as { response?: { data?: unknown } };
+      if (apiError.response?.data) throw apiError.response.data;
       throw error;
     }
   },
@@ -674,9 +694,10 @@ export const leaseService = {
 
       const response = await api.post<Lease>(`/leases/${uuid}/terminate`, {});
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur API terminateLease:', error);
-      if (error.response?.data) throw error.response.data;
+      const apiError = error as { response?: { data?: unknown } };
+      if (apiError.response?.data) throw apiError.response.data;
       throw error;
     }
   },

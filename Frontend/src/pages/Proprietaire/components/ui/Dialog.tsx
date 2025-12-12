@@ -40,7 +40,7 @@ const DialogContent = React.forwardRef<
   }
 >(({ className, children, hideCloseButton = false, ...props }, ref) => {
   // Prevent event propagation to avoid closing the dialog when clicking inside
-  const handlePointerDownOutside = (event: any) => {
+  const handlePointerDownOutside = (event: React.PointerEvent<Element>) => {
     if (props.onPointerDownOutside) {
       props.onPointerDownOutside(event);
     }

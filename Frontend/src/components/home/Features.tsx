@@ -16,6 +16,142 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import React, { useEffect, useRef, useState } from "react";
 
+/* CSS pour l'animation flip card */
+const flipCardStyles = `
+  @keyframes flipIn {
+    0% {
+      opacity: 0;
+      transform: translateY(20px) rotateX(-90deg);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) rotateX(0);
+    }
+  }
+
+  @keyframes cardFlip {
+    0% {
+      transform: rotateY(0deg);
+    }
+    100% {
+      transform: rotateY(360deg);
+    }
+  }
+
+  /* Animation pour les barres du graphique */
+  @keyframes barRise {
+    0% {
+      height: 0;
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  /* Animation pour la courbe */
+  @keyframes curveDraw {
+    0% {
+      stroke-dashoffset: 200;
+    }
+    100% {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  /* Animation pour les éléments mobiles */
+  @keyframes phoneSlide {
+    0% {
+      transform: translateX(-20px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  /* Animation pour les cercles de paiement */
+  @keyframes paymentPulse {
+    0%, 100% {
+      r: 18;
+      opacity: 0.8;
+    }
+    50% {
+      r: 22;
+      opacity: 1;
+    }
+  }
+
+  /* Animation pour le texte de la courbe */
+  @keyframes curveFloat {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-4px);
+    }
+  }
+
+  .svg-bar-chart rect {
+    animation: barRise 0.8s ease-out backwards;
+  }
+
+  .svg-bar-chart rect:nth-child(5) {
+    animation-delay: 0.1s;
+  }
+
+  .svg-bar-chart rect:nth-child(6) {
+    animation-delay: 0.2s;
+  }
+
+  .svg-bar-chart rect:nth-child(7) {
+    animation-delay: 0.3s;
+  }
+
+  .svg-bar-chart rect:nth-child(8) {
+    animation-delay: 0.4s;
+  }
+
+  .svg-curve-line {
+    stroke-dasharray: 200;
+    animation: curveDraw 1.2s ease-out forwards;
+  }
+
+  .svg-phone {
+    animation: phoneSlide 0.6s ease-out;
+  }
+
+  .svg-payment-circle {
+    animation: paymentPulse 2s ease-in-out infinite;
+  }
+
+  .svg-phone-content rect {
+    animation: curveFloat 2s ease-in-out infinite;
+  }
+
+  .feature-card {
+    perspective: 1000px;
+    animation: flipIn 0.7s ease-out backwards;
+  }
+
+  .feature-card:hover {
+    animation: cardFlip 0.6s ease-in-out;
+  }
+
+  .feature-card-inner {
+    transition: transform 0.3s ease;
+    transform-style: preserve-3d;
+  }
+`;
+
+// Injecter les styles
+if (typeof document !== "undefined") {
+  const style = document.createElement("style");
+  style.textContent = flipCardStyles;
+  document.head.appendChild(style);
+}
+
 /* -------------------------------------------
    Hook + wrapper d'animation scroll (bottom → top)
 ------------------------------------------- */
@@ -58,7 +194,7 @@ function AnimatedItem({ children, delay = 0 }: AnimatedItemProps) {
       className={`transform transition-all duration-700 ease-out ${
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       }`}
-      style={{ transitionDelay: `${delay}s` }}
+      style={{ "--transition-delay": `${delay}s` } as React.CSSProperties}
     >
       {children}
     </div>
@@ -142,6 +278,13 @@ const features = [
     description:
       "Calendrier iCal, gestion des réservations et synchronisation multi-plateformes.",
   },
+];
+
+const benefits = [
+ "Sans engagement",
+ "Gratuit pour commencer",
+ "Assistance incluse",
+ "Aucune carte bancaire requise",
 ];
 
 /* -------------------------------------------
@@ -303,15 +446,33 @@ function AssistIllustrationBlue() {
 
 function FeatureSvgCard1() {
   return (
-    <Card className="border-dashed border-primary/40 bg-primary/5 h-full">
+    <Card className="border-dashed border-primary/40 bg-gradient-to-br from-primary/8 via-transparent to-blue-50/40 h-full overflow-hidden hover:shadow-lg transition-shadow duration-500">
       <CardContent className="p-5 h-full flex flex-col">
         <div className="mb-3 text-sm font-semibold text-primary uppercase tracking-wide">
           Vue d&apos;ensemble GestiLoc
         </div>
-        <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-white shadow-sm mt-auto">
+        <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-gradient-to-br from-white to-slate-50/80 shadow-sm mt-auto border border-slate-200/60">
           {/* mini chart / dashboard illustration */}
-          <svg viewBox="0 0 320 240" className="w-full h-full">
-            <rect x="0" y="0" width="320" height="240" fill="#f7f8fa" />
+          <svg viewBox="0 0 320 240" className="w-full h-full svg-bar-chart" role="img" aria-hidden="true">
+            {/* Arrière-plan avec dégradé */}
+            <defs>
+              <linearGradient id="bgGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#f7f8fa" />
+                <stop offset="100%" stopColor="#ffffff" />
+              </linearGradient>
+              <linearGradient id="barGrad1" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" stopColor="#1e40af" />
+                <stop offset="100%" stopColor="#60a5fa" />
+              </linearGradient>
+              <linearGradient id="barGrad2" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" stopColor="#3b82f6" />
+                <stop offset="100%" stopColor="#93c5fd" />
+              </linearGradient>
+            </defs>
+            
+            <rect x="0" y="0" width="320" height="240" fill="url(#bgGrad1)" />
+            
+            {/* Cadre du dashboard */}
             <rect
               x="24"
               y="26"
@@ -320,22 +481,50 @@ function FeatureSvgCard1() {
               rx="18"
               fill="#ffffff"
               stroke="#e5e7eb"
+              strokeWidth="2"
             />
+            
+            {/* En-tête du tableau */}
             <rect x="40" y="46" width="80" height="8" rx="4" fill="#e5e7eb" />
-            <rect x="40" y="62" width="60" height="6" rx="3" fill="#e5e7eb" />
-            {/* barres */}
-            <rect x="60" y="150" width="24" height="40" rx="6" fill="#93c5fd" />
-            <rect x="110" y="130" width="24" height="60" rx="6" fill="#3b82f6" />
+            <rect x="40" y="62" width="60" height="6" rx="3" fill="#d1d5db" />
+            
+            {/* Ligne de grille subtile */}
+            <line x1="40" y1="90" x2="280" y2="90" stroke="#f3f4f6" strokeWidth="1" />
+            
+            {/* Barres animées avec dégradés */}
+            <rect x="60" y="150" width="24" height="40" rx="6" fill="url(#barGrad1)" />
+            <rect x="110" y="130" width="24" height="60" rx="6" fill="url(#barGrad2)" />
             <rect x="160" y="110" width="24" height="80" rx="6" fill="#1e40af" />
-            <rect x="210" y="140" width="24" height="50" rx="6" fill="#dbeafe" />
-            {/* courbe */}
+            <rect x="210" y="140" width="24" height="50" rx="6" fill="url(#barGrad1)" />
+            
+            {/* Valeurs au-dessus des barres */}
+            <text x="72" y="148" fontSize="10" fontWeight="bold" fill="#1e40af" textAnchor="middle">
+              45K
+            </text>
+            <text x="122" y="128" fontSize="10" fontWeight="bold" fill="#1e40af" textAnchor="middle">
+              62K
+            </text>
+            <text x="172" y="108" fontSize="10" fontWeight="bold" fill="#1e40af" textAnchor="middle">
+              78K
+            </text>
+            <text x="222" y="138" fontSize="10" fontWeight="bold" fill="#1e40af" textAnchor="middle">
+              55K
+            </text>
+            
+            {/* Courbe animée (trend line) */}
             <path
-              d="M60 110 C90 80 130 90 160 70 C190 50 220 70 250 60"
+              className="svg-curve-line"
+              d="M55 115 C85 95 125 100 155 75 C185 50 215 70 245 60"
               fill="none"
               stroke="#22c55e"
               strokeWidth="3"
               strokeLinecap="round"
             />
+            
+            {/* Points sur la courbe */}
+            <circle cx="55" cy="115" r="3" fill="#22c55e" />
+            <circle cx="155" cy="75" r="3" fill="#22c55e" />
+            <circle cx="245" cy="60" r="3" fill="#22c55e" />
           </svg>
         </div>
       </CardContent>
@@ -345,61 +534,139 @@ function FeatureSvgCard1() {
 
 function FeatureSvgCard2() {
   return (
-    <Card className="border-dashed border-primary/40 bg-blue-50/60 h-full">
+    <Card className="border-dashed border-primary/40 bg-gradient-to-br from-blue-50/80 via-transparent to-cyan-50/40 h-full overflow-hidden hover:shadow-lg transition-shadow duration-500">
       <CardContent className="p-5 flex flex-col gap-3 h-full">
         <div className="text-sm font-semibold text-primary uppercase tracking-wide">
           Multi-canal & Mobile Money
         </div>
-        <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-white shadow-sm mt-auto">
+        <div className="w-full aspect-[4/3] rounded-xl overflow-hidden bg-gradient-to-br from-blue-50/90 to-white shadow-sm mt-auto border border-blue-200/60">
           {/* illustration mobile / paiement */}
-          <svg viewBox="0 0 320 240" className="w-full h-full">
-            <rect x="0" y="0" width="320" height="240" fill="#dbeafe" />
-            {/* téléphone */}
+          <svg viewBox="0 0 320 240" className="w-full h-full" role="img" aria-hidden="true">
+            <defs>
+              <linearGradient id="phoneGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#dbeafe" />
+                <stop offset="100%" stopColor="#ffffff" />
+              </linearGradient>
+              <linearGradient id="screenGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                <stop offset="0%" stopColor="#93c5fd" />
+                <stop offset="100%" stopColor="#dbeafe" />
+              </linearGradient>
+              <linearGradient id="buttonGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#3b82f6" />
+                <stop offset="100%" stopColor="#1e40af" />
+              </linearGradient>
+            </defs>
+            
+            {/* Arrière-plan */}
+            <rect x="0" y="0" width="320" height="240" fill="#f0f9ff" />
+            
+            {/* Cercles de paiement à gauche - animés */}
+            <circle className="svg-payment-circle" cx="50" cy="80" r="18" fill="#dbeafe" stroke="#bfdbfe" strokeWidth="2" style={{animationDelay: '0s'}} />
+            <circle className="svg-payment-circle" cx="50" cy="160" r="18" fill="#dbeafe" stroke="#bfdbfe" strokeWidth="2" style={{animationDelay: '0.4s'}} />
+            
+            {/* Cercles de paiement à droite - animés */}
+            <circle className="svg-payment-circle" cx="270" cy="70" r="18" fill="#dbeafe" stroke="#bfdbfe" strokeWidth="2" style={{animationDelay: '0.2s'}} />
+            <circle className="svg-payment-circle" cx="270" cy="150" r="18" fill="#dbeafe" stroke="#bfdbfe" strokeWidth="2" style={{animationDelay: '0.6s'}} />
+            
+            {/* Symboles à l'intérieur des cercles */}
+            <text x="50" y="85" fontSize="12" fontWeight="bold" fill="#0f172a" textAnchor="middle" dominantBaseline="middle">
+              M
+            </text>
+            <text x="50" y="165" fontSize="12" fontWeight="bold" fill="#0f172a" textAnchor="middle" dominantBaseline="middle">
+              W
+            </text>
+            <text x="270" y="75" fontSize="12" fontWeight="bold" fill="#0f172a" textAnchor="middle" dominantBaseline="middle">
+              ◆
+            </text>
+            <text x="270" y="155" fontSize="12" fontWeight="bold" fill="#0f172a" textAnchor="middle" dominantBaseline="middle">
+              ✓
+            </text>
+            
+            {/* Téléphone avec meilleur style */}
             <rect
+              className="svg-phone"
               x="96"
               y="30"
               width="128"
               height="190"
               rx="22"
-              fill="#ffffff"
+              fill="url(#phoneGrad)"
               stroke="#0f172a"
               strokeWidth="3"
             />
-            <rect x="120" y="52" width="80" height="10" rx="5" fill="#e5e7eb" />
-            <rect x="114" y="80" width="92" height="20" rx="10" fill="#dbeafe" />
-            <rect x="114" y="112" width="92" height="20" rx="10" fill="#dbeafe" />
-            <rect x="114" y="144" width="92" height="20" rx="10" fill="#dbeafe" />
-            {/* bouton payer */}
+            
+            {/* Encoches du téléphone */}
+            <rect x="140" y="32" width="40" height="12" rx="6" fill="#0f172a" />
+            
+            {/* Barre d'état */}
+            <rect x="110" y="50" width="100" height="4" rx="2" fill="#e5e7eb" />
+            
+            {/* Contenu de l'écran avec animation */}
+            <g className="svg-phone-content">
+              <rect x="114" y="68" width="92" height="20" rx="10" fill="url(#screenGrad)" />
+              <text x="160" y="79" fontSize="9" fontWeight="bold" fill="#0f172a" textAnchor="middle">
+                MTN Mobile Money
+              </text>
+            </g>
+            
+            <g className="svg-phone-content" style={{animationDelay: '0.4s'}}>
+              <rect x="114" y="100" width="92" height="20" rx="10" fill="url(#screenGrad)" />
+              <text x="160" y="111" fontSize="9" fontWeight="bold" fill="#0f172a" textAnchor="middle">
+                Moov Money
+              </text>
+            </g>
+            
+            <g className="svg-phone-content" style={{animationDelay: '0.8s'}}>
+              <rect x="114" y="132" width="92" height="20" rx="10" fill="url(#screenGrad)" />
+              <text x="160" y="143" fontSize="9" fontWeight="bold" fill="#0f172a" textAnchor="middle">
+                Wave/Celtiis
+              </text>
+            </g>
+            
+            {/* Bouton de paiement en évidence */}
             <rect
               x="114"
-              y="178"
+              y="166"
               width="92"
               height="28"
               rx="14"
-              fill="#1e40af"
+              fill="url(#buttonGrad)"
             />
-            <circle cx="160" cy="208" r="4" fill="#0f172a" />
-            {/* cercles moyens de paiement */}
-            <circle cx="60" cy="90" r="18" fill="#dbeafe" />
-            <circle cx="260" cy="70" r="18" fill="#dbeafe" />
-            <circle cx="260" cy="160" r="18" fill="#dbeafe" />
+            <text x="160" y="181" fontSize="11" fontWeight="bold" fill="#ffffff" textAnchor="middle">
+              Payer
+            </text>
+            
+            {/* Bouton home */}
+            <circle cx="160" cy="208" r="5" fill="#0f172a" />
+            
+            {/* Lignes de connexion */}
             <path
-              d="M52 90 h16"
-              stroke="#0f172a"
+              d="M68 80 L96 60"
+              stroke="#93c5fd"
               strokeWidth="2"
               strokeLinecap="round"
+              strokeDasharray="5,5"
             />
             <path
-              d="M252 70 h16"
-              stroke="#0f172a"
+              d="M68 160 L96 170"
+              stroke="#93c5fd"
               strokeWidth="2"
               strokeLinecap="round"
+              strokeDasharray="5,5"
             />
             <path
-              d="M252 160 h16"
-              stroke="#0f172a"
+              d="M252 70 L224 55"
+              stroke="#93c5fd"
               strokeWidth="2"
               strokeLinecap="round"
+              strokeDasharray="5,5"
+            />
+            <path
+              d="M252 150 L224 175"
+              stroke="#93c5fd"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeDasharray="5,5"
             />
           </svg>
         </div>
@@ -432,27 +699,6 @@ export function Features() {
               <strong>Paiement Mobile Money accepté</strong> (MTN, Moov,
               Celtiis, Wave).
             </p>
-            <div className="space-y-1 pt-2">
-              <div className="flex flex-wrap items-center gap-3 text-sm">
-                <span className="font-medium text-foreground">
-                  Tellement utile et pratique&nbsp;!
-                </span>
-                <div className="inline-flex items-center gap-2 rounded-md bg-primary/10 px-3 py-1">
-                  <span className="text-xs font-semibold text-primary">4.8</span>
-                  <span className="flex gap-0.5">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className="h-4 w-4 fill-primary text-primary"
-                      />
-                    ))}
-                  </span>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                de 5 d&apos;après plus de 1000 utilisateurs béninois.
-              </p>
-            </div>
           </div>
 
           {/* Illustration à droite */}
@@ -482,19 +728,26 @@ export function Features() {
               )}
 
               <AnimatedItem delay={delayBase + 0.02}>
-                <Card className="rounded-3xl bg-muted/60 h-full hover:shadow-lg transition-shadow">
-                  <CardContent className="h-full flex flex-col items-center justify-center px-8 py-10 text-center">
-                    <div className="mb-6 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                      <Icon className="h-6 w-6 text-primary" />
-                    </div>
-                    <h3 className="text-lg md:text-xl font-semibold mb-3">
-                      {feature.title}
-                    </h3>
-                    <p className="text-sm md:text-base text-muted-foreground">
-                      {feature.description}
-                    </p>
-                  </CardContent>
-                </Card>
+                <div 
+                  className="feature-card rounded-3xl h-full"
+                  style={{
+                    animationDelay: `${delayBase + 0.02}s`
+                  }}
+                >
+                  <Card className="rounded-3xl bg-gradient-to-br from-primary/10 via-muted/60 to-muted/40 h-full hover:shadow-xl transition-all duration-300 cursor-pointer">
+                    <CardContent className="h-full flex flex-col items-center justify-center px-8 py-10 text-center">
+                      <div className="mb-6 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/20 hover:bg-primary/30 transition-colors duration-300">
+                        <Icon className="h-6 w-6 text-primary" />
+                      </div>
+                      <h3 className="text-lg md:text-xl font-semibold mb-3 text-foreground">
+                        {feature.title}
+                      </h3>
+                      <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                        {feature.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
               </AnimatedItem>
 
               {/* SVG à la toute fin */}
@@ -507,6 +760,24 @@ export function Features() {
           );
         })}
       </div>
+
+      {/* Benefits - 4 points sur la même ligne */}
+      <AnimatedItem delay={0.3}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-16 pt-16 border-t border-border/50">
+          {benefits.map((benefit, index) => (
+            <div key={index} className="flex items-center justify-center py-4">
+              <div className="flex items-center gap-3">
+                <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center">
+                  <div className="h-2 w-2 rounded-full bg-primary" />
+                </div>
+                <p className="text-sm md:text-base font-medium text-foreground">
+                  {benefit}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </AnimatedItem>
     </section>
   );
 }

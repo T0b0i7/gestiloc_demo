@@ -164,125 +164,13 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left side - Image */}
-      <motion.div
-        className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary to-primary-light items-center justify-center p-12 relative overflow-hidden"
-        initial={{ opacity: 0, x: -50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-      >
-        {/* Animated background elements */}
-        <motion.div
-          className="absolute top-10 left-10 w-20 h-20 bg-white/10 rounded-full"
-          animate={{
-            y: [0, -20, 0],
-            rotate: [0, 180, 360],
-          }}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute bottom-20 right-10 w-16 h-16 bg-white/10 rounded-full"
-          animate={{
-            y: [0, 20, 0],
-            rotate: [360, 180, 0],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1,
-          }}
-        />
-        <motion.div
-          className="absolute top-1/2 left-1/4 w-12 h-12 bg-white/10 rounded-full"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.5, 1, 0.5],
-          }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2,
-          }}
-        />
-
-        <motion.div
-          className="max-w-md relative z-10"
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-        >
-          <motion.img
-            src="/src/assets/p.jpeg"
-            alt="GestiLoc Illustration"
-            className="w-full h-auto rounded-2xl shadow-2xl"
-            animate={{
-              y: [0, -10, 0],
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-          <motion.div
-            className="mt-8 text-center"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-          >
-            <motion.h1
-              className="text-4xl font-bold text-white mb-4"
-              animate={{
-                textShadow: [
-                  "0 0 0px rgba(255,255,255,0)",
-                  "0 0 20px rgba(255,255,255,0.5)",
-                  "0 0 0px rgba(255,255,255,0)",
-                ],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            >
-              GestiLoc
-            </motion.h1>
-            <motion.p
-              className="text-blue-100 text-lg"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.7 }}
-            >
-              Gestion Immobilière Intelligente
-            </motion.p>
-            <motion.p
-              className="text-blue-100 mt-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.9 }}
-            >
-              Simplifiez la gestion de vos biens immobiliers avec notre plateforme moderne.
-            </motion.p>
-          </motion.div>
-        </motion.div>
-      </motion.div>
-
-      {/* Right side - Forms */}
-      <div className="flex-1 flex items-center justify-center p-4 bg-gray-50 lg:bg-white">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-white">
+      {/* Forms */}
+      <div className="w-full max-w-md">
         <div className="w-full max-w-md">
-          {/* Mobile Logo */}
-          <div className="text-center mb-8 lg:hidden">
+          {/* Logo */}
+          <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-primary mb-2">GestiLoc</h1>
-            <p className="text-slate-600">
-              Gestion Immobilière Intelligente
-            </p>
           </div>
 
           {/* Toggle Buttons */}
@@ -475,14 +363,15 @@ export default function Auth() {
                     >
                       Créer un compte propriétaire
                     </motion.h2>
-                    <motion.p
-                      className="text-sm text-slate-600 mb-8"
+                    <motion.h2
+                      className="p-leading mb-8"
+                      style={{color: 'black'}}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.4, delay: 0.3 }}
                     >
                       Compte gratuit, sans carte bancaire. Vous pourrez ajouter vos locataires ensuite.
-                    </motion.p>
+                    </motion.h2>
 
                     <form onSubmit={registerForm.handleSubmit(handleRegister)}>
                       <ScrollArea className="h-[350px] pr-4">
@@ -710,7 +599,7 @@ export default function Auth() {
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.4, delay: 0.9 }}
                       >
-                        <p className="text-sm text-slate-600">
+                        <p className="text-sm text-secondary">
                           Déjà un compte ?{" "}
                           <button
                             onClick={() => setIsLogin(true)}
@@ -731,7 +620,7 @@ export default function Auth() {
           <div className="text-center mt-8">
             <button
               onClick={() => navigate('/')}
-              className="text-slate-600 hover:text-primary text-sm font-medium transition-colors"
+              className="text-secondary hover:text-primary font-medium transition-colors"
             >
               ← Retour à l'accueil
             </button>
