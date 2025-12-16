@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Star, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Apple, Play } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 
@@ -320,79 +320,14 @@ export function Hero() {
   const isMobile = useIsMobile();
 
   return (
-    <section className="relative py-8 sm:py-10 md:py-12 lg:py-16 overflow-hidden">
-      {/* Fond bleu doux sur toute la largeur */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-sky-50 via-sky-50/70 to-white" />
+    <section className="relative py-8 sm:py-10 md:py-12 lg:py-16 overflow-hidden bg-gray-200">
+      {/* Fond gris léger sur toute la largeur */}
+      <div className="absolute inset-0 -z-10 bg-gray-200" />
 
       {/* Contenu centré dans la grille */}
       <div className="container">
         {/* Ligne d'avis tout en haut, centrée comme Rentila */}
-        <motion.div
-          className="mb-6 flex justify-center"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <motion.div
-            className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm"
-            initial="hidden"
-            animate="visible"
-            variants={{
-              hidden: { opacity: 0 },
-              visible: {
-                opacity: 1,
-                transition: {
-                  staggerChildren: 0.2,
-                },
-              },
-            }}
-          >
-            {[
-              "Tellement utile et pratique !",
-              "Incontournable pour le bailleur",
-              "Logiciel merveilleux !",
-            ].map((txt, i) => (
-              <motion.div
-                key={i}
-                className="flex items-center gap-3"
-                variants={{
-                  hidden: { x: -30, opacity: 0 },
-                  visible: { x: 0, opacity: 1 },
-                }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-              >
-                <motion.div
-                  className="flex gap-1 text-yellow-400"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ duration: 0.4, delay: 0.1 + i * 0.2 }}
-                >
-                  {[...Array(5)].map((_, k) => (
-                    <motion.div
-                      key={k}
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{
-                        duration: 0.3,
-                        delay: 0.2 + i * 0.2 + k * 0.1,
-                      }}
-                    >
-                      <Star className="h-4 w-4 fill-yellow-400" />
-                    </motion.div>
-                  ))}
-                </motion.div>
-                <motion.span
-                  className="font-medium"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.4, delay: 0.4 + i * 0.2 }}
-                >
-                  {txt}
-                </motion.span>
-              </motion.div>
-            ))}
-          </motion.div>
-        </motion.div>
+
 
         {/* Contenu principal : texte + illustration */}
         <div className="grid gap-12 lg:grid-cols-[1.1fr_1fr] items-center">
@@ -445,7 +380,8 @@ export function Hero() {
 
             {/* Description */}
             <motion.p
-              className="text-base text-muted-foreground md:text-lg max-w-xl"
+              className="text-base md:text-lg max-w-xl"
+              style={{ color: '#000' }}
               initial={{ x: 30, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.6, delay: 2.5 }}
@@ -490,7 +426,7 @@ export function Hero() {
 
             {/* App Stores */}
             <motion.div
-              className="flex flex-wrap items-center gap-4 pt-4 text-sm text-muted-foreground"
+              className="flex items-center gap-4 pt-4 text-sm text-muted-foreground"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.6, delay: 3.4 }}
@@ -504,13 +440,14 @@ export function Hero() {
               </motion.span>
 
               <motion.a
-                className="h-9 rounded-md border bg-background px-3 flex items-center shadow-sm"
+                className="h-9 rounded-md border bg-background px-3 flex items-center gap-2 shadow-sm"
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ duration: 0.4, delay: 3.8 }}
+                animate={{ x: 0, opacity: 1, boxShadow: ['0 0 0px rgba(59, 130, 246, 0)', '0 0 20px rgba(59, 130, 246, 0.5)', '0 0 0px rgba(59, 130, 246, 0)'] }}
+                transition={{ duration: 0.4, delay: 3.8, boxShadow: { duration: 2, repeat: Infinity } }}
               >
+                <Apple className="h-4 w-4 text-black" />
                 <span className="text-xs font-medium">App Store</span>
               </motion.a>
 
@@ -522,13 +459,14 @@ export function Hero() {
               />
 
               <motion.a
-                className="h-9 rounded-md border bg-background px-3 flex items-center shadow-sm"
+                className="h-9 rounded-md border bg-background px-3 flex items-center gap-2 shadow-sm"
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 initial={{ x: 20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ duration: 0.4, delay: 4.2 }}
+                animate={{ x: 0, opacity: 1, boxShadow: ['0 0 0px rgba(59, 130, 246, 0)', '0 0 20px rgba(59, 130, 246, 0.5)', '0 0 0px rgba(59, 130, 246, 0)'] }}
+                transition={{ duration: 0.4, delay: 4.2, boxShadow: { duration: 2, repeat: Infinity } }}
               >
+                <Play className="h-4 w-4 text-green-500" />
                 <span className="text-xs font-medium">Google Play</span>
               </motion.a>
             </motion.div>

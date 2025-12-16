@@ -58,27 +58,34 @@ const faqs = [
 
 export default function FAQ() {
   return (
-    <div className="container py-16 md:py-24">
-      <div className="mx-auto max-w-3xl">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Questions fréquentes</h1>
-          <p className="text-lg text-muted-foreground">
+    <div className="pb-16">
+      <section className="bg-primary py-16 md:py-20">
+        <div className="container text-center">
+          <div className="page-subtitle text-primary-foreground/80">Aide</div>
+          <h1 className="text-4xl font-bold mb-4 md:text-5xl text-primary-foreground">
+            Questions fréquentes
+          </h1>
+          <p className="text-lg text-primary-foreground/90">
             Trouvez rapidement des réponses aux questions les plus courantes
           </p>
         </div>
+      </section>
 
-        <Accordion type="single" collapsible className="w-full">
-          {faqs.map((faq, index) => (
-            <AccordionItem key={index} value={`item-${index}`}>
-              <AccordionTrigger className="text-left font-semibold">
-                {faq.question}
-              </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
-                {faq.answer}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+      <div className="container py-16 md:py-24">
+        <div className="mx-auto max-w-3xl">
+          <Accordion type="single" collapsible className="w-full">
+            {faqs.map((faq, index) => (
+              <AccordionItem key={index} value={`item-${index}`}>
+                <AccordionTrigger className="text-left font-semibold">
+                  {faq.question}
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  {faq.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
       </div>
     </div>
   );

@@ -16,7 +16,47 @@ const benefits = [
   "Sans engagement",
   "Gratuit pour commencer",
   "Assistance incluse",
+  "Aucune carte bancaire requise",
 ];
+
+/* CSS pour l'animation de fumée */
+const smokeStyles = `
+  @keyframes smokeRise {
+    0% {
+      opacity: 0.7;
+      transform: translateY(0) translateX(0) scale(1);
+    }
+    50% {
+      opacity: 0.5;
+      transform: translateY(-40px) translateX(8px) scale(1.2);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-80px) translateX(12px) scale(1.4);
+    }
+  }
+
+  .smoke-particle {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(60,60,60,0.8), rgba(30,30,30,0.4));
+    pointer-events: none;
+    filter: blur(2px);
+  }
+
+  .smoke-1 { animation: smokeRise 3s ease-out infinite; }
+  .smoke-2 { animation: smokeRise 3.5s ease-out infinite 0.3s; }
+  .smoke-3 { animation: smokeRise 3.2s ease-out infinite 0.6s; }
+  .smoke-4 { animation: smokeRise 3.8s ease-out infinite 0.9s; }
+`;
+
+// Injecter les styles
+if (typeof document !== "undefined") {
+  const style = document.createElement("style");
+  style.textContent = smokeStyles;
+  style.setAttribute("data-smoke-animation", "true");
+  document.head.appendChild(style);
+}
 
 const footerNavigation = {
   product: [
@@ -79,6 +119,24 @@ export function Footer() {
             boxShadow: "0 0 8px rgba(0,0,0,0.1)",
           }}
         />
+
+        {/* Fumée sortant de la cheminée */}
+        <div
+          className="absolute right-[15%] md:right-[20%]"
+          style={{
+            top: "60px",
+            width: "32px",
+            height: "150px",
+            zIndex: 50,
+            pointerEvents: "none",
+          }}
+        >
+          {/* Particules de fumée noire bien visibles */}
+          <div className="smoke-particle smoke-1" style={{ width: "20px", height: "20px", left: "6px", top: "0px" }} />
+          <div className="smoke-particle smoke-2" style={{ width: "24px", height: "24px", left: "4px", top: "5px" }} />
+          <div className="smoke-particle smoke-3" style={{ width: "18px", height: "18px", left: "8px", top: "10px" }} />
+          <div className="smoke-particle smoke-4" style={{ width: "22px", height: "22px", left: "5px", top: "15px" }} />
+        </div>
       </div>
 
       {/* Contenu par-dessus le fond bleu */}
@@ -94,10 +152,10 @@ export function Footer() {
     gestion locative avec GestiLoc.
   </p>
 
-  <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8 text-sm sm:text-base">
+  <div className="flex flex-row flex-nowrap justify-center gap-4 md:gap-8 mb-6 sm:mb-8 text-sm sm:text-base">
     {benefits.map((benefit, index) => (
-      <div key={index} className="flex items-center justify-center gap-2">
-        <Check className="h-4 w-4 sm:h-5 sm:w-5 text-[#2563EB]" />
+      <div key={index} className="flex items-center justify-center gap-2 whitespace-nowrap">
+        <Check className="h-4 w-4 sm:h-5 sm:w-5 text-[#2563EB] shrink-0" />
         <span className="font-medium text-slate-800">
           {benefit}
         </span>
@@ -115,13 +173,11 @@ export function Footer() {
     </Button>
   </div>
 
-  <p className="text-xs sm:text-sm text-slate-600 mt-4 sm:mt-6">
-    Aucune carte bancaire requise • Démarrez en 3 minutes
-  </p>
+ 
 </section>
 
         {/* Contenu du footer */}
-        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4 mb-12">
+        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4 mb-12 animate-float">
           {/* Brand Section */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
@@ -228,8 +284,7 @@ export function Footer() {
                 </div>
               </li>
               <li className="flex items-start gap-2">
-                <MapPin className="h-4 w-4 mt-0.5 text-[#2563EB] shrink-0" />
-                <span>Cotonou, Bénin</span>
+                
               </li>
             </ul>
           </div>
@@ -247,10 +302,7 @@ export function Footer() {
               Innovtech
             </Link>
           </p>
-          <p className="text-sm text-slate-700 flex items-center gap-1">
-            Fait avec{" "}
-            <Heart className="h-4 w-4 fill-red-500 text-red-500" /> au Bénin
-          </p>
+        
         </div>
       </div>
     </footer>

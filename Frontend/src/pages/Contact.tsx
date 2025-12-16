@@ -36,26 +36,32 @@ export default function Contact() {
   };
 
   return (
-    <div className="container py-16 md:py-24">
-      <div className="mx-auto max-w-5xl">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Contactez-nous</h1>
-          <p className="text-lg text-muted-foreground">
+    <div className="pb-16">
+      <section className="bg-primary py-16 md:py-20">
+        <div className="container text-center">
+          <div className="page-subtitle text-primary-foreground/80">Contact</div>
+          <h1 className="text-4xl font-bold mb-4 md:text-5xl text-primary-foreground">
+            Contactez-nous
+          </h1>
+          <p className="text-lg text-primary-foreground/90">
             Une question ? Notre équipe est là pour vous aider
           </p>
         </div>
+      </section>
 
-        <div className="grid gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Envoyez-nous un message</CardTitle>
-                <CardDescription>
-                  Nous vous répondrons dans les 24 heures
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <div className="container py-16 md:py-24">
+        <div className="mx-auto max-w-5xl">
+          <div className="grid gap-8 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Envoyez-nous un message</CardTitle>
+                  <CardDescription>
+                    Nous vous répondrons dans les 24 heures
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                   <div className="grid gap-6 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="name">Nom complet</Label>
@@ -124,11 +130,11 @@ export default function Contact() {
                     {isSubmitting ? "Envoi..." : "Envoyer le message"}
                   </Button>
                 </form>
-              </CardContent>
-            </Card>
-          </div>
+                </CardContent>
+              </Card>
+            </div>
 
-          <div className="space-y-6">
+            <div className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Coordonnées</CardTitle>
@@ -186,6 +192,7 @@ export default function Contact() {
                 </div>
               </CardContent>
             </Card>
+            </div>
           </div>
         </div>
       </div>

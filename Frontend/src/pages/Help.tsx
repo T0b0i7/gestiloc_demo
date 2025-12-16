@@ -69,10 +69,11 @@ const categories = [
 export default function Help() {
   return (
     <div className="pb-16">
-      <section className="bg-background py-12 sm:py-16 md:py-24">
+      <section className="bg-primary py-16 md:py-20">
         <div className="container text-center">
+          <div className="page-subtitle text-primary-foreground/80">Aide</div>
           <motion.h1
-            className="text-3xl sm:text-4xl font-bold mb-4 md:text-5xl text-primary"
+            className="text-3xl sm:text-4xl font-bold mb-4 md:text-5xl text-primary-foreground"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -80,13 +81,18 @@ export default function Help() {
             Centre d'aide
           </motion.h1>
           <motion.p
-            className="text-base sm:text-lg max-w-2xl mx-auto mb-8 text-foreground"
+            className="text-base sm:text-lg max-w-2xl mx-auto mb-8 text-primary-foreground/90"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             Trouvez rapidement des réponses à vos questions
           </motion.p>
+        </div>
+      </section>
+
+      <section className="py-12 sm:py-16 md:py-24">
+        <div className="container text-center">
           <motion.div
             className="max-w-2xl mx-auto"
             initial={{ opacity: 0, scale: 0.95 }}

@@ -7,6 +7,7 @@ export default function About() {
     <div className="pb-16">
       <section className="bg-primary py-16 md:py-20">
         <div className="container text-center">
+          <div className="page-subtitle text-primary-foreground/80">À propos</div>
           <h1 className="text-4xl font-bold mb-4 md:text-5xl text-primary-foreground">
             À propos de GestiLoc
           </h1>
