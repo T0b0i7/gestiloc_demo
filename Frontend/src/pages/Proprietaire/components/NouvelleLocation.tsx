@@ -527,7 +527,7 @@ export const NouvelleLocation: React.FC = () => {
                             >
                               {bien.label}
                               {bien.suggestedRent
-                                ? ` - ${bien.suggestedRent} €/mois`
+                                ? ` - ${bien.suggestedRent} FCFA/mois`
                                 : ""}
                             </option>
                           ))}
@@ -605,7 +605,7 @@ export const NouvelleLocation: React.FC = () => {
                   {/* Loyer */}
                   <div className="form-group">
                     <label className="form-label">
-                      Loyer mensuel (€) <span className="required">*</span>
+                      Loyer mensuel (FCFA) <span className="required">*</span>
                     </label>
                     <input
                       className="form-input"
@@ -623,7 +623,7 @@ export const NouvelleLocation: React.FC = () => {
                   {/* Dépôt */}
                   <div className="form-group">
                     <label className="form-label">
-                      Dépôt de garantie (€) <span className="required">*</span>
+                      Dépôt de garantie (FCFA) <span className="required">*</span>
                     </label>
                     <input
                       className="form-input"

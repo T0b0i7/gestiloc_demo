@@ -108,7 +108,7 @@ Le module Locataire utilise **40+ composants** de la librairie **shadcn/ui**.
 ├─────────────────────────────────┤
 │ Votre Compte                    │
 │ ┌─────────────┐ ┌─────────────┐│
-│ │ Loyer: 1000€│ │ Paiements: 3││
+│ │ Loyer: 1000FCFA│ │ Paiements: 3││
 │ │ [Badge]     │ │ [Badge]     ││
 │ └─────────────┘ └─────────────┘│
 │                                 │
@@ -151,9 +151,9 @@ Le module Locataire utilise **40+ composants** de la librairie **shadcn/ui**.
 ├──────────┴───────────────────────┤
 │ Date    │ Montant │ Statut       │
 ├─────────┼─────────┼──────────────┤
-│ Jan 24  │ €1,000  │ [Payé]       │
-│ Fév 24  │ €1,000  │ [Attente]    │
-│ Mar 24  │ €1,000  │ [Retard]     │
+│ Jan 24  │ FCFA1,000  │ [Payé]       │
+│ Fév 24  │ FCFA1,000  │ [Attente]    │
+│ Mar 24  │ FCFA1,000  │ [Retard]     │
 ├─────────┴─────────┴──────────────┤
 │ [Payer]  [Télécharger]  [+]     │
 └──────────────────────────────────┘

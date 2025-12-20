@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\PropertyConditionReportController;
 use App\Http\Controllers\Api\NoticeController;
 use App\Http\Controllers\Api\RentReceiptController;
 use App\Http\Controllers\Api\Tenant\MaintenanceRequestController as TenantMaintenanceRequestController;
+use App\Http\Controllers\Api\Tenant\TenantRentReceiptController as TenantRentReceiptController;
 use App\Http\Controllers\Api\Landlord\MaintenanceRequestController as LandlordMaintenanceRequestController;
 use App\Http\Controllers\Api\TenantPaymentController;
 use App\Http\Controllers\Api\FedapayWebhookController;
@@ -66,6 +67,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/invoices/{id}', [InvoiceController::class, 'show']);
     Route::get('/invoices/{id}/pdf', [InvoiceController::class, 'downloadPdf']);
 
+
+
     // Génération PDF
     Route::prefix('pdf')->group(function () {
         Route::get('/quittance/{id}', [PdfController::class, 'generateQuittance']);
@@ -80,6 +83,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // ...
 
 Route::middleware('role:tenant')->prefix('tenant')->group(function () {
+
     // ...
     Route::get('incidents', [TenantMaintenanceRequestController::class, 'index']);
     Route::post('incidents', [TenantMaintenanceRequestController::class, 'store']);
@@ -96,13 +100,19 @@ Route::middleware('role:landlord')->group(function () {
     Route::put('incidents/{id}', [LandlordMaintenanceRequestController::class, 'update']);
 });
 
-
-    Route::middleware('role:landlord')->group(function () {
-    Route::get('/rent-receipts', [RentReceiptController::class, 'index']);
-    Route::post('/rent-receipts', [RentReceiptController::class, 'store']);
-    Route::put('/rent-receipts/{rentReceipt}', [RentReceiptController::class, 'update']);
-    Route::delete('/rent-receipts/{rentReceipt}', [RentReceiptController::class, 'destroy']);
+// ✅ LISTE QUITTANCES : landlord + tenant
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/rent-receipts', [\App\Http\Controllers\Api\RentReceiptController::class, 'index']);
+    Route::get('/rent-receipts/{id}/pdf', [\App\Http\Controllers\Api\RentReceiptController::class, 'pdf']);
 });
+
+// ✅ CRUD QUITTANCES : landlord only
+Route::middleware(['auth:sanctum', 'role:landlord'])->group(function () {
+    Route::post('/rent-receipts', [\App\Http\Controllers\Api\RentReceiptController::class, 'store']);
+    Route::put('/rent-receipts/{rentReceipt}', [\App\Http\Controllers\Api\RentReceiptController::class, 'update']);
+    Route::delete('/rent-receipts/{rentReceipt}', [\App\Http\Controllers\Api\RentReceiptController::class, 'destroy']);
+});
+
 
     // ---------- BAILLEUR uniquement ----------
     Route::middleware('role:landlord')->group(function () {

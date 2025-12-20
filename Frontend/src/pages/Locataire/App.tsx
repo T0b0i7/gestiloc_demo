@@ -12,6 +12,7 @@ import { Profile } from './components/Profile';
 import { Tab, ToastMessage } from './types';
 import { Toaster } from '@/components/ui/toaster';
 import TenantPreavisPage from './components/TenantPreavisPage';
+import RentReceiptsPage from './components/RentReceiptsPage';
 
 // Wrapper pour gérer la navigation et les états partagés
 interface UserData {
@@ -147,6 +148,7 @@ const AppContent = () => {
         <Route path="messages" element={<Messages notify={notify} />} />
         <Route path="interventions" element={<Interventions notify={notify} />} />
         <Route path="documents" element={<Documents notify={notify} />} />
+        <Route path="receipts" element={<RentReceiptsPage notify={notify} />} />
         <Route path="lease" element={<Lease notify={notify} />} />
         <Route path="property" element={<Property notify={notify} />} />
         <Route path="notice" element={<TenantPreavisPage notify={notify} />} />

@@ -174,7 +174,7 @@ export const Lots: React.FC<LotsProps> = ({ notify }) => {
           <span className="text-lg">⭐</span>
           <div>
             <p className="font-semibold text-green-900">Besoin d'un compte illimité ?</p>
-            <p className="text-sm text-green-700">Passer un compte premium à partir de 4,90€/mois</p>
+            <p className="text-sm text-green-700">Passer un compte premium à partir de 4,90FCFA/mois</p>
           </div>
         </div>
         <Button variant="secondary" size="sm">ACHETER UN COMPTE PREMIUM</Button>
@@ -318,7 +318,7 @@ export const Lots: React.FC<LotsProps> = ({ notify }) => {
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-sm font-medium text-slate-900">
-                      {lot.loyer ? `${lot.loyer.toLocaleString()} €` : '—'}
+                      {lot.loyer ? `${lot.loyer.toLocaleString()} FCFA` : '—'}
                     </span>
                   </td>
                   <td className="px-6 py-4">

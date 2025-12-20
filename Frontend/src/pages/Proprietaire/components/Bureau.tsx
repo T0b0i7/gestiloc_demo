@@ -45,7 +45,7 @@ export const Bureau: React.FC<BureauProps> = ({ notify }) => {
           { label: 'Biens Actifs', value: '2', icon: Building, color: 'blue' },
           { label: 'Locataires', value: '3', icon: Users, color: 'green' },
           { label: 'Locations Actives', value: '2', icon: Home, color: 'purple' },
-          { label: 'Revenus Mensuels', value: '2 500 €', icon: DollarSign, color: 'orange' }
+          { label: 'Revenus Mensuels', value: '2 500 FCFA', icon: DollarSign, color: 'orange' }
         ].map((stat, idx) => {
           const Icon = stat.icon;
           const colorClass = {
@@ -99,7 +99,7 @@ export const Bureau: React.FC<BureauProps> = ({ notify }) => {
         <h2 className="text-lg font-bold text-slate-900 mb-4">Dernière Activité</h2>
         <div className="space-y-4">
           {[
-            { title: 'Loyer reçu', desc: 'Appartement 42 - 850€', time: 'Aujourd\'hui' },
+            { title: 'Loyer reçu', desc: 'Appartement 42 - 850 FCFA', time: 'Aujourd\'hui' },
             { title: 'État des lieux créé', desc: 'Nouveau bien - Appt 15', time: 'Hier' },
             { title: 'Document ajouté', desc: 'Bail signé - Locataire Jean D.', time: 'Il y a 3 jours' }
           ].map((item, idx) => (

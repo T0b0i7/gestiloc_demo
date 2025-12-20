@@ -191,7 +191,7 @@ export const TenantsList: React.FC<LocatairesProps> = ({ notify }) => {
           <span className="text-lg">⭐</span>
           <div>
             <p className="font-semibold text-green-900">Besoin d'un compte illimité ?</p>
-            <p className="text-sm text-green-700">Passer en premium dès 4,90€/mois</p>
+            <p className="text-sm text-green-700">Passer en premium dès 4,90FCFA/mois</p>
           </div>
         </div>
         <Button variant="secondary" size="sm">ACHETER PREMIUM</Button>
@@ -347,7 +347,7 @@ export const TenantsList: React.FC<LocatairesProps> = ({ notify }) => {
 
                   <td className="px-6 py-4">
                     <span className={`text-sm ${getSoldeColor(locataire.solde)}`}>
-                      {locataire.solde > 0 ? '+' : ''}{locataire.solde} €
+                      {locataire.solde > 0 ? '+' : ''}{locataire.solde} FCFA
                     </span>
                   </td>
 

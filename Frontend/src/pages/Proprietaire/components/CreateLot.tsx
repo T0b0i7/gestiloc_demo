@@ -1076,7 +1076,7 @@ export const CreateLot: React.FC<CreateLotProps> = ({ onBack, notify }) => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-900">Prix d'acquisition (€)</label>
+                  <label className="text-sm font-semibold text-slate-900">Prix d'acquisition (FCFA)</label>
                   <input
                     type="number"
                     title="Prix d'acquisition du bien"
@@ -1092,7 +1092,7 @@ export const CreateLot: React.FC<CreateLotProps> = ({ onBack, notify }) => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-900">Frais d'acquisition (€)</label>
+                  <label className="text-sm font-semibold text-slate-900">Frais d'acquisition (FCFA)</label>
                   <input
                     type="number"
                     title="Frais d'acquisition (notaire, inscription, etc.)"
@@ -1105,7 +1105,7 @@ export const CreateLot: React.FC<CreateLotProps> = ({ onBack, notify }) => {
                   <p className="text-xs text-slate-500">Frais de notaire, frais d'inscription, etc.</p>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-900">Frais d'agence (€)</label>
+                  <label className="text-sm font-semibold text-slate-900">Frais d'agence (FCFA)</label>
                   <input
                     type="number"
                     title="Frais d'agence"
@@ -1120,7 +1120,7 @@ export const CreateLot: React.FC<CreateLotProps> = ({ onBack, notify }) => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-900">Valeur actuelle (€)</label>
+                  <label className="text-sm font-semibold text-slate-900">Valeur actuelle (FCFA)</label>
                   <input
                     type="number"
                     title="Valeur actuelle du bien"
@@ -1133,7 +1133,7 @@ export const CreateLot: React.FC<CreateLotProps> = ({ onBack, notify }) => {
                   <p className="text-xs text-slate-500">Estimation de la valeur du marché de votre bien</p>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-900">Prix de vente (€)</label>
+                  <label className="text-sm font-semibold text-slate-900">Prix de vente (FCFA)</label>
                   <input
                     type="number"
                     title="Prix de vente indicatif"
@@ -1191,7 +1191,7 @@ export const CreateLot: React.FC<CreateLotProps> = ({ onBack, notify }) => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-900">Loyer hors charges (€)</label>
+                  <label className="text-sm font-semibold text-slate-900">Loyer hors charges (FCFA)</label>
                   <input
                     type="number"
                     title="Loyer hors charges"
@@ -1204,7 +1204,7 @@ export const CreateLot: React.FC<CreateLotProps> = ({ onBack, notify }) => {
                   <p className="text-xs text-slate-500">Montant repris dans la page de création de location et la fiche produit</p>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-900">Charges locatives (€)</label>
+                  <label className="text-sm font-semibold text-slate-900">Charges locatives (FCFA)</label>
                   <input
                     type="number"
                     title="Charges locatives"
@@ -1339,7 +1339,7 @@ export const CreateLot: React.FC<CreateLotProps> = ({ onBack, notify }) => {
                   <p className="text-xs text-slate-500">Attribué par l'administration fiscale</p>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-900">Taxe d'habitation (€)</label>
+                  <label className="text-sm font-semibold text-slate-900">Taxe d'habitation (FCFA)</label>
                   <input
                     type="number"
                     title="Taxe d'habitation"
@@ -1354,7 +1354,7 @@ export const CreateLot: React.FC<CreateLotProps> = ({ onBack, notify }) => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-900">Taxe foncière (€)</label>
+                <label className="text-sm font-semibold text-slate-900">Taxe foncière (FCFA)</label>
                 <input
                   type="number"
                   title="Taxe foncière"

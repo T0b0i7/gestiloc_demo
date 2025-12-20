@@ -906,7 +906,7 @@ Le locataire recevra un email pour créer son mot de passe et activer son compte
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Revenu annuel (€)</label>
+                      <label className="form-label">Revenu annuel (FCFA)</label>
                       <div className="form-input-icon">
                         <div className="icon-wrapper">
                           <Euro size={16} />
@@ -1065,7 +1065,7 @@ Le locataire recevra un email pour créer son mot de passe et activer son compte
 
                         <div className="form-group">
                           <label className="form-label">
-                            Revenu annuel (€) <span className="required">*</span>
+                            Revenu annuel (FCFA) <span className="required">*</span>
                           </label>
                           <div className="form-input-icon">
                             <div className="icon-wrapper">

@@ -64,7 +64,7 @@ export const Immeubles: React.FC<ImmeublesProps> = ({ notify }) => {
           <span className="text-lg">⭐</span>
           <div>
             <p className="font-semibold text-green-900">Besoin d'un compte illimité ?</p>
-            <p className="text-sm text-green-700">Passer un compte premium à partir de 4,90€/mois</p>
+            <p className="text-sm text-green-700">Passer un compte premium à partir de 4,90FCFA/mois</p>
           </div>
         </div>
         <Button variant="secondary" size="sm">ACHETER UN COMPTE PREMIUM</Button>

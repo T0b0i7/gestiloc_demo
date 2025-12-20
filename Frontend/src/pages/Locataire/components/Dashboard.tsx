@@ -1,60 +1,259 @@
-import React, { useState, useEffect } from 'react';
-import { FileText, ArrowUpRight, CheckCircle, Calendar, Wrench, Clock, Activity } from 'lucide-react';
-import { Button } from './ui/Button';
-import { Skeleton } from './ui/Skeleton';
-import { Tab } from '../types';
-import { PaymentModal } from './PaymentModal';
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  FileText,
+  ArrowUpRight,
+  CheckCircle,
+  Calendar,
+  Wrench,
+  Clock,
+  Activity,
+  Loader2,
+  AlertTriangle,
+  Home,
+  TrendingUp,
+} from "lucide-react";
+
+import { Button } from "./ui/Button";
+import { Skeleton } from "./ui/Skeleton";
+import { Tab } from "../types";
+import { PaymentModal } from "./PaymentModal";
+
+import tenantApi, { TenantLease, TenantIncident } from "../services/tenantApi";
+import { tenantRentReceiptService, RentReceipt } from "../services/tenantRentReceiptService";
+import { noticeService } from "@/services/noticeService";
+
+// ---------- helpers ----------
+const monthKey = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+
+const prevMonthKey = (ym: string) => {
+  const [yS, mS] = ym.split("-");
+  const y = Number(yS);
+  const m = Number(mS);
+  if (!y || !m) return ym;
+  const d = new Date(y, m - 1, 1);
+  d.setMonth(d.getMonth() - 1);
+  return monthKey(d);
+};
+
+const money = (v: any) => {
+  const n = typeof v === "string" ? Number(v) : typeof v === "number" ? v : 0;
+  return Number.isFinite(n) ? n : 0;
+};
+
+const fmtMoney = (n: number, currency = "FCFA") =>
+  `${n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ${currency}`;
+
+const safeDate = (v?: string | null) => {
+  if (!v) return null;
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? null : d;
+};
 
 interface DashboardProps {
   onNavigate: (tab: Tab) => void;
-  notify: (msg: string, type: 'success' | 'info' | 'error') => void;
+  notify: (msg: string, type: "success" | "info" | "error") => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, notify }) => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  
+  const [loading, setLoading] = useState(true);
+
+  const [lease, setLease] = useState<TenantLease | null>(null);
+  const [receipts, setReceipts] = useState<RentReceipt[]>([]);
+  const [incidents, setIncidents] = useState<TenantIncident[]>([]);
+  const [notices, setNotices] = useState<any[]>([]);
+
+  const [errLeases, setErrLeases] = useState<string | null>(null);
+  const [errReceipts, setErrReceipts] = useState<string | null>(null);
+  const [errIncidents, setErrIncidents] = useState<string | null>(null);
+  const [errNotices, setErrNotices] = useState<string | null>(null);
+
+  const currentYM = useMemo(() => monthKey(new Date()), []);
+  const ytdStartYM = useMemo(() => `${new Date().getFullYear()}-01`, []);
+
   useEffect(() => {
-    // Simulate data fetching
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
+    let cancelled = false;
+
+    const run = async () => {
+      setLoading(true);
+      setErrLeases(null);
+      setErrReceipts(null);
+      setErrIncidents(null);
+      setErrNotices(null);
+
+      // 1) Leases
+      try {
+        const ls = await tenantApi.getLeases();
+        if (cancelled) return;
+
+        const activeLease =
+          ls.find((l) => String(l.status).toLowerCase() === "active") || ls[0] || null;
+
+        setLease(activeLease);
+      } catch (e: any) {
+        console.error("[DASH] getLeases", e?.response?.data || e);
+        setErrLeases(e?.response?.data?.message || "Erreur lors du chargement du bail.");
+        setLease(null);
+      }
+
+      // 2) Receipts
+      try {
+        const rr = await tenantRentReceiptService.list({ type: "independent" });
+        if (cancelled) return;
+        setReceipts(Array.isArray(rr) ? rr : []);
+      } catch (e: any) {
+        console.error("[DASH] receipts", e?.response?.data || e);
+        setErrReceipts(e?.response?.data?.message || "Erreur lors du chargement des quittances.");
+        setReceipts([]);
+      }
+
+      // 3) Incidents
+      try {
+        const list = await tenantApi.getIncidents();
+        if (cancelled) return;
+        setIncidents(Array.isArray(list) ? list : []);
+      } catch (e: any) {
+        console.error("[DASH] incidents", e?.response?.data || e);
+        setErrIncidents(e?.response?.data?.message || "Erreur lors du chargement des incidents.");
+        setIncidents([]);
+      }
+
+      // 4) Notices (préavis) — optionnel
+      try {
+        const n = await noticeService.list();
+        if (cancelled) return;
+        setNotices(Array.isArray(n) ? n : []);
+      } catch (e: any) {
+        console.error("[DASH] notices", e?.response?.data || e);
+        setErrNotices(e?.response?.data?.message || "Erreur lors du chargement des préavis.");
+        setNotices([]);
+      }
+
+      if (!cancelled) setLoading(false);
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const handleQuickPay = () => {
-    setIsPaymentModalOpen(true);
-  };
+  // ---------- derived stats ----------
+  const rentMonthly = useMemo(() => (lease ? money(lease.rent_amount) : 0), [lease]);
+  const chargesMonthly = useMemo(() => (lease ? money(lease.charges_amount) : 0), [lease]);
+  const totalMonthly = useMemo(() => rentMonthly + chargesMonthly, [rentMonthly, chargesMonthly]);
 
-  if (isLoading) {
+  const receiptsSorted = useMemo(() => {
+    const arr = [...receipts];
+    arr.sort((a, b) => {
+      const da = safeDate(a.issued_date || "")?.getTime() ?? 0;
+      const db = safeDate(b.issued_date || "")?.getTime() ?? 0;
+      if (db !== da) return db - da;
+      const ma = (a.paid_month || "").localeCompare(a.paid_month || "");
+      const mb = (b.paid_month || "").localeCompare(b.paid_month || "");
+      return mb - ma;
+    });
+    return arr;
+  }, [receipts]);
+
+  const lastReceipt = useMemo(() => receiptsSorted[0] || null, [receiptsSorted]);
+
+  const monthsPaidSet = useMemo(() => {
+    const s = new Set<string>();
+    receipts.forEach((r) => {
+      if (r.paid_month) s.add(r.paid_month);
+    });
+    return s;
+  }, [receipts]);
+
+  // À jour si quittance existe pour le mois courant
+  const isUpToDate = useMemo(() => monthsPaidSet.has(currentYM), [monthsPaidSet, currentYM]);
+
+  // Streak : mois consécutifs en partant du dernier mois dispo
+  const paidStreak = useMemo(() => {
+    if (monthsPaidSet.size === 0) return 0;
+
+    // start = mois courant si présent sinon dernier mois du set
+    let start = currentYM;
+    if (!monthsPaidSet.has(start)) {
+      const all = Array.from(monthsPaidSet).sort(); // asc
+      start = all[all.length - 1];
+    }
+
+    let streak = 0;
+    let cur = start;
+    while (monthsPaidSet.has(cur)) {
+      streak++;
+      cur = prevMonthKey(cur);
+      if (streak > 120) break;
+    }
+    return streak;
+  }, [monthsPaidSet, currentYM]);
+
+  const receiptsYTD = useMemo(() => {
+    return receipts.filter((r) => (r.paid_month || "") >= ytdStartYM);
+  }, [receipts, ytdStartYM]);
+
+  const totalPaidYTD = useMemo(() => {
+    return receiptsYTD.reduce((sum, r) => {
+      const a = r.amount_paid != null ? money(r.amount_paid) : totalMonthly;
+      return sum + a;
+    }, 0);
+  }, [receiptsYTD, totalMonthly]);
+
+  const avgPaid = useMemo(() => {
+    if (!receipts.length) return 0;
+    const sum = receipts.reduce(
+      (acc, r) => acc + (r.amount_paid != null ? money(r.amount_paid) : totalMonthly),
+      0
+    );
+    return sum / receipts.length;
+  }, [receipts, totalMonthly]);
+
+  const openIncidents = useMemo(
+    () => incidents.filter((i) => i.status === "open").length,
+    [incidents]
+  );
+  const inProgressIncidents = useMemo(
+    () => incidents.filter((i) => i.status === "in_progress").length,
+    [incidents]
+  );
+
+  const pendingNotices = useMemo(
+    () => notices.filter((n: any) => String(n.status) === "pending").length,
+    [notices]
+  );
+
+  const hasAnyError = errLeases || errReceipts || errIncidents || errNotices;
+
+  // ---------- UI ----------
+  if (loading) {
     return (
       <div className="space-y-8 animate-fade-in">
-        {/* Welcome Skeleton */}
         <div className="flex flex-col md:flex-row justify-between items-end gap-4">
           <div className="space-y-2">
-             <Skeleton className="h-10 w-64 rounded-xl" />
-             <Skeleton className="h-4 w-48 rounded-lg" />
+            <Skeleton className="h-10 w-64 rounded-xl" />
+            <Skeleton className="h-4 w-48 rounded-lg" />
           </div>
           <div className="flex gap-3">
-             <Skeleton className="h-12 w-32 rounded-xl" />
-             <Skeleton className="h-12 w-32 rounded-xl" />
+            <Skeleton className="h-12 w-32 rounded-xl" />
+            <Skeleton className="h-12 w-32 rounded-xl" />
           </div>
         </div>
 
-        {/* Widgets Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-           {[1, 2, 3].map(i => (
-             <Skeleton key={i} className="h-56 w-full rounded-3xl" />
-           ))}
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-56 w-full rounded-3xl" />
+          ))}
         </div>
 
-        {/* Content Skeleton */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-           <div className="lg:col-span-2 space-y-6">
-              <Skeleton className="h-80 w-full rounded-3xl" />
-              <Skeleton className="h-40 w-full rounded-3xl" />
-           </div>
-           <Skeleton className="h-96 w-full rounded-3xl" />
+          <div className="lg:col-span-2 space-y-6">
+            <Skeleton className="h-56 w-full rounded-3xl" />
+            <Skeleton className="h-40 w-full rounded-3xl" />
+          </div>
+          <Skeleton className="h-96 w-full rounded-3xl" />
         </div>
       </div>
     );
@@ -62,181 +261,277 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, notify }) => {
 
   return (
     <>
-      <PaymentModal 
-        isOpen={isPaymentModalOpen} 
-        onClose={() => setIsPaymentModalOpen(false)} 
-        amount={850.00} 
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        amount={totalMonthly || 0}
         notify={notify}
       />
 
+      {hasAnyError ? (
+        <div className="mb-6 rounded-3xl border border-rose-200 bg-rose-50 p-5 text-rose-800 font-bold">
+          Certaines données n’ont pas pu être chargées (le dashboard reste utilisable).
+          <div className="mt-2 text-sm font-semibold">
+            {errLeases ? <div>• Bail: {errLeases}</div> : null}
+            {errReceipts ? <div>• Quittances: {errReceipts}</div> : null}
+            {errIncidents ? <div>• Incidents: {errIncidents}</div> : null}
+            {errNotices ? <div>• Préavis: {errNotices}</div> : null}
+          </div>
+        </div>
+      ) : null}
+
       <div className="space-y-8 animate-fade-in">
-        {/* Welcome Section */}
+        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
           <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-black animate-slide-in-right">Bonjour, Jean 👋</h1>
-              <p className="text-gray-700 mt-2 font-medium">Tout est en ordre pour la <span className="text-blue-600 font-bold">Résidence Les Hortensias</span>.</p>
+            <h1 className="text-3xl md:text-4xl font-bold text-black">Bonjour 👋</h1>
+            <p className="text-gray-700 mt-2 font-medium">
+              {lease?.property?.address ? (
+                <>
+                  Logement :{" "}
+                  <span className="text-blue-600 font-bold">{lease.property.address}</span>
+                  {lease.property.city ? ` • ${lease.property.city}` : ""}
+                </>
+              ) : (
+                "Bienvenue dans votre espace locataire."
+              )}
+            </p>
           </div>
+
           <div className="flex gap-3">
-              <Button variant="secondary" icon={<FileText size={18}/>} onClick={() => onNavigate('documents')}>Quittances</Button>
-              <Button variant="primary" icon={<ArrowUpRight size={18}/>} onClick={handleQuickPay}>Payer maintenant</Button>
+            <Button
+              variant="secondary"
+              icon={<FileText size={18} />}
+              onClick={() => onNavigate("documents")}
+            >
+              Quittances ({receipts.length})
+            </Button>
+            <Button
+              variant="primary"
+              icon={<ArrowUpRight size={18} />}
+              onClick={() => setIsPaymentModalOpen(true)}
+            >
+              Payer maintenant
+            </Button>
           </div>
         </div>
 
-        {/* Main Status Grid - "Modern SaaS Style" */}
+        {/* Top cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
-          {/* Rent Status Card - Hero */}
-          <div className="bg-white rounded-3xl p-6 shadow-md border border-blue-200 relative overflow-hidden group transition-all hover:-translate-y-1 hover:shadow-lg">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-400/20 to-transparent rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
-              <div className="relative z-10 flex flex-col h-full justify-between">
-                  <div>
-                    <div className="flex justify-between items-start mb-6">
-                        <div className="p-3 bg-green-100 rounded-2xl text-green-600">
-                            <CheckCircle size={28} />
-                        </div>
-                        <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full">À jour</span>
-                    </div>
-                    <h3 className="text-gray-500 text-xs font-bold uppercase tracking-widest">Loyer de Novembre</h3>
-                    <div className="mt-2 flex items-baseline gap-2">
-                        <span className="text-4xl font-bold text-black tracking-tight">850<span className="text-2xl">.00</span></span>
-                        <span className="text-xl text-gray-500">€</span>
-                    </div>
-                  </div>
-                  <p className="text-xs font-medium text-gray-600 mt-4 flex items-center gap-1">
-                    <CheckCircle size={12} /> Payé par virement le 28/11
-                  </p>
+          {/* Status */}
+          <div className="bg-white rounded-3xl p-6 shadow-md border border-blue-200 relative overflow-hidden">
+            <div className="flex justify-between items-start mb-6">
+              <div
+                className={`p-3 rounded-2xl ${
+                  isUpToDate ? "bg-green-100 text-green-600" : "bg-orange-100 text-orange-600"
+                }`}
+              >
+                {isUpToDate ? <CheckCircle size={28} /> : <AlertTriangle size={28} />}
               </div>
+              <span
+                className={`${
+                  isUpToDate ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+                } text-xs font-bold px-3 py-1.5 rounded-full`}
+              >
+                {isUpToDate ? "À jour" : "En attente"}
+              </span>
+            </div>
+
+            <h3 className="text-gray-500 text-xs font-bold uppercase tracking-widest">
+              Statut quittance (mois courant)
+            </h3>
+
+            <div className="mt-2 text-2xl font-bold text-black">
+              {isUpToDate ? `Quittance dispo (${currentYM})` : `Pas encore (${currentYM})`}
+            </div>
+
+            <p className="text-xs font-medium text-gray-600 mt-4 flex items-center gap-1">
+              <Activity size={12} /> Série : {paidStreak} mois consécutif(s)
+            </p>
           </div>
 
-          {/* Next Due Card */}
-          <div className="bg-white rounded-3xl p-6 shadow-md border border-blue-200 relative overflow-hidden group transition-all hover:-translate-y-1 hover:shadow-lg">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/20 to-transparent rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
-              <div className="relative z-10 flex flex-col h-full justify-between">
-                  <div>
-                    <div className="flex justify-between items-start mb-6">
-                        <div className="p-3 bg-blue-100 rounded-2xl text-blue-600">
-                            <Calendar size={28} />
-                        </div>
-                        <span className="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full">À venir</span>
-                    </div>
-                    <h3 className="text-gray-500 text-xs font-bold uppercase tracking-widest">Prochaine Échéance</h3>
-                    <div className="mt-2 flex items-baseline gap-2">
-                        <span className="text-4xl font-bold text-black tracking-tight">01 Déc</span>
-                    </div>
-                  </div>
-                  <p className="text-xs font-medium text-gray-600 mt-4 flex items-center gap-1">
-                    <Activity size={12} /> Prélèvement auto activé
-                  </p>
+          {/* Amounts */}
+          <div className="bg-white rounded-3xl p-6 shadow-md border border-blue-200 relative overflow-hidden">
+            <div className="flex justify-between items-start mb-6">
+              <div className="p-3 bg-blue-100 rounded-2xl text-blue-600">
+                <TrendingUp size={28} />
               </div>
+              <span className="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full">
+                Bail
+              </span>
+            </div>
+
+            <h3 className="text-gray-500 text-xs font-bold uppercase tracking-widest">
+              Montant mensuel
+            </h3>
+
+            <div className="mt-2 text-4xl font-bold text-black tracking-tight">
+              {fmtMoney(totalMonthly)}
+            </div>
+
+            <p className="text-xs font-medium text-gray-600 mt-4">
+              Loyer: {fmtMoney(rentMonthly)} • Charges: {fmtMoney(chargesMonthly)}
+            </p>
           </div>
 
-          {/* Incident/Action Card */}
-          <div 
-              className="bg-blue-700 rounded-3xl p-6 shadow-lg text-white relative overflow-hidden cursor-pointer hover:scale-[1.02] transition-transform border border-blue-600"
-              onClick={() => onNavigate('interventions')}
+          {/* Maintenance */}
+          <div
+            className="bg-blue-700 rounded-3xl p-6 shadow-lg text-white relative overflow-hidden cursor-pointer hover:scale-[1.02] transition-transform border border-blue-600"
+            onClick={() => onNavigate("interventions")}
           >
-              <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -mr-16 -mt-16 animate-pulse-slow"></div>
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-400/30 blur-3xl rounded-full"></div>
-              
-              <div className="relative z-10 flex flex-col h-full justify-between">
-                  <div className="flex justify-between items-start">
-                      <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-md border border-white/20">
-                          <Wrench size={28} className="text-orange-400" />
-                      </div>
-                      <span className="bg-orange-400 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg shadow-orange-400/30">1 En cours</span>
-                  </div>
-                  <div className="mt-6">
-                      <h3 className="text-white/70 text-xs font-bold uppercase tracking-widest mb-2">Maintenance</h3>
-                      <p className="text-xl font-bold leading-tight">Fuite robinet cuisine</p>
-                      <div className="flex items-center gap-2 mt-3 text-xs font-medium text-white/60 bg-black/20 w-fit px-3 py-1.5 rounded-lg backdrop-blur-sm">
-                          <Clock size={12} />
-                          <span>En attente artisan</span>
-                      </div>
-                  </div>
+            <div className="flex justify-between items-start">
+              <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-md border border-white/20">
+                <Wrench size={28} className="text-orange-400" />
               </div>
+              <span className="bg-orange-400 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg shadow-orange-400/30">
+                {openIncidents + inProgressIncidents} actif(s)
+              </span>
+            </div>
+
+            <div className="mt-6">
+              <h3 className="text-white/70 text-xs font-bold uppercase tracking-widest mb-2">
+                Incidents
+              </h3>
+              <p className="text-xl font-bold leading-tight">
+                Ouverts: {openIncidents} • En cours: {inProgressIncidents}
+              </p>
+              <div className="flex items-center gap-2 mt-3 text-xs font-medium text-white/60 bg-black/20 w-fit px-3 py-1.5 rounded-lg backdrop-blur-sm">
+                <Clock size={12} />
+                <span>Accéder</span>
+              </div>
+            </div>
           </div>
         </div>
 
+        {/* Detailed stats */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Recent Activity / Messages */}
+          {/* Left: receipts analytics */}
           <div className="lg:col-span-2 space-y-6">
-               <div className="flex items-center justify-between px-1">
-                  <h3 className="font-bold text-xl text-black">Derniers Messages</h3>
-                  <Button variant="ghost" size="sm" onClick={() => onNavigate('messages')}>Tout voir</Button>
-               </div>
-               
-               <div className="bg-white rounded-3xl border border-blue-200 shadow-md overflow-hidden">
-                  {[1, 2].map((_, idx) => (
-                      <div key={idx} className="p-5 border-b border-blue-100 last:border-0 hover:bg-blue-50 transition-colors cursor-pointer flex items-center gap-5 group">
-                          <div className="relative">
-                              <img src={`https://i.pravatar.cc/150?img=${idx + 5}`} alt="Avatar" className="w-12 h-12 rounded-2xl object-cover shadow-sm group-hover:scale-105 transition-transform duration-300" />
-                              {idx === 0 && <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></span>}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                              <div className="flex justify-between items-center mb-1">
-                                  <h4 className="font-bold text-black text-sm">{idx === 0 ? 'M. Dupont (Propriétaire)' : 'Agence Immobilière'}</h4>
-                                  <span className="text-xs font-medium text-gray-500">{idx === 0 ? '10:30' : 'Hier'}</span>
-                              </div>
-                              <p className="text-sm text-gray-700 truncate group-hover:text-blue-600 transition-colors">
-                                  {idx === 0 ? 'Bonjour, avez-vous pu vérifier le radiateur du salon ?' : 'Votre quittance de loyer pour le mois d\'Octobre est disponible.'}
-                              </p>
-                          </div>
-                          <div className="text-gray-400">
-                             <ArrowUpRight size={18} />
-                          </div>
-                      </div>
-                  ))}
-               </div>
-
-               {/* Documents Quick Access Banner */}
-               <div className="bg-gradient-to-r from-blue-50 to-white rounded-3xl p-6 border border-blue-200 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden shadow-md">
-                  <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-blue-200/30 rounded-full blur-3xl"></div>
-                  
-                  <div className="flex items-center gap-5 relative z-10">
-                      <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-blue-600 shadow-lg shadow-blue-600/10 border border-blue-200">
-                          <FileText size={28} />
-                      </div>
-                      <div>
-                          <h4 className="font-bold text-lg text-black">Espace Documents</h4>
-                          <p className="text-sm text-gray-700">Retrouvez vos baux, états des lieux et quittances.</p>
-                      </div>
+            <div className="bg-white rounded-3xl border border-blue-200 shadow-md p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700">
+                    <FileText size={22} />
                   </div>
-                  <Button variant="primary" className="relative z-10" onClick={() => onNavigate('documents')}>Accéder</Button>
-               </div>
+                  <div>
+                    <h3 className="font-bold text-xl text-black">Statistiques quittances</h3>
+                    <p className="text-sm font-semibold text-gray-600">
+                      Basé sur les quittances réellement disponibles.
+                    </p>
+                  </div>
+                </div>
+
+                <Button variant="ghost" size="sm" onClick={() => onNavigate("documents")}>
+                  Voir tout
+                </Button>
+              </div>
+
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                  <div className="text-xs font-extrabold text-gray-600 uppercase">Total quittances</div>
+                  <div className="mt-2 text-3xl font-black text-gray-900">{receipts.length}</div>
+                </div>
+
+                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                  <div className="text-xs font-extrabold text-gray-600 uppercase">Payé (YTD)</div>
+                  <div className="mt-2 text-3xl font-black text-gray-900">{fmtMoney(totalPaidYTD)}</div>
+                </div>
+
+                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                  <div className="text-xs font-extrabold text-gray-600 uppercase">Moyenne quittance</div>
+                  <div className="mt-2 text-3xl font-black text-gray-900">{fmtMoney(avgPaid)}</div>
+                </div>
+              </div>
+
+              <div className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 text-blue-700">
+                    <Calendar size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-extrabold text-gray-900">Dernière quittance</div>
+                    <div className="text-sm font-semibold text-gray-700">
+                      {lastReceipt
+                        ? `${lastReceipt.reference || `#${lastReceipt.id}`} • Mois: ${
+                            lastReceipt.paid_month || "—"
+                          } • Émise: ${
+                            lastReceipt.issued_date
+                              ? String(lastReceipt.issued_date).slice(0, 10)
+                              : "—"
+                          }`
+                        : "Aucune quittance disponible pour le moment."}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick actions */}
+            <div className="bg-gradient-to-r from-blue-50 to-white rounded-3xl p-6 border border-blue-200 shadow-md flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-white rounded-2xl border border-blue-200 flex items-center justify-center text-blue-700">
+                  <Home size={22} />
+                </div>
+                <div>
+                  <div className="font-bold text-lg text-black">Mon logement</div>
+                  <div className="text-sm font-semibold text-gray-700">
+                    Voir les infos, photos, contact propriétaire, bail.
+                  </div>
+                </div>
+              </div>
+              <Button variant="primary" onClick={() => onNavigate("property")}>
+                Accéder
+              </Button>
+            </div>
           </div>
 
-          {/* Property Info Side Widget */}
-          <div className="bg-white rounded-3xl border border-blue-200 shadow-md p-6 flex flex-col h-full">
-              <h3 className="font-bold text-xl text-black mb-5">Mon Logement</h3>
-              
-              <div className="mb-6 relative h-48 rounded-2xl overflow-hidden group cursor-pointer" onClick={() => onNavigate('property')}>
-                  <img src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=500" alt="Property" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="absolute bottom-4 left-4 right-4">
-                      <p className="text-white font-bold text-lg">Résidence Les Hortensias</p>
-                      <p className="text-white/80 text-xs font-medium mt-0.5">Apt 42 • Paris 2e</p>
-                  </div>
+          {/* Right: notices + incidents recap */}
+          <div className="bg-white rounded-3xl border border-blue-200 shadow-md p-6">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700">
+                <AlertTriangle size={22} />
+              </div>
+              <div>
+                <h3 className="font-bold text-xl text-black">Suivi</h3>
+                <p className="text-sm font-semibold text-gray-600">Préavis & incidents</p>
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-extrabold text-gray-600 uppercase">Préavis en attente</div>
+                  <div className="mt-1 text-2xl font-black text-gray-900">{pendingNotices}</div>
+                </div>
+                <Button variant="secondary" onClick={() => onNavigate("preavis" as any)}>
+                  Voir
+                </Button>
               </div>
 
-              <div className="space-y-4 mb-6 flex-1">
-                  <div className="flex justify-between items-center text-sm p-3 bg-blue-50 rounded-xl">
-                      <span className="text-gray-600 font-medium">Surface</span>
-                      <span className="font-bold text-black">45 m²</span>
+              <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-extrabold text-gray-600 uppercase">Incidents actifs</div>
+                  <div className="mt-1 text-2xl font-black text-gray-900">
+                    {openIncidents + inProgressIncidents}
                   </div>
-                  <div className="flex justify-between items-center text-sm p-3 bg-blue-50 rounded-xl">
-                      <span className="text-gray-600 font-medium">Type</span>
-                      <span className="font-bold text-black">2 Pièces (T2)</span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm p-3 bg-blue-50 rounded-xl">
-                      <span className="text-gray-600 font-medium">DPE</span>
-                      <span className="font-bold text-green-600 bg-green-100 px-3 py-1 rounded-lg">C</span>
-                  </div>
+                </div>
+                <Button variant="secondary" onClick={() => onNavigate("interventions")}>
+                  Suivre
+                </Button>
               </div>
 
-              <Button variant="secondary" className="w-full" onClick={() => onNavigate('property')}>Détails complets</Button>
+              <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+                <div className="text-xs font-extrabold text-blue-700 uppercase">Astuce</div>
+                <div className="mt-1 text-sm font-semibold text-gray-800">
+                  Si une quittance manque, elle apparaît dès que le propriétaire la génère.
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </>
   );
 };
+
+export default Dashboard;

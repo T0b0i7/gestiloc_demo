@@ -73,7 +73,7 @@ export const AddPropertyForm: React.FC<AddPropertyFormProps> = ({ onSuccess }) =
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="rent">Loyer (€)</Label>
+              <Label htmlFor="rent">Loyer (FCFA)</Label>
               <Input id="rent" type="number" placeholder="Ex: 850" required />
             </div>
             

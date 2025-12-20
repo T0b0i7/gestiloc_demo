@@ -361,7 +361,7 @@ export const CreateImmeubles: React.FC<CreateImmeublesProps> = ({ onBack, notify
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">PRIX D'ACQUISITION (€)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">PRIX D'ACQUISITION (FCFA)</label>
               <input
                 type="number"
                 placeholder="Exemple: 250000"
@@ -374,7 +374,7 @@ export const CreateImmeubles: React.FC<CreateImmeublesProps> = ({ onBack, notify
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">FRAIS D'ACQUISITION (€)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">FRAIS D'ACQUISITION (FCFA)</label>
               <input
                 type="number"
                 placeholder="Frais de notaire, droits d'enregistrement, etc."
@@ -387,7 +387,7 @@ export const CreateImmeubles: React.FC<CreateImmeublesProps> = ({ onBack, notify
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">TAXE FONCIÈRE ANNUELLE (€)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-2">TAXE FONCIÈRE ANNUELLE (FCFA)</label>
               <input
                 type="number"
                 placeholder="Montant annuel"

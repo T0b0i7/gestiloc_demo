@@ -528,7 +528,7 @@ const formatPrice = (value: string | null) => {
   if (!value) return '-';
   const num = Number(value);
   if (Number.isNaN(num)) return value;
-  return num.toLocaleString('fr-FR', { minimumFractionDigits: 0 }) + ' €';
+  return num.toLocaleString('fr-FR', { minimumFractionDigits: 0 }) + ' FCFA';
 };
 
 const formatSurface = (value: string | null) => {
@@ -1079,7 +1079,7 @@ export const MesBiens: React.FC = () => {
                     />
                   </div>
                   <div className="modal-field">
-                    <label className="modal-label" htmlFor="edit-rent">Loyer mensuel (€)</label>
+                    <label className="modal-label" htmlFor="edit-rent">Loyer mensuel (FCFA)</label>
                     <input
                       id="edit-rent"
                       className="modal-input"
@@ -1088,7 +1088,7 @@ export const MesBiens: React.FC = () => {
                       step={1}
                       value={editRent}
                       onChange={(e) => setEditRent(e.target.value)}
-                      title="Loyer mensuel (€)"
+                      title="Loyer mensuel (FCFA)"
                     />
                   </div>
                 </div>

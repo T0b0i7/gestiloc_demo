@@ -26,7 +26,7 @@ export function formatDate(date: string | Date | number | null | undefined): str
 /**
  * Formate un montant en euros
  * @param amount - Montant à formater (nombre ou chaîne représentant un nombre)
- * @returns Le montant formaté avec le symbole € et 2 décimales
+ * @returns Le montant formaté avec le symbole FCFA et 2 décimales
  */
 export function formatCurrency(amount: number | string | null | undefined): string {
   if (amount === null || amount === undefined) return 'N/A';

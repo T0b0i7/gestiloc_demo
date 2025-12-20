@@ -96,17 +96,17 @@ export const AddRentalForm: React.FC<AddRentalFormProps> = ({ onSuccess }) => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="rent">Loyer mensuel (€)</Label>
+              <Label htmlFor="rent">Loyer mensuel (FCFA)</Label>
               <Input id="rent" type="number" placeholder="850" required />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="deposit">Dépôt de garantie (€)</Label>
+              <Label htmlFor="deposit">Dépôt de garantie (FCFA)</Label>
               <Input id="deposit" type="number" placeholder="850" required />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="charges">Charges mensuelles (€)</Label>
+              <Label htmlFor="charges">Charges mensuelles (FCFA)</Label>
               <Input id="charges" type="number" placeholder="100" required />
             </div>
             

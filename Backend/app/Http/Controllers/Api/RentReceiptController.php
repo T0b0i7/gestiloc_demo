@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\RentReceipt;
 use App\Models\Lease;
+use App\Models\Property;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class RentReceiptController extends Controller
 {
@@ -24,32 +26,52 @@ class RentReceiptController extends Controller
             'query'   => $request->query(),
         ]);
 
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
         $type = $request->query('type'); // independent | invoice | null
 
         $q = RentReceipt::query()->latest();
 
-        if ($user?->hasRole('landlord')) {
+        // ✅ BAILLEUR
+        if ($user->hasRole('landlord')) {
             $q->where('landlord_id', $user->id);
+        }
+        // ✅ LOCATAIRE
+        elseif ($user->hasRole('tenant')) {
+            $tenant = $user->tenant;
+
+            if (!$tenant) {
+                return response()->json([
+                    'message' => 'Tenant profile not found for this user.'
+                ], 422);
+            }
+
+            // ✅ IMPORTANT : tenant_id = tenants.id
+            $q->where('tenant_id', $tenant->id);
         } else {
-            $q->where('tenant_id', $user->id);
+            return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        // ✅ Filtre type uniquement si colonne existe (évite crash si migration pas passée)
+        // ✅ filtre type si colonne existe
         if ($type && Schema::hasColumn('rent_receipts', 'type')) {
             $q->where('type', $type);
         }
 
-        $rows = $q->with(['property', 'tenant', 'lease'])->get();
-
-        Log::info('[RentReceiptController@index] result', [
-            'count' => $rows->count(),
-            'type_filter' => $type,
-            'has_type_column' => Schema::hasColumn('rent_receipts', 'type'),
-        ]);
+        $rows = $q->with([
+            'property',
+            'lease',
+            'tenant.user',   // ✅ email/phone côté locataire
+            'landlord',      // ✅ bailleur user
+        ])->get();
 
         return response()->json($rows);
     }
 
+    /**
+     * ✅ Création réservée au bailleur (quittance indépendante)
+     */
     public function store(Request $request)
     {
         $user = Auth::user();
@@ -60,7 +82,14 @@ class RentReceiptController extends Controller
             'payload' => $request->all(),
         ]);
 
-        // ✅ On accepte paid_month "YYYY-MM"
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        if (!$user->hasRole('landlord')) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'lease_id'    => 'required|exists:leases,id',
             'type'        => 'required|in:independent,invoice',
@@ -70,82 +99,42 @@ class RentReceiptController extends Controller
         ]);
 
         if ($validator->fails()) {
-            Log::warning('[RentReceiptController@store] validation failed', [
+            return response()->json([
+                'message' => 'Validation error',
                 'errors' => $validator->errors(),
-            ]);
-            return response()->json($validator->errors(), 422);
+            ], 422);
         }
 
-        // ✅ Récupérer le bail + relations utiles
         $lease = Lease::with(['property', 'tenant'])->find($request->lease_id);
+        if (!$lease) return response()->json(['message' => 'Lease not found'], 404);
 
-        Log::info('[RentReceiptController@store] lease lookup', [
-            'lease_found' => !!$lease,
-            'lease_id'    => $lease?->id,
-            'property_id' => $lease?->property_id,
-            'tenant_id'   => $lease?->tenant_id,
-        ]);
-
-        if (!$lease) {
-            return response()->json(['message' => 'Lease not found'], 404);
-        }
-
-        // ✅ Autorisation : seul le propriétaire du bien peut créer
         $property = $lease->property;
+        if (!$property) return response()->json(['message' => 'Property not found'], 404);
 
-        Log::info('[RentReceiptController@store] property lookup', [
-            'property_found'   => !!$property,
-            'property_id'      => $property?->id,
-            'property_user_id' => $property?->user_id ?? null,
-            'auth_id'          => $user->id,
-        ]);
+        // ✅ ownership tolérant (user_id OU landlord_id)
+        $ownerByUserId = isset($property->user_id) && ((int)$property->user_id === (int)$user->id);
+        $ownerByLandlordId = isset($property->landlord_id) && ((int)$property->landlord_id === (int)$user->id);
 
-        if (!$property || ($property->user_id ?? null) !== $user->id) {
-            Log::warning('[RentReceiptController@store] forbidden - property not owned by auth user', [
-                'auth_id'          => $user->id,
-                'property_id'      => $property?->id,
-                'property_user_id' => $property?->user_id ?? null,
-            ]);
+        if (!$ownerByUserId && !$ownerByLandlordId) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // ✅ paid_month -> month/year
         [$yearStr, $monthStr] = explode('-', $request->paid_month);
         $year  = (int) $yearStr;
         $month = (int) $monthStr;
 
-        // ✅ Montant payé: idéalement depuis lease->rent_amount
         $amount = (float) ($lease->rent_amount ?? 0);
 
-        // ✅ Génération reference (si colonne existe) — Fix ton erreur "Field reference doesn't have a default value"
         $reference = null;
         if (Schema::hasColumn('rent_receipts', 'reference')) {
             $reference = $this->nextReference($user->id, $year, $month);
         }
 
-        Log::info('[RentReceiptController@store] computed fields', [
-            'paid_month' => $request->paid_month,
-            'month'      => $month,
-            'year'       => $year,
-            'amount'     => $amount,
-            'reference'  => $reference,
-            'columns'    => [
-                'has_reference'  => Schema::hasColumn('rent_receipts', 'reference'),
-                'has_type'       => Schema::hasColumn('rent_receipts', 'type'),
-                'has_paid_month' => Schema::hasColumn('rent_receipts', 'paid_month'),
-                'has_month'      => Schema::hasColumn('rent_receipts', 'month'),
-                'has_year'       => Schema::hasColumn('rent_receipts', 'year'),
-                'has_amount_paid'=> Schema::hasColumn('rent_receipts', 'amount_paid'),
-                'has_issued_date'=> Schema::hasColumn('rent_receipts', 'issued_date'),
-            ],
-        ]);
-
-        // ✅ On ne set que les colonnes réellement existantes (évite crash env pas migré)
         $data = [
             'lease_id'    => $lease->id,
             'property_id' => $lease->property_id,
-            'landlord_id' => $user->id,
-            'tenant_id'   => $lease->tenant_id,
+            'landlord_id' => $user->id,          // users.id
+            'tenant_id'   => $lease->tenant_id,  // tenants.id ✅
             'status'      => 'issued',
             'notes'       => $request->notes,
         ];
@@ -153,88 +142,77 @@ class RentReceiptController extends Controller
         if (Schema::hasColumn('rent_receipts', 'reference') && $reference) {
             $data['reference'] = $reference;
         }
-
         if (Schema::hasColumn('rent_receipts', 'type')) {
             $data['type'] = $request->type;
         }
-
         if (Schema::hasColumn('rent_receipts', 'paid_month')) {
             $data['paid_month'] = $request->paid_month;
         }
-
         if (Schema::hasColumn('rent_receipts', 'month')) {
             $data['month'] = $month;
         }
-
         if (Schema::hasColumn('rent_receipts', 'year')) {
             $data['year'] = $year;
         }
-
         if (Schema::hasColumn('rent_receipts', 'issued_date')) {
             $data['issued_date'] = $request->issued_date;
         }
-
         if (Schema::hasColumn('rent_receipts', 'amount_paid')) {
             $data['amount_paid'] = $amount;
         }
 
-        Log::info('[RentReceiptController@store] insert payload', $data);
-
         $receipt = RentReceipt::create($data);
 
-        Log::info('[RentReceiptController@store] created', [
-            'receipt_id' => $receipt->id,
-            'reference'  => $receipt->reference ?? null,
-            'type'       => $receipt->type ?? null,
-            'paid_month' => $receipt->paid_month ?? null,
-            'month'      => $receipt->month ?? null,
-            'year'       => $receipt->year ?? null,
-        ]);
-
-        return response()->json($receipt->load(['property', 'tenant', 'lease']), 201);
-    }
-
-    public function pdf($id)
-    {
-        $user = Auth::user();
-
-        Log::info('[RentReceiptController@pdf] incoming', [
-            'auth_id' => $user?->id,
-            'roles'   => $user?->roles?->pluck('name'),
-            'id'      => $id,
-        ]);
-
-        $receipt = RentReceipt::with(['property', 'tenant', 'lease'])->findOrFail($id);
-
-        // ✅ autorisation
-        if ($user->hasRole('landlord') && $receipt->landlord_id !== $user->id) {
-            Log::warning('[RentReceiptController@pdf] forbidden landlord', [
-                'auth_id' => $user->id,
-                'receipt_landlord_id' => $receipt->landlord_id,
-            ]);
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        if ($user->hasRole('tenant') && $receipt->tenant_id !== $user->id) {
-            Log::warning('[RentReceiptController@pdf] forbidden tenant', [
-                'auth_id' => $user->id,
-                'receipt_tenant_id' => $receipt->tenant_id,
-            ]);
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        // TODO: ici tu branches le générateur PDF
-        // Exemple: return response()->streamDownload(...)
-        return response()->json([
-            'message' => 'PDF generator not implemented yet',
-            'receipt' => $receipt,
-        ], 501);
+        return response()->json($receipt->load([
+            'property',
+            'lease',
+            'tenant.user',
+            'landlord'
+        ]), 201);
     }
 
     /**
-     * Génère une reference stable, unique par landlord/mois.
-     * Exemple: RR-2025-12-000001
+     * ✅ Télécharger PDF quittance
+     * - si rent_receipts.pdf_path existe => on sert le fichier
+     * - sinon fallback vers /quittance-independent/{id} (PdfController)
      */
+    public function pdf($id)
+    {
+        $user = Auth::user();
+        if (!$user) return response()->json(['message' => 'Unauthenticated.'], 401);
+
+        $receipt = RentReceipt::with(['property', 'lease', 'tenant.user', 'landlord'])->findOrFail($id);
+
+        // ✅ ACL landlord
+        if ($user->hasRole('landlord') && (int)$receipt->landlord_id !== (int)$user->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        // ✅ ACL tenant : tenant_id = tenants.id
+        if ($user->hasRole('tenant')) {
+            $tenant = $user->tenant;
+            if (!$tenant) return response()->json(['message' => 'Tenant profile missing'], 422);
+
+            if ((int)$receipt->tenant_id !== (int)$tenant->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+        }
+
+        // 1) Si le PDF est stocké
+        if (Schema::hasColumn('rent_receipts', 'pdf_path') && $receipt->pdf_path) {
+            if (Storage::disk('public')->exists($receipt->pdf_path)) {
+                $filename = 'quittance-' . ($receipt->paid_month ?? $receipt->id) . '.pdf';
+                return Storage::disk('public')->download($receipt->pdf_path, $filename);
+            }
+        }
+
+        // 2) fallback : ton générateur existant
+        return response()->json([
+            'message' => 'PDF not stored. Use /quittance-independent/{id} to generate.',
+            'fallback_url' => url("/api/quittance-independent/{$receipt->id}"),
+        ], 200);
+    }
+
     private function nextReference(int $landlordId, int $year, int $month): string
     {
         $prefix = sprintf('RR-%04d-%02d-', $year, $month);
@@ -245,9 +223,7 @@ class RentReceiptController extends Controller
             ->orderByDesc('id')
             ->value('reference');
 
-        if (!$last) {
-            return $prefix . '000001';
-        }
+        if (!$last) return $prefix . '000001';
 
         $seq = (int) substr($last, -6);
         $seq++;

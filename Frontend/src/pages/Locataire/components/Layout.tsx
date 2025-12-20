@@ -75,7 +75,7 @@ export const Layout: React.FC<LayoutProps> = ({
   const menuItems = [
     { id: 'home', label: 'Accueil', icon: Home },
     { id: 'property', label: 'Mon bail', icon: Building },
- 
+    { id: 'receipts', label: 'Quittances', icon: FileText },
     { id: 'interventions', label: 'Incidents', icon: Wrench },
     { id: 'notice', label: 'Préavis', icon: FileSignature },
     { id: 'profile', label: 'Profil', icon: User },

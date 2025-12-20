@@ -190,7 +190,7 @@ export const Lease: React.FC<LeaseProps> = ({ notify }) => {
                   <p className="text-xs text-slate-500 mt-1">
                     Loyer :{' '}
                     <span className="font-semibold">
-                      {lease.rent_amount} € / mois
+                      {lease.rent_amount} FCFA / mois
                     </span>
                   </p>
                 </div>
@@ -335,7 +335,7 @@ export const Lease: React.FC<LeaseProps> = ({ notify }) => {
                         </span>
                       </div>
                       <span className="font-bold text-slate-900">
-                        {selectedLease.rent_amount} €
+                        {selectedLease.rent_amount} FCFA
                       </span>
                     </div>
 
@@ -350,7 +350,7 @@ export const Lease: React.FC<LeaseProps> = ({ notify }) => {
                         </span>
                       </div>
                       <span className="font-bold text-slate-900">
-                        {selectedLease.charges_amount ?? '—'} €
+                        {selectedLease.charges_amount ?? '—'} FCFA
                       </span>
                     </div> */}
 
@@ -375,7 +375,7 @@ export const Lease: React.FC<LeaseProps> = ({ notify }) => {
                       </div>
                       <Badge variant="success">
                         {selectedLease.deposit
-                          ? `Payé (${selectedLease.deposit} €)`
+                          ? `Payé (${selectedLease.deposit} FCFA)`
                           : 'Non renseigné'}
                       </Badge>
                     </div> */}

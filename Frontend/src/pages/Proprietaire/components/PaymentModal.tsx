@@ -58,7 +58,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, amo
           <div className="bg-blue-50 p-4 rounded-xl flex justify-between items-center mb-4 border border-blue-100">
             <div>
               <p className="text-xs text-blue-600 font-bold uppercase tracking-wide">Montant à régler</p>
-              <p className="text-2xl font-bold text-blue-900">{amount.toFixed(2)} €</p>
+              <p className="text-2xl font-bold text-blue-900">{amount.toFixed(2)} FCFA</p>
             </div>
             <div className="bg-white p-2 rounded-full shadow-sm">
               <Lock size={20} className="text-blue-500" />
@@ -122,7 +122,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, amo
 
           <div className="pt-2">
             <Button className="w-full py-3 shadow-lg shadow-blue-500/20" size="lg">
-              Payer {amount.toFixed(2)} €
+              Payer {amount.toFixed(2)} FCFA
             </Button>
             <p className="text-center text-xs text-gray-400 mt-3 flex items-center justify-center gap-1">
               <Lock size={10} /> Paiement chiffré SSL 256-bit

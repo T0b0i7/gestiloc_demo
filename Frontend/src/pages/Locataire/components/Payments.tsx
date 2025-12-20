@@ -86,14 +86,14 @@ export const Payments: React.FC<PaymentsProps> = ({ notify }) => {
         <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
             <span className="text-xs font-medium text-gray-500 uppercase">Solde Actuel</span>
             <div className="mt-1 flex items-baseline">
-                <span className="text-2xl font-bold text-gray-900">0,00 €</span>
+                <span className="text-2xl font-bold text-gray-900">0,00 FCFA</span>
                 <span className="ml-2 text-xs font-medium text-green-600 bg-green-100 px-2 py-0.5 rounded-full">À jour</span>
             </div>
         </div>
         <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
             <span className="text-xs font-medium text-gray-500 uppercase">Dernier Paiement</span>
             <div className="mt-1 flex items-baseline">
-                <span className="text-2xl font-bold text-gray-900">850,00 €</span>
+                <span className="text-2xl font-bold text-gray-900">850,00 FCFA</span>
                 <span className="ml-2 text-sm text-gray-500">le 28/11</span>
             </div>
         </div>
@@ -101,7 +101,7 @@ export const Payments: React.FC<PaymentsProps> = ({ notify }) => {
             <span className="text-xs font-medium text-gray-500 uppercase">Prochain Loyer</span>
             <div className="mt-1 flex items-baseline">
                 <span className="text-2xl font-bold text-gray-900">01 Déc</span>
-                <span className="ml-2 text-sm text-gray-500">850 €</span>
+                <span className="ml-2 text-sm text-gray-500">850 FCFA</span>
             </div>
         </div>
       </div>
@@ -158,7 +158,7 @@ export const Payments: React.FC<PaymentsProps> = ({ notify }) => {
                         className="w-20 px-2 py-1 border border-gray-300 rounded"
                       />
                     ) : (
-                      <div className="text-sm text-gray-900">{payment.amount} €</div>
+                      <div className="text-sm text-gray-900">{payment.amount} FCFA</div>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

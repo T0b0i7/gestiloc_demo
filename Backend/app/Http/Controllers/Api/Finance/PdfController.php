@@ -52,52 +52,94 @@ class PdfController extends Controller
      * ✅ Quittance indépendante (bailleur)
      * Route: GET /api/quittance-independent/{id}
      */
-    public function generateIndependentRentReceipt($id)
-    {
-        $user = auth()->user();
+    /**
+ * ✅ Quittance indépendante (bailleur + locataire)
+ * Route: GET /api/quittance-independent/{id}
+ */
+public function generateIndependentRentReceipt($id)
+{
+    $user = auth()->user();
 
-        Log::info('[PdfController@generateIndependentRentReceipt] incoming', [
-            'auth_id'    => $user?->id,
-            'roles'      => $user?->roles?->pluck('name'),
-            'receipt_id' => $id,
-        ]);
+    Log::info('[PdfController@generateIndependentRentReceipt] incoming', [
+        'auth_id'    => $user?->id,
+        'roles'      => $user?->roles?->pluck('name'),
+        'receipt_id' => (string) $id,
+    ]);
 
+    try {
         $receipt = RentReceipt::with([
             'property',
-            'tenant',   // User
-            'landlord', // User
+            'landlord',           // User
+            'tenant.user',        // Tenant profile + User (email/phone)
             'lease',
-            'lease.tenant',
-            'lease.tenant.user',
             'lease.property',
             'lease.property.landlord',
             'lease.property.landlord.user',
+            'lease.tenant',
+            'lease.tenant.user',
         ])->findOrFail($id);
 
-        // ✅ Vérif role uniquement
-        if (!$user || !$user->hasRole('landlord')) {
-            return response()->json(['message' => 'Forbidden'], 403);
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
-        // ✅ IMPORTANT : ici on compare users.id vs users.id
-        if ((int) $receipt->landlord_id !== (int) $user->id) {
+        $isLandlord = $user->hasRole('landlord');
+        $isTenant   = $user->hasRole('tenant');
+
+        // tenant profile id (tenants.id)
+        $tenantProfileId = $user->tenant?->id;
+
+        // ✅ Autorisations:
+        // - landlord: users.id doit matcher receipt.landlord_id
+        // - tenant: tenants.id doit matcher receipt.tenant_id
+        $canLandlord = $isLandlord && ((int) $receipt->landlord_id === (int) $user->id);
+        $canTenant   = $isTenant && $tenantProfileId && ((int) $receipt->tenant_id === (int) $tenantProfileId);
+
+        if (!$canLandlord && !$canTenant) {
             Log::warning('[PdfController@generateIndependentRentReceipt] forbidden', [
-                'auth_id'            => $user->id,
-                'receipt_landlord_id'=> $receipt->landlord_id,
-                'expected_landlord_id'=> $user->id,
+                'auth_id' => $user->id,
+                'receipt_landlord_id' => $receipt->landlord_id,
+                'receipt_tenant_id' => $receipt->tenant_id,
+                'tenant_profile_id' => $tenantProfileId,
             ]);
+
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        // ✅ View : attention dossier "pdfs" (avec s)
-        $pdf = \PDF::loadView('pdfs.rent_receipt_independent', [
-            'receipt' => $receipt
-        ]);
+        // ✅ PDF view
+        $viewName = 'pdfs.rent_receipt_independent';
+        if (!view()->exists($viewName)) {
+            Log::error('[PdfController@generateIndependentRentReceipt] view missing', [
+                'view' => $viewName,
+            ]);
 
-        $filename = "quittance-{$receipt->year}-" . str_pad($receipt->month, 2, '0', STR_PAD_LEFT) . "-{$receipt->reference}.pdf";
+            return response()->json(['message' => 'PDF template missing'], 500);
+        }
+
+        $pdf = \PDF::loadView($viewName, [
+            'receipt' => $receipt,
+        ])->setPaper('a4');
+
+        $year  = $receipt->year ?: (int) now()->format('Y');
+        $month = $receipt->month ?: (int) now()->format('m');
+        $ref   = $receipt->reference ?: ('RR-' . $receipt->id);
+
+        $filename = "quittance-{$year}-" . str_pad((string)$month, 2, '0', STR_PAD_LEFT) . "-{$ref}.pdf";
 
         return $pdf->download($filename);
+
+    } catch (\Throwable $e) {
+        Log::error('[PdfController@generateIndependentRentReceipt] exception', [
+            'message' => $e->getMessage(),
+            'trace'   => $e->getTraceAsString(),
+        ]);
+
+        return response()->json([
+            'message' => 'Erreur lors de la génération de la quittance',
+            'error'   => $e->getMessage(),
+        ], 500);
     }
+}
 
     public function generateAvisEcheance($id)
     {

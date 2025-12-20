@@ -687,7 +687,7 @@ export const AjouterBien = () => {
                 </h2>
                 <div className="form-grid form-grid-3">
                   <div className="form-group">
-                    <label className="form-label">Loyer mensuel par défaut (€)</label>
+                    <label className="form-label">Loyer mensuel par défaut (FCFA)</label>
                     <div className="form-input-icon">
                       <div className="icon-wrapper">
                         <Euro size={16} />
