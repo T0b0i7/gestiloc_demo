@@ -29,7 +29,7 @@ interface InterventionsProps {
   notify: (msg: string, type: 'success' | 'info' | 'error') => void;
 }
 
-const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://https://wheat-skunk-120710.hostingersite.com';
 
 const categoryMeta: Record<IncidentCategory, { label: string; icon: any; hint: string }> = {
   plumbing: { label: 'Plomberie', icon: Droplet, hint: 'Fuite, évier, WC, robinet...' },

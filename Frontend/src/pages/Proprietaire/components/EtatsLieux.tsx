@@ -66,7 +66,7 @@ type PhotoFormItem = {
   condition_notes?: string;
 };
 
-const API_ORIGIN = 'http://localhost:8000';
+const API_ORIGIN = 'http://https://wheat-skunk-120710.hostingersite.com';
 
 const formatDate = (dateStr?: string | null) => {
   if (!dateStr) return 'Date inconnue';

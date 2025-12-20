@@ -304,7 +304,7 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "http://localhost:8000/api"
+      "value": "http://https://wheat-skunk-120710.hostingersite.com/api"
     },
     {
       "key": "token",

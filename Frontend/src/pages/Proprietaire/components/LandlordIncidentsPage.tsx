@@ -24,7 +24,7 @@ const statusLabel: Record<IncidentStatus, string> = {
   cancelled: "Annulé",
 };
 
-const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const apiBase = import.meta.env.VITE_API_BASE_URL || "http://https://wheat-skunk-120710.hostingersite.com";
 
 // ✅ même logique que côté locataire, avec fallback /storage si besoin
 const incidentPhotoUrl = (p: string) => {
