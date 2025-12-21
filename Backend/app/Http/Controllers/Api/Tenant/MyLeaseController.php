@@ -29,24 +29,31 @@ class MyLeaseController extends Controller
     /**
      * Liste l'historique des baux.
      */
-    public function index()
-    {
-        $tenant = $this->getTenant();
+public function index()
+{
+    $user = auth()->user();
 
-        $leases = Lease::where('tenant_id', $tenant->id)
-            ->with([
-                'property',
-                'property.landlord',
-                'property.landlord.user', // ✅ email/phone depuis users
-                'invoices' => function ($q) {
-                    $q->latest('due_date')->take(5);
-                },
-            ])
-            ->orderBy('start_date', 'desc')
-            ->get();
-
-        return LeaseResource::collection($leases);
+    if (!$user || !$user->hasRole('tenant') || !$user->tenant) {
+        return response()->json(['message' => 'Accès réservé aux locataires'], 403);
     }
+
+    $leases = Lease::query()
+        ->where('tenant_id', $user->tenant->id)
+        ->with([
+            'property',
+            'property.landlord',
+            'property.landlord.user',
+            'invoices' => function ($q) {
+                $q->latest('due_date')->take(5);
+            },
+        ])
+        ->orderByDesc('start_date')
+        ->get();
+
+    // ✅ IMPORTANT : retourne un tableau, pas {data: ...}
+    return response()->json($leases->values());
+}
+
 
     /**
      * Détail d'un bail.

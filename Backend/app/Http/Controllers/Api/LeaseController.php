@@ -60,14 +60,31 @@ class LeaseController extends Controller
         });
     }
 
-    public function index(Request $request)
+public function index(Request $request)
 {
-    $leases = Lease::with(['property', 'tenant'])
+    $user = $request->user();
+
+    if (!$user || !$user->hasRole('landlord') || !$user->landlord) {
+        return response()->json(['message' => 'Accès réservé aux propriétaires'], 403);
+    }
+
+    $leases = Lease::query()
+        ->whereHas('property', function ($q) use ($user) {
+            $q->where('landlord_id', $user->landlord->id);
+        })
+        ->with([
+            'property',
+            'tenant',
+            'tenant.user',
+        ])
         ->orderByDesc('created_at')
         ->get();
 
-    return response()->json($leases);
+    // ✅ tableau pur
+    return response()->json($leases->values());
 }
+
+
 
 
     // Optional: end lease, list leases etc (not fully expanded here)
