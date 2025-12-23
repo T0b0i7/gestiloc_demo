@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import ReactDOM from "react-dom";
-import { Plus, RefreshCw, Download, Eye, X, CheckCircle2 } from "lucide-react";
+import { Plus, RefreshCw, Download, Eye, X, CheckCircle2, Loader2 } from "lucide-react";
 import { leaseService, rentReceiptService, contractService } from "@/services/api";
 
 type LeaseLite = any;
@@ -24,6 +24,71 @@ type RentReceipt = {
   lease?: any;
 };
 
+type ApiErr = {
+  response?: { status?: number; data?: any };
+  request?: unknown;
+  message?: string;
+};
+
+function looksTechnical(msg?: string) {
+  if (!msg) return false;
+  const m = msg.toLowerCase();
+  return (
+    m.includes("sql") ||
+    m.includes("exception") ||
+    m.includes("stack") ||
+    m.includes("trace") ||
+    m.includes("undefined") ||
+    m.includes("vendor/") ||
+    m.includes("laravel") ||
+    m.includes("symfony")
+  );
+}
+
+function extractBackendMessage(err: ApiErr): string {
+  const d: any = err?.response?.data;
+  const msg = (typeof d === "string" ? d : null) || d?.message || d?.error || err?.message || "";
+  return String(msg || "").trim();
+}
+
+function isDuplicateReceiptError(err: ApiErr): boolean {
+  // Cas typiques Laravel/MySQL/Postgres quand le backend renvoie 500 au lieu de 409/422
+  const msg = extractBackendMessage(err).toLowerCase();
+  return (
+    msg.includes("duplicate") || // MySQL "Duplicate entry"
+    msg.includes("unique constraint") || // Postgres
+    msg.includes("integrity constraint") || // SQLSTATE
+    msg.includes("sqlstate[23000]") || // MySQL
+    msg.includes("already exists") || // generic
+    msg.includes("existe déjà") || // FR
+    msg.includes("paid_month") || // champ
+    msg.includes("quittance") // mot métier
+  );
+}
+
+function normalizeApiError(err: ApiErr, fallback: string) {
+  // ✅ Doublon quittance -> message propre (même si status 500)
+  if (isDuplicateReceiptError(err)) {
+    return "Une quittance pour ce bail et ce mois existe déjà. Choisis un autre mois ou ouvre celle déjà créée.";
+  }
+
+  if (err?.request && !err?.response) return "Le serveur ne répond pas. Vérifie ta connexion puis réessaie.";
+  const status = err?.response?.status;
+
+  if (status === 401) return "Session expirée. Reconnecte-toi.";
+  if (status === 403) return "Accès refusé.";
+  if (status === 404) return "Ressource introuvable.";
+  if (status === 409) return "Cette quittance existe déjà pour ce mois.";
+  if (status === 413) return "Fichiers trop volumineux.";
+  if (status === 422) return "Certains champs sont invalides. Vérifie le formulaire.";
+  if (status && status >= 500) return "Problème serveur. Réessaie dans quelques instants.";
+
+  const backendMsg = extractBackendMessage(err);
+  if (backendMsg && !looksTechnical(backendMsg)) return backendMsg;
+
+  return fallback;
+}
+
 function ModalPortal({ children }: { children: React.ReactNode }) {
   if (typeof document === "undefined") return null;
   return ReactDOM.createPortal(children, document.body);
@@ -32,7 +97,11 @@ function ModalPortal({ children }: { children: React.ReactNode }) {
 export function QuittancesIndependantes() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+
+  // ✅ Error global (page) + errors modals
   const [error, setError] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
   const [leases, setLeases] = useState<LeaseLite[]>([]);
   const [receipts, setReceipts] = useState<RentReceipt[]>([]);
@@ -76,10 +145,12 @@ export function QuittancesIndependantes() {
     setSelectedLeaseId("");
     setPaidMonth(monthIso());
     setNotes("");
+    setCreateError(null);
   };
 
   const closePreview = () => {
     setPreviewing(null);
+    setPreviewError(null);
     if (pdfUrl) URL.revokeObjectURL(pdfUrl);
     setPdfUrl(null);
   };
@@ -98,7 +169,8 @@ export function QuittancesIndependantes() {
       setReceipts(Array.isArray(receiptsRes) ? (receiptsRes as any) : []);
     } catch (e: any) {
       console.error(e);
-      setError(e?.response?.data?.message || e?.message || "Erreur lors du chargement");
+      const msg = normalizeApiError(e as ApiErr, "Erreur lors du chargement");
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -106,7 +178,7 @@ export function QuittancesIndependantes() {
 
   const loadPdfPreview = async (receiptId: number) => {
     setBusy(true);
-    setError(null);
+    setPreviewError(null);
     try {
       const blob = await rentReceiptService.downloadPdf(receiptId);
       const url = URL.createObjectURL(blob);
@@ -114,24 +186,26 @@ export function QuittancesIndependantes() {
       setPdfUrl(url);
     } catch (e: any) {
       console.error(e);
-      setError(e?.response?.data?.message || e?.message || "Impossible de charger le PDF");
+      const msg = normalizeApiError(e as ApiErr, "Impossible de charger le PDF");
+      setPreviewError(msg);
     } finally {
       setBusy(false);
     }
   };
 
   const handleCreate = async () => {
+    setCreateError(null);
+
     if (!selectedLeaseId) {
-      setError("Choisis une location (bail).");
+      setCreateError("Choisis une location (bail).");
       return;
     }
     if (!paidMonth || paidMonth.length !== 7) {
-      setError("Choisis un mois valide (YYYY-MM).");
+      setCreateError("Choisis un mois valide (YYYY-MM).");
       return;
     }
 
     setBusy(true);
-    setError(null);
 
     try {
       const created = await rentReceiptService.createIndependent({
@@ -149,14 +223,26 @@ export function QuittancesIndependantes() {
       setPreviewing(created as any);
       await loadPdfPreview((created as any).id);
     } catch (e: any) {
-      console.error(e);
-      const msg =
-        e?.response?.data?.message ||
-        e?.response?.data?.error ||
-        (typeof e?.response?.data === "string" ? e.response.data : null) ||
-        e?.message ||
-        "Erreur lors de la création";
-      setError(msg);
+      const err = e as ApiErr;
+      console.error(err);
+
+      // ✅ 422 avec errors -> message précis si possible
+      if (err?.response?.status === 422 && err?.response?.data?.errors) {
+        const be = err.response.data.errors;
+        const msg =
+          be.lease_id?.[0] ||
+          be.paid_month?.[0] ||
+          be.issued_date?.[0] ||
+          be.notes?.[0] ||
+          err.response.data.message ||
+          "Champs invalides. Vérifie le formulaire.";
+        setCreateError(msg);
+        return;
+      }
+
+      // ✅ tout le reste (y compris doublon qui arrive en 500)
+      const msg = normalizeApiError(err, "Erreur lors de la création");
+      setCreateError(msg);
     } finally {
       setBusy(false);
     }
@@ -164,13 +250,14 @@ export function QuittancesIndependantes() {
 
   const handleDownload = async (receipt: RentReceipt) => {
     setBusy(true);
-    setError(null);
+    setPreviewError(null);
     try {
       const blob = await rentReceiptService.downloadPdf(receipt.id);
       contractService.downloadBlob(blob, `quittance-${receipt.paid_month}-lease-${receipt.lease_id}.pdf`);
     } catch (e: any) {
       console.error(e);
-      setError(e?.response?.data?.message || e?.message || "Téléchargement impossible");
+      const msg = normalizeApiError(e as ApiErr, "Téléchargement impossible");
+      setPreviewError(msg);
     } finally {
       setBusy(false);
     }
@@ -239,7 +326,10 @@ export function QuittancesIndependantes() {
           </button>
 
           <button
-            onClick={() => setOpenCreate(true)}
+            onClick={() => {
+              setOpenCreate(true);
+              setCreateError(null);
+            }}
             className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
           >
             <Plus className="h-4 w-4" />
@@ -248,7 +338,7 @@ export function QuittancesIndependantes() {
         </div>
       </div>
 
-      {/* Error */}
+      {/* Error (page) */}
       {error && <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>}
 
       {/* Create Modal */}
@@ -271,6 +361,13 @@ export function QuittancesIndependantes() {
                   <X className="h-5 w-5" />
                 </button>
               </div>
+
+              {/* ✅ Error in modal */}
+              {createError && (
+                <div className="px-6 pt-5">
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{createError}</div>
+                </div>
+              )}
 
               <div className="space-y-5 px-6 py-5">
                 {/* Lease Select */}
@@ -353,7 +450,7 @@ export function QuittancesIndependantes() {
                   disabled={busy || !selectedLeaseId}
                   className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
                 >
-                  <CheckCircle2 className="h-4 w-4" />
+                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                   Créer & Prévisualiser
                 </button>
               </div>
@@ -389,6 +486,13 @@ export function QuittancesIndependantes() {
                   </button>
                 </div>
               </div>
+
+              {/* ✅ Error in preview modal */}
+              {previewError && (
+                <div className="px-6 pt-5">
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{previewError}</div>
+                </div>
+              )}
 
               <div className="h-[78vh] bg-slate-50">
                 {pdfUrl ? (
@@ -432,7 +536,9 @@ export function QuittancesIndependantes() {
                   <div className="text-sm font-semibold text-slate-900">Quittance {r.paid_month} — Bail #{r.lease_id}</div>
                   <div className="text-xs text-slate-600">
                     Émise le {String(r.issued_date).slice(0, 10)} • Montant:{" "}
-                    <span className="font-medium text-slate-900">{(r.amount_paid ?? 0).toLocaleString("fr-FR")} FCFA</span>
+                    <span className="font-medium text-slate-900">
+                      {(r.amount_paid ?? 0).toLocaleString("fr-FR")} FCFA
+                    </span>
                   </div>
                   {r.notes ? (
                     <div className="text-sm text-slate-700 mt-2 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2">
@@ -442,11 +548,14 @@ export function QuittancesIndependantes() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">{r.type}</span>
+                  <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                    {r.type}
+                  </span>
 
                   <button
                     onClick={async () => {
                       setPreviewing(r);
+                      setPreviewError(null);
                       await loadPdfPreview(r.id);
                     }}
                     disabled={busy}

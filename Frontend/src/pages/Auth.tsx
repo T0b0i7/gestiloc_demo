@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, AlertCircle, User, Phone } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,6 +36,66 @@ const registerSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 type RegisterFormData = z.infer<typeof registerSchema>;
 
+type ApiErr = {
+  response?: { status?: number; data?: { message?: string; errors?: Record<string, string[]> } };
+  request?: unknown;
+  message?: string;
+};
+
+function normalizeBackendMessage(err: ApiErr, fallback: string) {
+  // On logge les détails techniques mais on renvoie un message propre au user.
+  const status = err.response?.status;
+
+  // Erreurs réseau / serveur HS
+  if (err.request && !err.response) {
+    return "Le serveur ne répond pas. Vérifiez votre connexion internet puis réessayez.";
+  }
+
+  // Codes utiles
+  if (status === 401) return "Email ou mot de passe incorrect.";
+  if (status === 403) return "Accès refusé. Vérifiez vos droits ou contactez le support.";
+  if (status === 422) return "Certains champs sont invalides. Vérifiez le formulaire.";
+  if (status && status >= 500) return "Problème serveur. Réessayez dans quelques instants.";
+
+  // Message backend parfois utile mais pas toujours “user-friendly”
+  const backendMsg = err.response?.data?.message?.trim();
+  if (backendMsg) {
+    // Petit filtre : on évite d'afficher des messages techniques.
+    const looksTechnical =
+      backendMsg.toLowerCase().includes('sql') ||
+      backendMsg.toLowerCase().includes('exception') ||
+      backendMsg.toLowerCase().includes('stack') ||
+      backendMsg.toLowerCase().includes('undefined') ||
+      backendMsg.toLowerCase().includes('trace');
+
+    if (!looksTechnical) return backendMsg;
+  }
+
+  return fallback;
+}
+
+function applyBackendFieldErrors<T extends Record<string, any>>(
+  err: ApiErr,
+  setError: (name: any, error: any) => void,
+  map: Record<string, keyof T>
+) {
+  const errors = err.response?.data?.errors;
+  if (!errors) return false;
+
+  let applied = false;
+
+  Object.entries(errors).forEach(([backendKey, messages]) => {
+    const formKey = map[backendKey];
+    if (!formKey) return;
+
+    const msg = Array.isArray(messages) ? messages[0] : "Champ invalide";
+    setError(formKey as any, { type: 'server', message: msg });
+    applied = true;
+  });
+
+  return applied;
+}
+
 export default function Auth() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -46,17 +106,57 @@ export default function Auth() {
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
+    mode: 'onSubmit',
+    reValidateMode: 'onChange',
+    shouldFocusError: true,
   });
 
   const registerForm = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
-    defaultValues: {
-      acceptTerms: false
-    }
+    mode: 'onSubmit',
+    reValidateMode: 'onChange',
+    shouldFocusError: true,
+    defaultValues: { acceptTerms: false },
   });
+
+  // maps backend -> form fields (si Laravel renvoie first_name, etc.)
+  const registerFieldMap = useMemo(
+    () => ({
+      first_name: 'firstName',
+      last_name: 'lastName',
+      email: 'email',
+      phone: 'phone',
+      password: 'password',
+      password_confirmation: 'confirmPassword',
+      accept_terms: 'acceptTerms',
+    }) as Record<string, keyof RegisterFormData>,
+    []
+  );
+
+  const loginFieldMap = useMemo(
+    () => ({
+      email: 'email',
+      password: 'password',
+    }) as Record<string, keyof LoginFormData>,
+    []
+  );
+
+  // Petite aide UX : quand on bascule login/register on reset les messages
+  useEffect(() => {
+    setError('');
+    loginForm.clearErrors();
+    registerForm.clearErrors();
+  }, [isLogin]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const notifyClientValidation = (formErrors: Record<string, any>) => {
+    const first = Object.values(formErrors)?.[0];
+    const msg = first?.message || "Vérifiez les champs du formulaire.";
+    toast.error(msg);
+  };
 
   const handleLogin = async (data: LoginFormData) => {
     setError('');
+
     try {
       setIsLoading(true);
 
@@ -64,6 +164,7 @@ export default function Auth() {
 
       if (response && response.data && response.data.user) {
         const { user } = response.data;
+
         toast.success('Connexion réussie !');
 
         localStorage.setItem('token', response.data.access_token);
@@ -92,25 +193,24 @@ export default function Auth() {
       } else {
         throw new Error('Réponse du serveur invalide');
       }
-    } catch (error: unknown) {
-      console.error('Erreur de connexion :', error);
-      let errorMessage = 'Email ou mot de passe incorrect';
+    } catch (e: unknown) {
+      const err = e as ApiErr;
 
-      const err = error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } }; request?: unknown; message?: string };
+      // Log technique pour toi
+      console.error('Erreur de connexion :', err);
 
-      if (err.response) {
-        if (err.response.data?.message) {
-          errorMessage = err.response.data.message;
-        } else if (err.response.data?.errors) {
-          errorMessage = Object.values(err.response.data.errors).flat().join('\n');
-        }
-      } else if (err.request) {
-        errorMessage = 'Le serveur ne répond pas. Vérifiez votre connexion.';
-      } else if (err.message) {
-        errorMessage = err.message;
+      // Appliquer erreurs de champs si 422
+      const applied = applyBackendFieldErrors<LoginFormData>(err, loginForm.setError, loginFieldMap);
+
+      const msg = normalizeBackendMessage(err, "Email ou mot de passe incorrect.");
+      setError(msg);
+
+      // Notifs : si erreurs champs, on affiche un toast clair, sinon message général
+      if (applied) {
+        toast.error("Vérifiez vos informations de connexion.");
+      } else {
+        toast.error(msg);
       }
-
-      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -135,6 +235,7 @@ export default function Auth() {
 
       if (response?.status === 'success' || response?.data?.token) {
         toast.success("Compte créé avec succès ! Vous allez être redirigé vers la page de connexion.");
+
         setTimeout(() => {
           setIsLogin(true);
           registerForm.reset();
@@ -142,22 +243,24 @@ export default function Auth() {
       } else {
         throw new Error(response?.message || "Erreur lors de l'inscription");
       }
-    } catch (error: unknown) {
-      console.error('Erreur lors de l\'inscription :', error);
-      let errorMessage = "Une erreur est survenue lors de l'inscription";
+    } catch (e: unknown) {
+      const err = e as ApiErr;
 
-      const err = error as { response?: { data?: { errors?: Record<string, string[]>; message?: string } }; message?: string };
+      // Log technique pour toi
+      console.error("Erreur lors de l'inscription :", err);
 
-      if (err.response?.data?.errors) {
-        const validationErrors = Object.values(err.response.data.errors).flat();
-        errorMessage = validationErrors.join('\n');
-      } else if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.message) {
-        errorMessage = err.message;
+      // Appliquer erreurs champ par champ si Laravel renvoie errors{}
+      const applied = applyBackendFieldErrors<RegisterFormData>(err, registerForm.setError, registerFieldMap);
+
+      // Message user-friendly
+      const msg = normalizeBackendMessage(err, "Une erreur est survenue lors de la création du compte.");
+
+      // Notifs : si erreurs champs -> toast générique; sinon -> msg
+      if (applied) {
+        toast.error("Certains champs sont invalides. Vérifiez le formulaire.");
+      } else {
+        toast.error(msg);
       }
-
-      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -165,15 +268,12 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-white">
-      {/* Forms */}
       <div className="w-full max-w-md">
         <div className="w-full max-w-md">
-          {/* Logo */}
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-primary mb-2">GestiLoc</h1>
           </div>
 
-          {/* Toggle Buttons */}
           <motion.div
             className="flex rounded-lg bg-slate-100 p-1 mb-8"
             initial={{ y: -20, opacity: 0 }}
@@ -202,7 +302,6 @@ export default function Auth() {
             </motion.button>
           </motion.div>
 
-          {/* Forms Container */}
           <div className="relative min-h-[700px]">
             <AnimatePresence mode="wait">
               {isLogin ? (
@@ -214,7 +313,6 @@ export default function Auth() {
                   transition={{ duration: 0.4, ease: "easeInOut" }}
                   className="absolute top-0 left-0 w-full"
                 >
-                  {/* Login Form */}
                   <motion.div
                     className="bg-white rounded-2xl shadow-xl p-8 border border-slate-200"
                     initial={{ y: 20, opacity: 0 }}
@@ -245,7 +343,10 @@ export default function Auth() {
                       )}
                     </AnimatePresence>
 
-                    <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-6">
+                    <form
+                      onSubmit={loginForm.handleSubmit(handleLogin, (errs) => notifyClientValidation(errs))}
+                      className="space-y-6"
+                    >
                       <motion.div
                         initial={{ x: -20, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
@@ -308,7 +409,11 @@ export default function Auth() {
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ duration: 0.4, delay: 0.5 }}
                       >
-                        <Button type="submit" className="w-full h-12 text-lg font-medium relative overflow-hidden" disabled={isLoading}>
+                        <Button
+                          type="submit"
+                          className="w-full h-12 text-lg font-medium relative overflow-hidden"
+                          disabled={isLoading}
+                        >
                           <motion.div
                             className="flex items-center justify-center gap-2"
                             animate={isLoading ? { scale: [1, 1.05, 1] } : {}}
@@ -348,7 +453,6 @@ export default function Auth() {
                   transition={{ duration: 0.4, ease: "easeInOut" }}
                   className="absolute top-0 left-0 w-full"
                 >
-                  {/* Register Form */}
                   <motion.div
                     className="bg-white rounded-2xl shadow-xl p-8 border border-slate-200"
                     initial={{ y: 20, opacity: 0 }}
@@ -365,7 +469,7 @@ export default function Auth() {
                     </motion.h2>
                     <motion.h2
                       className="p-leading mb-8"
-                      style={{color: 'black'}}
+                      style={{ color: 'black' }}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.4, delay: 0.3 }}
@@ -373,7 +477,9 @@ export default function Auth() {
                       Compte gratuit, sans carte bancaire. Vous pourrez ajouter vos locataires ensuite.
                     </motion.h2>
 
-                    <form onSubmit={registerForm.handleSubmit(handleRegister)}>
+                    <form
+                      onSubmit={registerForm.handleSubmit(handleRegister, (errs) => notifyClientValidation(errs))}
+                    >
                       <ScrollArea className="h-[350px] pr-4">
                         <motion.div
                           className="space-y-6 pb-6"
@@ -383,10 +489,7 @@ export default function Auth() {
                             hidden: { opacity: 0 },
                             visible: {
                               opacity: 1,
-                              transition: {
-                                staggerChildren: 0.1,
-                                delayChildren: 0.4,
-                              },
+                              transition: { staggerChildren: 0.1, delayChildren: 0.4 },
                             },
                           }}
                         >
@@ -575,7 +678,11 @@ export default function Auth() {
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ duration: 0.4, delay: 0.8 }}
                       >
-                        <Button type="submit" className="w-full h-12 text-lg font-medium mt-6 relative overflow-hidden" disabled={isLoading}>
+                        <Button
+                          type="submit"
+                          className="w-full h-12 text-lg font-medium mt-6 relative overflow-hidden"
+                          disabled={isLoading}
+                        >
                           <motion.div
                             className="flex items-center justify-center gap-2"
                             animate={isLoading ? { scale: [1, 1.05, 1] } : {}}
@@ -616,7 +723,6 @@ export default function Auth() {
             </AnimatePresence>
           </div>
 
-          {/* Retour */}
           <div className="text-center mt-8">
             <button
               onClick={() => navigate('/')}

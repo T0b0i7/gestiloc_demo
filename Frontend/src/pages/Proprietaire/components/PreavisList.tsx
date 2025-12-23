@@ -175,12 +175,71 @@ function TextArea({
   );
 }
 
-export default function LandlordNoticesPage() {
+/** ✅ Helpers erreurs / notifications (modale vs page) */
+type NotifyType = "success" | "info" | "error";
+
+type ApiErr = {
+  response?: {
+    status?: number;
+    data?: {
+      message?: string;
+      error?: string;
+      errors?: Record<string, string[]>;
+    };
+  };
+  request?: unknown;
+  message?: string;
+};
+
+function looksTechnical(msg?: string) {
+  if (!msg) return false;
+  const m = msg.toLowerCase();
+  return (
+    m.includes("sql") ||
+    m.includes("exception") ||
+    m.includes("stack") ||
+    m.includes("trace") ||
+    m.includes("undefined") ||
+    m.includes("vendor/") ||
+    m.includes("laravel") ||
+    m.includes("symfony")
+  );
+}
+
+function normalizeApiError(err: ApiErr, fallback: string) {
+  if (err?.request && !err?.response) return "Le serveur ne répond pas. Vérifie ta connexion puis réessaie.";
+  const status = err?.response?.status;
+
+  if (status === 401) return "Session expirée. Reconnecte-toi.";
+  if (status === 403) return "Accès refusé.";
+  if (status === 413) return "Fichiers trop volumineux.";
+  if (status === 422) return "Certains champs sont invalides. Vérifie le formulaire.";
+  if (status && status >= 500) return "Problème serveur. Réessaie dans quelques instants.";
+
+  const backendMsg =
+    err?.response?.data?.message?.trim() ||
+    err?.response?.data?.error?.trim() ||
+    err?.message?.trim();
+
+  if (backendMsg && !looksTechnical(backendMsg)) return backendMsg;
+
+  return fallback;
+}
+
+export default function LandlordNoticesPage({
+  notify,
+}: {
+  notify?: (msg: string, type: NotifyType) => void;
+}) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [items, setItems] = useState<Notice[]>([]);
   const [leases, setLeases] = useState<LeaseLite[]>([]);
-  const [error, setError] = useState<string | null>(null);
+
+  // ✅ erreurs séparées
+  const [pageError, setPageError] = useState<string | null>(null);   // fetchAll
+  const [modalError, setModalError] = useState<string | null>(null); // create modal
+  const [inlineError, setInlineError] = useState<string | null>(null); // actions list (optionnel)
 
   // Filters
   const [q, setQ] = useState("");
@@ -200,6 +259,11 @@ export default function LandlordNoticesPage() {
 
   // notes internes par notice (bailleur)
   const [draftNotes, setDraftNotes] = useState<Record<number, string>>({});
+
+  const pushNotify = (msg: string, type: NotifyType) => {
+    if (notify) notify(msg, type);
+    else alert(msg);
+  };
 
   const selectedLease = useMemo(() => {
     if (!selectedLeaseId) return null;
@@ -226,7 +290,8 @@ export default function LandlordNoticesPage() {
 
   const fetchAll = async () => {
     setLoading(true);
-    setError(null);
+    setPageError(null);
+    setInlineError(null);
     try {
       const [leasesRes, noticesRes] = await Promise.all([leaseService.listLeases(), noticeService.list()]);
       const leasesArr = Array.isArray(leasesRes) ? leasesRes : [];
@@ -239,7 +304,9 @@ export default function LandlordNoticesPage() {
       noticesArr.forEach((n) => (map[n.id] = n.notes || ""));
       setDraftNotes(map);
     } catch (e: any) {
-      setError(e?.response?.data?.message || e?.message || "Erreur lors du chargement.");
+      const msg = normalizeApiError(e as ApiErr, "Erreur lors du chargement.");
+      setPageError(msg);
+      pushNotify(msg, "error");
     } finally {
       setLoading(false);
     }
@@ -255,6 +322,7 @@ export default function LandlordNoticesPage() {
     setEndDate(isoToday());
     setReason("");
     setNotes("");
+    setModalError(null);
   };
 
   const filtered = useMemo(() => {
@@ -291,12 +359,16 @@ export default function LandlordNoticesPage() {
 
   const quickUpdate = async (id: number, payload: Partial<Pick<Notice, "status" | "notes">>) => {
     setSavingId(id);
+    setInlineError(null);
     try {
       const updated = await noticeService.update(id, payload);
       setItems((prev) => prev.map((x) => (x.id === id ? updated : x)));
       setDraftNotes((prev) => ({ ...prev, [id]: updated.notes || "" }));
+      pushNotify("Mise à jour enregistrée.", "success");
     } catch (e: any) {
-      alert(e?.response?.data?.message || "Erreur lors de la mise à jour.");
+      const msg = normalizeApiError(e as ApiErr, "Erreur lors de la mise à jour.");
+      setInlineError(msg);
+      pushNotify(msg, "error");
     } finally {
       setSavingId(null);
     }
@@ -308,32 +380,47 @@ export default function LandlordNoticesPage() {
   };
 
   const handleCreate = async () => {
-    if (!selectedLease || !computedPropertyId) return setError("Choisis une location valide.");
-    if (!endDate) return setError("Choisis une date de libération.");
+    // ✅ erreur dans la modale uniquement
+    setModalError(null);
 
-    // si le bailleur crée -> il doit écrire la raison (pas auto imposée)
+    if (!selectedLease || !computedPropertyId) {
+      const msg = "Choisis une location valide.";
+      setModalError(msg);
+      return;
+    }
+    if (!endDate) {
+      const msg = "Choisis une date de libération.";
+      setModalError(msg);
+      return;
+    }
     const r = (reason || "").trim();
-    if (!r) return setError("Ajoute une raison (motif du préavis).");
+    if (!r) {
+      const msg = "Ajoute une raison (motif du préavis).";
+      setModalError(msg);
+      return;
+    }
 
     setBusy(true);
-    setError(null);
 
     try {
       await noticeService.create({
         property_id: Number(computedPropertyId),
-        lease_id: Number(selectedLease.id), // backend déduit tenant_id
-        type: noticeType, // landlord / tenant
+        lease_id: Number(selectedLease.id),
+        type: noticeType,
         reason: r,
         notice_date: isoToday(),
         end_date: endDate,
         notes: notes || null,
       });
 
+      pushNotify("Préavis créé.", "success");
       setOpenCreate(false);
       resetCreate();
       await fetchAll();
     } catch (e: any) {
-      setError(e?.response?.data?.message || e?.response?.data?.error || e?.message || "Erreur lors de la création.");
+      const msg = normalizeApiError(e as ApiErr, "Erreur lors de la création.");
+      setModalError(msg);
+      pushNotify(msg, "error");
     } finally {
       setBusy(false);
     }
@@ -349,9 +436,7 @@ export default function LandlordNoticesPage() {
             Préavis
           </div>
 
-          <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-gray-900">
-            Suivi des préavis
-          </h1>
+          <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-gray-900">Suivi des préavis</h1>
 
           <p className="mt-1 text-sm font-semibold text-gray-600">
             Demandes de sortie + préavis bailleur. Confirme/annule et ajoute tes notes.
@@ -377,7 +462,10 @@ export default function LandlordNoticesPage() {
           </button>
 
           <button
-            onClick={() => setOpenCreate(true)}
+            onClick={() => {
+              setModalError(null);
+              setOpenCreate(true);
+            }}
             className="
               inline-flex items-center justify-center gap-2
               rounded-2xl bg-blue-600 px-4 py-3
@@ -392,10 +480,17 @@ export default function LandlordNoticesPage() {
         </div>
       </div>
 
-      {/* Error */}
-      {error && (
+      {/* Page error: uniquement chargement global */}
+      {pageError && (
         <div className="mt-6 rounded-3xl border border-red-200 bg-red-50 p-6 text-red-700 font-bold">
-          {error}
+          {pageError}
+        </div>
+      )}
+
+      {/* Inline error (updates) */}
+      {inlineError && (
+        <div className="mt-4 rounded-3xl border border-red-200 bg-red-50 p-4 text-red-700 font-bold">
+          {inlineError}
         </div>
       )}
 
@@ -423,6 +518,13 @@ export default function LandlordNoticesPage() {
             </div>
 
             <div className="px-6 py-5 space-y-5">
+              {/* ✅ ERREUR DANS LA MODALE */}
+              {modalError && (
+                <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-red-700 font-bold">
+                  {modalError}
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <FieldLabel>Type</FieldLabel>
@@ -448,9 +550,7 @@ export default function LandlordNoticesPage() {
                         { value: "", label: "— Choisir une location —" },
                         ...leases.map((l: any) => {
                           const addr = l.property?.address || `Bien #${l.property_id}`;
-                          const t = l.tenant
-                            ? `${l.tenant.first_name || ""} ${l.tenant.last_name || ""}`.trim()
-                            : "";
+                          const t = l.tenant ? `${l.tenant.first_name || ""} ${l.tenant.last_name || ""}`.trim() : "";
                           const label = `${addr}${t ? ` — ${t}` : ""}`;
                           return { value: String(l.id), label };
                         }),
@@ -480,11 +580,7 @@ export default function LandlordNoticesPage() {
                 <div>
                   <FieldLabel>Date de libération (fin du préavis)</FieldLabel>
                   <div className="mt-2">
-                    <Input
-                      value={endDate}
-                      onChange={(v) => setEndDate(v)}
-                      placeholder="YYYY-MM-DD"
-                    />
+                    <Input value={endDate} onChange={(v) => setEndDate(v)} placeholder="YYYY-MM-DD" />
                     <div className="mt-2 text-xs font-bold text-gray-500 flex items-center gap-2">
                       <CalendarDays size={14} className="text-blue-700" />
                       notice_date = aujourd’hui ({isoToday()})
@@ -497,7 +593,7 @@ export default function LandlordNoticesPage() {
                   <div className="mt-2">
                     <Input
                       value={reason}
-                      onChange={setReason}
+                      onChange={(v) => setReason(v)}
                       placeholder='Ex : "Reprise pour habiter" / "Fin de bail" / "Vente"...'
                     />
                   </div>
@@ -509,7 +605,7 @@ export default function LandlordNoticesPage() {
                 <div className="mt-2">
                   <TextArea
                     value={notes}
-                    onChange={setNotes}
+                    onChange={(v) => setNotes(v)}
                     placeholder="Ex : Merci de préparer l’état des lieux, remise des clés, plages de visite…"
                   />
                 </div>
@@ -626,9 +722,7 @@ export default function LandlordNoticesPage() {
           ) : filtered.length === 0 ? (
             <div className="rounded-3xl border border-blue-200 bg-white p-8">
               <div className="text-gray-900 font-extrabold">Aucun préavis trouvé</div>
-              <div className="mt-1 text-sm font-semibold text-gray-600">
-                Essaie de changer le filtre ou la recherche.
-              </div>
+              <div className="mt-1 text-sm font-semibold text-gray-600">Essaie de changer le filtre ou la recherche.</div>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4">
@@ -709,7 +803,11 @@ export default function LandlordNoticesPage() {
                                 inline-flex items-center justify-center gap-2
                               "
                             >
-                              {savingId === it.id ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                              {savingId === it.id ? (
+                                <Loader2 size={16} className="animate-spin" />
+                              ) : (
+                                <CheckCircle2 size={16} />
+                              )}
                               Confirmer
                             </button>
 

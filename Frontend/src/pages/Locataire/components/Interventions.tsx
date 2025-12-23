@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertTriangle,
   Calendar,
@@ -29,7 +29,10 @@ interface InterventionsProps {
   notify: (msg: string, type: 'success' | 'info' | 'error') => void;
 }
 
-const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://https://wheat-skunk-120710.hostingersite.com';
+// ✅ Fix valeur par défaut (ton code avait http://https://)
+const apiBase =
+  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ||
+  'https://wheat-skunk-120710.hostingersite.com';
 
 const categoryMeta: Record<IncidentCategory, { label: string; icon: any; hint: string }> = {
   plumbing: { label: 'Plomberie', icon: Droplet, hint: 'Fuite, évier, WC, robinet...' },
@@ -52,6 +55,48 @@ const statusLabel = (s: TenantIncident['status']) => {
   return 'Annulé';
 };
 
+type FormErrors = Partial<{
+  propertyId: string;
+  title: string;
+  description: string;
+  slots: string;
+  photos: string;
+}>;
+
+function looksTechnical(msg?: string) {
+  if (!msg) return false;
+  const m = msg.toLowerCase();
+  return (
+    m.includes('sql') ||
+    m.includes('exception') ||
+    m.includes('stack') ||
+    m.includes('trace') ||
+    m.includes('undefined') ||
+    m.includes('null') ||
+    m.includes('laravel') ||
+    m.includes('symfony') ||
+    m.includes('vendor/')
+  );
+}
+
+function normalizeApiError(e: any, fallback: string) {
+  // Réseau / serveur HS
+  if (e?.request && !e?.response) return "Le serveur ne répond pas. Vérifie ta connexion et réessaie.";
+
+  const status = e?.response?.status;
+
+  if (status === 401) return "Session expirée. Reconnecte-toi.";
+  if (status === 403) return "Accès refusé.";
+  if (status === 413) return "Fichiers trop volumineux. Réduis la taille des photos.";
+  if (status === 422) return "Certains champs sont invalides. Vérifie le formulaire.";
+  if (status >= 500) return "Problème serveur. Réessaie dans quelques instants.";
+
+  const backendMsg = e?.response?.data?.message;
+  if (backendMsg && !looksTechnical(backendMsg)) return backendMsg;
+
+  return fallback;
+}
+
 export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
   const [leases, setLeases] = useState<TenantLease[]>([]);
   const [incidents, setIncidents] = useState<TenantIncident[]>([]);
@@ -67,6 +112,14 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
+  // ✅ erreurs client side
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
+
+  // ✅ refs pour focus
+  const titleRef = useRef<HTMLInputElement | null>(null);
+  const propertyRef = useRef<HTMLSelectElement | null>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
+
   // Shared input styles (clean, lisible)
   const inputBase =
     'w-full rounded-xl bg-white text-gray-900 placeholder:text-gray-400 ' +
@@ -75,6 +128,7 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
 
   const labelBase = 'text-sm font-semibold text-gray-900';
   const helperBase = 'text-xs text-gray-500 mt-1';
+  const errorText = 'text-xs text-red-600 mt-1';
 
   useEffect(() => {
     let cancelled = false;
@@ -92,9 +146,9 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
         const list = await tenantApi.getIncidents();
         if (cancelled) return;
         setIncidents(list);
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
-        notify('Impossible de charger les incidents', 'error');
+        notify(normalizeApiError(e, 'Impossible de charger les incidents'), 'error');
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -120,31 +174,86 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
     return first.startsWith('http') ? first : `${apiBase}/storage/${first}`;
   }, [selectedProperty]);
 
-  const addSlot = () =>
-    setSlots((prev) => [...prev, { date: '', from: '14:00', to: '18:00' }]);
+  // ✅ previews (et cleanup pour éviter fuite mémoire)
+  const photoPreviews = useMemo(() => photoFiles.map((f) => URL.createObjectURL(f)), [photoFiles]);
+  useEffect(() => {
+    return () => {
+      photoPreviews.forEach((u) => URL.revokeObjectURL(u));
+    };
+  }, [photoPreviews]);
 
+  const addSlot = () => setSlots((prev) => [...prev, { date: '', from: '14:00', to: '18:00' }]);
   const removeSlot = (idx: number) => setSlots((prev) => prev.filter((_, i) => i !== idx));
-
   const updateSlot = (idx: number, patch: Partial<PreferredSlot>) => {
     setSlots((prev) => prev.map((s, i) => (i === idx ? { ...s, ...patch } : s)));
   };
 
   const onPickPhotos = (files: FileList | null) => {
     if (!files) return;
+
     const arr = Array.from(files);
-    setPhotoFiles((prev) => [...prev, ...arr].slice(0, 8));
+
+    // ✅ petite validation “compréhensible”
+    const tooMany = Math.max(0, photoFiles.length + arr.length - 8);
+    if (tooMany > 0) notify('Maximum 8 photos. Les photos en trop ne seront pas ajoutées.', 'info');
+
+    // (Optionnel) check taille 5MB
+    const maxSize = 5 * 1024 * 1024;
+    const filtered = arr.filter((f) => f.size <= maxSize);
+    if (filtered.length !== arr.length) notify('Certaines photos dépassent 5MB et ont été ignorées.', 'info');
+
+    setPhotoFiles((prev) => [...prev, ...filtered].slice(0, 8));
+    setFormErrors((p) => ({ ...p, photos: undefined }));
   };
 
   const removePhoto = (idx: number) => setPhotoFiles((prev) => prev.filter((_, i) => i !== idx));
 
   const refreshIncidents = async () => {
-    const list = await tenantApi.getIncidents();
-    setIncidents(list);
+    try {
+      const list = await tenantApi.getIncidents();
+      setIncidents(list);
+    } catch (e: any) {
+      console.error(e);
+      notify(normalizeApiError(e, 'Impossible de rafraîchir la liste'), 'error');
+    }
+  };
+
+  const validate = (): FormErrors => {
+    const errs: FormErrors = {};
+
+    if (!propertyId) errs.propertyId = 'Choisis un bien.';
+    if (!title.trim()) errs.title = 'Le titre est obligatoire.';
+    else if (title.trim().length < 3) errs.title = 'Le titre doit contenir au moins 3 caractères.';
+
+    // description optionnelle, mais si fournie on peut mettre un mini seuil
+    if (description.trim() && description.trim().length < 10) {
+      errs.description = 'Ajoute un peu plus de détails (au moins 10 caractères).';
+    }
+
+    // slots optionnels : si l’utilisateur a commencé à remplir un slot, il doit être complet
+    const partialSlots = slots.some((s) => (s.date || s.from || s.to) && !(s.date && s.from && s.to));
+    if (partialSlots) errs.slots = 'Chaque créneau doit avoir une date + une heure de début + une heure de fin.';
+
+    return errs;
+  };
+
+  const focusFirstError = (errs: FormErrors) => {
+    if (errs.propertyId) propertyRef.current?.focus();
+    else if (errs.title) titleRef.current?.focus();
+    else if (errs.description) descriptionRef.current?.focus();
   };
 
   const handleSubmit = async () => {
-    if (!propertyId) return notify('Choisis un bien', 'error');
-    if (!title.trim()) return notify('Ajoute un titre', 'error');
+    // ✅ client-side validation
+    const errs = validate();
+    setFormErrors(errs);
+
+    if (Object.keys(errs).length > 0) {
+      const firstMsg = Object.values(errs)[0] || 'Vérifie le formulaire.';
+      notify(firstMsg, 'error');
+      focusFirstError(errs);
+      return;
+    }
 
     const cleanSlots = slots
       .map((s) => ({ ...s, date: s.date.trim(), from: s.from.trim(), to: s.to.trim() }))
@@ -176,11 +285,33 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
       setDescription('');
       setSlots([{ date: '', from: '09:00', to: '12:00' }]);
       setPhotoFiles([]);
+      setFormErrors({});
 
       await refreshIncidents();
     } catch (e: any) {
       console.error(e);
-      notify(e?.response?.data?.message || 'Erreur lors de l’envoi', 'error');
+
+      // ✅ si backend renvoie errors{} Laravel 422, on “traduit” en messages simples
+      const status = e?.response?.status;
+      const fieldErrors = e?.response?.data?.errors;
+
+      if (status === 422 && fieldErrors) {
+        // mapping minimal (tu peux l’étendre selon ton backend)
+        const mapped: FormErrors = {};
+        if (fieldErrors.property_id) mapped.propertyId = fieldErrors.property_id?.[0] || 'Bien invalide.';
+        if (fieldErrors.title) mapped.title = fieldErrors.title?.[0] || 'Titre invalide.';
+        if (fieldErrors.description) mapped.description = fieldErrors.description?.[0] || 'Description invalide.';
+        if (fieldErrors.preferred_slots) mapped.slots = fieldErrors.preferred_slots?.[0] || 'Créneaux invalides.';
+        if (fieldErrors.photos) mapped.photos = fieldErrors.photos?.[0] || 'Photos invalides.';
+        setFormErrors((prev) => ({ ...prev, ...mapped }));
+
+        notify('Certains champs sont invalides. Vérifie le formulaire.', 'error');
+        focusFirstError(mapped);
+        return;
+      }
+
+      // ✅ message propre
+      notify(normalizeApiError(e, 'Erreur lors de l’envoi'), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -191,9 +322,9 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
       await tenantApi.deleteIncident(id);
       notify('Incident supprimé', 'success');
       await refreshIncidents();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      notify('Impossible de supprimer', 'error');
+      notify(normalizeApiError(e, 'Impossible de supprimer'), 'error');
     }
   };
 
@@ -213,9 +344,7 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
       {/* HEADER */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Incidents</h1>
-        <p className="text-sm text-gray-600">
-          Déclare un problème lié à ton bien (photos + disponibilités).
-        </p>
+        <p className="text-sm text-gray-600">Déclare un problème lié à ton bien (photos + disponibilités).</p>
       </div>
 
       {/* CREATE FORM */}
@@ -229,8 +358,12 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
             </div>
 
             <select
+              ref={propertyRef}
               value={propertyId}
-              onChange={(e) => setPropertyId(e.target.value ? Number(e.target.value) : '')}
+              onChange={(e) => {
+                setPropertyId(e.target.value ? Number(e.target.value) : '');
+                setFormErrors((p) => ({ ...p, propertyId: undefined }));
+              }}
               className={inputBase}
             >
               {leases.map((l) => (
@@ -239,6 +372,7 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
                 </option>
               ))}
             </select>
+            {formErrors.propertyId ? <p className={errorText}>{formErrors.propertyId}</p> : null}
 
             <div className="rounded-2xl border border-gray-200 overflow-hidden bg-white shadow-sm">
               {selectedMainImage ? (
@@ -250,9 +384,7 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
               )}
 
               <div className="p-4 border-t border-gray-100">
-                <div className="font-semibold text-gray-900">
-                  {selectedProperty?.address || '—'}
-                </div>
+                <div className="font-semibold text-gray-900">{selectedProperty?.address || '—'}</div>
                 <div className="text-sm text-gray-600">
                   {(selectedProperty as any)?.zip_code || ''} {selectedProperty?.city || ''}
                 </div>
@@ -267,11 +399,16 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
                 <label className={labelBase}>Titre</label>
                 <p className={helperBase}>Court et précis (ex: “Fuite robinet cuisine”).</p>
                 <input
+                  ref={titleRef}
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    if (formErrors.title) setFormErrors((p) => ({ ...p, title: undefined }));
+                  }}
                   className={`${inputBase} mt-2`}
                   placeholder="Ex : Fuite robinet cuisine"
                 />
+                {formErrors.title ? <p className={errorText}>{formErrors.title}</p> : null}
               </div>
 
               <div>
@@ -332,11 +469,16 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
               <label className={labelBase}>Description</label>
               <p className={helperBase}>Localisation, depuis quand, impact (bruit, fuite, danger...).</p>
               <textarea
+                ref={descriptionRef}
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  if (formErrors.description) setFormErrors((p) => ({ ...p, description: undefined }));
+                }}
                 className={`${inputBase} mt-2 min-h-[120px]`}
                 placeholder="Décris le problème, localisation, depuis quand..."
               />
+              {formErrors.description ? <p className={errorText}>{formErrors.description}</p> : null}
             </div>
 
             {/* Photos */}
@@ -360,11 +502,16 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
                 </label>
               </div>
 
+              {formErrors.photos ? <p className={errorText}>{formErrors.photos}</p> : null}
+
               {photoFiles.length > 0 ? (
                 <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3">
                   {photoFiles.map((f, idx) => (
-                    <div key={idx} className="relative rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
-                      <img src={URL.createObjectURL(f)} alt={f.name} className="h-24 w-full object-cover" />
+                    <div
+                      key={idx}
+                      className="relative rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm"
+                    >
+                      <img src={photoPreviews[idx]} alt={f.name} className="h-24 w-full object-cover" />
                       <button
                         type="button"
                         onClick={() => removePhoto(idx)}
@@ -401,6 +548,8 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
                 </button>
               </div>
 
+              {formErrors.slots ? <p className={errorText}>{formErrors.slots}</p> : null}
+
               <div className="mt-3 space-y-3">
                 {slots.map((s, idx) => (
                   <div
@@ -414,7 +563,10 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
                       <input
                         type="date"
                         value={s.date}
-                        onChange={(e) => updateSlot(idx, { date: e.target.value })}
+                        onChange={(e) => {
+                          updateSlot(idx, { date: e.target.value });
+                          if (formErrors.slots) setFormErrors((p) => ({ ...p, slots: undefined }));
+                        }}
                         className={inputBase}
                       />
                     </div>
@@ -426,7 +578,10 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
                       <input
                         type="time"
                         value={s.from}
-                        onChange={(e) => updateSlot(idx, { from: e.target.value })}
+                        onChange={(e) => {
+                          updateSlot(idx, { from: e.target.value });
+                          if (formErrors.slots) setFormErrors((p) => ({ ...p, slots: undefined }));
+                        }}
                         className={inputBase}
                       />
                     </div>
@@ -438,7 +593,10 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
                       <input
                         type="time"
                         value={s.to}
-                        onChange={(e) => updateSlot(idx, { to: e.target.value })}
+                        onChange={(e) => {
+                          updateSlot(idx, { to: e.target.value });
+                          if (formErrors.slots) setFormErrors((p) => ({ ...p, slots: undefined }));
+                        }}
                         className={inputBase}
                       />
                       {slots.length > 1 && (
@@ -477,7 +635,9 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
       <Card className="p-6">
         <div className="mb-4">
           <div className="text-lg font-bold text-gray-900">Historique</div>
-          <div className="text-sm text-gray-600">Suivi de tes incidents (statut, prestataire, résolution).</div>
+          <div className="text-sm text-gray-600">
+            Suivi de tes incidents (statut, prestataire, résolution).
+          </div>
         </div>
 
         {incidents.length === 0 ? (

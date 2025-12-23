@@ -123,7 +123,7 @@ export interface PaginatedResponse<T> {
 }
 
 // 🔹 baseURL = http://https://wheat-skunk-120710.hostingersite.com/api
-const API_URL = 'https://wheat-skunk-120710.hostingersite.com';
+const API_URL = 'http://localhost:8000/api';
 
 const api = axios.create({
   baseURL: API_URL,
