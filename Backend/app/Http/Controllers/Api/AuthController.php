@@ -8,11 +8,14 @@ use App\Http\Requests\LoginRequest;
 use App\Models\TenantInvitation;
 use App\Models\User;
 use App\Models\Tenant;
+use App\Models\Landlord;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -22,6 +25,215 @@ class AuthController extends Controller
     {
         $this->authService = $authService;
     }
+
+    /* =========================
+     * Helpers emails (modern HTML)
+     * ========================= */
+
+    private function appName(): string
+    {
+        return config('app.name', 'Gestiloc');
+    }
+
+    private function frontendUrl(): string
+    {
+        return rtrim(config('app.frontend_url', env('FRONTEND_URL', config('app.url'))), '/');
+    }
+
+    private function mailLayoutHtml(string $title, string $ref, string $contentHtml): string
+    {
+        $appName = e($this->appName());
+        $year = date('Y');
+
+        return <<<HTML
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<body style="margin:0;padding:0;background:#f6f7fb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#111827;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f6f7fb;padding:24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="640" cellspacing="0" cellpadding="0" style="max-width:640px;width:100%;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 12px 30px rgba(17,24,39,0.08);">
+          <tr>
+            <td style="padding:20px 22px;background:linear-gradient(135deg,#111827,#374151);color:#fff;">
+              <div style="font-size:14px;opacity:.9;">{$appName}</div>
+              <div style="font-size:20px;font-weight:800;line-height:1.2;margin-top:6px;">{$title}</div>
+              <div style="font-size:13px;opacity:.9;margin-top:6px;">
+                Référence : <strong>{$ref}</strong>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:22px;">
+              {$contentHtml}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:18px 22px;border-top:1px solid #eef2f7;background:#fbfcff;">
+              <div style="font-size:12px;color:#6b7280;line-height:1.6;">
+                Cet email a été envoyé automatiquement. Si vous n’êtes pas concerné, vous pouvez l’ignorer.
+              </div>
+              <div style="font-size:12px;color:#6b7280;margin-top:8px;">
+                © {$year} {$appName}
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+HTML;
+    }
+
+    private function buttonHtml(string $label, string $url): string
+    {
+        $l = e($label);
+        $u = e($url);
+
+        return <<<HTML
+<a href="{$u}" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;padding:12px 16px;border-radius:12px;font-weight:800;font-size:14px;">
+  {$l}
+</a>
+HTML;
+    }
+
+    private function sendHtmlEmail(string $to, string $subject, string $html): void
+    {
+        // ✅ Laravel 10/11 ok: Mail::html()
+        Mail::html($html, function ($message) use ($to, $subject) {
+            $message->to($to)->subject($subject);
+        });
+
+        Log::info('[auth-mail] sent', ['to' => $to, 'subject' => $subject]);
+    }
+
+    private function trySendMail(string $to, string $subject, string $title, string $ref, string $contentHtml): void
+    {
+        try {
+            $html = $this->mailLayoutHtml($title, e($ref), $contentHtml);
+            $this->sendHtmlEmail($to, $subject, $html);
+        } catch (\Throwable $e) {
+            Log::error('[auth-mail] failed', [
+                'to' => $to,
+                'subject' => $subject,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function invitationRef(TenantInvitation $invitation): string
+    {
+        return 'INV-' . str_pad((string) $invitation->id, 6, '0', STR_PAD_LEFT);
+    }
+
+    private function resolveLandlordEmailFromInvitation(TenantInvitation $invitation): ?string
+    {
+        // Cas A: relation ->landlord->user->email
+        $email = $invitation->landlord?->user?->email ?? null;
+        if ($email) return $email;
+
+        // Cas B: landlord_id est un users.id (rare mais possible)
+        if (!empty($invitation->landlord_id)) {
+            $u = User::find($invitation->landlord_id);
+            if ($u?->email) return $u->email;
+        }
+
+        // Cas C: landlord_id est un landlords.id -> on retrouve user via landlord.user_id
+        if (!empty($invitation->landlord_id)) {
+            $landlord = Landlord::find($invitation->landlord_id);
+            if ($landlord && !empty($landlord->user_id)) {
+                $u = User::find($landlord->user_id);
+                if ($u?->email) return $u->email;
+            }
+        }
+
+        return null;
+    }
+
+    private function welcomeTenantContentHtml(User $user, Tenant $tenant): string
+    {
+        $email = e((string) $user->email);
+        $name = e(trim(($tenant->first_name ?? '') . ' ' . ($tenant->last_name ?? '')) ?: 'Votre compte');
+
+        $cta = $this->buttonHtml('Accéder à mon espace', $this->frontendUrl());
+
+        return <<<HTML
+<div style="font-size:14px;color:#374151;line-height:1.7;">
+  Bonjour <strong>{$name}</strong>,<br><br>
+  Votre compte locataire est maintenant <strong>activé</strong>. Vous pouvez vous connecter et accéder à votre espace.
+</div>
+
+<div style="height:14px"></div>
+
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #eef2f7;border-radius:14px;overflow:hidden;">
+  <tr>
+    <td style="padding:14px;background:#f9fafb;">
+      <div style="font-size:14px;font-weight:900;color:#111827;">Vos identifiants</div>
+      <div style="font-size:13px;color:#6b7280;margin-top:6px;">Email : <strong>{$email}</strong></div>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:14px;">
+      <div style="font-size:13px;color:#374151;line-height:1.6;">
+        Vous pouvez dès maintenant consulter vos informations, vos baux, et échanger avec votre bailleur.
+      </div>
+      <div style="height:14px"></div>
+      {$cta}
+    </td>
+  </tr>
+</table>
+
+<div style="height:14px"></div>
+<div style="font-size:12px;color:#6b7280;line-height:1.6;">
+  Conseil sécurité : ne partagez jamais votre mot de passe.
+</div>
+HTML;
+    }
+
+    private function landlordTenantActivatedContentHtml(TenantInvitation $invitation, User $tenantUser, Tenant $tenant): string
+    {
+        $tenantName = e(trim(($tenant->first_name ?? '') . ' ' . ($tenant->last_name ?? '')) ?: ($invitation->name ?? 'Locataire'));
+        $tenantEmail = e((string) $tenantUser->email);
+
+        $cta = $this->buttonHtml('Ouvrir le dashboard', $this->frontendUrl());
+
+        return <<<HTML
+<div style="font-size:14px;color:#374151;line-height:1.7;">
+  Bonjour,<br><br>
+  Bonne nouvelle : le locataire invité a finalisé son inscription et son compte est maintenant <strong>actif</strong>.
+</div>
+
+<div style="height:14px"></div>
+
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #eef2f7;border-radius:14px;overflow:hidden;">
+  <tr>
+    <td style="padding:14px;background:#f9fafb;">
+      <div style="font-size:14px;font-weight:900;color:#111827;">Locataire activé</div>
+      <div style="font-size:13px;color:#6b7280;margin-top:6px;">Nom : <strong>{$tenantName}</strong></div>
+      <div style="font-size:13px;color:#6b7280;margin-top:6px;">Email : <strong>{$tenantEmail}</strong></div>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:14px;">
+      <div style="font-size:13px;color:#374151;line-height:1.6;">
+        Vous pouvez maintenant lui attribuer un bail, gérer les échanges, et suivre les demandes.
+      </div>
+      <div style="height:14px"></div>
+      {$cta}
+    </td>
+  </tr>
+</table>
+HTML;
+    }
+
+    /* =========================
+     * Auth endpoints
+     * ========================= */
 
     // Register landlord (creates user + landlord)
     public function registerLandlord(StoreLandlordRequest $request): JsonResponse
@@ -56,7 +268,6 @@ class AuthController extends Controller
      */
     public function acceptInvitation(Request $request, $invitationId)
     {
-        // Signature déjà vérifiée par Laravel (temporarySignedRoute)
         $invitation = TenantInvitation::where('id', $invitationId)
             ->whereNull('accepted_at')
             ->where('expires_at', '>', now())
@@ -65,7 +276,7 @@ class AuthController extends Controller
         $frontendUrl = config('app.frontend_url', 'http://localhost:8080');
 
         return redirect()->away(
-            $frontendUrl .
+            rtrim($frontendUrl, '/') .
             '/activation/locataire?token=' . urlencode($invitation->token) .
             '&email=' . urlencode($invitation->email)
         );
@@ -74,98 +285,112 @@ class AuthController extends Controller
     /**
      * Le locataire soumet son mot de passe depuis le front.
      * Crée / met à jour le User + crée Tenant + assigne le rôle tenant.
+     * ✅ Envoie: Bienvenue locataire + Notification bailleur
      */
     public function completeTenantRegistration(Request $request)
-{
-    $data = $request->validate([
-        'token' => 'required|string',
-        'email' => 'required|email',
-        'password' => 'required|string|min:8|confirmed',
-    ]);
-
-    $invitation = TenantInvitation::where('token', $data['token'])
-        ->where('email', $data['email'])
-        ->whereNull('accepted_at')
-        ->where('expires_at', '>', now())
-        ->first();
-
-    if (! $invitation) {
-        throw ValidationException::withMessages([
-            'token' => ['Invitation invalide ou expirée.'],
-        ]);
-    }
-
-    // 1) Récupérer ou créer le user
-    $user = User::where('email', $data['email'])->first();
-
-    if (! $user) {
-        // Découpe du nom "Prénom Nom" venant de l'invitation
-        $parts = preg_split('/\s+/', $invitation->name, 2);
-        $firstName = $parts[0] ?? null;
-        $lastName  = $parts[1] ?? null;
-
-        $user = User::create([
-            'email'      => $invitation->email,
-            'password'   => Hash::make($data['password']),
-            'phone'      => null,
-            'email_verified_at' => now(),
+    {
+        $data = $request->validate([
+            'token' => 'required|string',
+            'email' => 'required|email',
+            'password' => 'required|string|min:8|confirmed',
         ]);
 
-        // Si tu veux stocker prénom/nom côté user aussi, ajoute les colonnes dans la table users
-        // puis ici :
-        // 'first_name' => $firstName,
-        // 'last_name'  => $lastName,
-    } else {
-        $user->password = Hash::make($data['password']);
-        $user->email_verified_at = $user->email_verified_at ?? now();
-        $user->save();
-    }
+        $invitation = TenantInvitation::where('token', $data['token'])
+            ->where('email', $data['email'])
+            ->whereNull('accepted_at')
+            ->where('expires_at', '>', now())
+            ->first();
 
-    // 2) Rôle tenant
-    if (method_exists($user, 'assignRole')) {
-        $user->assignRole('tenant');
-    }
+        if (! $invitation) {
+            throw ValidationException::withMessages([
+                'token' => ['Invitation invalide ou expirée.'],
+            ]);
+        }
 
-    // 3) Créer / lier le Tenant avec les bons champs
-    $parts = preg_split('/\s+/', $invitation->name, 2);
-    $firstName = $parts[0] ?? $invitation->name;
-    $lastName  = $parts[1] ?? '';
+        // ✅ Prépare ref email
+        $ref = $this->invitationRef($invitation);
 
-    $tenant = Tenant::firstOrCreate(
-        ['user_id' => $user->id],
-        [
-            'first_name'      => $firstName,
-            'last_name'       => $lastName,
-            'status'          => 'active',
-            'solvency_score'  => 0,
-            'meta'            => [
-                'invitation_email' => $invitation->email,
-                'landlord_id'      => $invitation->landlord_id,
-                'invitation_id'    => $invitation->id,
+        // 1) Récupérer ou créer le user
+        $user = User::where('email', $data['email'])->first();
+
+        if (! $user) {
+            $user = User::create([
+                'email' => $invitation->email,
+                'password' => Hash::make($data['password']),
+                'phone' => null,
+                'email_verified_at' => now(),
+            ]);
+        } else {
+            $user->password = Hash::make($data['password']);
+            $user->email_verified_at = $user->email_verified_at ?? now();
+            $user->save();
+        }
+
+        // 2) Rôle tenant
+        if (method_exists($user, 'assignRole')) {
+            $user->assignRole('tenant');
+        }
+
+        // 3) Créer / lier le Tenant
+        $parts = preg_split('/\s+/', (string) $invitation->name, 2);
+        $firstName = $parts[0] ?? ($invitation->name ?? 'Locataire');
+        $lastName  = $parts[1] ?? '';
+
+        $tenant = Tenant::firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'status' => 'active',
+                'solvency_score' => 0,
+                'meta' => [
+                    'invitation_email' => $invitation->email,
+                    'landlord_id' => $invitation->landlord_id,
+                    'invitation_id' => $invitation->id,
+                ],
+            ]
+        );
+
+        // 4) Marquer l'invitation comme acceptée
+        $invitation->accepted_at = now();
+        $invitation->tenant_user_id = $user->id;
+        $invitation->save();
+
+        // 5) Générer un token pour connexion auto
+        $token = $user->createToken('tenant-login')->plainTextToken;
+
+        // ✅ EMAILS (les vrais)
+        // A) Bienvenue locataire
+        $tenantTitle = 'Bienvenue ! Votre compte est activé ✅';
+        $tenantSubject = "🎉 Bienvenue sur {$this->appName()}";
+        $tenantContent = $this->welcomeTenantContentHtml($user, $tenant);
+        $this->trySendMail($user->email, $tenantSubject, $tenantTitle, $ref, $tenantContent);
+
+        // B) Info bailleur
+        $landlordEmail = $this->resolveLandlordEmailFromInvitation($invitation);
+        if ($landlordEmail) {
+            $landlordTitle = 'Locataire activé ✅';
+            $landlordSubject = "✅ Locataire activé : {$user->email}";
+            $landlordContent = $this->landlordTenantActivatedContentHtml($invitation, $user, $tenant);
+            $this->trySendMail($landlordEmail, $landlordSubject, $landlordTitle, $ref, $landlordContent);
+        } else {
+            Log::warning('[auth-mail] landlord email missing (tenant activation)', [
+                'invitation_id' => $invitation->id,
+                'landlord_id' => $invitation->landlord_id,
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Compte locataire créé avec succès.',
+            'token'   => $token,
+            'user'    => [
+                'id'    => $user->id,
+                'email' => $user->email,
+                'roles' => method_exists($user, 'getRoleNames')
+                    ? $user->getRoleNames()
+                    : ['tenant'],
             ],
-        ]
-    );
-
-    // 4) Marquer l'invitation comme acceptée
-    $invitation->accepted_at = now();
-    $invitation->tenant_user_id = $user->id;
-    $invitation->save();
-
-    // 5) Générer un token pour connexion auto
-    $token = $user->createToken('tenant-login')->plainTextToken;
-
-    return response()->json([
-        'message' => 'Compte locataire créé avec succès.',
-        'token'   => $token,
-        'user'    => [
-            'id'    => $user->id,
-            'email' => $user->email,
-            'roles' => method_exists($user, 'getRoleNames')
-                ? $user->getRoleNames()
-                : ['tenant'],
-        ],
-        'tenant' => $tenant,
-    ]);
+            'tenant' => $tenant,
+        ]);
     }
-
 }
