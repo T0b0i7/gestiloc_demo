@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Home,
   MapPin,
@@ -10,13 +10,17 @@ import {
   AlertCircle,
   Search,
   X,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   propertyService,
   Property,
   PaginatedResponse,
   uploadService,
-} from '@/services/api';
+} from "@/services/api";
+
+// ✅ IMPORTANT : on n’écrit PLUS "https://wheat-skunk-120710.hostingersite.com" ici.
+// On prend l’origin depuis la config axios de api.ts (baseURL = https://wheat-skunk-120710.hostingersite.com/api)
+import api from "@/services/api";
 
 const styles = `
   .properties-page {
@@ -439,21 +443,20 @@ const styles = `
     color: #4b5563;
   }
 
- .modal-input,
-.modal-select {
-  border-radius: 0.75rem;
-  border: 1px solid #d1d5db;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.9rem;
-  outline: none;
-  background-color: #ffffff;   /* fond blanc */
-  color: #111827;              /* texte noir */
-}
+  .modal-input,
+  .modal-select {
+    border-radius: 0.75rem;
+    border: 1px solid #d1d5db;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    outline: none;
+    background-color: #ffffff;
+    color: #111827;
+  }
 
-.modal-input::placeholder {
-  color: #9ca3af;              /* gris léger pour le placeholder */
-}
-
+  .modal-input::placeholder {
+    color: #9ca3af;
+  }
 
   .modal-input:focus,
   .modal-select:focus {
@@ -525,58 +528,94 @@ const styles = `
 `;
 
 const formatPrice = (value: string | null) => {
-  if (!value) return '-';
+  if (!value) return "-";
   const num = Number(value);
   if (Number.isNaN(num)) return value;
-  return num.toLocaleString('fr-FR', { minimumFractionDigits: 0 }) + ' FCFA';
+  return num.toLocaleString("fr-FR", { minimumFractionDigits: 0 }) + " FCFA";
 };
 
 const formatSurface = (value: string | null) => {
-  if (!value) return '-';
+  if (!value) return "-";
   const num = Number(value);
   if (Number.isNaN(num)) return value;
-  return `${num.toLocaleString('fr-FR')} m²`;
+  return `${num.toLocaleString("fr-FR")} m²`;
 };
 
 const statusLabel: Record<string, string> = {
-  available: 'Disponible',
-  rented: 'Loué',
-  maintenance: 'En maintenance',
-  off_market: 'Retiré du marché',
+  available: "Disponible",
+  rented: "Loué",
+  maintenance: "En maintenance",
+  off_market: "Retiré du marché",
 };
 
 const typeLabel: Record<string, string> = {
-  apartment: 'Appartement',
-  house: 'Maison',
-  office: 'Bureau',
-  commercial: 'Local commercial',
-  parking: 'Parking',
-  land: 'Terrain',
-  other: 'Autre',
+  apartment: "Appartement",
+  house: "Maison",
+  office: "Bureau",
+  commercial: "Local commercial",
+  parking: "Parking",
+  land: "Terrain",
+  other: "Autre",
+};
+
+// ✅ Utilise l’origin du backend à partir de axios baseURL (api.ts)
+// baseURL ex: https://wheat-skunk-120710.hostingersite.com/api  => origin: https://wheat-skunk-120710.hostingersite.com
+const getBackendOrigin = () => {
+  const baseURL = (api.defaults.baseURL || "").toString();
+  if (!baseURL) return window.location.origin; // fallback
+  try {
+    return new URL(baseURL).origin;
+  } catch {
+    // si baseURL est relatif
+    try {
+      return new URL(baseURL, window.location.origin).origin;
+    } catch {
+      return window.location.origin;
+    }
+  }
+};
+
+// ✅ Convertit un path stocké en DB (properties/xxx.png) en URL affichable
+const resolvePhotoUrl = (p?: string | null) => {
+  if (!p) return null;
+
+  // déjà une URL complète
+  if (p.startsWith("http://") || p.startsWith("https://")) return p;
+
+  const origin = getBackendOrigin();
+
+  // Si tu stockes déjà "/storage/...."
+  if (p.startsWith("/storage/")) return `${origin}${p}`;
+
+  // Cas DB : "properties/xxx.png" (ou parfois "properties\xxx.png")
+  const normalized = p.replaceAll("\\", "/").replace(/^\/+/, "");
+  return `${origin}/storage/${normalized}`;
 };
 
 export const MesBiens: React.FC = () => {
   const [data, setData] = useState<PaginatedResponse<Property> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const navigate = useNavigate();
 
   // Modale / édition
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(
+    null
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   // Form modale
-  const [editName, setEditName] = useState('');
-  const [editAddress, setEditAddress] = useState('');
-  const [editCity, setEditCity] = useState('');
-  const [editZip, setEditZip] = useState('');
-  const [editDistrict, setEditDistrict] = useState('');
-  const [editSurface, setEditSurface] = useState('');
-  const [editRent, setEditRent] = useState('');
-  const [editStatus, setEditStatus] = useState<string>('available');
+  const [editName, setEditName] = useState("");
+  const [editAddress, setEditAddress] = useState("");
+  const [editCity, setEditCity] = useState("");
+  const [editZip, setEditZip] = useState("");
+  const [editDistrict, setEditDistrict] = useState("");
+  const [editSurface, setEditSurface] = useState("");
+  const [editRent, setEditRent] = useState("");
+  const [editStatus, setEditStatus] = useState<string>("available");
   const [editPhotos, setEditPhotos] = useState<string[]>([]);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
@@ -588,10 +627,10 @@ export const MesBiens: React.FC = () => {
         const response = await propertyService.listProperties();
         setData(response);
       } catch (err: unknown) {
-        const error = err as { message?: string };
-        console.error('Erreur chargement propriétés:', err);
+        const e = err as { message?: string };
+        console.error("Erreur chargement propriétés:", err);
         setError(
-          error?.message ||
+          e?.message ||
             "Impossible de charger vos biens. Veuillez réessayer dans quelques instants."
         );
       } finally {
@@ -620,23 +659,25 @@ export const MesBiens: React.FC = () => {
   }, [properties, search]);
 
   const handleAddProperty = () => {
-    navigate('/ajouter-bien');
+    navigate("/proprietaire/ajouter-bien");
   };
 
   const handleOpenProperty = (property: Property) => {
     setSelectedProperty(property);
-    setEditName(property.name || '');
-    setEditAddress(property.address || '');
-    setEditCity(property.city || '');
-    setEditZip(property.zip_code || '');
-    setEditDistrict(property.district || '');
-    setEditSurface(property.surface || '');
-    setEditRent(property.rent_amount || '');
-    setEditStatus(property.status || 'available');
+    setEditName(property.name || "");
+    setEditAddress(property.address || "");
+    setEditCity(property.city || "");
+    setEditZip(property.zip_code || "");
+    setEditDistrict(property.district || "");
+    setEditSurface(property.surface || "");
+    setEditRent(property.rent_amount || "");
+    setEditStatus(property.status || "available");
 
     const photos = property.photos || [];
     setEditPhotos(photos);
-    setPhotoPreview(photos.length ? photos[0] : null);
+
+    // ✅ preview = URL affichable
+    setPhotoPreview(photos.length ? resolvePhotoUrl(photos[0]) : null);
 
     setIsModalOpen(true);
   };
@@ -654,19 +695,23 @@ export const MesBiens: React.FC = () => {
 
     try {
       setIsUploadingPhoto(true);
+
       const res = await uploadService.uploadPhoto(file);
-      const url = res.url;
+
+      // ✅ ON STOCKE LE PATH EN DB (stable)
+      const path = res.path;
 
       setEditPhotos((prev) => {
         const next = [...(prev || [])];
-        if (next.length === 0) next.push(url);
-        else next[0] = url;
+        if (next.length === 0) next.push(path);
+        else next[0] = path;
         return next;
       });
 
-      setPhotoPreview(url);
+      // ✅ MAIS ON AFFICHE L’URL
+      setPhotoPreview(resolvePhotoUrl(path));
     } catch (err) {
-      console.error('Erreur upload photo:', err);
+      console.error("Erreur upload photo:", err);
       alert("❌ Impossible d'uploader la photo. Réessayez.");
     } finally {
       setIsUploadingPhoto(false);
@@ -681,7 +726,7 @@ export const MesBiens: React.FC = () => {
 
       const payload: Record<string, unknown> = {
         type: selectedProperty.type,
-        title: editName || selectedProperty.name || 'Bien immobilier',
+        title: editName || selectedProperty.name || "Bien immobilier",
         name: editName || selectedProperty.name,
         description: selectedProperty.description,
         address: editAddress,
@@ -704,7 +749,10 @@ export const MesBiens: React.FC = () => {
         status: editStatus,
         reference_code: selectedProperty.reference_code,
         amenities: selectedProperty.amenities,
+
+        // ✅ on envoie des PATHS (pas des URLs)
         photos: editPhotos,
+
         meta: selectedProperty.meta,
       };
 
@@ -722,16 +770,21 @@ export const MesBiens: React.FC = () => {
         };
       });
 
-      alert('✅ Bien mis à jour avec succès.');
+      alert("✅ Bien mis à jour avec succès.");
       handleCloseModal();
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { errors?: Record<string, unknown[]>; message?: string } } };
-      console.error('Erreur mise à jour bien:', err);
-      if (error?.response?.data?.errors) {
-        const msgs = Object.values(error.response?.data?.errors ?? {}).flat().join('\n');
-        alert('❌ Erreur de validation :\n' + msgs);
-      } else if (error?.response?.data?.message) {
-        alert('❌ ' + error.response.data.message);
+      const errorObj = err as {
+        response?: { data?: { errors?: Record<string, unknown[]>; message?: string } };
+      };
+      console.error("Erreur mise à jour bien:", err);
+
+      if (errorObj?.response?.data?.errors) {
+        const msgs = Object.values(errorObj.response?.data?.errors ?? {})
+          .flat()
+          .join("\n");
+        alert("❌ Erreur de validation :\n" + msgs);
+      } else if (errorObj?.response?.data?.message) {
+        alert("❌ " + errorObj.response.data.message);
       } else {
         alert("❌ Une erreur est survenue lors de l'enregistrement.");
       }
@@ -743,6 +796,7 @@ export const MesBiens: React.FC = () => {
   return (
     <>
       <style>{styles}</style>
+
       <div className="properties-page">
         <div className="properties-container">
           {/* Header + recherche + bouton */}
@@ -769,6 +823,7 @@ export const MesBiens: React.FC = () => {
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
+
               <button
                 className="button button-primary"
                 type="button"
@@ -810,7 +865,9 @@ export const MesBiens: React.FC = () => {
           {!isLoading && !error && properties.length === 0 && (
             <div className="empty-state">
               <Home size={32} color="#9ca3af" />
-              <p className="empty-title">Vous n’avez encore aucun bien enregistré</p>
+              <p className="empty-title">
+                Vous n’avez encore aucun bien enregistré
+              </p>
               <p className="empty-text">
                 Ajoutez votre premier bien pour commencer à suivre vos locations,
                 loyers et locataires dans Gestiloc.
@@ -827,26 +884,31 @@ export const MesBiens: React.FC = () => {
           )}
 
           {/* Liste filtrée vide */}
-          {!isLoading && !error && properties.length > 0 && filtered.length === 0 && (
-            <div className="empty-state">
-              <Search size={28} color="#9ca3af" />
-              <p className="empty-title">Aucun bien ne correspond à votre recherche</p>
-              <p className="empty-text">
-                Essayez avec un autre nom, une adresse ou une ville.
-              </p>
-            </div>
-          )}
+          {!isLoading &&
+            !error &&
+            properties.length > 0 &&
+            filtered.length === 0 && (
+              <div className="empty-state">
+                <Search size={28} color="#9ca3af" />
+                <p className="empty-title">
+                  Aucun bien ne correspond à votre recherche
+                </p>
+                <p className="empty-text">
+                  Essayez avec un autre nom, une adresse ou une ville.
+                </p>
+              </div>
+            )}
 
           {/* Liste filtrée */}
           {!isLoading && !error && filtered.length > 0 && (
             <div className="properties-grid">
               {filtered.map((property) => {
-                const firstPhoto =
-                  property.photos && property.photos.length > 0
-                    ? property.photos[0]
-                    : null;
+                // ✅ on resolve en URL affichable
+                const firstPhoto = resolvePhotoUrl(
+                  property.photos?.[0] ?? null
+                );
 
-                const statusKey = property.status ?? 'available';
+                const statusKey = property.status ?? "available";
                 const statusClass = `property-status-badge status-${statusKey}`;
 
                 return (
@@ -859,8 +921,14 @@ export const MesBiens: React.FC = () => {
                       {firstPhoto ? (
                         <img
                           src={firstPhoto}
-                          alt={property.name || 'Photo du bien'}
+                          alt={property.name || "Photo du bien"}
                           className="property-image"
+                          loading="lazy"
+                          onError={(e) => {
+                            // fallback icone si image cassée
+                            (e.currentTarget as HTMLImageElement).style.display =
+                              "none";
+                          }}
                         />
                       ) : (
                         <ImageIcon size={40} color="#9ca3af" />
@@ -876,14 +944,16 @@ export const MesBiens: React.FC = () => {
                         {typeLabel[property.type] ?? property.type}
                       </p>
                       <h3 className="property-title">
-                        {property.name || property.reference_code || 'Bien sans titre'}
+                        {property.name ||
+                          property.reference_code ||
+                          "Bien sans titre"}
                       </h3>
 
                       <div className="property-location">
                         <MapPin size={15} />
                         <span>
                           {property.address}
-                          {property.city ? `, ${property.city}` : ''}
+                          {property.city ? `, ${property.city}` : ""}
                         </span>
                       </div>
 
@@ -906,9 +976,9 @@ export const MesBiens: React.FC = () => {
                         <span>
                           {property.photos?.length
                             ? `${property.photos.length} photo${
-                                property.photos.length > 1 ? 's' : ''
+                                property.photos.length > 1 ? "s" : ""
                               }`
-                            : 'Aucune photo'}
+                            : "Aucune photo"}
                         </span>
                       </div>
                       {property.reference_code && (
@@ -928,15 +998,12 @@ export const MesBiens: React.FC = () => {
       {/* 🪟 Modale fiche / édition bien */}
       {isModalOpen && selectedProperty && (
         <div className="modal-backdrop" onClick={handleCloseModal}>
-          <div
-            className="modal-dialog"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div>
                 <p className="modal-section-label">Fiche bien</p>
                 <h3 className="modal-title">
-                  {editName || selectedProperty.name || 'Bien immobilier'}
+                  {editName || selectedProperty.name || "Bien immobilier"}
                 </h3>
               </div>
               <button
@@ -957,15 +1024,22 @@ export const MesBiens: React.FC = () => {
                     src={photoPreview}
                     alt="Photo du bien"
                     className="modal-photo-img"
+                    onError={(e) => {
+                      // si l'image ne charge pas, on enlève la preview
+                      setPhotoPreview(null);
+                      (e.currentTarget as HTMLImageElement).style.display =
+                        "none";
+                    }}
                   />
                 ) : (
                   <ImageIcon size={40} color="#9ca3af" />
                 )}
+
                 <div className="modal-photo-overlay">
                   <span>Photo principale</span>
                   <label className="modal-photo-upload-label">
                     <ImageIcon size={14} />
-                    {isUploadingPhoto ? 'Chargement…' : 'Changer la photo'}
+                    {isUploadingPhoto ? "Chargement…" : "Changer la photo"}
                     <input
                       type="file"
                       accept="image/*"
@@ -982,7 +1056,9 @@ export const MesBiens: React.FC = () => {
                 <p className="modal-section-label">Informations principales</p>
                 <div className="modal-grid">
                   <div className="modal-field">
-                    <label className="modal-label" htmlFor="edit-name">Nom / Titre du bien</label>
+                    <label className="modal-label" htmlFor="edit-name">
+                      Nom / Titre du bien
+                    </label>
                     <input
                       id="edit-name"
                       className="modal-input"
@@ -994,7 +1070,9 @@ export const MesBiens: React.FC = () => {
                     />
                   </div>
                   <div className="modal-field">
-                    <label className="modal-label" htmlFor="edit-status">Statut</label>
+                    <label className="modal-label" htmlFor="edit-status">
+                      Statut
+                    </label>
                     <select
                       id="edit-status"
                       className="modal-select"
@@ -1015,7 +1093,9 @@ export const MesBiens: React.FC = () => {
                 <p className="modal-section-label">Adresse</p>
                 <div className="modal-grid">
                   <div className="modal-field">
-                    <label className="modal-label" htmlFor="edit-address">Adresse</label>
+                    <label className="modal-label" htmlFor="edit-address">
+                      Adresse
+                    </label>
                     <input
                       id="edit-address"
                       className="modal-input"
@@ -1026,7 +1106,9 @@ export const MesBiens: React.FC = () => {
                     />
                   </div>
                   <div className="modal-field">
-                    <label className="modal-label" htmlFor="edit-city">Ville</label>
+                    <label className="modal-label" htmlFor="edit-city">
+                      Ville
+                    </label>
                     <input
                       id="edit-city"
                       className="modal-input"
@@ -1037,7 +1119,9 @@ export const MesBiens: React.FC = () => {
                     />
                   </div>
                   <div className="modal-field">
-                    <label className="modal-label" htmlFor="edit-zip">Code postal</label>
+                    <label className="modal-label" htmlFor="edit-zip">
+                      Code postal
+                    </label>
                     <input
                       id="edit-zip"
                       className="modal-input"
@@ -1048,7 +1132,9 @@ export const MesBiens: React.FC = () => {
                     />
                   </div>
                   <div className="modal-field">
-                    <label className="modal-label" htmlFor="edit-district">Quartier</label>
+                    <label className="modal-label" htmlFor="edit-district">
+                      Quartier
+                    </label>
                     <input
                       id="edit-district"
                       className="modal-input"
@@ -1066,7 +1152,9 @@ export const MesBiens: React.FC = () => {
                 <p className="modal-section-label">Caractéristiques</p>
                 <div className="modal-grid">
                   <div className="modal-field">
-                    <label className="modal-label" htmlFor="edit-surface">Surface (m²)</label>
+                    <label className="modal-label" htmlFor="edit-surface">
+                      Surface (m²)
+                    </label>
                     <input
                       id="edit-surface"
                       className="modal-input"
@@ -1079,7 +1167,9 @@ export const MesBiens: React.FC = () => {
                     />
                   </div>
                   <div className="modal-field">
-                    <label className="modal-label" htmlFor="edit-rent">Loyer mensuel (FCFA)</label>
+                    <label className="modal-label" htmlFor="edit-rent">
+                      Loyer mensuel (FCFA)
+                    </label>
                     <input
                       id="edit-rent"
                       className="modal-input"
@@ -1096,11 +1186,7 @@ export const MesBiens: React.FC = () => {
             </div>
 
             <div className="modal-footer">
-              <button
-                className="btn-ghost"
-                type="button"
-                onClick={handleCloseModal}
-              >
+              <button className="btn-ghost" type="button" onClick={handleCloseModal}>
                 Annuler
               </button>
               <button
@@ -1115,7 +1201,7 @@ export const MesBiens: React.FC = () => {
                     Enregistrement…
                   </>
                 ) : (
-                  'Enregistrer les modifications'
+                  "Enregistrer les modifications"
                 )}
               </button>
             </div>

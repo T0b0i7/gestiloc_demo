@@ -1,5 +1,6 @@
 // src/pages/landlord/LandlordIncidentsPage.tsx
 import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   AlertCircle,
   CheckCircle2,
@@ -12,6 +13,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 
+import api from "@/services/api";
 import { maintenanceService, MaintenanceRequest, MaintenanceStatus } from "@/services/maintenanceService";
 
 type IncidentStatus = MaintenanceStatus;
@@ -24,18 +26,32 @@ const statusLabel: Record<IncidentStatus, string> = {
   cancelled: "Annulé",
 };
 
-const apiBase = import.meta.env.VITE_API_BASE_URL || "http://https://wheat-skunk-120710.hostingersite.com";
+/**
+ * ✅ Base URL backend depuis api.ts (source unique)
+ * api.defaults.baseURL = "https://wheat-skunk-120710.hostingersite.com/api"
+ * -> origin "https://wheat-skunk-120710.hostingersite.com"
+ */
+const getBackendOrigin = () => {
+  const base = api.defaults.baseURL || "";
+  return base.replace(/\/api\/?$/, "");
+};
 
-// ✅ même logique que côté locataire, avec fallback /storage si besoin
-const incidentPhotoUrl = (p: string) => {
+/**
+ * ✅ Normalise un path photo stocké en DB
+ * - "maintenance/xxx.jpg" => {origin}/storage/maintenance/xxx.jpg
+ * - "/storage/maintenance/xxx.jpg" => {origin}/storage/maintenance/xxx.jpg
+ * - "http(s)://..." => inchangé
+ */
+const fileUrl = (p: string) => {
   if (!p) return "";
   if (p.startsWith("http://") || p.startsWith("https://")) return p;
 
-  if (p.startsWith("/storage/")) return `${apiBase}${p}`;
-  if (p.startsWith("storage/")) return `${apiBase}/${p}`;
+  const origin = getBackendOrigin();
 
-  // ex: "incidents/xxx.jpg"
-  return `${apiBase}/storage/${p}`;
+  if (p.startsWith("/storage/")) return `${origin}${p}`;
+  if (p.startsWith("storage/")) return `${origin}/${p}`;
+
+  return `${origin}/storage/${p}`;
 };
 
 function StatusBadge({ status }: { status: IncidentStatus }) {
@@ -104,7 +120,6 @@ function Select({
           </option>
         ))}
       </select>
-
       <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-400">▾</div>
     </div>
   );
@@ -138,13 +153,7 @@ function Input({
   );
 }
 
-function PhotoStrip({
-  photos,
-  onOpen,
-}: {
-  photos: string[];
-  onOpen: (url: string) => void;
-}) {
+function PhotoStrip({ photos, onOpen }: { photos: string[]; onOpen: (url: string) => void }) {
   if (!photos?.length) return null;
 
   return (
@@ -156,7 +165,7 @@ function PhotoStrip({
 
       <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
         {photos.map((p, idx) => {
-          const url = incidentPhotoUrl(p);
+          const url = fileUrl(p);
           return (
             <button
               key={idx}
@@ -171,7 +180,6 @@ function PhotoStrip({
                 className="h-24 w-36 object-cover block"
                 loading="lazy"
                 onError={(e) => {
-                  // fallback visuel si 404
                   (e.currentTarget as HTMLImageElement).style.display = "none";
                 }}
               />
@@ -189,19 +197,23 @@ function PhotoStrip({
   );
 }
 
-function Lightbox({
-  url,
-  onClose,
-}: {
-  url: string | null;
-  onClose: () => void;
-}) {
+/**
+ * ✅ Lightbox en PORTAL : ne sera plus coupé par ton layout dashboard
+ * ✅ Largeur réduite + bien centré
+ */
+function Lightbox({ url, onClose }: { url: string | null; onClose: () => void }) {
   if (!url) return null;
 
-  return (
-    <div className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+  const node = (
+    <div
+      className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={onClose}
+    >
       <div
-        className="w-full max-w-5xl rounded-3xl bg-white border border-blue-200 shadow-2xl overflow-hidden"
+        className="
+          w-[92vw] max-w-3xl
+          rounded-3xl bg-white border border-blue-200 shadow-2xl overflow-hidden
+        "
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-blue-100 bg-blue-50">
@@ -225,12 +237,18 @@ function Lightbox({
           </div>
         </div>
 
-        <div className="p-4 bg-white">
-          <img src={url} alt="aperçu" className="w-full max-h-[75vh] object-contain rounded-2xl border border-gray-200 bg-white" />
+        <div className="p-4 bg-white flex items-center justify-center">
+          <img
+            src={url}
+            alt="aperçu"
+            className="w-full max-h-[72vh] object-contain rounded-2xl border border-gray-200 bg-white"
+          />
         </div>
       </div>
     </div>
   );
+
+  return createPortal(node, document.body);
 }
 
 export default function LandlordIncidentsPage() {
@@ -410,7 +428,6 @@ export default function LandlordIncidentsPage() {
             {filtered.map((it) => {
               const tenantName = `${it.tenant?.first_name || ""} ${it.tenant?.last_name || ""}`.trim();
               const propLine = [it.property?.name, it.property?.address, it.property?.city].filter(Boolean).join(" • ");
-
               const photos = Array.isArray(it.photos) ? it.photos.filter(Boolean) : [];
 
               return (
@@ -522,7 +539,7 @@ export default function LandlordIncidentsPage() {
                     </div>
                   </div>
 
-                  {/* ✅ Photos */}
+                  {/* Photos */}
                   <PhotoStrip photos={photos} onOpen={(url) => setPreviewUrl(url)} />
 
                   {/* Footer meta */}

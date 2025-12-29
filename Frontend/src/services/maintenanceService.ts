@@ -59,17 +59,18 @@ export const maintenanceService = {
   async list(params?: { status?: MaintenanceStatus; property_id?: number; page?: number }) {
     const res = await api.get<PaginatedResponse<MaintenanceRequest> | any>("/incidents", { params });
 
-    // Cas 1: paginate Laravel => { data: [...], ...meta }
+    // Cas paginate Laravel => { data: [...], ...meta }
     if (res.data && typeof res.data === "object" && Array.isArray(res.data.data)) {
       return res.data as PaginatedResponse<MaintenanceRequest>;
     }
 
-    // Cas 2: Resource collection => { data: [...] }
-    if (res.data && typeof res.data === "object" && Array.isArray(res.data.data)) {
-      return { data: res.data.data, current_page: 1, last_page: 1, per_page: res.data.data.length, total: res.data.data.length };
+    // Cas Resource collection => { data: [...] }
+    if (res.data && typeof res.data === "object" && Array.isArray(res.data?.data)) {
+      const arr = res.data.data as MaintenanceRequest[];
+      return { data: arr, current_page: 1, last_page: 1, per_page: arr.length, total: arr.length };
     }
 
-    // Cas 3: array direct
+    // Cas array direct
     const arr = Array.isArray(res.data) ? (res.data as MaintenanceRequest[]) : [];
     return { data: arr, current_page: 1, last_page: 1, per_page: arr.length, total: arr.length };
   },

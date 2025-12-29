@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class PropertyController extends Controller
 {
@@ -20,6 +21,14 @@ class PropertyController extends Controller
     {
         return config('app.name', 'Gestiloc');
     }
+
+    protected $appends = ['photo_urls'];
+
+public function getPhotoUrlsAttribute()
+{
+    $photos = $this->photos ?? [];
+    return array_map(fn($p) => Storage::disk('public')->url($p), $photos);
+}
 
     private function frontendUrl(): string
     {

@@ -66,7 +66,7 @@ type PhotoFormItem = {
   condition_notes?: string;
 };
 
-const API_ORIGIN = 'http://https://wheat-skunk-120710.hostingersite.com';
+const API_ORIGIN = 'https://wheat-skunk-120710.hostingersite.com';
 
 const formatDate = (dateStr?: string | null) => {
   if (!dateStr) return 'Date inconnue';
@@ -107,7 +107,7 @@ const getBadgeColor = (type: ConditionType) => {
 const buildPublicPhotoUrl = (photo?: PropertyConditionPhoto | null) => {
   if (!photo) return '';
   if (photo.url) return photo.url;
-  const path = photo.path?.replace(/^\/+/, '');
+  const path = (photo.path || '').replace(/^\/+/, '');
   return path ? `${API_ORIGIN}/storage/${path}` : '';
 };
 
@@ -146,7 +146,7 @@ const leaseLabel = (lease: Lease, property: Property | null) => {
   };
 };
 
-/** ✅ UI helpers (pas de fond gris / texte illisible) */
+/** ✅ UI helpers */
 const ui = {
   input:
     'w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/35 focus:border-primary',
@@ -223,10 +223,7 @@ const EtatsLieux: React.FC = () => {
         if (list.length > 0 && !selectedPropertyId) setSelectedPropertyId(list[0].id);
       } catch (e: any) {
         console.error('Erreur chargement propriétés:', e);
-        setError(
-          e?.message ||
-            'Impossible de charger les biens. Vérifiez vos droits ou réessayez plus tard.'
-        );
+        setError(e?.message || 'Impossible de charger les biens. Vérifiez vos droits ou réessayez plus tard.');
       } finally {
         setIsLoadingProperties(false);
       }
@@ -274,9 +271,7 @@ const EtatsLieux: React.FC = () => {
         setCreateError(null);
 
         const allLeases = await leaseService.listLeases();
-        const filtered = allLeases.filter(
-          (lease) => Number(lease.property_id) === Number(selectedPropertyId)
-        );
+        const filtered = allLeases.filter((lease) => Number(lease.property_id) === Number(selectedPropertyId));
 
         setLeasesForProperty(filtered);
 
@@ -391,7 +386,7 @@ const EtatsLieux: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      {/* ✅ Header pro + barre actions */}
+      {/* Header */}
       <div className={`${ui.card} p-5`}>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
@@ -401,9 +396,7 @@ const EtatsLieux: React.FC = () => {
               </div>
               <div className="min-w-0">
                 <h1 className="text-xl sm:text-2xl font-bold text-slate-900 truncate">États des lieux</h1>
-                <p className="text-sm text-slate-500 mt-0.5">
-                  Entrée • Sortie • Intermédiaire — suivi complet avec photos et signatures.
-                </p>
+                <p className="text-sm text-slate-500 mt-0.5">Entrée • Sortie • Intermédiaire — suivi complet avec photos et signatures.</p>
               </div>
             </div>
           </div>
@@ -424,7 +417,7 @@ const EtatsLieux: React.FC = () => {
                   value={selectedPropertyId ?? ''}
                   onChange={(e) => setSelectedPropertyId(e.target.value ? Number(e.target.value) : null)}
                   disabled={isLoadingProperties || properties.length === 0}
-                  className={ui.select}
+                  className={`${ui.select} pl-10`}
                 >
                   {properties.length === 0 && <option value="">Aucun bien disponible</option>}
                   {properties.map((p) => (
@@ -435,10 +428,6 @@ const EtatsLieux: React.FC = () => {
                 </select>
                 <Home className="h-4 w-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <ChevronDown className="h-4 w-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                {/* padding-left icon */}
-                <style>{`
-                  select.${ui.select.split(' ')[0]} { padding-left: 2.25rem; }
-                `}</style>
               </div>
             </div>
 
@@ -457,13 +446,10 @@ const EtatsLieux: React.FC = () => {
           </div>
         </div>
 
-        {/* ✅ mini info bien + total */}
         {currentProperty && (
           <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-slate-900 truncate">
-                {currentProperty.name || currentProperty.reference_code || 'Bien sélectionné'}
-              </p>
+              <p className="text-sm font-semibold text-slate-900 truncate">{currentProperty.name || currentProperty.reference_code || 'Bien sélectionné'}</p>
               <p className="text-xs text-slate-500 truncate">
                 {currentProperty.address} · {currentProperty.city}
               </p>
@@ -476,7 +462,7 @@ const EtatsLieux: React.FC = () => {
         )}
       </div>
 
-      {/* ✅ Filtres (plus clean) */}
+      {/* Filtres */}
       <div className={`${ui.card} p-5`}>
         <div className="flex items-center gap-2 mb-4">
           <div className="h-9 w-9 rounded-2xl bg-slate-900/5 flex items-center justify-center text-slate-700">
@@ -524,7 +510,7 @@ const EtatsLieux: React.FC = () => {
         </div>
       )}
 
-      {/* ✅ Stats cards (plus pro, plus lisibles) */}
+      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <StatCard title="Entrées" value={entryReports.length} tone="emerald" />
         <StatCard title="Sorties" value={exitReports.length} tone="rose" />
@@ -557,17 +543,16 @@ const EtatsLieux: React.FC = () => {
         </div>
       )}
 
-      {/* ✅ Modal création (inputs 100% blanc lisible, layout + sticky footer) */}
+      {/* ✅ Modal création — FIX: layout flex + footer toujours visible + submit correct */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/55 backdrop-blur-sm p-4">
-          <div className="mx-auto flex min-h-full w-full max-w-3xl items-center justify-center">
-            <div className="w-full rounded-3xl bg-white shadow-2xl border border-slate-200 max-h-[90vh] overflow-hidden">
-              <div className="flex items-start justify-between gap-3 p-6 border-b border-slate-100">
+          <div className="mx-auto flex min-h-full w-full items-center justify-center">
+            <div className="w-full max-w-3xl rounded-3xl bg-white shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+              {/* Header */}
+              <div className="flex items-start justify-between gap-3 p-6 border-b border-slate-100 shrink-0">
                 <div>
                   <h2 className="text-lg font-bold text-slate-900">Nouvel état des lieux</h2>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Type • Bail • Date • Notes • Photos (statut + note par photo)
-                  </p>
+                  <p className="text-xs text-slate-500 mt-1">Type • Bail • Date • Notes • Photos (statut + note par photo)</p>
                 </div>
 
                 <button
@@ -580,7 +565,8 @@ const EtatsLieux: React.FC = () => {
                 </button>
               </div>
 
-              <div className="p-6 overflow-y-auto max-h-[calc(90vh-78px-76px)]">
+              {/* Body scrollable */}
+              <div className="p-6 overflow-y-auto flex-1">
                 {createError && (
                   <div className="flex items-start gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-xs text-rose-700 mb-4">
                     <AlertCircle className="w-4 h-4 mt-0.5" />
@@ -588,7 +574,7 @@ const EtatsLieux: React.FC = () => {
                   </div>
                 )}
 
-                <form onSubmit={handleSubmitNewReport} className="space-y-5">
+                <form id="create-condition-report-form" onSubmit={handleSubmitNewReport} className="space-y-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className={ui.label}>Type</label>
@@ -623,12 +609,8 @@ const EtatsLieux: React.FC = () => {
                         className={ui.select}
                       >
                         {isLoadingLeases && <option value="">Chargement des baux…</option>}
-                        {!isLoadingLeases && leasesForProperty.length === 0 && (
-                          <option value="">Aucun bail pour ce bien (crée un bail avant)</option>
-                        )}
-                        {!isLoadingLeases && leasesForProperty.length > 0 && !formLeaseId && (
-                          <option value="">Sélectionner un bail</option>
-                        )}
+                        {!isLoadingLeases && leasesForProperty.length === 0 && <option value="">Aucun bail pour ce bien (crée un bail avant)</option>}
+                        {!isLoadingLeases && leasesForProperty.length > 0 && !formLeaseId && <option value="">Sélectionner un bail</option>}
                         {leasesForProperty.map((lease) => {
                           const { title, subtitle } = leaseLabel(lease, currentProperty);
                           return (
@@ -666,9 +648,7 @@ const EtatsLieux: React.FC = () => {
                         onChange={(e) => onPickFiles(e.target.files)}
                         className="block w-full text-xs text-slate-600 file:mr-3 file:rounded-xl file:border-0 file:bg-slate-900 file:text-white file:px-3 file:py-2 file:text-xs file:font-semibold hover:file:opacity-90 cursor-pointer"
                       />
-                      <p className="mt-2 text-[11px] text-slate-500">
-                        Ajoute plusieurs photos. Renseigne un statut + une note par photo si besoin.
-                      </p>
+                      <p className="mt-2 text-[11px] text-slate-500">Ajoute plusieurs photos. Renseigne un statut + une note par photo si besoin.</p>
                     </div>
                   </div>
 
@@ -698,9 +678,7 @@ const EtatsLieux: React.FC = () => {
                               <div className="relative">
                                 <select
                                   value={p.condition_status}
-                                  onChange={(e) =>
-                                    updatePhotoItem(idx, { condition_status: e.target.value as ConditionStatus })
-                                  }
+                                  onChange={(e) => updatePhotoItem(idx, { condition_status: e.target.value as ConditionStatus })}
                                   className={ui.select}
                                 >
                                   <option value="good">Bon</option>
@@ -727,19 +705,19 @@ const EtatsLieux: React.FC = () => {
                     </div>
                   )}
 
-                  {/* spacer pour footer sticky */}
+                  {/* ✅ padding bottom pour éviter que le dernier bloc “colle” au footer */}
                   <div className="h-2" />
                 </form>
               </div>
 
-              {/* ✅ Footer sticky */}
-              <div className="p-5 border-t border-slate-100 bg-white flex justify-end gap-2">
+              {/* Footer sticky (non scroll) */}
+              <div className="p-5 border-t border-slate-100 bg-white flex justify-end gap-2 shrink-0">
                 <button type="button" onClick={() => setShowCreateModal(false)} className={ui.btnGhost}>
                   Annuler
                 </button>
                 <button
-                  type="button"
-                  onClick={(e) => handleSubmitNewReport(e as any)}
+                  type="submit"
+                  form="create-condition-report-form"
                   disabled={isSubmitting || !selectedPropertyId}
                   className={ui.btnPrimary}
                 >
@@ -752,7 +730,7 @@ const EtatsLieux: React.FC = () => {
         </div>
       )}
 
-      {/* ✅ Modal détails (plus “pro”, colonne infos + grille photos) */}
+      {/* Modal détails (inchangé) */}
       {selectedReport && (
         <div className="fixed inset-0 z-50 bg-slate-900/55 backdrop-blur-sm p-4">
           <div className="mx-auto flex min-h-full w-full max-w-6xl items-center justify-center">
@@ -783,7 +761,6 @@ const EtatsLieux: React.FC = () => {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Colonne gauche infos */}
                     <div className="lg:col-span-1 space-y-4">
                       <div className={`${ui.softCard} p-4`}>
                         <p className={ui.label}>Bail associé</p>
@@ -808,9 +785,7 @@ const EtatsLieux: React.FC = () => {
                             </div>
                           </div>
                         ) : (
-                          <p className="text-xs text-slate-500 mt-2">
-                            Locataire non chargé (ajoute `lease.tenant` côté backend).
-                          </p>
+                          <p className="text-xs text-slate-500 mt-2">Locataire non chargé (ajoute `lease.tenant` côté backend).</p>
                         )}
                       </div>
 
@@ -822,7 +797,6 @@ const EtatsLieux: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Colonne photos */}
                     <div className="lg:col-span-2">
                       <div className="flex items-center justify-between mb-3">
                         <div>
@@ -839,12 +813,7 @@ const EtatsLieux: React.FC = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                           {selectedReport.photos.map((ph) => (
                             <div key={ph.id} className="rounded-2xl border border-slate-200 overflow-hidden bg-white shadow-sm">
-                              <img
-                                src={buildPublicPhotoUrl(ph)}
-                                alt={ph.caption || 'Photo'}
-                                className="w-full h-56 object-cover"
-                                loading="lazy"
-                              />
+                              <img src={buildPublicPhotoUrl(ph)} alt={ph.caption || 'Photo'} className="w-full h-56 object-cover" loading="lazy" />
                               <div className="p-3 text-xs text-slate-600 space-y-1">
                                 <div className="flex items-center justify-between">
                                   <span>{formatDate(ph.taken_at)}</span>
@@ -881,11 +850,7 @@ const EtatsLieux: React.FC = () => {
   );
 };
 
-const StatCard: React.FC<{ title: string; value: any; tone: 'emerald' | 'rose' | 'amber' }> = ({
-  title,
-  value,
-  tone,
-}) => {
+const StatCard: React.FC<{ title: string; value: any; tone: 'emerald' | 'rose' | 'amber' }> = ({ title, value, tone }) => {
   const toneMap: Record<string, { bg: string; icon: string }> = {
     emerald: { bg: 'bg-emerald-50', icon: 'text-emerald-600' },
     rose: { bg: 'bg-rose-50', icon: 'text-rose-600' },
@@ -932,7 +897,6 @@ const SectionEtats: React.FC<SectionProps> = ({ title, reports, emptyMessage, on
             const firstPhoto = photos[0] || null;
             const badgeColor = getBadgeColor(report.type as ConditionType);
             const previewUrl = buildPublicPhotoUrl(firstPhoto);
-
             const tenantName = report.lease?.tenant ? fullName(report.lease.tenant) : '';
 
             return (
@@ -967,9 +931,7 @@ const SectionEtats: React.FC<SectionProps> = ({ title, reports, emptyMessage, on
                           <Calendar className="w-3 h-3 text-slate-400" />
                           {formatDate(report.report_date)}
                         </p>
-                        <p className="text-sm font-bold text-slate-900 mt-0.5">
-                          {getTypeLabel(report.type as ConditionType)}
-                        </p>
+                        <p className="text-sm font-bold text-slate-900 mt-0.5">{getTypeLabel(report.type as ConditionType)}</p>
 
                         {tenantName && (
                           <p className="text-xs text-slate-500 mt-1 truncate">
@@ -983,9 +945,7 @@ const SectionEtats: React.FC<SectionProps> = ({ title, reports, emptyMessage, on
                       </span>
                     </div>
 
-                    {report.notes && (
-                      <p className="text-xs text-slate-600 line-clamp-3">{report.notes}</p>
-                    )}
+                    {report.notes && <p className="text-xs text-slate-600 line-clamp-3">{report.notes}</p>}
 
                     <div className="flex items-center justify-between gap-3 pt-1">
                       <div className="flex items-center gap-2 text-[11px] text-slate-500">
@@ -993,7 +953,7 @@ const SectionEtats: React.FC<SectionProps> = ({ title, reports, emptyMessage, on
                         <span className="font-medium">{photos.length}</span> photo(s)
                       </div>
 
-                      {report.signed_by && (
+                      {(report as any).signed_by && (
                         <div className="flex items-center gap-1.5 text-[11px] text-emerald-600">
                           <CheckCircle2 className="w-3 h-3" />
                           <span className="font-semibold">Signé</span>
@@ -1003,8 +963,7 @@ const SectionEtats: React.FC<SectionProps> = ({ title, reports, emptyMessage, on
 
                     {firstPhoto?.condition_status && (
                       <div className="text-[11px] text-slate-600">
-                        <span className="font-semibold">Statut :</span>{' '}
-                        {statusLabel(firstPhoto.condition_status as ConditionStatus)}
+                        <span className="font-semibold">Statut :</span> {statusLabel(firstPhoto.condition_status as ConditionStatus)}
                         {firstPhoto.condition_notes ? (
                           <>
                             {' '}

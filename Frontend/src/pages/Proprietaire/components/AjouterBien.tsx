@@ -683,7 +683,7 @@ export const AjouterBien = ({
       if (photos.length > 0) {
         for (const file of photos) {
           const res = await uploadService.uploadPhoto(file);
-          uploadedPhotoUrls.push(res.url);
+          uploadedPhotoUrls.push(res.path);
         }
       }
 
@@ -721,7 +721,7 @@ export const AjouterBien = ({
       console.log("Property created:", property);
 
       pushNotify("✅ Le bien a été ajouté avec succès !", "success");
-      navigate("/proprietaire/biens");
+      navigate("/proprietaire/mes-biens");
     } catch (e: any) {
       const err = e as ApiErr;
       console.error("Erreur lors de l'ajout du bien:", err);
