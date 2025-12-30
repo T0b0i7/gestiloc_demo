@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('rent_receipts', function (Blueprint $table) {
+        Schema::create('fix_rent_receipts', function (Blueprint $table) {
             $table->id();
 
             $table->foreignId('invoice_id')->constrained()->cascadeOnDelete();
@@ -31,6 +31,6 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::dropIfExists('rent_receipts');
+        Schema::dropIfExists('fix_rent_receipts');
     }
 };

@@ -15,6 +15,21 @@ use Carbon\Carbon;
 
 class LeaseController extends Controller
 {
+    /**
+     * ✅ Ajuste ces 2 constantes selon tes valeurs réelles en DB
+     */
+    private const PROPERTY_STATUS_RENTED = 'rented';
+
+    // ⚠️ Mets ici le vrai statut “disponible” chez toi.
+    // Si tu utilises réellement "available", laisse comme ça.
+    private const PROPERTY_STATUS_AVAILABLE = 'available';
+
+    /**
+     * ✅ Statuts de bail considérés comme “en cours”
+     * (si dans TA table leases.status tu as "rented", ajoute-le ici)
+     */
+    private const LEASE_OPEN_STATUSES = ['active', 'pending'];
+
     private function appName(): string
     {
         return config('app.name', 'Gestiloc');
@@ -306,7 +321,8 @@ HTML;
     }
 
     /**
-     * Create a lease — only landlord owning the property can create
+     * ✅ Create a lease — only landlord owning the property can create
+     * ✅ One property can have only ONE open lease at a time
      */
     public function store(StoreLeaseRequest $request): JsonResponse
     {
@@ -322,32 +338,61 @@ HTML;
             return response()->json(['message' => 'Landlord profile missing'], 422);
         }
 
-        $property = Property::findOrFail($data['property_id']);
+        return DB::transaction(function () use ($data, $landlord, $request) {
 
-        if ((int) $property->landlord_id !== (int) $landlord->id) {
-            return response()->json(['message' => 'You do not own this property'], 403);
-        }
+            // 🔒 Lock du bien (MySQL/InnoDB) : empêche 2 créations simultanées
+            $property = Property::whereKey($data['property_id'])
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        $tenant = Tenant::findOrFail($data['tenant_id']);
+            // Ownership check
+            if ((int) $property->landlord_id !== (int) $landlord->id) {
+                return response()->json(['message' => 'You do not own this property'], 403);
+            }
 
-        return DB::transaction(function () use ($data, $property, $tenant, $request) {
+            // ✅ Blocage immédiat si le bien est déjà loué
+            if (($property->status ?? null) === self::PROPERTY_STATUS_RENTED) {
+                return response()->json([
+                    'message' => 'Ce bien est déjà loué.',
+                    'errors' => [
+                        'property_id' => ['Ce bien est déjà loué.']
+                    ]
+                ], 422);
+            }
+
+            // ✅ Vérifie qu’il n’existe PAS déjà un bail “en cours”
+            $alreadyOpen = Lease::query()
+                ->where('property_id', $property->id)
+                ->whereIn('status', self::LEASE_OPEN_STATUSES)
+                ->exists();
+
+            if ($alreadyOpen) {
+                return response()->json([
+                    'message' => 'Ce bien a déjà un bail en cours.',
+                    'errors' => [
+                        'property_id' => ['Ce bien a déjà un bail en cours.']
+                    ]
+                ], 422);
+            }
+
+            $tenant = Tenant::findOrFail($data['tenant_id']);
 
             $lease = Lease::create([
                 'property_id' => $property->id,
-                'tenant_id' => $tenant->id,
-                'start_date' => $data['start_date'],
-                'end_date' => $data['end_date'] ?? null,
+                'tenant_id'   => $tenant->id,
+                'start_date'  => $data['start_date'],
+                'end_date'    => $data['end_date'] ?? null,
                 'rent_amount' => $data['rent_amount'],
-                'deposit' => $data['deposit'] ?? null,
-                'type' => $data['type'],
-                'status' => $data['status'] ?? 'active',
-                'terms' => $data['terms'] ?? null,
+                'deposit'     => $data['deposit'] ?? null,
+                'type'        => $data['type'],
+                'status'      => $data['status'] ?? 'active',
+                'terms'       => $data['terms'] ?? null,
             ]);
 
-            if ($lease->status === 'active') {
-                $property->status = 'rented';
-                $property->save();
-            }
+            // ✅ Dès qu’un bail est créé (active/pending), on marque le bien loué
+            // (si tu veux le faire seulement pour "active", dis-le)
+            $property->status = self::PROPERTY_STATUS_RENTED;
+            $property->save();
 
             $this->sendLeaseCreatedMails($request, $lease);
 
@@ -388,14 +433,6 @@ HTML;
 
         $landlordId = (int) $user->landlord->id;
 
-        $lease = Lease::where('uuid', $uuid)
-            ->with(['property', 'tenant', 'tenant.user'])
-            ->firstOrFail();
-
-        if ((int) $lease->property?->landlord_id !== $landlordId) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
-
         // validation end_date (optionnelle)
         $data = $request->validate([
             'end_date' => ['nullable', 'date'],
@@ -405,14 +442,23 @@ HTML;
             ? Carbon::parse($data['end_date'])->toDateString()
             : now()->toDateString();
 
+        $lease = Lease::where('uuid', $uuid)
+            ->with(['property', 'tenant', 'tenant.user'])
+            ->firstOrFail();
+
+        if ((int) $lease->property?->landlord_id !== $landlordId) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
         DB::transaction(function () use ($lease, $endDateYmd) {
             $lease->update([
-                'status' => 'terminated',
+                'status'   => 'terminated',
                 'end_date' => $endDateYmd,
             ]);
 
             if ($lease->property) {
-                $lease->property->update(['status' => 'available']);
+                // ✅ Libère le bien (⚠️ ajuste PROPERTY_STATUS_AVAILABLE si besoin)
+                $lease->property->update(['status' => self::PROPERTY_STATUS_AVAILABLE]);
             }
         });
 

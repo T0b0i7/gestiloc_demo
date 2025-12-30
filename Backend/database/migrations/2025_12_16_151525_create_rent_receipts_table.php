@@ -14,7 +14,8 @@ return new class extends Migration {
             $table->foreignId('property_id')->constrained('properties')->cascadeOnDelete();
 
             $table->foreignId('landlord_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignId('tenant_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
+
 
             // mois/année du paiement
             $table->unsignedTinyInteger('month'); // 1..12

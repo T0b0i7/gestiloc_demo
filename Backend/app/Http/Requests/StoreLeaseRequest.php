@@ -15,15 +15,22 @@ class StoreLeaseRequest extends FormRequest
     {
         return [
             'property_id' => 'required|exists:properties,id',
-            'tenant_id' => 'required|exists:tenants,id',
-            'start_date' => 'required|date|after:today',
-            'end_date' => 'nullable|date|after:start_date',
-            'rent_amount' => 'required|numeric|min:0.01|max:99999.99',
-            'deposit' => 'nullable|numeric|min:0|max:99999.99',
-            'type' => 'required|in:nu,meuble',
-            'status' => 'nullable|in:pending,active,terminated',
-            'terms' => 'nullable|array',
-            'terms.*' => 'nullable|string|max:1000',
+            'tenant_id'   => 'required|exists:tenants,id',
+
+            // ✅ autorise aujourd’hui
+            'start_date'  => 'required|date|after_or_equal:today',
+            'end_date'    => 'nullable|date|after_or_equal:start_date',
+
+            'rent_amount' => 'required|numeric|min:0.01',
+            'deposit'     => 'nullable|numeric|min:0',
+
+            'type'        => 'required|in:nu,meuble',
+
+            // ✅ statuts de bail (tu peux ajouter 'rented' ici seulement si ton Lease.status l’utilise vraiment)
+            'status'      => 'nullable|in:pending,active,terminated',
+
+            'terms'       => 'nullable|array',
+            'terms.*'     => 'nullable|string',
         ];
     }
 }

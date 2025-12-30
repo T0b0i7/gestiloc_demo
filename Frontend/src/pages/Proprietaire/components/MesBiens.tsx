@@ -18,8 +18,8 @@ import {
   uploadService,
 } from "@/services/api";
 
-// ✅ IMPORTANT : on n’écrit PLUS "https://wheat-skunk-120710.hostingersite.com" ici.
-// On prend l’origin depuis la config axios de api.ts (baseURL = https://wheat-skunk-120710.hostingersite.com/api)
+// ✅ IMPORTANT : on n’écrit PLUS "http://localhost:8000" ici.
+// On prend l’origin depuis la config axios de api.ts (baseURL = http://localhost:8000/api)
 import api from "@/services/api";
 
 const styles = `
@@ -559,7 +559,7 @@ const typeLabel: Record<string, string> = {
 };
 
 // ✅ Utilise l’origin du backend à partir de axios baseURL (api.ts)
-// baseURL ex: https://wheat-skunk-120710.hostingersite.com/api  => origin: https://wheat-skunk-120710.hostingersite.com
+// baseURL ex: http://localhost:8000/api  => origin: http://localhost:8000
 const getBackendOrigin = () => {
   const baseURL = (api.defaults.baseURL || "").toString();
   if (!baseURL) return window.location.origin; // fallback

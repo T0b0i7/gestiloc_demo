@@ -28,8 +28,8 @@ const statusLabel: Record<IncidentStatus, string> = {
 
 /**
  * ✅ Base URL backend depuis api.ts (source unique)
- * api.defaults.baseURL = "https://wheat-skunk-120710.hostingersite.com/api"
- * -> origin "https://wheat-skunk-120710.hostingersite.com"
+ * api.defaults.baseURL = "http://localhost:8000/api"
+ * -> origin "http://localhost:8000"
  */
 const getBackendOrigin = () => {
   const base = api.defaults.baseURL || "";
