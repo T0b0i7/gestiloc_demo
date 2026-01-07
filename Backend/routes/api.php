@@ -66,6 +66,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/invoices', [InvoiceController::class, 'index']);
     Route::get('/invoices/{id}', [InvoiceController::class, 'show']);
     Route::get('/invoices/{id}/pdf', [InvoiceController::class, 'downloadPdf']);
+    Route::get('/invoices/{id}/payment/verify', [\App\Http\Controllers\Api\Finance\PaymentVerificationController::class, 'verify']);
+    Route::post('/invoices/{id}/pay-link', [\App\Http\Controllers\Api\PaymentLinkController::class, 'create']);
 
 
 
@@ -118,6 +120,7 @@ Route::middleware(['auth:sanctum', 'role:landlord'])->group(function () {
     Route::middleware('role:landlord')->group(function () {
 
         // Finance côté bailleur
+        Route::post('/invoices', [InvoiceController::class, 'store']);
         Route::post('/invoices/{id}/remind', [InvoiceController::class, 'sendReminder']);
         Route::post('/transactions', [TransactionController::class, 'store']);
         Route::get('/transactions', [TransactionController::class, 'index']);
@@ -143,6 +146,7 @@ Route::middleware(['auth:sanctum', 'role:landlord'])->group(function () {
     });
 
     // ---------- LOCATAIRE ----------
+    // ---------- LOCATAIRE ----------
     Route::middleware('role:tenant')->prefix('tenant')->group(function () {
 
         // Baux du locataire
@@ -156,6 +160,8 @@ Route::middleware(['auth:sanctum', 'role:landlord'])->group(function () {
         Route::post('tickets/{id}/close', [TicketController::class, 'close']);
     });
 
+// Endpoint public pour initier paiement via token (pay-link)
+Route::post('/pay-links/{token}/init', [\App\Http\Controllers\Api\PaymentLinkController::class, 'init']);
     // ---------- Fichiers / Upload (commun) ----------
     Route::post('/upload', [UploadController::class, 'store']);
     // Route::delete('/upload', [UploadController::class, 'destroy']);

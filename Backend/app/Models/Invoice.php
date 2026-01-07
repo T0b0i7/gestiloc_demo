@@ -14,7 +14,7 @@ class Invoice extends Model
         'lease_id', 'invoice_number', 'type',
         'due_date', 'period_start', 'period_end',
         'amount_total', 'amount_paid', 'status',
-        'pdf_path', 'sent_at'
+        'pdf_path', 'sent_at', 'payment_method'
     ];
 
     protected $casts = [

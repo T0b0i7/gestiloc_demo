@@ -98,6 +98,20 @@ class FedapayWebhookController extends Controller
             // Générer quittance (1 par facture)
             $this->receipts->generateForInvoice($invoice);
 
+            // Marquer facture comme payée (idempotent)
+            try {
+                $invoice->update(['status' => 'paid']);
+            } catch (\Throwable $e) {
+                // ignore
+            }
+
+            // Invalider les pay-links associés
+            try {
+                \App\Models\PaymentLink::where('invoice_id', $invoice->id)->update(['used_at' => now()]);
+            } catch (\Throwable $e) {
+                // ignore
+            }
+
             return response()->json(['message' => 'ok'], 200);
         }
 
