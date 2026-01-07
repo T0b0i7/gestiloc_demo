@@ -17,9 +17,11 @@ import { Button } from "./ui/Button";
 import { Skeleton } from "./ui/Skeleton";
 import { Tab } from "../types";
 import { PaymentModal } from "./PaymentModal";
+import { TenantInvoicesCard } from "./TenantInvoicesCard";
 
 import tenantApi, { TenantLease, TenantIncident } from "../services/tenantApi";
 import { tenantRentReceiptService, RentReceipt } from "../services/tenantRentReceiptService";
+import tenantInvoiceService, { TenantInvoice } from "../services/tenantInvoiceService";
 import { noticeService } from "@/services/noticeService";
 
 // ---------- helpers ----------
@@ -61,11 +63,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, notify }) => {
 
   const [lease, setLease] = useState<TenantLease | null>(null);
   const [receipts, setReceipts] = useState<RentReceipt[]>([]);
+  const [invoices, setInvoices] = useState<TenantInvoice[]>([]);
   const [incidents, setIncidents] = useState<TenantIncident[]>([]);
   const [notices, setNotices] = useState<any[]>([]);
 
   const [errLeases, setErrLeases] = useState<string | null>(null);
   const [errReceipts, setErrReceipts] = useState<string | null>(null);
+  const [errInvoices, setErrInvoices] = useState<string | null>(null);
   const [errIncidents, setErrIncidents] = useState<string | null>(null);
   const [errNotices, setErrNotices] = useState<string | null>(null);
 
@@ -79,61 +83,102 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, notify }) => {
       setLoading(true);
       setErrLeases(null);
       setErrReceipts(null);
+      setErrInvoices(null);
       setErrIncidents(null);
       setErrNotices(null);
 
-      // 1) Leases
-      try {
-        const ls = await tenantApi.getLeases();
-        if (cancelled) return;
+      // Lancer toutes les requêtes en parallèle puis traiter les résultats
+      const promises = {
+        leases: tenantApi.getLeases(),
+        receipts: tenantRentReceiptService.list({ type: "independent" }),
+        invoices: tenantInvoiceService.list(),
+        incidents: tenantApi.getIncidents(),
+        notices: noticeService.list(),
+      } as const;
 
-        const activeLease =
-          ls.find((l) => String(l.status).toLowerCase() === "active") || ls[0] || null;
+      const entries = Object.entries(promises) as [keyof typeof promises, Promise<any>][];
 
-        setLease(activeLease);
-      } catch (e: any) {
-        console.error("[DASH] getLeases", e?.response?.data || e);
-        setErrLeases(e?.response?.data?.message || "Erreur lors du chargement du bail.");
-        setLease(null);
-      }
+      const results = await Promise.allSettled(entries.map(([, p]) => p));
 
-      // 2) Receipts
-      try {
-        const rr = await tenantRentReceiptService.list({ type: "independent" });
-        if (cancelled) return;
-        setReceipts(Array.isArray(rr) ? rr : []);
-      } catch (e: any) {
-        console.error("[DASH] receipts", e?.response?.data || e);
-        setErrReceipts(e?.response?.data?.message || "Erreur lors du chargement des quittances.");
-        setReceipts([]);
-      }
+      if (cancelled) return;
 
-      // 3) Incidents
-      try {
-        const list = await tenantApi.getIncidents();
-        if (cancelled) return;
-        setIncidents(Array.isArray(list) ? list : []);
-      } catch (e: any) {
-        console.error("[DASH] incidents", e?.response?.data || e);
-        setErrIncidents(e?.response?.data?.message || "Erreur lors du chargement des incidents.");
-        setIncidents([]);
-      }
-
-      // 4) Notices (préavis) — optionnel
-      try {
-        const n = await noticeService.list();
-        if (cancelled) return;
-        setNotices(Array.isArray(n) ? n : []);
-      } catch (e: any) {
-        console.error("[DASH] notices", e?.response?.data || e);
-        setErrNotices(e?.response?.data?.message || "Erreur lors du chargement des préavis.");
-        setNotices([]);
+      // Associer résultats dans l'ordre
+      for (let i = 0; i < entries.length; i++) {
+        const key = entries[i][0];
+        const res = results[i];
+        try {
+          if (res.status === "fulfilled") {
+            const value = res.value;
+            switch (key) {
+              case "leases": {
+                const ls = Array.isArray(value) ? value : [];
+                const activeLease =
+                  ls.find((l: any) => String(l.status).toLowerCase() === "active") || ls[0] || null;
+                setLease(activeLease);
+                break;
+              }
+              case "receipts": {
+                setReceipts(Array.isArray(value) ? value : []);
+                break;
+              }
+              case "invoices": {
+                setInvoices(Array.isArray(value) ? value : []);
+                break;
+              }
+              case "incidents": {
+                setIncidents(Array.isArray(value) ? value : []);
+                break;
+              }
+              case "notices": {
+                setNotices(Array.isArray(value) ? value : []);
+                break;
+              }
+              default:
+                break;
+            }
+          } else {
+            // rejected
+            const e = res.reason;
+            switch (key) {
+              case "leases":
+                console.error("[DASH] getLeases", e?.response?.data || e);
+                setErrLeases(e?.response?.data?.message || "Erreur lors du chargement du bail.");
+                setLease(null);
+                break;
+              case "receipts":
+                console.error("[DASH] receipts", e?.response?.data || e);
+                setErrReceipts(e?.response?.data?.message || "Erreur lors du chargement des quittances.");
+                setReceipts([]);
+                break;
+              case "invoices":
+                console.error("[DASH] invoices", e?.response?.data || e);
+                setErrInvoices(e?.response?.data?.message || "Erreur lors du chargement des factures.");
+                setInvoices([]);
+                break;
+              case "incidents":
+                console.error("[DASH] incidents", e?.response?.data || e);
+                setErrIncidents(e?.response?.data?.message || "Erreur lors du chargement des incidents.");
+                setIncidents([]);
+                break;
+              case "notices":
+                console.error("[DASH] notices", e?.response?.data || e);
+                setErrNotices(e?.response?.data?.message || "Erreur lors du chargement des préavis.");
+                setNotices([]);
+                break;
+              default:
+                break;
+            }
+          }
+        } catch (err) {
+          console.error("[DASH] processing result", err);
+        }
       }
 
       if (!cancelled) setLoading(false);
     };
 
     run();
+
     return () => {
       cancelled = true;
     };
@@ -273,8 +318,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, notify }) => {
           Certaines données n’ont pas pu être chargées (le dashboard reste utilisable).
           <div className="mt-2 text-sm font-semibold">
             {errLeases ? <div>• Bail: {errLeases}</div> : null}
-            {errReceipts ? <div>• Quittances: {errReceipts}</div> : null}
-            {errIncidents ? <div>• Incidents: {errIncidents}</div> : null}
+            {errReceipts ? <div>• Quittances: {errReceipts}</div> : null}            {errInvoices ? <div>• Factures: {errInvoices}</div> : null}            {errIncidents ? <div>• Incidents: {errIncidents}</div> : null}
             {errNotices ? <div>• Préavis: {errNotices}</div> : null}
           </div>
         </div>
@@ -405,8 +449,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, notify }) => {
 
         {/* Detailed stats */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: receipts analytics */}
+          {/* Left: invoices + receipts analytics */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Invoices Card */}
+            <TenantInvoicesCard 
+              invoices={invoices}
+              isLoading={loading}
+              error={errInvoices}
+              onDownload={(id) => {
+                // TODO: Implémenter le téléchargement du PDF
+                notify('Téléchargement en cours...', 'info');
+              }}
+            />
+
             <div className="bg-white rounded-3xl border border-blue-200 shadow-md p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">

@@ -64,3 +64,36 @@ export interface ToastMessage {
   message: string;
   type: 'success' | 'error' | 'info';
 }
+
+// Payment Integration Types
+export interface PaymentSession {
+  id: string;
+  invoice_id: number;
+  amount: number;
+  currency: string;
+  reference: string;
+  fedapay_transaction_id?: string;
+  status: 'pending' | 'completed' | 'failed' | 'cancelled';
+  created_at: string;
+  expires_at?: string;
+}
+
+export interface PaymentInitializePayload {
+  invoice_id: number;
+  amount: number;
+  currency?: string;
+  description?: string;
+  customer_email?: string;
+  customer_phone?: string;
+}
+
+export interface PaymentConfirmation {
+  id: number;
+  invoice_id: number;
+  transaction_id: string;
+  amount_paid: number;
+  payment_method: string;
+  paid_at: string;
+  receipt_url?: string;
+  status: 'success' | 'failed' | 'pending';
+}

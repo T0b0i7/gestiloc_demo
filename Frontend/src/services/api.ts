@@ -26,13 +26,43 @@ export interface LoginResponse {
   };
 }
 
+export interface Landlord {
+  id?: number;
+  name?: string;
+  email?: string;
+  phone?: string;
+  [key: string]: unknown;
+}
+
+export interface ApiError {
+  response?: {
+    status?: number;
+    statusText?: string;
+    data?: {
+      message?: string;
+      errors?: Record<string, string[]>;
+    };
+  };
+  message?: string;
+}
+
+export interface RegisterPayload {
+  first_name?: string;
+  last_name?: string;
+  email: string;
+  phone: string;
+  password: string;
+  password_confirmation: string;
+  role?: string;
+}
+
 export interface RegisterResponse {
   status: string;
   message: string;
   data?: {
     token: string;
     user: User;
-    landlord?: any;
+    landlord?: Landlord;
   };
   token?: string;
   user?: User;
@@ -69,7 +99,7 @@ export interface Property {
 
   amenities: string[] | null;
   photos: string[] | null;
-  meta: Record<string, any> | null;
+  meta: Record<string, unknown> | null;
 
   created_at: string;
   updated_at: string;
@@ -111,7 +141,7 @@ export interface CreatePropertyPayload {
   reference_code?: string | null;
   amenities?: string[] | null;
   photos?: string[] | null;
-  meta?: Record<string, any> | null;
+  meta?: Record<string, unknown> | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -169,10 +199,11 @@ initializeCsrfToken().catch(console.error);
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    const apiError = error as ApiError;
     const originalRequest = error.config;
 
-    if (error.response?.status === 419 && !originalRequest._retry) {
-      (originalRequest as any)._retry = true;
+    if (apiError.response?.status === 419 && !(originalRequest as Record<string, unknown>)._retry) {
+      (originalRequest as Record<string, unknown>)._retry = true;
       await getCsrfToken();
       return api(originalRequest);
     }
@@ -226,45 +257,47 @@ export const authService = {
       }
 
       // 2️⃣ Cas fallback : backend renvoie { token, user } à la racine
-      if ((response.data as any).token) {
-        const anyData: any = response.data;
-        localStorage.setItem('token', anyData.token);
-        if (anyData.user) {
-          localStorage.setItem('user', JSON.stringify(anyData.user));
+      if ('token' in response.data && response.data.token) {
+        const fallbackData = response.data as LoginResponse & { token?: string; user?: typeof response.data.data.user };
+        if (fallbackData.token) {
+          localStorage.setItem('token', fallbackData.token);
+        }
+        if (fallbackData.user) {
+          localStorage.setItem('user', JSON.stringify(fallbackData.user));
         }
       }
 
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
+      const apiError = error as ApiError;
       console.error('Login error:', error);
 
-      if (error.response?.data?.message) {
-        throw new Error(error.response.data.message);
-      } else if (error.response?.data?.errors) {
+      if (apiError.response?.data?.message) {
+        throw new Error(apiError.response.data.message);
+      } else if (apiError.response?.data?.errors) {
         const validationErrors = Object.values(
-          error.response.data.errors
+          apiError.response.data.errors
         ).flat();
         throw new Error(validationErrors[0] || 'Erreur de validation');
       } else {
         throw new Error(
-          error.message || 'Une erreur est survenue lors de la connexion'
+          apiError.message || 'Une erreur est survenue lors de la connexion'
         );
       }
     }
   },
 
-  register: async (userData: any): Promise<RegisterResponse> => {
+  register: async (userData: RegisterPayload): Promise<RegisterResponse> => {
     try {
       await initializeCsrfToken();
 
       const requestData = {
-        first_name: userData.first_name || userData.firstName,
-        last_name: userData.last_name || userData.lastName,
+        first_name: userData.first_name || userData.first_name,
+        last_name: userData.last_name || userData.last_name,
         email: userData.email,
         phone: userData.phone,
         password: userData.password,
-        password_confirmation:
-          userData.password_confirmation || userData.confirmPassword,
+        password_confirmation: userData.password_confirmation,
         role: userData.role || 'proprietaire',
       };
 
@@ -284,34 +317,35 @@ export const authService = {
       }
 
       return responseData;
-    } catch (error: any) {
+    } catch (error) {
+      const apiError = error as ApiError;
       console.error('API - Register error:', error);
 
-      if (error.response) {
-        if (error.response.data) {
-          if (error.response.data.errors) {
+      if (apiError.response) {
+        if (apiError.response.data) {
+          if (apiError.response.data.errors) {
             const validationErrors = Object.values(
-              error.response.data.errors
+              apiError.response.data.errors
             ).flat();
             const errorMessage =
               validationErrors && validationErrors.length > 0
                 ? (validationErrors as string[]).join('\n')
                 : 'Une erreur de validation est survenue';
             const errorWithResponse = new Error(errorMessage);
-            (errorWithResponse as any).response = error.response;
+            (errorWithResponse as ApiError).response = apiError.response;
             throw errorWithResponse;
           }
-          if (error.response.data.message) {
-            const errorWithResponse = new Error(error.response.data.message);
-            (errorWithResponse as any).response = error.response;
+          if (apiError.response.data.message) {
+            const errorWithResponse = new Error(apiError.response.data.message);
+            (errorWithResponse as ApiError).response = apiError.response;
             throw errorWithResponse;
           }
         }
 
         const statusError = new Error(
-          `Erreur ${error.response.status}: ${error.response.statusText}`
+          `Erreur ${apiError.response.status}: ${apiError.response.statusText}`
         );
-        (statusError as any).response = error.response;
+        (statusError as ApiError).response = apiError.response;
         throw statusError;
       }
 
@@ -381,9 +415,10 @@ export const propertyService = {
 
       const response = await api.post<Property>('/properties', safePayload);
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
+      const apiError = error as ApiError;
       console.error('Erreur API createProperty:', error);
-      if (error.response?.data) throw error.response.data;
+      if (apiError.response?.data) throw apiError.response.data;
       throw error;
     }
   },
@@ -415,9 +450,10 @@ export const propertyService = {
         safePayload
       );
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
+      const apiError = error as ApiError;
       console.error('Erreur API updateProperty:', error);
-      if (error.response?.data) throw error.response.data;
+      if (apiError.response?.data) throw apiError.response.data;
       throw error;
     }
   },
@@ -427,9 +463,10 @@ export const propertyService = {
     try {
       await initializeCsrfToken();
       await api.delete(`/properties/${id}`);
-    } catch (error: any) {
+    } catch (error) {
+      const apiError = error as ApiError;
       console.error('Erreur API deleteProperty:', error);
-      if (error.response?.data) throw error.response.data;
+      if (apiError.response?.data) throw apiError.response.data;
       throw error;
     }
   },
@@ -455,8 +492,9 @@ export const uploadService = {
         }
       );
       return response.data;
-    } catch (error: any) {
-      console.error('Erreur API uploadPhoto:', error.response?.data || error);
+    } catch (error) {
+      const apiError = error as ApiError;
+      console.error('Erreur API uploadPhoto:', apiError.response?.data || error);
       throw error;
     }
   },
@@ -534,11 +572,12 @@ export const tenantService = {
 
       const response = await api.post('/tenants/invite', payload);
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
+      const apiError = error as ApiError;
       console.error('Erreur API inviteTenant:', error);
 
-      if (error.response?.data) {
-        throw error.response.data;
+      if (apiError.response?.data) {
+        throw apiError.response.data;
       }
       throw error;
     }
@@ -550,11 +589,12 @@ export const tenantService = {
 
       const response = await api.get<TenantIndexResponse>('/tenants');
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
+      const apiError = error as ApiError;
       console.error('Erreur API listTenants:', error);
 
-      if (error.response?.data) {
-        throw error.response.data;
+      if (apiError.response?.data) {
+        throw apiError.response.data;
       }
       throw error;
     }
@@ -565,7 +605,7 @@ export const tenantService = {
   ): Promise<{
     message: string;
     token: string;
-    user: any;
+    user: User;
   }> => {
     try {
       await initializeCsrfToken();
@@ -584,11 +624,12 @@ export const tenantService = {
       }
 
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
+      const apiError = error as ApiError;
       console.error('Erreur API completeTenantRegistration:', error);
 
-      if (error.response?.data) {
-        throw error.response.data;
+      if (apiError.response?.data) {
+        throw apiError.response.data;
       }
       throw error;
     }
@@ -639,9 +680,10 @@ export const leaseService = {
 
       const response = await api.post<Lease>('/leases', payload);
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
+      const apiError = error as ApiError;
       console.error('Erreur API createLease:', error);
-      if (error.response?.data) throw error.response.data;
+      if (apiError.response?.data) throw apiError.response.data;
       throw error;
     }
   },
@@ -650,9 +692,10 @@ export const leaseService = {
     try {
       const response = await api.get<Lease[]>('/leases');
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
+      const apiError = error as ApiError;
       console.error('Erreur API listLeases:', error);
-      if (error.response?.data) throw error.response.data;
+      if (apiError.response?.data) throw apiError.response.data;
       throw error;
     }
   },
@@ -661,9 +704,10 @@ export const leaseService = {
     try {
       const response = await api.get<Lease>(`/leases/${id}`);
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
+      const apiError = error as ApiError;
       console.error('Erreur API getLease:', error);
-      if (error.response?.data) throw error.response.data;
+      if (apiError.response?.data) throw apiError.response.data;
       throw error;
     }
   },
@@ -674,9 +718,10 @@ export const leaseService = {
 
       const response = await api.post<Lease>(`/leases/${uuid}/terminate`, {});
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
+      const apiError = error as ApiError;
       console.error('Erreur API terminateLease:', error);
-      if (error.response?.data) throw error.response.data;
+      if (apiError.response?.data) throw apiError.response.data;
       throw error;
     }
   },
@@ -715,8 +760,8 @@ export interface PropertyConditionReport {
   signed_at?: string | null;
 
   photos?: PropertyConditionPhoto[];
-  lease?: any | null;      // ← ton backend peut renvoyer lease + tenant, on garde souple
-  property?: any | null;
+  lease?: Lease | null;
+  property?: Property | null;
 }
 
 // Item photo côté form
@@ -824,15 +869,15 @@ export const conditionReportService = {
       }
     });
 
-    const response = await api.post(
+    const response = await api.post<{ message: string; report: PropertyConditionReport } | PropertyConditionReport>(
       `/properties/${propertyId}/condition-reports`,
       formData,
       { headers: { 'Content-Type': 'multipart/form-data' } }
     );
 
     // ton store renvoie { message, report }
-    const data: any = response.data;
-    return data.report ?? data.data ?? data;
+    const data = response.data as { message?: string; report?: PropertyConditionReport } | PropertyConditionReport;
+    return (data && 'report' in data ? data.report : data) as PropertyConditionReport;
   },
 
   /**
@@ -1059,7 +1104,7 @@ export interface RentReceipt {
 
   created_at: string;
 
-  lease?: any;
+  lease?: Lease;
   property?: { id: number; address: string; city?: string | null };
   tenant?: { id: number; first_name?: string | null; last_name?: string | null; email?: string | null };
 }
@@ -1100,6 +1145,103 @@ downloadPdf: async (id: number): Promise<Blob> => {
   return new Blob([response.data], { type: "application/pdf" });
 },
 
+};
+
+// ================= INVOICES SERVICE =================
+
+export interface CreateInvoicePayload {
+  lease_id: string;
+  type: 'rent' | 'deposit' | 'charge' | 'repair';
+  due_date: string;
+  period_start?: string;
+  period_end?: string;
+  amount_total: number;
+  payment_method?: string;
+}
+
+export interface Invoice {
+  id?: number;
+  lease_id: string;
+  type: 'rent' | 'deposit' | 'charge' | 'repair';
+  due_date: string;
+  amount_total: number;
+  [key: string]: unknown;
+}
+
+export interface TenantInvoice {
+  id: number;
+  lease_id: number;
+  type: 'rent' | 'deposit' | 'charge' | 'repair';
+  due_date: string;
+  amount_total: number;
+  paid_amount?: number;
+  status: 'pending' | 'paid' | 'partially_paid' | 'overdue' | 'failed';
+  paid_date?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaymentConfirmation {
+  id: number;
+  invoice_id: number;
+  transaction_id: string;
+  amount_paid: number;
+  payment_method: string;
+  paid_at: string;
+  receipt_url?: string;
+  status: 'success' | 'failed' | 'pending';
+}
+
+export const invoiceService = {
+  createInvoice: async (payload: CreateInvoicePayload): Promise<Invoice> => {
+    try {
+      await initializeCsrfToken();
+
+      const response = await api.post('/invoices', payload);
+      return response.data;
+    } catch (error) {
+      const apiError = error as ApiError;
+      console.error('Erreur API createInvoice:', error);
+      if (apiError.response?.data) throw apiError.response.data;
+      throw error;
+    }
+  },
+
+  listInvoices: async (): Promise<Invoice[]> => {
+    try {
+      const response = await api.get('/invoices');
+      // Gérer les structures possibles : tableau direct ou objet avec data
+      const data = response.data;
+      if (Array.isArray(data)) {
+        return data;
+      }
+      if (data?.data && Array.isArray(data.data)) {
+        return data.data;
+      }
+      return [];
+    } catch (error) {
+      const apiError = error as ApiError;
+      console.error('Erreur API listInvoices:', error);
+      if (apiError.response?.data) throw apiError.response.data;
+      throw error;
+    }
+  },
+};
+
+// Export apiService as an object with all services
+export const apiService = {
+  ...authService,
+  ...propertyService,
+  ...uploadService,
+  ...tenantService,
+  ...leaseService,
+  ...conditionReportService,
+  ...contractService,
+  ...noticeService,
+  ...rentReceiptService,
+  ...invoiceService,
+  getLeases: leaseService.listLeases,
+  createInvoice: invoiceService.createInvoice,
 };
 
 

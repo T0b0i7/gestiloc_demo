@@ -100,23 +100,70 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, notify }) => {
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [propsRes, tenantsRes, leasesRes, noticesRes, receiptsRes] = await Promise.all([
-        propertyService.listProperties(),
-        tenantService.listTenants(),
-        leaseService.listLeases(),
-        noticeService.list(),
-        rentReceiptService.listIndependent(),
-      ]);
+      const promises = {
+        props: propertyService.listProperties(),
+        tenants: tenantService.listTenants(),
+        leases: leaseService.listLeases(),
+        notices: noticeService.list(),
+        receipts: rentReceiptService.listIndependent(),
+      } as const;
 
-      const props = propsRes?.data ?? [];
-      setProperties(props);
+      const entries = Object.entries(promises) as [keyof typeof promises, Promise<any>][];
+      const results = await Promise.allSettled(entries.map(([, p]) => p));
 
-      setTenants(tenantsRes?.tenants ?? []);
-      setLeases(Array.isArray(leasesRes) ? leasesRes : []);
-      setNotices(Array.isArray(noticesRes) ? noticesRes : []);
-      setReceipts(Array.isArray(receiptsRes) ? receiptsRes : []);
-
-      setSelectedPropertyId((prev) => prev ?? (props[0]?.id ?? null));
+      for (let i = 0; i < entries.length; i++) {
+        const key = entries[i][0];
+        const res = results[i];
+        if (res.status === "fulfilled") {
+          const value = res.value;
+          switch (key) {
+            case "props": {
+              const props = value?.data ?? [];
+              setProperties(props);
+              setSelectedPropertyId((prev) => prev ?? (props[0]?.id ?? null));
+              break;
+            }
+            case "tenants":
+              setTenants(value?.tenants ?? []);
+              break;
+            case "leases":
+              setLeases(Array.isArray(value) ? value : []);
+              break;
+            case "notices":
+              setNotices(Array.isArray(value) ? value : []);
+              break;
+            case "receipts":
+              setReceipts(Array.isArray(value) ? value : []);
+              break;
+            default:
+              break;
+          }
+        } else {
+          const e = res.reason;
+          console.error(`[PROPRIETAIRE DASH] ${String(key)} error`, e?.response?.data || e);
+          notify(e?.message || `Erreur lors du chargement de ${String(key)}`, "error");
+          switch (key) {
+            case "props":
+              setProperties([]);
+              setSelectedPropertyId((prev) => prev ?? null);
+              break;
+            case "tenants":
+              setTenants([]);
+              break;
+            case "leases":
+              setLeases([]);
+              break;
+            case "notices":
+              setNotices([]);
+              break;
+            case "receipts":
+              setReceipts([]);
+              break;
+            default:
+              break;
+          }
+        }
+      }
     } catch (e: any) {
       console.error(e);
       notify(e?.message || "Impossible de charger le tableau de bord", "error");

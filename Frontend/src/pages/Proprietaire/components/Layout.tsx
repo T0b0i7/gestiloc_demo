@@ -169,10 +169,11 @@ export const Layout: React.FC<LayoutProps> = ({
       submenu: [
         { id: "baux", label: "Contrats de bail", icon: FileSignature, path: "/proprietaire/documents/baux" },
         { id: "quittances", label: "Quittances", icon: FileText, path: "/proprietaire/quittances" },
+        { id: "factures", label: "Factures", icon: FileText, path: "/proprietaire/factures" },
+        { id: "émettre-facture", label: "Émettre une facture", icon: FilePlus, path: "/proprietaire/émettre-facture" },
 
         // ✅ COMMENTÉ : le reste
         // { id: "documents-generaux", label: "Documents généraux", icon: FileText, path: "/proprietaire/documents/generaux" },
-        // { id: "factures", label: "Factures", icon: FileText, path: "/proprietaire/documents/factures" },
         // { id: "modeles-lettres", label: "Modèles de lettres", icon: FileText, path: "/proprietaire/documents/modeles-lettres" },
         // { id: "signature-electronique", label: "Signature électronique", icon: PenTool, path: "/proprietaire/documents/signature-electronique" },
       ],

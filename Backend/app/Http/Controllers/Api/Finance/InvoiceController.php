@@ -14,6 +14,74 @@ use App\Mail\PaymentReminderMail; // Mailable à créer
 class InvoiceController extends Controller
 {
     /**
+     * Créer une nouvelle facture (Bailleur seulement)
+     */
+    public function store(Request $request)
+    {
+        $user = auth()->user();
+
+        // Vérifier que c'est un bailleur
+        if (!$user->landlord) {
+            return response()->json(['message' => 'Seul un propriétaire peut créer une facture.'], 403);
+        }
+
+        $request->validate([
+            'lease_id' => 'required|exists:leases,id',
+            'type' => 'required|in:rent,deposit,charge,repair',
+            'due_date' => 'required|date|after:today',
+            'period_start' => 'nullable|date',
+            'period_end' => 'nullable|date|after:period_start',
+            'amount_total' => 'required|numeric|min:0.01',
+            'payment_method' => 'required|string|in:card,mobile_money,virement,cheque,especes,fedapay',
+        ]);
+
+        $lease = \App\Models\Lease::findOrFail($request->lease_id);
+
+        // Vérifier que le bailleur possède bien cette location
+        if ($lease->property->landlord_id !== $user->landlord->id) {
+            return response()->json(['message' => 'Vous ne pouvez pas créer de facture pour cette location.'], 403);
+        }
+
+        $invoice = Invoice::create([
+            'lease_id' => $request->lease_id,
+            'type' => $request->type,
+            'due_date' => $request->due_date,
+            'period_start' => $request->period_start,
+            'period_end' => $request->period_end,
+            'amount_total' => $request->amount_total,
+            'payment_method' => $request->payment_method,
+            'status' => 'pending',
+        ]);
+
+        // Option: créer automatiquement un lien de paiement et envoyer au locataire
+        try {
+            $token = \Illuminate\Support\Str::random(48);
+            $expires = now()->addHours(24);
+            $tenantId = $invoice->lease->tenant_id ?? null;
+
+            \App\Models\PaymentLink::create([
+                'invoice_id' => $invoice->id,
+                'tenant_id' => $tenantId,
+                'token' => $token,
+                'expires_at' => $expires,
+            ]);
+
+            $url = rtrim(config('app.frontend_url', ''), '/') . '/pay-link/' . $token;
+            if ($invoice->lease && $invoice->lease->tenant && $invoice->lease->tenant->user) {
+                \Illuminate\Support\Facades\Mail::to($invoice->lease->tenant->user->email)
+                    ->queue(new \App\Mail\PaymentLinkMail($invoice, $url));
+            }
+        } catch (\Throwable $e) {
+            // silent fail: link/email not required for invoice creation
+        }
+
+        return response()->json([
+            'message' => 'Facture créée avec succès.',
+            'invoice' => new InvoiceResource($invoice->load(['lease.property', 'lease.tenant']))
+        ], 201);
+    }
+
+    /**
      * Liste les factures (Adaptatif : Bailleur ou Locataire)
      */
     public function index(Request $request)

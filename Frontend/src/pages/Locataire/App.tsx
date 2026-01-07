@@ -13,6 +13,9 @@ import { Tab, ToastMessage } from './types';
 import { Toaster } from '@/components/ui/toaster';
 import TenantPreavisPage from './components/TenantPreavisPage';
 import RentReceiptsPage from './components/RentReceiptsPage';
+import PaymentPage from './components/PaymentPage';
+import PaymentConfirmationPage from './components/PaymentConfirmationPage';
+import PayLinkPage from '../Public/PayLinkPage';
 
 // Wrapper pour gérer la navigation et les états partagés
 interface UserData {
@@ -153,6 +156,10 @@ const AppContent = () => {
         <Route path="property" element={<Property notify={notify} />} />
         <Route path="notice" element={<TenantPreavisPage notify={notify} />} />
         <Route path="profile" element={<Profile notify={notify} onLogout={handleLogout} />} />
+        <Route path="factures" element={<Dashboard onNavigate={handleNavigation} notify={notify} />} />
+        <Route path="payer/:invoiceId" element={<PaymentPage />} />
+        <Route path="paiement/confirmation/:invoiceId/:transactionId" element={<PaymentConfirmationPage />} />
+        <Route path="/pay-link/:token" element={<PayLinkPage />} />
         <Route path="*" element={<Navigate to="home" replace />} />
       </Routes>
 
