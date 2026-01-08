@@ -17,8 +17,8 @@ class RentalContractController extends Controller
                 'address' => $request->input('landlord.address'),
                 'phone' => $request->input('landlord.phone'),
                 'email' => $request->input('landlord.email'),
-                'id_type' => $request->input('landlord.id_type'),
-                'id_number' => $request->input('landlord.id_number'),
+                // Les champs id_type et id_number sont retirés pour les landlords
+                // Ils ne doivent exister que pour les co-owners
             ],
             'tenant' => [
                 'name' => $request->input('tenant.name'),

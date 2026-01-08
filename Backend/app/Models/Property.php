@@ -2,12 +2,20 @@
 
 namespace App\Models;
 
+use App\Models\Tenant;
+use App\Models\Landlord;
+use App\Models\PropertyDelegation;
+use App\Models\User;
+use App\Models\Lease;
+use App\Models\PropertyConditionReport;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Str;
 
 class Property extends Model
@@ -82,6 +90,22 @@ class Property extends Model
     public function conditionReports(): HasMany
     {
         return $this->hasMany(PropertyConditionReport::class);
+    }
+
+    /**
+     * Copropriétaire gestionnaire du bien (via délégation - relation polymorphe)
+     */
+    public function managingCoOwner(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    /**
+     * Délégations de gestion pour ce bien
+     */
+    public function delegations(): HasMany
+    {
+        return $this->hasMany(PropertyDelegation::class);
     }
 
     // ========== SCOPES ==========

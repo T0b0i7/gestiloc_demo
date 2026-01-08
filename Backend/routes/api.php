@@ -4,8 +4,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TenantController;
+use App\Http\Controllers\Api\CoOwnerController;
 use App\Http\Controllers\Api\PropertyController;
 use App\Http\Controllers\Api\LeaseController;
+use App\Http\Controllers\Api\PropertyDelegationController;
 use App\Http\Controllers\Api\Landlord\DashboardController;
 use App\Http\Controllers\Api\Tenant\MyLeaseController;
 use App\Http\Controllers\Api\Tenant\TicketController;
@@ -32,6 +34,7 @@ use App\Http\Controllers\Api\TenantQuittanceController;
 
 // ---------- Auth publics ----------
 Route::post('auth/register/landlord', [AuthController::class, 'registerLandlord']);
+Route::post('auth/register/co-owner', [AuthController::class, 'registerCoOwner']);
 Route::post('auth/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -41,9 +44,16 @@ Route::middleware('auth:sanctum')->group(function () {
 // Le locataire définit son mot de passe après invitation
 Route::post('auth/tenant/set-password', [AuthController::class, 'setPassword']);
 
-// Le locataire clique sur le lien dans l’email -> acceptInvitation
+// Le locataire clique sur le lien dans l'email -> acceptInvitation
 Route::get('auth/tenant/accept-invitation/{invitationId}', [AuthController::class, 'acceptInvitation'])
     ->name('api.auth.accept-invitation');
+
+// Le copropriétaire définit son mot de passe après invitation
+Route::post('auth/co-owner/set-password', [AuthController::class, 'setCoOwnerPassword']);
+
+// Le copropriétaire clique sur le lien dans l'email -> acceptInvitation
+Route::get('auth/co-owner/accept-invitation/{invitationId}', [AuthController::class, 'acceptCoOwnerInvitation'])
+    ->name('api.auth.accept-co-owner-invitation');
 
 Route::post('auth/tenant/complete-registration', [AuthController::class, 'completeTenantRegistration']);
 
@@ -100,6 +110,17 @@ Route::middleware('role:landlord')->group(function () {
     Route::get('incidents', [LandlordMaintenanceRequestController::class, 'index']);
     Route::get('incidents/{id}', [LandlordMaintenanceRequestController::class, 'show']);
     Route::put('incidents/{id}', [LandlordMaintenanceRequestController::class, 'update']);
+    
+    // Délégations de propriétés
+    Route::get('landlords/delegations', [PropertyDelegationController::class, 'listLandlordDelegations']);
+    Route::post('properties/{property}/delegate', [PropertyDelegationController::class, 'delegate']);
+    Route::post('properties/{property}/revoke-delegation', [PropertyDelegationController::class, 'revoke']);
+    Route::put('delegations/{delegation}', [PropertyDelegationController::class, 'update']);
+});
+
+// Routes pour les copropriétaires
+Route::middleware('role:co_owner')->group(function () {
+    Route::get('co-owners/{coOwner}/delegations', [PropertyDelegationController::class, 'listCoOwnerDelegations']);
 });
 
 // ✅ LISTE QUITTANCES : landlord + tenant
@@ -115,6 +136,14 @@ Route::middleware(['auth:sanctum', 'role:landlord'])->group(function () {
     Route::delete('/rent-receipts/{rentReceipt}', [\App\Http\Controllers\Api\RentReceiptController::class, 'destroy']);
 });
 
+// ✅ CRUD PROPERTIES : landlord + agency (avec délégation)
+Route::middleware(['auth:sanctum', 'property.access'])->group(function () {
+    Route::get('/properties', [PropertyController::class, 'index']);
+    Route::post('/properties', [PropertyController::class, 'store']);
+    Route::get('/properties/{property}', [PropertyController::class, 'show']);
+    Route::put('/properties/{property}', [PropertyController::class, 'update']);
+    Route::delete('/properties/{property}', [PropertyController::class, 'destroy']);
+});
 
     // ---------- BAILLEUR uniquement ----------
     Route::middleware('role:landlord')->group(function () {
@@ -128,6 +157,10 @@ Route::middleware(['auth:sanctum', 'role:landlord'])->group(function () {
         // Gestion des locataires (invitation, listing)
         Route::post('tenants/invite', [TenantController::class, 'invite']);
         Route::get('tenants', [TenantController::class, 'index']);
+
+        // Gestion des copropriétaires (invitation, listing)
+        Route::post('co-owners/invite', [CoOwnerController::class, 'invite']);
+        Route::get('co-owners', [CoOwnerController::class, 'index']);
 
         // Dashboard bailleur
         Route::get('dashboard', [DashboardController::class, 'stats']);
@@ -145,19 +178,24 @@ Route::middleware(['auth:sanctum', 'role:landlord'])->group(function () {
         // admin routes...
     });
 
-    // ---------- LOCATAIRE ----------
-    // ---------- LOCATAIRE ----------
-    Route::middleware('role:tenant')->prefix('tenant')->group(function () {
+// Routes pour les copropriétaires
+Route::middleware('role:co_owner')->group(function () {
+    Route::post('landlords/invite', [CoOwnerController::class, 'invite']);
+    Route::get('my-invitations', [CoOwnerController::class, 'index']);
+});
 
-        // Baux du locataire
-        Route::get('my-leases', [MyLeaseController::class, 'index']);
-        Route::get('my-leases/{uuid}', [MyLeaseController::class, 'show']);
-        Route::get('my-leases/{uuid}/contract', [MyLeaseController::class, 'downloadContract']);
-        Route::get('my-leases/{uuid}/invoices', [MyLeaseController::class, 'invoices']);
+// ---------- LOCATAIRE ----------
+Route::middleware('role:tenant')->prefix('tenant')->group(function () {
 
-        // Tickets
-        Route::apiResource('tickets', TicketController::class)->except(['update', 'destroy']);
-        Route::post('tickets/{id}/close', [TicketController::class, 'close']);
+    // Baux du locataire
+    Route::get('my-leases', [MyLeaseController::class, 'index']);
+    Route::get('my-leases/{uuid}', [MyLeaseController::class, 'show']);
+    Route::get('my-leases/{uuid}/contract', [MyLeaseController::class, 'downloadContract']);
+    Route::get('my-leases/{uuid}/invoices', [MyLeaseController::class, 'invoices']);
+
+    // Tickets
+    Route::apiResource('tickets', TicketController::class)->except(['update', 'destroy']);
+    Route::post('tickets/{id}/close', [TicketController::class, 'close']);
     });
 
 // Endpoint public pour initier paiement via token (pay-link)

@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreLandlordRequest;
+use App\Http\Requests\StoreCoOwnerRequest;
 use App\Http\Requests\LoginRequest;
 use App\Models\TenantInvitation;
+use App\Models\CoOwnerInvitation;
 use App\Models\User;
 use App\Models\Tenant;
+use App\Models\CoOwner;
 use App\Models\Landlord;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
@@ -131,6 +134,11 @@ HTML;
         return 'INV-' . str_pad((string) $invitation->id, 6, '0', STR_PAD_LEFT);
     }
 
+    private function coOwnerInvitationRef(CoOwnerInvitation $invitation): string
+    {
+        return 'CO-INV-' . str_pad((string) $invitation->id, 6, '0', STR_PAD_LEFT);
+    }
+
     private function resolveLandlordEmailFromInvitation(TenantInvitation $invitation): ?string
     {
         // Cas A: relation ->landlord->user->email
@@ -153,6 +161,82 @@ HTML;
         }
 
         return null;
+    }
+
+    private function welcomeCoOwnerContentHtml(User $user, CoOwner $coOwner): string
+    {
+        $email = e((string) $user->email);
+        $name = e(trim(($coOwner->first_name ?? '') . ' ' . ($coOwner->last_name ?? '')) ?: 'Votre compte');
+
+        $cta = $this->buttonHtml('Accéder à mon espace', $this->frontendUrl());
+
+        return <<<HTML
+<div style="font-size:14px;color:#374151;line-height:1.7;">
+  Bonjour <strong>{$name}</strong>,<br><br>
+  Votre compte copropriétaire est maintenant <strong>activé</strong>. Vous pouvez vous connecter et accéder à votre espace.
+</div>
+
+<div style="height:14px"></div>
+
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #eef2f7;border-radius:14px;overflow:hidden;">
+  <tr>
+    <td style="padding:14px;background:#f9fafb;">
+      <div style="font-size:14px;font-weight:900;color:#111827;">Vos identifiants</div>
+      <div style="font-size:13px;color:#6b7280;margin-top:6px;">Email : <strong>{$email}</strong></div>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:14px;">
+      <div style="font-size:13px;color:#374151;line-height:1.6;">
+        Vous pouvez dès maintenant consulter vos informations, les délégations reçues, et gérer vos biens.
+      </div>
+      <div style="height:14px"></div>
+      {$cta}
+    </td>
+  </tr>
+</table>
+
+<div style="height:14px"></div>
+<div style="font-size:12px;color:#6b7280;line-height:1.6;">
+  Conseil sécurité : ne partagez jamais votre mot de passe.
+</div>
+HTML;
+    }
+
+    private function landlordCoOwnerActivatedContentHtml(CoOwnerInvitation $invitation, User $coOwnerUser, CoOwner $coOwner): string
+    {
+        $coOwnerName = e(trim(($coOwner->first_name ?? '') . ' ' . ($coOwner->last_name ?? '')) ?: ($invitation->name ?? 'Copropriétaire'));
+        $coOwnerEmail = e((string) $coOwnerUser->email);
+
+        $cta = $this->buttonHtml('Ouvrir le dashboard', $this->frontendUrl());
+
+        return <<<HTML
+<div style="font-size:14px;color:#374151;line-height:1.7;">
+  Bonjour,<br><br>
+  Bonne nouvelle : le copropriétaire invité a finalisé son inscription et son compte est maintenant <strong>actif</strong>.
+</div>
+
+<div style="height:14px"></div>
+
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #eef2f7;border-radius:14px;overflow:hidden;">
+  <tr>
+    <td style="padding:14px;background:#f9fafb;">
+      <div style="font-size:14px;font-weight:900;color:#111827;">Copropriétaire activé</div>
+      <div style="font-size:13px;color:#6b7280;margin-top:6px;">Nom : <strong>{$coOwnerName}</strong></div>
+      <div style="font-size:13px;color:#6b7280;margin-top:6px;">Email : <strong>{$coOwnerEmail}</strong></div>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:14px;">
+      <div style="font-size:13px;color:#374151;line-height:1.6;">
+        Vous pouvez maintenant lui déléguer des propriétés et gérer les collaborations.
+      </div>
+      <div style="height:14px"></div>
+      {$cta}
+    </td>
+  </tr>
+</table>
+HTML;
     }
 
     private function welcomeTenantContentHtml(User $user, Tenant $tenant): string
@@ -250,6 +334,21 @@ HTML;
         ], 201);
     }
 
+    /**
+     * Register co-owner (creates user + co-owner record)
+     */
+    public function registerCoOwner(StoreCoOwnerRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $result = $this->authService->registerCoOwner($data);
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Co-owner registered successfully',
+            'data' => $result
+        ], 201);
+    }
+
     // Login
     public function login(LoginRequest $request): JsonResponse
     {
@@ -260,6 +359,166 @@ HTML;
             'message' => 'Login successful.',
             'data' => $result
         ]);
+    }
+
+    /**
+     * Appelé via le lien signé dans l'email pour les copropriétaires.
+     * Redirige vers le front avec token + email.
+     */
+    public function acceptCoOwnerInvitation(Request $request, $invitationId)
+    {
+        $invitation = CoOwnerInvitation::where('id', $invitationId)
+            ->whereNull('accepted_at')
+            ->where('expires_at', '>', now())
+            ->firstOrFail();
+
+        $frontendUrl = config('app.frontend_url', 'http://localhost:8080');
+
+        return redirect()->away(
+            rtrim($frontendUrl, '/') .
+            '/activation/coproprietaire?token=' . urlencode($invitation->token) .
+            '&email=' . urlencode($invitation->email)
+        );
+    }
+
+    /**
+     * Le copropriétaire soumet son mot de passe depuis le front.
+     * Crée / met à jour le User + crée CoOwner + assigne le rôle co_owner.
+     * ✅ Envoie: Bienvenue copropriétaire + Notification bailleur
+     */
+    public function setCoOwnerPassword(Request $request)
+    {
+        $data = $request->validate([
+            'token' => 'required|string',
+            'email' => 'required|email',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $invitation = CoOwnerInvitation::where('token', $data['token'])
+            ->where('email', $data['email'])
+            ->whereNull('accepted_at')
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (! $invitation) {
+            throw ValidationException::withMessages([
+                'token' => ['Invitation invalide ou expirée.'],
+            ]);
+        }
+
+        // ✅ Prépare ref email
+        $ref = $this->coOwnerInvitationRef($invitation);
+
+        // 1) Récupérer ou créer le user
+        $user = User::where('email', $data['email'])->first();
+
+        if (! $user) {
+            $user = User::create([
+                'email' => $invitation->email,
+                'password' => Hash::make($data['password']),
+                'phone' => $invitation->meta['phone'] ?? null,
+                'email_verified_at' => now(),
+            ]);
+        } else {
+            $user->password = Hash::make($data['password']);
+            $user->email_verified_at = $user->email_verified_at ?? now();
+            if (isset($invitation->meta['phone'])) {
+                $user->phone = $invitation->meta['phone'];
+            }
+            $user->save();
+        }
+
+        // 2) Rôle co_owner
+        if (method_exists($user, 'assignRole')) {
+            $user->assignRole('co_owner');
+        }
+
+        // 3) Créer / lier le CoOwner
+        $parts = preg_split('/\s+/', (string) $invitation->name, 2);
+        $firstName = $invitation->meta['first_name'] ?? $parts[0] ?? ($invitation->name ?? 'Copropriétaire');
+        $lastName  = $invitation->meta['last_name'] ?? $parts[1] ?? '';
+
+        $coOwner = CoOwner::firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'company_name' => $invitation->meta['company_name'] ?? null,
+                'address_billing' => $invitation->meta['address_billing'] ?? null,
+                'license_number' => $invitation->meta['license_number'] ?? null,
+                'is_professional' => $invitation->meta['is_professional'] ?? false,
+                'ifu' => $invitation->meta['ifu'] ?? null,
+                'rccm' => $invitation->meta['rccm'] ?? null,
+                'vat_number' => $invitation->meta['vat_number'] ?? null,
+                'meta' => $invitation->meta ?? null,
+            ]
+        );
+
+        // 4) Marquer l'invitation comme acceptée
+        $invitation->accepted_at = now();
+        $invitation->co_owner_user_id = $user->id;
+        $invitation->save();
+
+        // 5) Générer un token pour connexion auto
+        $token = $user->createToken('co-owner-login')->plainTextToken;
+
+        // ✅ EMAILS (les vrais)
+        // A) Bienvenue copropriétaire
+        $coOwnerTitle = 'Bienvenue ! Votre compte copropriétaire est activé ✅';
+        $coOwnerSubject = "🎉 Bienvenue sur {$this->appName()}";
+        $coOwnerContent = $this->welcomeCoOwnerContentHtml($user, $coOwner);
+        $this->trySendMail($user->email, $coOwnerSubject, $coOwnerTitle, $ref, $coOwnerContent);
+
+        // B) Info bailleur
+        $landlordEmail = $this->resolveLandlordEmailFromCoOwnerInvitation($invitation);
+        if ($landlordEmail) {
+            $landlordTitle = 'Copropriétaire activé ✅';
+            $landlordSubject = "✅ Copropriétaire activé : {$user->email}";
+            $landlordContent = $this->landlordCoOwnerActivatedContentHtml($invitation, $user, $coOwner);
+            $this->trySendMail($landlordEmail, $landlordSubject, $landlordTitle, $ref, $landlordContent);
+        } else {
+            Log::warning('[auth-mail] landlord email missing (co-owner activation)', [
+                'invitation_id' => $invitation->id,
+                'landlord_id' => $invitation->landlord_id,
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Compte copropriétaire créé avec succès.',
+            'token'   => $token,
+            'user'    => [
+                'id'    => $user->id,
+                'email' => $user->email,
+                'roles' => method_exists($user, 'getRoleNames')
+                    ? $user->getRoleNames()
+                    : ['co_owner'],
+            ],
+            'co_owner' => $coOwner,
+        ]);
+    }
+
+    private function resolveLandlordEmailFromCoOwnerInvitation(CoOwnerInvitation $invitation): ?string
+    {
+        // Cas A: relation ->landlord->user->email
+        $email = $invitation->landlord?->user?->email ?? null;
+        if ($email) return $email;
+
+        // Cas B: landlord_id est un users.id (rare mais possible)
+        if (!empty($invitation->landlord_id)) {
+            $u = User::find($invitation->landlord_id);
+            if ($u?->email) return $u->email;
+        }
+
+        // Cas C: landlord_id est un landlords.id -> on retrouve user via landlord.user_id
+        if (!empty($invitation->landlord_id)) {
+            $landlord = Landlord::find($invitation->landlord_id);
+            if ($landlord && !empty($landlord->user_id)) {
+                $u = User::find($landlord->user_id);
+                if ($u?->email) return $u->email;
+            }
+        }
+
+        return null;
     }
 
     /**
