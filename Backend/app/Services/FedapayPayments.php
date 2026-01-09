@@ -16,9 +16,15 @@ class FedapayPayments
      */
     public function createCheckout(Payment $payment, Invoice $invoice, Lease $lease, array $customer): array
     {
-        $commissionRate = (float) config('fedapay.commission_rate', 0.05);
-        $fee = round(((float)$invoice->amount_total) * $commissionRate, 2);
-        $net = round(((float)$invoice->amount_total) - $fee, 2);
+        // ANCIEN CODE: Calcul avec commission de 5%
+        // $commissionRate = (float) config('fedapay.commission_rate', 0.05);
+        // $fee = round(((float)$invoice->amount_total) * $commissionRate, 2);
+        // $net = round(((float)$invoice->amount_total) - $fee, 2);
+        
+        // NOUVEAU CODE: Commission à 0% - tout le montant va au propriétaire
+        $commissionRate = 0.00; // 0% au lieu de 5%
+        $fee = 0.00; // Aucun frais prélevés
+        $net = round((float)$invoice->amount_total, 2); // Le montant total va au propriétaire
 
         // Enregistre montants dès maintenant (même si pas payé)
         $payment->update([
@@ -63,17 +69,21 @@ class FedapayPayments
         if ($landlordSubaccountId) {
             $payload["transaction"]["metadata"]["landlord_subaccount_id"] = $landlordSubaccountId;
 
-            // ⚠️ Exemple générique: adapte au format exact FedaPay “split/commission”
-            $payload["transaction"]["fees"] = [
-                [
-                    "type" => "commission",
-                    "amount" => $fee,
-                    "currency" => config('fedapay.currency', 'XOF'),
-                ]
-            ];
+            // ANCIEN CODE: Configuration avec commission de 5%
+            // $payload["transaction"]["fees"] = [
+            //     [
+            //         "type" => "commission",
+            //         "amount" => $fee,
+            //         "currency" => config('fedapay.currency', 'XOF'),
+            //     ]
+            // ];
+            
+            // NOUVEAU CODE: Pas de frais - tout le montant va au propriétaire
+            // Les frais sont maintenant à 0%, donc on n'envoie pas de section "fees"
+            
             $payload["transaction"]["transfer"] = [
                 "destination" => $landlordSubaccountId,
-                "amount" => $net,
+                "amount" => $net, // Maintenant $net = montant total (100%)
                 "currency" => config('fedapay.currency', 'XOF'),
             ];
         }

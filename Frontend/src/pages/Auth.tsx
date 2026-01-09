@@ -1,37 +1,122 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { toast } from 'sonner';
-import { authService } from '@/services/api';
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  Building2,
+  User2,
+  MapPin,
+  IdCard,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
+import { authService } from "@/services/api";
+
+const ID_TYPES = [
+  { value: "CNI", label: "Carte d'identité (CNI)" },
+  { value: "PASSPORT", label: "Passeport" },
+  { value: "PERMIS", label: "Permis de conduire" },
+  { value: "SEJOUR", label: "Titre de séjour" },
+] as const;
+
+// -------------------- SCHEMAS --------------------
 
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
   password: z.string().min(1, "Mot de passe requis"),
 });
 
-const registerSchema = z.object({
-  firstName: z.string().min(2, "Le prénom doit contenir au moins 2 caractères"),
-  lastName: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
-  email: z.string().email("Email invalide").toLowerCase(),
-  phone: z.string().min(1, "Le téléphone est requis"),
-  password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
-  confirmPassword: z.string(),
-  acceptTerms: z.boolean().refine((val) => val === true, {
-    message: "Vous devez accepter les conditions d'utilisation",
-  }),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Les mots de passe ne correspondent pas",
-  path: ["confirmPassword"],
-});
+const registerSchema = z
+  .object({
+    // Toggle
+    isProfessional: z.boolean().default(false),
+
+    // ✅ Représentant (désormais requis en Pro aussi)
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+
+    // Pro
+    companyName: z.string().optional(),
+    ifu: z.string().optional(),
+    rccm: z.string().optional(),
+
+    // Commun
+    email: z.string().email("Email invalide").toLowerCase(),
+    phone: z.string().min(1, "Le téléphone est requis"),
+    address: z.string().min(5, "L'adresse du bailleur est requise"),
+    idType: z.enum(["CNI", "PASSPORT", "PERMIS", "SEJOUR"], {
+      required_error: "Type de pièce d'identité requis",
+    }),
+    idNumber: z.string().optional(),
+
+    password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+    confirmPassword: z.string(),
+    acceptTerms: z.boolean().refine((val) => val === true, {
+      message: "Vous devez accepter les conditions d'utilisation",
+    }),
+  })
+  .superRefine((data, ctx) => {
+    // passwords match
+    if (data.password !== data.confirmPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Les mots de passe ne correspondent pas",
+        path: ["confirmPassword"],
+      });
+    }
+
+    // ✅ Prénom/Nom requis dans tous les cas (Particulier ET Pro)
+    if (!data.firstName || data.firstName.trim().length < 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Le prénom doit contenir au moins 2 caractères",
+        path: ["firstName"],
+      });
+    }
+    if (!data.lastName || data.lastName.trim().length < 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Le nom doit contenir au moins 2 caractères",
+        path: ["lastName"],
+      });
+    }
+
+    // Particulier vs Pro rules
+    if (data.isProfessional) {
+      if (!data.companyName || data.companyName.trim().length < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "La raison sociale est requise",
+          path: ["companyName"],
+        });
+      }
+      if (!data.ifu || data.ifu.trim().length < 3) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "L'IFU est requis",
+          path: ["ifu"],
+        });
+      }
+      if (!data.rccm || data.rccm.trim().length < 3) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Le RCCM est requis",
+          path: ["rccm"],
+        });
+      }
+    }
+  });
 
 type LoginFormData = z.infer<typeof loginSchema>;
 type RegisterFormData = z.infer<typeof registerSchema>;
@@ -43,30 +128,25 @@ type ApiErr = {
 };
 
 function normalizeBackendMessage(err: ApiErr, fallback: string) {
-  // On logge les détails techniques mais on renvoie un message propre au user.
   const status = err.response?.status;
 
-  // Erreurs réseau / serveur HS
   if (err.request && !err.response) {
     return "Le serveur ne répond pas. Vérifiez votre connexion internet puis réessayez.";
   }
 
-  // Codes utiles
   if (status === 401) return "Email ou mot de passe incorrect.";
   if (status === 403) return "Accès refusé. Vérifiez vos droits ou contactez le support.";
   if (status === 422) return "Certains champs sont invalides. Vérifiez le formulaire.";
   if (status && status >= 500) return "Problème serveur. Réessayez dans quelques instants.";
 
-  // Message backend parfois utile mais pas toujours “user-friendly”
   const backendMsg = err.response?.data?.message?.trim();
   if (backendMsg) {
-    // Petit filtre : on évite d'afficher des messages techniques.
     const looksTechnical =
-      backendMsg.toLowerCase().includes('sql') ||
-      backendMsg.toLowerCase().includes('exception') ||
-      backendMsg.toLowerCase().includes('stack') ||
-      backendMsg.toLowerCase().includes('undefined') ||
-      backendMsg.toLowerCase().includes('trace');
+      backendMsg.toLowerCase().includes("sql") ||
+      backendMsg.toLowerCase().includes("exception") ||
+      backendMsg.toLowerCase().includes("stack") ||
+      backendMsg.toLowerCase().includes("undefined") ||
+      backendMsg.toLowerCase().includes("trace");
 
     if (!looksTechnical) return backendMsg;
   }
@@ -89,7 +169,7 @@ function applyBackendFieldErrors<T extends Record<string, any>>(
     if (!formKey) return;
 
     const msg = Array.isArray(messages) ? messages[0] : "Champ invalide";
-    setError(formKey as any, { type: 'server', message: msg });
+    setError(formKey as any, { type: "server", message: msg });
     applied = true;
   });
 
@@ -99,51 +179,71 @@ function applyBackendFieldErrors<T extends Record<string, any>>(
 export default function Auth() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isLogin, setIsLogin] = useState(location.pathname === '/login');
+  const [isLogin, setIsLogin] = useState(location.pathname === "/login");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    mode: 'onSubmit',
-    reValidateMode: 'onChange',
+    mode: "onSubmit",
+    reValidateMode: "onChange",
     shouldFocusError: true,
   });
 
   const registerForm = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
-    mode: 'onSubmit',
-    reValidateMode: 'onChange',
+    mode: "onSubmit",
+    reValidateMode: "onChange",
     shouldFocusError: true,
-    defaultValues: { acceptTerms: false },
+    defaultValues: {
+      acceptTerms: false,
+      isProfessional: false,
+      idType: "CNI",
+    },
   });
 
-  // maps backend -> form fields (si Laravel renvoie first_name, etc.)
+  // maps backend -> form fields
   const registerFieldMap = useMemo(
-    () => ({
-      first_name: 'firstName',
-      last_name: 'lastName',
-      email: 'email',
-      phone: 'phone',
-      password: 'password',
-      password_confirmation: 'confirmPassword',
-      accept_terms: 'acceptTerms',
-    }) as Record<string, keyof RegisterFormData>,
+    () =>
+      ({
+        // Commun
+        email: "email",
+        phone: "phone",
+        address: "address",
+        id_type: "idType",
+        id_number: "idNumber",
+
+        password: "password",
+        password_confirmation: "confirmPassword",
+        accept_terms: "acceptTerms",
+
+        // Toggle
+        is_professional: "isProfessional",
+
+        // Représentant / Personne
+        first_name: "firstName",
+        last_name: "lastName",
+
+        // Pro
+        company_name: "companyName",
+        ifu: "ifu",
+        rccm: "rccm",
+      }) as Record<string, keyof RegisterFormData>,
     []
   );
 
   const loginFieldMap = useMemo(
-    () => ({
-      email: 'email',
-      password: 'password',
-    }) as Record<string, keyof LoginFormData>,
+    () =>
+      ({
+        email: "email",
+        password: "password",
+      }) as Record<string, keyof LoginFormData>,
     []
   );
 
-  // Petite aide UX : quand on bascule login/register on reset les messages
   useEffect(() => {
-    setError('');
+    setError("");
     loginForm.clearErrors();
     registerForm.clearErrors();
   }, [isLogin]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -155,62 +255,63 @@ export default function Auth() {
   };
 
   const handleLogin = async (data: LoginFormData) => {
-    setError('');
+    setError("");
 
     try {
       setIsLoading(true);
 
       const response = await authService.login(data.email, data.password);
 
-      if (response && response.data && response.data.user) {
-        const { user } = response.data;
+      // Selon ton LoginResponse actuel: { status, message, data: { access_token, user } }
+      // Et ton ancien code attendait response.data.user => on gère les deux formats.
+      const user = (response as any)?.data?.user ?? (response as any)?.data?.data?.user ?? (response as any)?.data?.user ?? (response as any)?.data?.data?.user;
 
-        toast.success('Connexion réussie !');
+      const token =
+        (response as any)?.data?.access_token ??
+        (response as any)?.data?.data?.access_token ??
+        (response as any)?.data?.data?.access_token;
 
-        localStorage.setItem('token', response.data.access_token);
-        localStorage.setItem('user', JSON.stringify(user));
+      if (token) localStorage.setItem("token", token);
+      if (user) localStorage.setItem("user", JSON.stringify(user));
+
+      if (user) {
+        toast.success("Connexion réussie !");
 
         const roles = user.roles || [];
 
-        let redirectPath = '/';
-        let userRole = '';
+        let redirectPath = "/";
+        let userRole = "";
 
-        if (roles.includes('admin')) {
-          redirectPath = '/admin';
-          userRole = 'admin';
-        } else if (roles.includes('landlord') || roles.includes('proprietaire')) {
-          redirectPath = '/proprietaire';
-          userRole = 'proprietaire';
-        } else if (roles.includes('tenant') || roles.includes('locataire')) {
-          redirectPath = '/locataire';
-          userRole = 'locataire';
+        if (roles.includes("admin")) {
+          redirectPath = "/admin";
+          userRole = "admin";
+        } else if (roles.includes("landlord") || roles.includes("proprietaire")) {
+          redirectPath = "/proprietaire";
+          userRole = "proprietaire";
+        } else if (roles.includes("tenant") || roles.includes("locataire")) {
+          redirectPath = "/locataire";
+          userRole = "locataire";
         }
 
         const updatedUser = { ...user, role: userRole };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        localStorage.setItem("user", JSON.stringify(updatedUser));
 
         navigate(redirectPath, { replace: true });
       } else {
-        throw new Error('Réponse du serveur invalide');
+        throw new Error("Réponse du serveur invalide");
       }
     } catch (e: unknown) {
       const err = e as ApiErr;
 
-      // Log technique pour toi
-      console.error('Erreur de connexion :', err);
+      console.error("Erreur de connexion :", err);
 
-      // Appliquer erreurs de champs si 422
       const applied = applyBackendFieldErrors<LoginFormData>(err, loginForm.setError, loginFieldMap);
 
       const msg = normalizeBackendMessage(err, "Email ou mot de passe incorrect.");
       setError(msg);
 
-      // Notifs : si erreurs champs, on affiche un toast clair, sinon message général
-      if (applied) {
-        toast.error("Vérifiez vos informations de connexion.");
-      } else {
-        toast.error(msg);
-      }
+      if (applied) toast.error("Vérifiez vos informations de connexion.");
+      else toast.error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -220,25 +321,45 @@ export default function Auth() {
     try {
       setIsLoading(true);
 
-      const userData = {
-        first_name: data.firstName,
-        last_name: data.lastName,
-        email: data.email.toLowerCase(),
+      const isPro = !!data.isProfessional;
+
+      // ✅ On envoie first_name/last_name TOUJOURS (représentant)
+      const userData: any = {
+        email: data.email.toLowerCase().trim(),
         phone: data.phone,
         password: data.password,
         password_confirmation: data.confirmPassword,
-        role: 'proprietaire',
-        accept_terms: data.acceptTerms
+
+        is_professional: isPro,
+
+        address: data.address,
+
+        id_type: data.idType,
+        id_number: (data.idNumber || "").trim() || null,
+
+        first_name: (data.firstName || "").trim(),
+        last_name: (data.lastName || "").trim(),
+
+        company_name: isPro ? (data.companyName || "").trim() : null,
+        ifu: isPro ? (data.ifu || "").trim() : null,
+        rccm: isPro ? (data.rccm || "").trim() : null,
+
+        role: "proprietaire",
+        accept_terms: data.acceptTerms,
       };
 
       const response = await authService.register(userData);
 
-      if (response?.status === 'success' || response?.data?.token) {
+      if (response?.status === "success" || response?.data?.token || (response as any)?.token) {
         toast.success("Compte créé avec succès ! Vous allez être redirigé vers la page de connexion.");
 
         setTimeout(() => {
           setIsLogin(true);
-          registerForm.reset();
+          registerForm.reset({
+            acceptTerms: false,
+            isProfessional: false,
+            idType: "CNI",
+          });
         }, 1500);
       } else {
         throw new Error(response?.message || "Erreur lors de l'inscription");
@@ -246,25 +367,19 @@ export default function Auth() {
     } catch (e: unknown) {
       const err = e as ApiErr;
 
-      // Log technique pour toi
       console.error("Erreur lors de l'inscription :", err);
 
-      // Appliquer erreurs champ par champ si Laravel renvoie errors{}
       const applied = applyBackendFieldErrors<RegisterFormData>(err, registerForm.setError, registerFieldMap);
-
-      // Message user-friendly
       const msg = normalizeBackendMessage(err, "Une erreur est survenue lors de la création du compte.");
 
-      // Notifs : si erreurs champs -> toast générique; sinon -> msg
-      if (applied) {
-        toast.error("Certains champs sont invalides. Vérifiez le formulaire.");
-      } else {
-        toast.error(msg);
-      }
+      if (applied) toast.error("Certains champs sont invalides. Vérifiez le formulaire.");
+      else toast.error(msg);
     } finally {
       setIsLoading(false);
     }
   };
+
+  const isProfessional = registerForm.watch("isProfessional");
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-white">
@@ -283,26 +398,28 @@ export default function Auth() {
             <motion.button
               onClick={() => setIsLogin(true)}
               className={`flex-1 py-3 px-4 rounded-md text-sm font-medium transition-colors ${
-                isLogin ? 'bg-primary text-white shadow-sm' : 'text-slate-600 hover:bg-slate-200'
+                isLogin ? "bg-primary text-white shadow-sm" : "text-slate-600 hover:bg-slate-200"
               }`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              type="button"
             >
               Connexion
             </motion.button>
             <motion.button
               onClick={() => setIsLogin(false)}
               className={`flex-1 py-3 px-4 rounded-md text-sm font-medium transition-colors ${
-                !isLogin ? 'bg-primary text-white shadow-sm' : 'text-slate-600 hover:bg-slate-200'
+                !isLogin ? "bg-primary text-white shadow-sm" : "text-slate-600 hover:bg-slate-200"
               }`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              type="button"
             >
               Inscription
             </motion.button>
           </motion.div>
 
-          <div className="relative min-h-[700px]">
+          <div className="relative min-h-[760px]">
             <AnimatePresence mode="wait">
               {isLogin ? (
                 <motion.div
@@ -366,9 +483,7 @@ export default function Auth() {
                           />
                         </div>
                         {loginForm.formState.errors.email && (
-                          <p className="text-sm text-red-600 mt-1">
-                            {loginForm.formState.errors.email.message}
-                          </p>
+                          <p className="text-sm text-red-600 mt-1">{loginForm.formState.errors.email.message}</p>
                         )}
                       </motion.div>
 
@@ -384,7 +499,7 @@ export default function Auth() {
                           <Lock size={18} className="absolute left-3 top-3.5 text-slate-400" />
                           <Input
                             id="login-password"
-                            type={showPassword ? 'text' : 'password'}
+                            type={showPassword ? "text" : "password"}
                             placeholder="••••••••"
                             {...loginForm.register("password")}
                             className="pl-10 pr-10 h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
@@ -398,9 +513,7 @@ export default function Auth() {
                           </button>
                         </div>
                         {loginForm.formState.errors.password && (
-                          <p className="text-sm text-red-600 mt-1">
-                            {loginForm.formState.errors.password.message}
-                          </p>
+                          <p className="text-sm text-red-600 mt-1">{loginForm.formState.errors.password.message}</p>
                         )}
                       </motion.div>
 
@@ -426,7 +539,7 @@ export default function Auth() {
                                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                               />
                             )}
-                            {isLoading ? 'Connexion en cours...' : 'Se connecter'}
+                            {isLoading ? "Connexion en cours..." : "Se connecter"}
                           </motion.div>
                         </Button>
                       </motion.div>
@@ -467,20 +580,53 @@ export default function Auth() {
                     >
                       Créer un compte propriétaire
                     </motion.h2>
-                    <motion.h2
-                      className="p-leading mb-8"
-                      style={{ color: 'black' }}
+
+                    <motion.p
+                      className="mb-6 text-slate-700"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.4, delay: 0.3 }}
                     >
                       Compte gratuit, sans carte bancaire. Vous pourrez ajouter vos locataires ensuite.
-                    </motion.h2>
+                    </motion.p>
 
-                    <form
-                      onSubmit={registerForm.handleSubmit(handleRegister, (errs) => notifyClientValidation(errs))}
-                    >
-                      <ScrollArea className="h-[350px] pr-4">
+                    {/* Toggle Particulier / Pro */}
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 mb-6 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {isProfessional ? (
+                          <Building2 size={18} className="text-slate-600" />
+                        ) : (
+                          <User2 size={18} className="text-slate-600" />
+                        )}
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800">
+                            {isProfessional ? "Professionnel" : "Particulier"}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {isProfessional ? "Société + représentant" : "Prénom + Nom"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <Controller
+                        name="isProfessional"
+                        control={registerForm.control}
+                        render={({ field }) => (
+                          <button
+                            type="button"
+                            onClick={() => field.onChange(!field.value)}
+                            className={`h-9 px-3 rounded-lg text-sm font-medium transition-colors ${
+                              field.value ? "bg-primary text-white" : "bg-white text-slate-700 border border-slate-200"
+                            }`}
+                          >
+                            {field.value ? "Pro" : "Particulier"}
+                          </button>
+                        )}
+                      />
+                    </div>
+
+                    <form onSubmit={registerForm.handleSubmit(handleRegister, (errs) => notifyClientValidation(errs))}>
+                      <ScrollArea className="h-[420px] pr-4">
                         <motion.div
                           className="space-y-6 pb-6"
                           initial="hidden"
@@ -489,20 +635,18 @@ export default function Auth() {
                             hidden: { opacity: 0 },
                             visible: {
                               opacity: 1,
-                              transition: { staggerChildren: 0.1, delayChildren: 0.4 },
+                              transition: { staggerChildren: 0.08, delayChildren: 0.15 },
                             },
                           }}
                         >
+                          {/* ✅ Représentant / Identité (toujours affiché) */}
                           <motion.div
                             className="grid grid-cols-2 gap-4"
-                            variants={{
-                              hidden: { y: 20, opacity: 0 },
-                              visible: { y: 0, opacity: 1 },
-                            }}
+                            variants={{ hidden: { y: 12, opacity: 0 }, visible: { y: 0, opacity: 1 } }}
                           >
                             <div className="space-y-2">
                               <Label htmlFor="firstName" className="text-slate-700 font-medium">
-                                Prénom *
+                                {isProfessional ? "Prénom du représentant *" : "Prénom *"}
                               </Label>
                               <Input
                                 id="firstName"
@@ -512,14 +656,14 @@ export default function Auth() {
                               />
                               {registerForm.formState.errors.firstName && (
                                 <p className="text-sm text-red-600">
-                                  {registerForm.formState.errors.firstName.message}
+                                  {registerForm.formState.errors.firstName.message as any}
                                 </p>
                               )}
                             </div>
 
                             <div className="space-y-2">
                               <Label htmlFor="lastName" className="text-slate-700 font-medium">
-                                Nom *
+                                {isProfessional ? "Nom du représentant *" : "Nom *"}
                               </Label>
                               <Input
                                 id="lastName"
@@ -529,42 +673,103 @@ export default function Auth() {
                               />
                               {registerForm.formState.errors.lastName && (
                                 <p className="text-sm text-red-600">
-                                  {registerForm.formState.errors.lastName.message}
+                                  {registerForm.formState.errors.lastName.message as any}
                                 </p>
                               )}
                             </div>
                           </motion.div>
 
+                          {/* Pro */}
+                          {isProfessional && (
+                            <motion.div
+                              className="space-y-4"
+                              variants={{ hidden: { y: 12, opacity: 0 }, visible: { y: 0, opacity: 1 } }}
+                            >
+                              <div className="space-y-2">
+                                <Label htmlFor="companyName" className="text-slate-700 font-medium">
+                                  Raison sociale *
+                                </Label>
+                                <div className="relative mt-1">
+                                  <Building2 size={18} className="absolute left-3 top-3.5 text-slate-400" />
+                                  <Input
+                                    id="companyName"
+                                    placeholder="MB Pro Services"
+                                    {...registerForm.register("companyName")}
+                                    className="pl-10 h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
+                                  />
+                                </div>
+                                {registerForm.formState.errors.companyName && (
+                                  <p className="text-sm text-red-600">
+                                    {registerForm.formState.errors.companyName.message as any}
+                                  </p>
+                                )}
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="ifu" className="text-slate-700 font-medium">
+                                    IFU *
+                                  </Label>
+                                  <Input
+                                    id="ifu"
+                                    placeholder="Ex: 123456789"
+                                    {...registerForm.register("ifu")}
+                                    className="h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
+                                  />
+                                  {registerForm.formState.errors.ifu && (
+                                    <p className="text-sm text-red-600">
+                                      {registerForm.formState.errors.ifu.message as any}
+                                    </p>
+                                  )}
+                                </div>
+
+                                <div className="space-y-2">
+                                  <Label htmlFor="rccm" className="text-slate-700 font-medium">
+                                    RCCM *
+                                  </Label>
+                                  <Input
+                                    id="rccm"
+                                    placeholder="Ex: RB/ABC/2025"
+                                    {...registerForm.register("rccm")}
+                                    className="h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
+                                  />
+                                  {registerForm.formState.errors.rccm && (
+                                    <p className="text-sm text-red-600">
+                                      {registerForm.formState.errors.rccm.message as any}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+
+                          {/* Email */}
                           <motion.div
                             className="space-y-2"
-                            variants={{
-                              hidden: { x: -20, opacity: 0 },
-                              visible: { x: 0, opacity: 1 },
-                            }}
+                            variants={{ hidden: { x: -10, opacity: 0 }, visible: { x: 0, opacity: 1 } }}
                           >
                             <Label htmlFor="register-email" className="text-slate-700 font-medium">
                               Adresse email *
                             </Label>
-                            <Input
-                              id="register-email"
-                              type="email"
-                              placeholder="nom@exemple.fr"
-                              {...registerForm.register("email")}
-                              className="h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
-                            />
+                            <div className="relative mt-1">
+                              <Mail size={18} className="absolute left-3 top-3.5 text-slate-400" />
+                              <Input
+                                id="register-email"
+                                type="email"
+                                placeholder="nom@exemple.fr"
+                                {...registerForm.register("email")}
+                                className="pl-10 h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
+                              />
+                            </div>
                             {registerForm.formState.errors.email && (
-                              <p className="text-sm text-red-600">
-                                {registerForm.formState.errors.email.message}
-                              </p>
+                              <p className="text-sm text-red-600">{registerForm.formState.errors.email.message}</p>
                             )}
                           </motion.div>
 
+                          {/* Phone */}
                           <motion.div
                             className="space-y-2"
-                            variants={{
-                              hidden: { x: -20, opacity: 0 },
-                              visible: { x: 0, opacity: 1 },
-                            }}
+                            variants={{ hidden: { x: -10, opacity: 0 }, visible: { x: 0, opacity: 1 } }}
                           >
                             <Label htmlFor="phone" className="text-slate-700 font-medium">
                               Téléphone *
@@ -577,42 +782,106 @@ export default function Auth() {
                               className="h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
                             />
                             {registerForm.formState.errors.phone && (
+                              <p className="text-sm text-red-600">{registerForm.formState.errors.phone.message}</p>
+                            )}
+                          </motion.div>
+
+                          {/* Address */}
+                          <motion.div
+                            className="space-y-2"
+                            variants={{ hidden: { x: -10, opacity: 0 }, visible: { x: 0, opacity: 1 } }}
+                          >
+                            <Label htmlFor="address" className="text-slate-700 font-medium">
+                              Adresse du bailleur *
+                            </Label>
+                            <div className="relative mt-1">
+                              <MapPin size={18} className="absolute left-3 top-3.5 text-slate-400" />
+                              <Input
+                                id="address"
+                                placeholder="1 rue Marguerin, 75014 Paris"
+                                {...registerForm.register("address")}
+                                className="pl-10 h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
+                              />
+                            </div>
+                            {registerForm.formState.errors.address && (
                               <p className="text-sm text-red-600">
-                                {registerForm.formState.errors.phone.message}
+                                {registerForm.formState.errors.address.message as any}
                               </p>
                             )}
                           </motion.div>
 
+                          {/* ID Type + Number */}
+                          <motion.div
+                            className="space-y-3"
+                            variants={{ hidden: { y: 10, opacity: 0 }, visible: { y: 0, opacity: 1 } }}
+                          >
+                            <div className="space-y-2">
+                              <Label className="text-slate-700 font-medium">Type de pièce d'identité *</Label>
+                              <div className="relative mt-1">
+                                <IdCard size={18} className="absolute left-3 top-3.5 text-slate-400" />
+                                <select
+                                  className="w-full h-12 pl-10 pr-3 rounded-md border border-slate-300 bg-white text-slate-800 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                                  {...registerForm.register("idType")}
+                                >
+                                  {ID_TYPES.map((t) => (
+                                    <option key={t.value} value={t.value}>
+                                      {t.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              {registerForm.formState.errors.idType && (
+                                <p className="text-sm text-red-600">
+                                  {registerForm.formState.errors.idType.message as any}
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor="idNumber" className="text-slate-700 font-medium">
+                                Numéro de la pièce (optionnel)
+                              </Label>
+                              <Input
+                                id="idNumber"
+                                placeholder="Ex: AB123456"
+                                {...registerForm.register("idNumber")}
+                                className="h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
+                              />
+                              {registerForm.formState.errors.idNumber && (
+                                <p className="text-sm text-red-600">
+                                  {registerForm.formState.errors.idNumber.message as any}
+                                </p>
+                              )}
+                            </div>
+                          </motion.div>
+
+                          {/* Password */}
                           <motion.div
                             className="space-y-2"
-                            variants={{
-                              hidden: { x: -20, opacity: 0 },
-                              visible: { x: 0, opacity: 1 },
-                            }}
+                            variants={{ hidden: { x: -10, opacity: 0 }, visible: { x: 0, opacity: 1 } }}
                           >
                             <Label htmlFor="register-password" className="text-slate-700 font-medium">
                               Mot de passe *
                             </Label>
-                            <Input
-                              id="register-password"
-                              type="password"
-                              placeholder="Minimum 8 caractères"
-                              {...registerForm.register("password")}
-                              className="h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
-                            />
+                            <div className="relative mt-1">
+                              <Lock size={18} className="absolute left-3 top-3.5 text-slate-400" />
+                              <Input
+                                id="register-password"
+                                type="password"
+                                placeholder="Minimum 8 caractères"
+                                {...registerForm.register("password")}
+                                className="pl-10 h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
+                              />
+                            </div>
                             {registerForm.formState.errors.password && (
-                              <p className="text-sm text-red-600">
-                                {registerForm.formState.errors.password.message}
-                              </p>
+                              <p className="text-sm text-red-600">{registerForm.formState.errors.password.message}</p>
                             )}
                           </motion.div>
 
+                          {/* Confirm Password */}
                           <motion.div
                             className="space-y-2"
-                            variants={{
-                              hidden: { x: -20, opacity: 0 },
-                              visible: { x: 0, opacity: 1 },
-                            }}
+                            variants={{ hidden: { x: -10, opacity: 0 }, visible: { x: 0, opacity: 1 } }}
                           >
                             <Label htmlFor="confirmPassword" className="text-slate-700 font-medium">
                               Confirmer le mot de passe *
@@ -626,17 +895,15 @@ export default function Auth() {
                             />
                             {registerForm.formState.errors.confirmPassword && (
                               <p className="text-sm text-red-600">
-                                {registerForm.formState.errors.confirmPassword.message}
+                                {registerForm.formState.errors.confirmPassword.message as any}
                               </p>
                             )}
                           </motion.div>
 
+                          {/* Terms */}
                           <motion.div
                             className="flex items-start space-x-3"
-                            variants={{
-                              hidden: { y: 20, opacity: 0 },
-                              visible: { y: 0, opacity: 1 },
-                            }}
+                            variants={{ hidden: { y: 10, opacity: 0 }, visible: { y: 0, opacity: 1 } }}
                           >
                             <Controller
                               name="acceptTerms"
@@ -666,9 +933,7 @@ export default function Auth() {
                             </Label>
                           </motion.div>
                           {registerForm.formState.errors.acceptTerms && (
-                            <p className="text-sm text-red-600">
-                              {registerForm.formState.errors.acceptTerms.message}
-                            </p>
+                            <p className="text-sm text-red-600">{registerForm.formState.errors.acceptTerms.message}</p>
                           )}
                         </motion.div>
                       </ScrollArea>
@@ -676,7 +941,7 @@ export default function Auth() {
                       <motion.div
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        transition={{ duration: 0.4, delay: 0.8 }}
+                        transition={{ duration: 0.4, delay: 0.25 }}
                       >
                         <Button
                           type="submit"
@@ -704,11 +969,12 @@ export default function Auth() {
                         className="mt-6 text-center"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ duration: 0.4, delay: 0.9 }}
+                        transition={{ duration: 0.4, delay: 0.3 }}
                       >
                         <p className="text-sm text-secondary">
                           Déjà un compte ?{" "}
                           <button
+                            type="button"
                             onClick={() => setIsLogin(true)}
                             className="text-primary hover:underline font-medium"
                           >
@@ -725,8 +991,9 @@ export default function Auth() {
 
           <div className="text-center mt-8">
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate("/")}
               className="text-secondary hover:text-primary font-medium transition-colors"
+              type="button"
             >
               ← Retour à l'accueil
             </button>

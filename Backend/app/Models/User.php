@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Landlord;
+use App\Models\Agency;
+use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable
 {
@@ -31,9 +35,19 @@ class User extends Authenticatable
     ];
 
     // One-to-one with Landlord (if user has landlord role)
-    public function landlord(): HasOne
+    public function landlord(): BelongsTo
     {
-        return $this->hasOne(Landlord::class, 'user_id');
+        return $this->belongsTo(Landlord::class);
+    }
+
+    public function coOwner(): BelongsTo
+    {
+        return $this->belongsTo(Landlord::class, 'co_owner_id');
+    }
+
+    public function agency(): BelongsTo
+    {
+        return $this->belongsTo(Agency::class, 'agency_id');
     }
 
     // One-to-one with Tenant (if user has tenant role)
@@ -46,6 +60,11 @@ class User extends Authenticatable
     public function isLandlord(): bool
     {
         return $this->hasRole('landlord');
+    }
+
+    public function isCoOwner(): bool
+    {
+        return $this->hasRole('co_owner');
     }
 
     public function isTenant(): bool

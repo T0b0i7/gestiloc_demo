@@ -306,15 +306,14 @@ export const authService = {
         requestData
       );
 
-      const responseData = response.data;
+    const responseData = response.data;
 
-      if (responseData.token || responseData.data?.token) {
-        const token = responseData.token || responseData.data?.token;
-        const user = responseData.user || responseData.data?.user;
+    // ✅ stock token/user si présent (2 formats possibles)
+    const token = responseData.token || responseData.data?.token;
+    const user = responseData.user || responseData.data?.user;
 
-        if (token) localStorage.setItem('token', token);
-        if (user) localStorage.setItem('user', JSON.stringify(user));
-      }
+    if (token) localStorage.setItem('token', token);
+    if (user) localStorage.setItem('user', JSON.stringify(user));
 
       return responseData;
     } catch (error) {
@@ -349,9 +348,9 @@ export const authService = {
         throw statusError;
       }
 
-      throw error;
-    }
-  },
+    throw error;
+  }
+},
 
   logout: async () => {
     try {
@@ -1137,13 +1136,13 @@ export const rentReceiptService = {
   },
 
   // ✅ PDF quittance indépendante
-downloadPdf: async (id: number): Promise<Blob> => {
-  await initializeCsrfToken();
-  const response = await api.get(`/quittance-independent/${id}`, {
-    responseType: "blob",
-  });
-  return new Blob([response.data], { type: "application/pdf" });
-},
+  downloadPdf: async (id: number): Promise<Blob> => {
+    await initializeCsrfToken();
+    const response = await api.get(`/quittance-independent/${id}`, {
+      responseType: "blob",
+    });
+    return new Blob([response.data], { type: "application/pdf" });
+  },
 
 };
 
