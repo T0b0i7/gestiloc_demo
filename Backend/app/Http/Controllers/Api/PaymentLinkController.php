@@ -78,7 +78,7 @@ class PaymentLinkController extends Controller
 
         // appeler le service Fedapay pour créer checkout
         try {
-            $fedapay = app(\App\Services\Fedapay\FedapayPayments::class);
+            $fedapay = app(\App\Services\FedapayPayments::class);
             $customer = [
                 'firstname' => $tenant->first_name ?? null,
                 'lastname' => $tenant->last_name ?? null,

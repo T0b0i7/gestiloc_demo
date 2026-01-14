@@ -16,6 +16,8 @@ use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\Api\Finance\InvoiceController;
 use App\Http\Controllers\Api\Finance\TransactionController;
 use App\Http\Controllers\Api\Finance\PdfController;
+use App\Http\Controllers\Api\Admin\FinanceController;
+use App\Http\Controllers\Api\Admin\PaymentManagementController;
 use App\Http\Controllers\Api\PropertyConditionReportController;
 use App\Http\Controllers\Api\NoticeController;
 use App\Http\Controllers\Api\RentReceiptController;
@@ -174,15 +176,32 @@ Route::middleware(['auth:sanctum', 'property.access'])->group(function () {
     });
 
     // ---------- ADMIN uniquement ----------
-    Route::middleware('role:admin')->group(function () {
-        // admin routes...
+    Route::middleware('role:admin')->prefix('admin')->group(function () {
+        // Routes de gestion des finances
+        Route::prefix('finance')->group(function () {
+            Route::get('dashboard', [FinanceController::class, 'dashboard']);
+            Route::get('transactions', [FinanceController::class, 'transactions']);
+            Route::get('alerts', [FinanceController::class, 'alerts']);
+            Route::post('reports', [FinanceController::class, 'reports']);
+        });
+
+        // Routes de gestion des paiements
+        Route::prefix('payments')->group(function () {
+            Route::get('/', [PaymentManagementController::class, 'index']);
+            Route::get('{id}', [PaymentManagementController::class, 'show']);
+            Route::post('{id}/confirm', [PaymentManagementController::class, 'confirm']);
+            Route::post('{id}/reject', [PaymentManagementController::class, 'reject']);
+            Route::post('{id}/refund', [PaymentManagementController::class, 'refund']);
+            Route::get('{id}/receipt', [PaymentManagementController::class, 'downloadReceipt']);
+            Route::get('statistics', [PaymentManagementController::class, 'statistics']);
+        });
     });
 
-// Routes pour les copropriétaires
-Route::middleware('role:co_owner')->group(function () {
-    Route::post('landlords/invite', [CoOwnerController::class, 'invite']);
-    Route::get('my-invitations', [CoOwnerController::class, 'index']);
-});
+    // Routes pour les copropriétaires
+    Route::middleware('role:co_owner')->group(function () {
+        Route::post('landlords/invite', [CoOwnerController::class, 'invite']);
+        Route::get('my-invitations', [CoOwnerController::class, 'index']);
+    });
 
 // ---------- LOCATAIRE ----------
 Route::middleware('role:tenant')->prefix('tenant')->group(function () {

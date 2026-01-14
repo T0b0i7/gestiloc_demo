@@ -1227,6 +1227,369 @@ export const invoiceService = {
   },
 };
 
+// ================= ADMIN SERVICE =================
+
+export interface AdminDashboardStats {
+  kpi: {
+    total_users: number;
+    online_users: number;
+    offline_users: number;
+    online_percentage: number;
+    total_landlords: number;
+    total_tenants: number;
+    suspended_users: number;
+    deactivated_users: number;
+    user_growth_rate: number;
+    new_users_this_month: number;
+  };
+  properties: {
+    total_properties: number;
+    new_properties_this_month: number;
+    global_occupancy_rate: number;
+    properties_with_leases: number;
+    vacant_properties: number;
+  };
+  leases: {
+    total_leases: number;
+    active_leases: number;
+    new_leases_this_month: number;
+    lease_activation_rate: number;
+  };
+  financial: {
+    monthly_expected_rent: number;
+    monthly_collected_rent: number;
+    collection_rate: number;
+    revenue_growth_rate: number;
+    last_month_expected_rent: number;
+    last_month_collected_rent: number;
+  };
+  payments: {
+    total_payments: number;
+    fedapay_payments: number;
+    successful_payments: number;
+    fedapay_conversion_rate: number;
+  };
+  documents: {
+    rent_receipts_count: number;
+    property_condition_reports_count: number;
+    contracts_count: number;
+    total_documents: number;
+  };
+  maintenance: {
+    total_requests: number;
+    open_requests: number;
+    in_progress_requests: number;
+    resolved_requests: number;
+  };
+  charts: {
+    revenue_trend: Array<{
+      month: string;
+      month_label: string;
+      expected_rent: number;
+      collected_rent: number;
+      collection_rate: number;
+    }>;
+    online_by_role: {
+      admin: number;
+      landlord: number;
+      tenant: number;
+      unknown: number;
+    };
+  };
+  recent_activity: Array<{
+    type: string;
+    description: string;
+    role?: string;
+    landlord?: string;
+    tenant?: string;
+    property?: string;
+    method?: string;
+    month?: string;
+    created_at: string;
+  }>;
+  updated_at: string;
+}
+
+export interface AdminUser {
+  id: number;
+  email: string;
+  phone?: string;
+  status: string;
+  last_activity_at?: string;
+  created_at: string;
+  updated_at: string;
+  properties_count?: number;
+  leases_count?: number;
+  landlord?: {
+    id: number;
+    first_name?: string;
+    last_name?: string;
+    company_name?: string;
+  };
+  tenant?: {
+    id: number;
+    first_name?: string;
+    last_name?: string;
+  };
+  suspendedByAdmin?: {
+    id: number;
+    email: string;
+  };
+  deactivatedByAdmin?: {
+    id: number;
+    email: string;
+  };
+}
+
+export interface AdminUserDetail {
+  user: AdminUser;
+  summary: {
+    role: string | null;
+    properties_count: number;
+    active_leases_count: number;
+    total_revenue: number;
+    maintenance_requests_count: number;
+  };
+  activity: Array<{
+    type: string;
+    count?: number;
+    period?: string;
+    label: string;
+    date?: string;
+  }>;
+}
+
+export interface AdminProperty {
+  id: number;
+  uuid: string;
+  name: string;
+  address: string;
+  city: string;
+  status: string;
+  type: string;
+  rent_amount?: number;
+  landlord: {
+    user: {
+      email: string;
+    };
+  };
+  leases?: Array<{
+    id: number;
+    status: string;
+  }>;
+  pendingReports?: PropertyConditionReport[];
+  reports?: PropertyConditionReport[];
+}
+
+export interface AdminPayment {
+  id: number;
+  transaction_id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  payment_method: string;
+  created_at: string;
+  invoice: {
+    lease: {
+      property: {
+        name: string;
+        landlord: {
+          user: {
+            email: string;
+          };
+        };
+      };
+      tenant: {
+        user: {
+          email: string;
+        };
+      };
+    };
+  };
+}
+
+export interface PaginationMeta {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+  from?: number;
+  to?: number;
+  path?: string;
+  first_page_url?: string;
+  last_page_url?: string | null;
+  next_page_url?: string | null;
+  prev_page_url?: string | null;
+}
+
+export interface AdminPropertyStats {
+  [key: string]: unknown;
+}
+
+export interface AdminFinanceDashboard {
+  [key: string]: unknown;
+}
+
+export const adminService = {
+  getDashboardStats: async (): Promise<AdminDashboardStats> => {
+    try {
+      const response = await api.get<AdminDashboardStats>('/admin/dashboard/stats');
+      return response.data;
+    } catch (error) {
+      const apiError = error as ApiError;
+      console.error('Erreur API getDashboardStats:', error);
+      if (apiError.response?.data) throw apiError.response.data;
+      throw error;
+    }
+  },
+
+  // User management
+  getUsers: async (params?: {
+    role?: string;
+    status?: string;
+    online?: boolean;
+    search?: string;
+    sort_by?: string;
+    sort_order?: 'asc' | 'desc';
+    per_page?: number;
+  }): Promise<{ data: AdminUser[]; meta: PaginationMeta }> => {
+    try {
+      const response = await api.get('/admin/users', { params });
+      return response.data;
+    } catch (error) {
+      const apiError = error as ApiError;
+      console.error('Erreur API getUsers:', error);
+      if (apiError.response?.data) throw apiError.response.data;
+      throw error;
+    }
+  },
+
+  getUserDetail: async (userId: number): Promise<AdminUserDetail> => {
+    try {
+      const response = await api.get(`/admin/users/${userId}`);
+      return response.data;
+    } catch (error) {
+      const apiError = error as ApiError;
+      console.error('Erreur API getUserDetail:', error);
+      if (apiError.response?.data) throw apiError.response.data;
+      throw error;
+    }
+  },
+
+  suspendUser: async (userId: number, reason: string): Promise<{ message: string; user: AdminUser }> => {
+    try {
+      const response = await api.post(`/admin/users/${userId}/suspend`, { reason });
+      return response.data;
+    } catch (error) {
+      const apiError = error as ApiError;
+      console.error('Erreur API suspendUser:', error);
+      if (apiError.response?.data) throw apiError.response.data;
+      throw error;
+    }
+  },
+
+  reactivateUser: async (userId: number): Promise<{ message: string; user: AdminUser }> => {
+    try {
+      const response = await api.post(`/admin/users/${userId}/reactivate`);
+      return response.data;
+    } catch (error) {
+      const apiError = error as ApiError;
+      console.error('Erreur API reactivateUser:', error);
+      if (apiError.response?.data) throw apiError.response.data;
+      throw error;
+    }
+  },
+
+  deactivateUser: async (userId: number, reason: string): Promise<{ message: string; user: AdminUser }> => {
+    try {
+      const response = await api.post(`/admin/users/${userId}/deactivate`, { reason });
+      return response.data;
+    } catch (error) {
+      const apiError = error as ApiError;
+      console.error('Erreur API deactivateUser:', error);
+      if (apiError.response?.data) throw apiError.response.data;
+      throw error;
+    }
+  },
+
+  // Property management
+  getProperties: async (params?: {
+    search?: string;
+    status?: string;
+    type?: string;
+    city?: string;
+    landlord_id?: number;
+    has_reports?: boolean;
+    has_pending_reports?: boolean;
+    min_rent?: number;
+    max_rent?: number;
+    min_surface?: number;
+    max_surface?: number;
+    sort_by?: string;
+    sort_order?: 'asc' | 'desc';
+    per_page?: number;
+  }): Promise<{ data: AdminProperty[]; meta: PaginationMeta }> => {
+    try {
+      const response = await api.get('/admin/properties', { params });
+      return response.data;
+    } catch (error) {
+      const apiError = error as ApiError;
+      console.error('Erreur API getProperties:', error);
+      if (apiError.response?.data) throw apiError.response.data;
+      throw error;
+    }
+  },
+
+  getPropertyDetail: async (propertyId: number): Promise<{ property: AdminProperty; stats: AdminPropertyStats }> => {
+    try {
+      const response = await api.get(`/admin/properties/${propertyId}`);
+      return response.data;
+    } catch (error) {
+      const apiError = error as ApiError;
+      console.error('Erreur API getPropertyDetail:', error);
+      if (apiError.response?.data) throw apiError.response.data;
+      throw error;
+    }
+  },
+
+  // Finance/Payment management
+  getFinanceDashboard: async (params?: { period?: string }): Promise<AdminFinanceDashboard> => {
+    try {
+      const response = await api.get('/admin/finance/dashboard', { params });
+      return response.data;
+    } catch (error) {
+      const apiError = error as ApiError;
+      console.error('Erreur API getFinanceDashboard:', error);
+      if (apiError.response?.data) throw apiError.response.data;
+      throw error;
+    }
+  },
+
+  getTransactions: async (params?: {
+    status?: string;
+    date_from?: string;
+    date_to?: string;
+    amount_min?: number;
+    amount_max?: number;
+    transaction_id?: string;
+    tenant_email?: string;
+    landlord_email?: string;
+    sort_by?: string;
+    sort_order?: 'asc' | 'desc';
+    per_page?: number;
+  }): Promise<{ data: AdminPayment[]; meta: PaginationMeta }> => {
+    try {
+      const response = await api.get('/admin/finance/transactions', { params });
+      return response.data;
+    } catch (error) {
+      const apiError = error as ApiError;
+      console.error('Erreur API getTransactions:', error);
+      if (apiError.response?.data) throw apiError.response.data;
+      throw error;
+    }
+  },
+};
+
 // Export apiService as an object with all services
 export const apiService = {
   ...authService,
@@ -1239,6 +1602,7 @@ export const apiService = {
   ...noticeService,
   ...rentReceiptService,
   ...invoiceService,
+  ...adminService,
   getLeases: leaseService.listLeases,
   createInvoice: invoiceService.createInvoice,
 };

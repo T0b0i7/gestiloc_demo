@@ -7,7 +7,7 @@ use App\Models\Invoice;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
-class TenantReceiptController extends Controller
+class TenantQuittanceController extends Controller
 {
     public function download(Invoice $invoice)
     {

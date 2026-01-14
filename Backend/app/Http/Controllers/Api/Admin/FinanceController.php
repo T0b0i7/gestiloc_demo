@@ -21,9 +21,9 @@ class FinanceController extends Controller
         $period = $request->get('period', 'month'); // day, week, month, quarter, year
         $dateRange = $this->getDateRange($period);
 
-        // Revenus totaux plate-forme
+        // Revenus totaux plate-forme (factures marquées comme payées)
         $totalRevenue = Invoice::where('status', 'paid')
-            ->whereBetween('paid_at', [$dateRange['start'], $dateRange['end']])
+            ->whereBetween('created_at', [$dateRange['start'], $dateRange['end']])
             ->sum('amount_paid');
 
         // Commissions plate-forme (ex: 5% des revenus)
@@ -266,7 +266,7 @@ class FinanceController extends Controller
         // 3. Seuil de revenus dépassé (positif)
         $revenueThreshold = config('gestiloc.alerts.revenue_threshold', 1000000);
         $currentRevenue = Invoice::where('status', 'paid')
-            ->whereBetween('paid_at', [$dateRange['start'], $dateRange['end']])
+            ->whereBetween('updated_at', [$dateRange['start'], $dateRange['end']])
             ->sum('amount_paid');
 
         if ($currentRevenue >= $revenueThreshold) {
@@ -346,7 +346,7 @@ class FinanceController extends Controller
             };
 
             $revenue = Invoice::where('status', 'paid')
-                ->whereDate('paid_at', $date->toDateString())
+                ->whereDate('updated_at', $date->toDateString())
                 ->sum('amount_paid');
 
             $data[] = [
@@ -407,12 +407,12 @@ class FinanceController extends Controller
     private function generateRevenueReport(array $dateRange, string $format): StreamedResponse
     {
         $data = Invoice::where('status', 'paid')
-            ->whereBetween('paid_at', [$dateRange['start'], $dateRange['end']])
+            ->whereBetween('updated_at', [$dateRange['start'], $dateRange['end']])
             ->with(['lease.property.landlord.user', 'lease.tenant.user'])
             ->get()
             ->map(function ($invoice) {
                 return [
-                    'Date' => $invoice->paid_at->format('d/m/Y H:i'),
+                    'Date' => $invoice->updated_at->format('d/m/Y H:i'),
                     'Référence' => $invoice->invoice_number,
                     'Propriétaire' => $invoice->lease->property->landlord->user->email,
                     'Locataire' => $invoice->lease->tenant->user->email,
@@ -457,7 +457,7 @@ class FinanceController extends Controller
         $commissionRate = config('gestiloc.commission_rate', 0.05);
         
         $data = Invoice::where('status', 'paid')
-            ->whereBetween('paid_at', [$dateRange['start'], $dateRange['end']])
+            ->whereBetween('updated_at', [$dateRange['start'], $dateRange['end']])
             ->with(['lease.property.landlord.user'])
             ->get()
             ->groupBy('lease.property.landlord_id')

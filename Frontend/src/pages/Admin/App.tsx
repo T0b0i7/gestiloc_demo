@@ -5,6 +5,8 @@ import { UserManagement } from './components/UserManagement';
 import { SupportTickets } from './components/SupportTickets';
 import { SystemActivity } from './components/SystemActivity';
 import { Settings } from './components/Settings';
+import PaymentManagement from './components/PaymentManagement';
+import DocumentManagement from './components/DocumentManagement';
 import { ViewType, AppNotification } from './types';
 import { Menu, Bell, Search, Moon, Sun, Languages, Check, Trash2, Info, AlertCircle } from 'lucide-react';
 import { AppProvider, useAppContext } from './context/AppContext';
@@ -48,6 +50,8 @@ const AppContent: React.FC = () => {
       case 'users': return <UserManagement />;
       case 'tickets': return <SupportTickets />;
       case 'activity': return <SystemActivity />;
+      case 'payments': return <PaymentManagement />;
+      case 'documents': return <DocumentManagement />;
       case 'settings': return <Settings />;
       default: return <Dashboard />;
     }

@@ -64,4 +64,4 @@ export interface AppNotification {
   type: 'info' | 'success' | 'warning' | 'alert';
 }
 
-export type ViewType = 'dashboard' | 'users' | 'tickets' | 'activity' | 'settings';
+export type ViewType = 'dashboard' | 'users' | 'tickets' | 'activity' | 'payments' | 'documents' | 'settings';

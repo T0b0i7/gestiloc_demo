@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Users, MessageSquare, Activity, Settings as SettingsIcon, X } from 'lucide-react';
+import { LayoutDashboard, Users, MessageSquare, Activity, Settings as SettingsIcon, X, CreditCard, FileText } from 'lucide-react';
 import { ViewType } from '../types';
 import { useAppContext } from '../context/AppContext';
 
@@ -18,6 +18,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isO
     { id: 'users', label: t('sidebar.users'), icon: Users },
     { id: 'tickets', label: t('sidebar.tickets'), icon: MessageSquare },
     { id: 'activity', label: t('sidebar.activity'), icon: Activity },
+    { id: 'payments', label: 'Paiements', icon: CreditCard },
+    { id: 'documents', label: 'Documents', icon: FileText },
   ];
 
   return (
