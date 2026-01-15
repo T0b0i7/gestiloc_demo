@@ -8,7 +8,7 @@ class StoreCoOwnerRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true; // L'inscription est ouverte
+        return true;
     }
 
     public function rules(): array

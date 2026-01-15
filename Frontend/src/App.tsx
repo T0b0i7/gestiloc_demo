@@ -38,6 +38,7 @@ import LocataireApp from "./pages/Locataire/App";
 import ProprietaireApp from "./pages/Proprietaire/App";
 import AdminApp from "./pages/Admin/App";
 import TenantActivation from "./pages/Proprietaire/components/LocataireActivation";
+import PayLinkPage from "./pages/Locataire/components/PayLinkPage";
 
 const queryClient = new QueryClient();
 
@@ -206,6 +207,8 @@ const AppContent = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/activation/locataire" element={<TenantActivation />} />
+      <Route path="/pay-link/:token" element={<PayLinkPage />} />
+
 
       {/* Pages marketing avec AppShell */}
       <Route path="/" element={<AppShell><Home /></AppShell>} />

@@ -11,6 +11,59 @@ use Illuminate\Support\Facades\Mail;
 
 class PaymentLinkController extends Controller
 {
+
+    // GET /api/pay-links/{token}
+public function show(string $token)
+{
+    $link = PaymentLink::where('token', $token)->first();
+    if (!$link) return response()->json(['message' => 'Lien invalide'], 404);
+
+    if ($link->used_at) return response()->json(['message' => 'Lien déjà utilisé'], 410);
+    if ($link->expires_at && $link->expires_at->isPast()) return response()->json(['message' => 'Lien expiré'], 410);
+
+    $invoice = $link->invoice()
+        ->with('lease.property.landlord.user', 'lease.tenant.user')
+        ->first();
+
+    if (!$invoice) return response()->json(['message' => 'Facture introuvable'], 404);
+
+    $lease = $invoice->lease;
+    $property = $lease?->property;
+    $tenant = $lease?->tenant;
+    $tenantUser = $tenant?->user;
+
+    return response()->json([
+        'token' => $token,
+        'expires_at' => $link->expires_at,
+        'invoice' => [
+            'id' => $invoice->id,
+            'invoice_number' => $invoice->invoice_number,
+            'amount_total' => $invoice->amount_total,
+            'balance_due' => $invoice->balance_due,
+            'status' => $invoice->status,
+            'period_start' => $invoice->period_start,
+            'period_end' => $invoice->period_end,
+            'due_date' => $invoice->due_date,
+        ],
+        'lease' => [
+            'id' => $lease?->id,
+            'uuid' => $lease?->uuid,
+        ],
+        'property' => [
+            'id' => $property?->id,
+            'address' => $property?->address,
+            'city' => $property?->city,
+        ],
+        'tenant' => [
+            'id' => $tenant?->id,
+            'first_name' => $tenant?->first_name,
+            'last_name' => $tenant?->last_name,
+            'email' => $tenantUser?->email,
+            'phone' => $tenantUser?->phone,
+        ],
+    ]);
+}
+
     // POST /api/invoices/{id}/pay-link
     public function create(Request $request, $id)
     {
@@ -90,9 +143,7 @@ class PaymentLinkController extends Controller
 
             $payment->update(['status' => 'pending', 'checkout_url' => $checkout['checkout_url'] ?? null, 'fedapay_reference' => $checkout['reference'] ?? null]);
 
-            // marquer lien comme utilisé (one-time)
-            $link->update(['used_at' => now()]);
-
+            
             return response()->json(['checkout_url' => $checkout['checkout_url']]);
         } catch (\Throwable $e) {
             return response()->json(['message' => 'Impossible d\'initialiser le paiement', 'error' => $e->getMessage()], 500);

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Fedapay;
+namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 

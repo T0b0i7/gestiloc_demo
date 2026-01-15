@@ -1149,7 +1149,7 @@ export const rentReceiptService = {
 // ================= INVOICES SERVICE =================
 
 export interface CreateInvoicePayload {
-  lease_id: string;
+  lease_id: number;
   type: 'rent' | 'deposit' | 'charge' | 'repair';
   due_date: string;
   period_start?: string;
@@ -1160,7 +1160,7 @@ export interface CreateInvoicePayload {
 
 export interface Invoice {
   id?: number;
-  lease_id: string;
+  lease_id: number;
   type: 'rent' | 'deposit' | 'charge' | 'repair';
   due_date: string;
   amount_total: number;

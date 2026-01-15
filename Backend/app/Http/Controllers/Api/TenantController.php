@@ -271,6 +271,12 @@ HTML;
 
         $landlord = $user->landlord;
 
+        
+if (! $landlord) {
+    return response()->json(['message' => 'Landlord profile missing'], 422);
+}
+
+
         $baseColumns = [
             'id',
             'user_id',

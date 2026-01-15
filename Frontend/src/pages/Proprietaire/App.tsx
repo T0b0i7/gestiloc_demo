@@ -32,6 +32,8 @@ import QuittancesIndependants from './components/QuittancesIndependants';
 import LandlordIncidentsPage from './components/LandlordIncidentsPage';
 import { EmitInvoice } from './components/EmitInvoice';
 import { InvoicesList } from './components/InvoicesList';
+import CreatePaymentRequest from './components/EmettrePaiement';
+import WithdrawalMethod from './components/RetraitMethode';
 
 
 const ProprietaireApp: React.FC = () => {
@@ -183,6 +185,34 @@ const ProprietaireApp: React.FC = () => {
             toggleTheme={() => {}}
           >
             <Bureau notify={notify} />
+          </Layout>
+        } />
+
+        <Route path="emettre-paiement" element={
+          <Layout
+            activeTab="finances"
+            onNavigate={handleNavigation}
+            toasts={toasts}
+            removeToast={removeToast}
+            onLogout={handleLogout}
+            isDarkMode={false}
+            toggleTheme={() => {}}
+          >
+            <CreatePaymentRequest />
+          </Layout>
+        } />
+
+        <Route path="retrait-methode" element={
+          <Layout
+            activeTab="finances"
+            onNavigate={handleNavigation}
+            toasts={toasts}
+            removeToast={removeToast}
+            onLogout={handleLogout}
+            isDarkMode={false}
+            toggleTheme={() => {}}
+          >
+            <WithdrawalMethod />
           </Layout>
         } />
         

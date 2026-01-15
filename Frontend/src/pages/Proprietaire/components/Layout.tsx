@@ -17,6 +17,7 @@ import {
   X,
   Sun,
   Moon,
+  CreditCard, // ✅ NEW
 } from "lucide-react";
 
 import { Tab, Notification, ToastMessage } from "../types";
@@ -139,9 +140,8 @@ export const Layout: React.FC<LayoutProps> = ({
           id: "incidents",
           label: "Réparations",
           icon: FileCheck,
-          path: "/proprietaire/incidents"
+          path: "/proprietaire/incidents",
         },
-        // ✅ COMMENTÉ : coproprietaires
         // { id: "coproprietaires", label: "Copropriétaires", icon: Users, path: "/proprietaire/coproprietaires" },
       ],
     },
@@ -170,12 +170,32 @@ export const Layout: React.FC<LayoutProps> = ({
         { id: "baux", label: "Contrats de bail", icon: FileSignature, path: "/proprietaire/documents/baux" },
         { id: "quittances", label: "Quittances", icon: FileText, path: "/proprietaire/quittances" },
         { id: "factures", label: "Factures", icon: FileText, path: "/proprietaire/factures" },
-        { id: "émettre-facture", label: "Émettre une facture", icon: FilePlus, path: "/proprietaire/émettre-facture" },
+        // ✅ SUPPRIMÉ: "Émettre une facture"
+        // { id: "émettre-facture", label: "Émettre une facture", icon: FilePlus, path: "/proprietaire/émettre-facture" },
+      ],
+    },
 
-        // ✅ COMMENTÉ : le reste
-        // { id: "documents-generaux", label: "Documents généraux", icon: FileText, path: "/proprietaire/documents/generaux" },
-        // { id: "modeles-lettres", label: "Modèles de lettres", icon: FileText, path: "/proprietaire/documents/modeles-lettres" },
-        // { id: "signature-electronique", label: "Signature électronique", icon: PenTool, path: "/proprietaire/documents/signature-electronique" },
+    // ✅ NEW: FINANCES
+    {
+      id: "finances",
+      label: "Finances",
+      icon: CreditCard,
+      path: "/proprietaire/finances",
+      submenu: [
+        {
+          id: "emettre-paiement",
+          label: "Émettre un paiement",
+          icon: CreditCard,
+          path: "/proprietaire/emettre-paiement",
+        },
+        {
+          id: "retrait-methode",
+          label: "Méthode de retrait",
+          icon: CreditCard,
+          path: "/proprietaire/retrait-methode",
+        },
+        // (optionnel) si tu veux ensuite :
+        // { id: "transactions", label: "Transactions", icon: FileText, path: "/proprietaire/finances/transactions" },
       ],
     },
   ];
@@ -252,8 +272,9 @@ export const Layout: React.FC<LayoutProps> = ({
             </div>
             <ChevronDown
               size={18}
-              className={`transition-transform ${isExpanded ? "rotate-180" : ""} ${isActive ? "text-white/90" : "text-gray-400 group-hover:text-blue-600"
-                }`}
+              className={`transition-transform ${isExpanded ? "rotate-180" : ""} ${
+                isActive ? "text-white/90" : "text-gray-400 group-hover:text-blue-600"
+              }`}
             />
           </button>
 
@@ -266,8 +287,9 @@ export const Layout: React.FC<LayoutProps> = ({
                   <button
                     key={String(sub.id)}
                     onClick={() => handleNavigate(sub.path ?? sub.id)}
-                    className={`${baseBtn} ${subActive ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30" : idleBtn
-                      } py-3`}
+                    className={`${baseBtn} ${
+                      subActive ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30" : idleBtn
+                    } py-3`}
                     type="button"
                   >
                     <div className="flex items-center gap-3.5">
@@ -280,8 +302,9 @@ export const Layout: React.FC<LayoutProps> = ({
 
                     {typeof sub.badge === "number" && sub.badge > 0 && (
                       <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${subActive ? "bg-white/20 text-white" : "bg-blue-100 text-blue-700"
-                          }`}
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          subActive ? "bg-white/20 text-white" : "bg-blue-100 text-blue-700"
+                        }`}
                       >
                         {sub.badge}
                       </span>
@@ -303,18 +326,15 @@ export const Layout: React.FC<LayoutProps> = ({
         type="button"
       >
         <div className="flex items-center gap-3.5">
-          <Icon
-            size={20}
-            className={`${isActive ? "text-white" : "text-gray-500 group-hover:text-blue-600"}`}
-          />
+          <Icon size={20} className={`${isActive ? "text-white" : "text-gray-500 group-hover:text-blue-600"}`} />
           {item.label}
         </div>
 
-
         {typeof item.badge === "number" && item.badge > 0 && (
           <span
-            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isActive ? "bg-white/20 text-white" : "bg-blue-100 text-blue-700"
-              }`}
+            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              isActive ? "bg-white/20 text-white" : "bg-blue-100 text-blue-700"
+            }`}
           >
             {item.badge}
           </span>
@@ -419,16 +439,18 @@ export const Layout: React.FC<LayoutProps> = ({
           <div className="bg-blue-50 p-1 rounded-xl flex mb-4 border border-blue-200">
             <button
               onClick={toggleTheme}
-              className={`flex-1 flex items-center justify-center py-2 rounded-lg text-xs font-bold ${!isDarkMode ? "bg-white shadow text-blue-600" : "text-gray-400 hover:text-gray-600"
-                }`}
+              className={`flex-1 flex items-center justify-center py-2 rounded-lg text-xs font-bold ${
+                !isDarkMode ? "bg-white shadow text-blue-600" : "text-gray-400 hover:text-gray-600"
+              }`}
               type="button"
             >
               <Sun size={14} className="mr-2" /> Light
             </button>
             <button
               onClick={toggleTheme}
-              className={`flex-1 flex items-center justify-center py-2 rounded-lg text-xs font-bold ${isDarkMode ? "bg-white shadow text-blue-600" : "text-gray-400 hover:text-gray-600"
-                }`}
+              className={`flex-1 flex items-center justify-center py-2 rounded-lg text-xs font-bold ${
+                isDarkMode ? "bg-white shadow text-blue-600" : "text-gray-400 hover:text-gray-600"
+              }`}
               type="button"
             >
               <Moon size={14} className="mr-2" /> Dark
@@ -449,9 +471,7 @@ export const Layout: React.FC<LayoutProps> = ({
             </div>
             <div className="overflow-hidden flex-1">
               <p className="text-sm font-bold text-black truncate">{ownerName}</p>
-              <p className="text-[10px] uppercase tracking-wider font-bold text-gray-500 truncate">
-                Propriétaire
-              </p>
+              <p className="text-[10px] uppercase tracking-wider font-bold text-gray-500 truncate">Propriétaire</p>
             </div>
             <ChevronRight size={16} className="text-gray-400" />
           </div>
@@ -462,8 +482,9 @@ export const Layout: React.FC<LayoutProps> = ({
       <main className="flex-1 flex flex-col min-h-screen w-full transition-all duration-300 relative z-10 bg-white lg:ml-80">
         {/* Header */}
         <header
-          className={`sticky top-0 z-30 transition-all duration-200 ${scrolled ? "bg-white shadow-sm border-b border-blue-100" : "border-b border-blue-100"
-            }`}
+          className={`sticky top-0 z-30 transition-all duration-200 ${
+            scrolled ? "bg-white shadow-sm border-b border-blue-100" : "border-b border-blue-100"
+          }`}
         >
           <div className="px-4 lg:px-8 py-4 lg:py-6 flex justify-between items-center">
             <div className="flex items-center gap-3 lg:hidden">
@@ -517,10 +538,11 @@ export const Layout: React.FC<LayoutProps> = ({
                       >
                         <div className="flex gap-3">
                           <div
-                            className={`w-2 h-2 mt-2 rounded-full shrink-0 ${notif.type === "critical"
+                            className={`w-2 h-2 mt-2 rounded-full shrink-0 ${
+                              notif.type === "critical"
                                 ? "bg-red-500 shadow-lg shadow-red-500/40"
                                 : "bg-blue-600 shadow-lg shadow-blue-600/40"
-                              }`}
+                            }`}
                           />
                           <div>
                             <p className="text-sm font-medium text-black group-hover:text-blue-600 transition-colors">

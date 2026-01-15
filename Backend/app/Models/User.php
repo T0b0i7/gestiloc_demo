@@ -34,11 +34,12 @@ class User extends Authenticatable
         'password_changed_at' => 'datetime',
     ];
 
-    // One-to-one with Landlord (if user has landlord role)
-    public function landlord(): BelongsTo
-    {
-        return $this->belongsTo(Landlord::class);
-    }
+
+public function landlord(): HasOne
+{
+    return $this->hasOne(Landlord::class, 'user_id');
+}
+
 
     public function coOwner(): BelongsTo
     {

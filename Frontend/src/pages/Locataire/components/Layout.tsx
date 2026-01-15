@@ -34,7 +34,12 @@ interface LayoutProps {
   removeToast: (id: number) => void;
   onLogout: () => void;
   user: UserData | null;
+
+  // ✅ AJOUTE ÇA
+  isDarkMode: boolean;
+  toggleTheme: () => void;
 }
+
 
 const notifications: Notification[] = [
   { id: '1', type: 'critical', message: 'Loyer novembre en retard', subtext: 'Régularisez avant pénalités', isRead: false },
@@ -49,6 +54,8 @@ export const Layout: React.FC<LayoutProps> = ({
   removeToast,
   onLogout,
   user,
+  isDarkMode,
+  toggleTheme,
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -79,6 +86,7 @@ export const Layout: React.FC<LayoutProps> = ({
     { id: 'interventions', label: 'Incidents', icon: Wrench },
     { id: 'notice', label: 'Préavis', icon: FileSignature },
     { id: 'profile', label: 'Profil', icon: User },
+    { id: 'factures', label: 'Paiements', icon: CreditCard },
   ];
 
   const userInitials =
