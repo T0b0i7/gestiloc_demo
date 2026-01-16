@@ -97,6 +97,8 @@ return array(
     'App\\Providers\\AppServiceProvider' => $baseDir . '/app/Providers/AppServiceProvider.php',
     'App\\Providers\\AuthServiceProvider' => $baseDir . '/app/Providers/AuthServiceProvider.php',
     'App\\Services\\AuthService' => $baseDir . '/app/Services/AuthService.php',
+    'App\\Services\\FedapayClient' => $baseDir . '/app/Services/FedapayClient.php',
+    'App\\Services\\FedapayPayments' => $baseDir . '/app/Services/FedapayPayments.php',
     'App\\Services\\LeaseService' => $baseDir . '/app/Services/LeaseService.php',
     'App\\Services\\PdfService' => $baseDir . '/app/Services/PdfService.php',
     'App\\Services\\PropertyService' => $baseDir . '/app/Services/PropertyService.php',

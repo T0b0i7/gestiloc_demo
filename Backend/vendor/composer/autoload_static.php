@@ -649,6 +649,8 @@ class ComposerStaticInitc42279388a56fab344a7d2d9dc8dc696
         'App\\Providers\\AppServiceProvider' => __DIR__ . '/../..' . '/app/Providers/AppServiceProvider.php',
         'App\\Providers\\AuthServiceProvider' => __DIR__ . '/../..' . '/app/Providers/AuthServiceProvider.php',
         'App\\Services\\AuthService' => __DIR__ . '/../..' . '/app/Services/AuthService.php',
+        'App\\Services\\FedapayClient' => __DIR__ . '/../..' . '/app/Services/FedapayClient.php',
+        'App\\Services\\FedapayPayments' => __DIR__ . '/../..' . '/app/Services/FedapayPayments.php',
         'App\\Services\\LeaseService' => __DIR__ . '/../..' . '/app/Services/LeaseService.php',
         'App\\Services\\PdfService' => __DIR__ . '/../..' . '/app/Services/PdfService.php',
         'App\\Services\\PropertyService' => __DIR__ . '/../..' . '/app/Services/PropertyService.php',
