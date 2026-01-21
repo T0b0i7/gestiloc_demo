@@ -451,6 +451,8 @@ HTML;
                 'rccm' => $invitation->meta['rccm'] ?? null,
                 'vat_number' => $invitation->meta['vat_number'] ?? null,
                 'meta' => $invitation->meta ?? null,
+                'landlord_id' => $invitation->landlord_id,
+                'invitation_id' => $invitation->id,
             ]
         );
 
@@ -566,6 +568,13 @@ HTML;
             ]);
         }
 
+        Log::info('Tenant invitation found:', [
+            'id' => $invitation->id,
+            'email' => $invitation->email,
+            'meta' => $invitation->meta,
+            'phone_in_meta' => $invitation->meta['phone'] ?? 'null'
+        ]);
+
         // ✅ Prépare ref email
         $ref = $this->invitationRef($invitation);
 
@@ -573,16 +582,27 @@ HTML;
         $user = User::where('email', $data['email'])->first();
 
         if (! $user) {
+            $phone = $invitation->meta['phone'] ?? null;
+            Log::info('Creating new tenant user with phone:', ['phone' => $phone]);
+            
             $user = User::create([
                 'email' => $invitation->email,
                 'password' => Hash::make($data['password']),
-                'phone' => null,
+                'phone' => $phone,
                 'email_verified_at' => now(),
             ]);
+            
+            Log::info('New tenant user created:', ['id' => $user->id, 'phone' => $user->phone]);
         } else {
             $user->password = Hash::make($data['password']);
             $user->email_verified_at = $user->email_verified_at ?? now();
+            if (isset($invitation->meta['phone'])) {
+                Log::info('Updating existing tenant user phone:', ['phone' => $invitation->meta['phone']]);
+                $user->phone = $invitation->meta['phone'];
+            }
             $user->save();
+            
+            Log::info('Existing tenant user updated:', ['id' => $user->id, 'phone' => $user->phone]);
         }
 
         // 2) Rôle tenant

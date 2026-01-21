@@ -262,14 +262,25 @@ export default function Auth() {
 
       const response = await authService.login(data.email, data.password);
 
-      // Selon ton LoginResponse actuel: { status, message, data: { access_token, user } }
-      // Et ton ancien code attendait response.data.user => on gère les deux formats.
-      const user = (response as any)?.data?.user ?? (response as any)?.data?.data?.user ?? (response as any)?.data?.user ?? (response as any)?.data?.data?.user;
+      const responseData = (response as any).data;
 
-      const token =
-        (response as any)?.data?.access_token ??
-        (response as any)?.data?.data?.access_token ??
-        (response as any)?.data?.data?.access_token;
+      // Gérer les deux formats possibles de réponse
+      let user: any = null;
+      let token: string | null = null;
+
+      if (responseData?.access_token && responseData?.user) {
+        // Format : { data: { access_token, user } }
+        token = responseData.access_token;
+        user = responseData.user;
+      } else if (responseData?.access_token) {
+        // Format : { access_token, user } à la racine
+        token = responseData.access_token;
+        user = responseData.user;
+      } else if ((response as any)?.access_token && (response as any)?.user) {
+        // Format : { access_token, user } à la racine
+        token = (response as any).access_token;
+        user = (response as any).user;
+      }
 
       if (token) localStorage.setItem("token", token);
       if (user) localStorage.setItem("user", JSON.stringify(user));

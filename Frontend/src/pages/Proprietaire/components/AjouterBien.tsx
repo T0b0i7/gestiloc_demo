@@ -498,9 +498,22 @@ interface FormData {
   district: string;
   zip_code: string;
   surface: string;
+  room_count: string;      // Nombre de pièces
+  bedroom_count: string;   // Nombre de chambres
+  bathroom_count: string;  // Nombre de salles de bain
   rent_amount: string;
   status: string;
   reference_code: string;
+  // Caractéristiques supplémentaires
+  terrace: boolean;        // Terrasse
+  balcony: boolean;        // Balcon
+  garden: boolean;         // Jardin
+  parking: boolean;        // Parking
+  floor: string;          // Étage
+  elevator: boolean;       // Ascenseur
+  furnished: boolean;      // Meublé
+  heating_type: string;    // Type de chauffage
+  energy_class: string;    // Classe énergétique
 }
 
 type CreatePropertyPayload = any;
@@ -559,9 +572,22 @@ export const AjouterBien = ({
     district: "",
     zip_code: "",
     surface: "",
+    room_count: "",
+    bedroom_count: "",
+    bathroom_count: "",
     rent_amount: "",
     status: "available",
     reference_code: "",
+    // Caractéristiques supplémentaires
+    terrace: false,
+    balcony: false,
+    garden: false,
+    parking: false,
+    floor: "",
+    elevator: false,
+    furnished: false,
+    heating_type: "",
+    energy_class: "",
   });
 
   const [photos, setPhotos] = useState<File[]>([]);
@@ -703,9 +729,9 @@ export const AjouterBien = ({
         longitude: null,
 
         surface: formData.surface ? parseFloat(formData.surface) : null,
-        room_count: null,
-        bedroom_count: null,
-        bathroom_count: null,
+        room_count: formData.room_count ? parseInt(formData.room_count) : null,
+        bedroom_count: formData.bedroom_count ? parseInt(formData.bedroom_count) : null,
+        bathroom_count: formData.bathroom_count ? parseInt(formData.bathroom_count) : null,
 
         rent_amount: formData.rent_amount ? parseFloat(formData.rent_amount) : null,
         charges_amount: null,
@@ -714,7 +740,17 @@ export const AjouterBien = ({
         reference_code: formData.reference_code || null,
         amenities: [],
         photos: uploadedPhotoUrls.length ? uploadedPhotoUrls : null,
-        meta: null,
+        meta: {
+          terrace: formData.terrace,
+          balcony: formData.balcony,
+          garden: formData.garden,
+          parking: formData.parking,
+          floor: formData.floor ? parseInt(formData.floor) : undefined,
+          elevator: formData.elevator,
+          furnished: formData.furnished,
+          heating_type: formData.heating_type || undefined,
+          energy_class: formData.energy_class || undefined,
+        },
       };
 
       const property = await propertyService.createProperty(payload);
@@ -943,6 +979,156 @@ export const AjouterBien = ({
                         />
                       </div>
                       {formErrors.surface ? <div className="error">{formErrors.surface}</div> : null}
+                    </div>
+
+                    <div className="field">
+                      <label className="label">Nombre de pièces</label>
+                      <input
+                        type="number"
+                        name="room_count"
+                        value={formData.room_count}
+                        onChange={handleChange}
+                        placeholder="Ex: 4"
+                        className="control"
+                        min="0"
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label className="label">Nombre de chambres</label>
+                      <input
+                        type="number"
+                        name="bedroom_count"
+                        value={formData.bedroom_count}
+                        onChange={handleChange}
+                        placeholder="Ex: 3"
+                        className="control"
+                        min="0"
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label className="label">Nombre de salles de bain</label>
+                      <input
+                        type="number"
+                        name="bathroom_count"
+                        value={formData.bathroom_count}
+                        onChange={handleChange}
+                        placeholder="Ex: 2"
+                        className="control"
+                        min="0"
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label className="label">Étage</label>
+                      <input
+                        type="number"
+                        name="floor"
+                        value={formData.floor}
+                        onChange={handleChange}
+                        placeholder="Ex: 3"
+                        className="control"
+                        min="0"
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label className="label">Caractéristiques</label>
+                      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            name="terrace"
+                            checked={formData.terrace}
+                            onChange={handleChange}
+                          />
+                          <span>Terrasse</span>
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            name="balcony"
+                            checked={formData.balcony}
+                            onChange={handleChange}
+                          />
+                          <span>Balcon</span>
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            name="garden"
+                            checked={formData.garden}
+                            onChange={handleChange}
+                          />
+                          <span>Jardin</span>
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            name="parking"
+                            checked={formData.parking}
+                            onChange={handleChange}
+                          />
+                          <span>Parking</span>
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            name="elevator"
+                            checked={formData.elevator}
+                            onChange={handleChange}
+                          />
+                          <span>Ascenseur</span>
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            name="furnished"
+                            checked={formData.furnished}
+                            onChange={handleChange}
+                          />
+                          <span>Meublé</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="field">
+                      <label className="label">Type de chauffage</label>
+                      <select
+                        name="heating_type"
+                        value={formData.heating_type}
+                        onChange={handleChange}
+                        className="control"
+                      >
+                        <option value="">Sélectionner...</option>
+                        <option value="electric">Électrique</option>
+                        <option value="gas">Gaz</option>
+                        <option value="oil">Fioul</option>
+                        <option value="heat_pump">Pompe à chaleur</option>
+                        <option value="solar">Solaire</option>
+                        <option value="collective">Collectif</option>
+                        <option value="none">Aucun</option>
+                      </select>
+                    </div>
+
+                    <div className="field">
+                      <label className="label">Classe énergétique</label>
+                      <select
+                        name="energy_class"
+                        value={formData.energy_class}
+                        onChange={handleChange}
+                        className="control"
+                      >
+                        <option value="">Sélectionner...</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                        <option value="E">E</option>
+                        <option value="F">F</option>
+                        <option value="G">G</option>
+                      </select>
                     </div>
 
                     <div className="field">

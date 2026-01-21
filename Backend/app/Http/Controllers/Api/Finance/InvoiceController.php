@@ -14,15 +14,15 @@ use App\Mail\PaymentReminderMail; // Mailable à créer
 class InvoiceController extends Controller
 {
     /**
-     * Créer une nouvelle facture (Bailleur seulement)
+     * Créer une nouvelle facture (Bailleur ou Co-propriétaire)
      */
     public function store(Request $request)
     {
         $user = auth()->user();
 
-        // Vérifier que c'est un bailleur
-        if (!$user->landlord) {
-            return response()->json(['message' => 'Seul un propriétaire peut créer une facture.'], 403);
+        // Vérifier que c'est un bailleur ou un co-propriétaire
+        if (!$user->landlord && !$user->coOwner) {
+            return response()->json(['message' => 'Seul un propriétaire ou un co-propriétaire peut créer une facture.'], 403);
         }
 
         $request->validate([
@@ -38,8 +38,23 @@ class InvoiceController extends Controller
         $lease = \App\Models\Lease::findOrFail($request->lease_id);
 
         // Vérifier que le bailleur possède bien cette location
-        if ($lease->property->landlord_id !== $user->landlord->id) {
+        if ($user->landlord && $lease->property->landlord_id !== $user->landlord->id) {
             return response()->json(['message' => 'Vous ne pouvez pas créer de facture pour cette location.'], 403);
+        }
+
+        // Pour les co-propriétaires, vérifier qu'ils ont accès à cette location via délégation
+        if ($user->coOwner) {
+            // Vérifier si la propriété est déléguée à ce co-propriétaire
+            $hasDelegation = \App\Models\PropertyDelegation::where('delegated_to', $user->coOwner->id)
+                ->whereHas('property', function($query) use ($lease) {
+                    $query->where('id', $lease->property_id);
+                })
+                ->where('status', 'accepted')
+                ->exists();
+                
+            if (!$hasDelegation) {
+                return response()->json(['message' => 'Vous ne pouvez pas créer de facture pour cette location.'], 403);
+            }
         }
 
         $invoice = Invoice::create([

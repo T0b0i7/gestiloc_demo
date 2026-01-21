@@ -6,132 +6,172 @@ use App\Http\Controllers\Controller;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Transaction;
+use App\Services\FedapayPayments;
 use App\Services\RentReceiptService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class FedapayWebhookController extends Controller
 {
-    public function __construct(private RentReceiptService $receipts) {}
+    public function __construct(
+        private RentReceiptService $receipts,
+        private FedapayPayments $fedapay
+    ) {}
 
     public function handle(Request $request)
     {
-        // ✅ Vérifier la signature (à adapter selon header exact FedaPay)
-        $secret = (string) config('fedapay.webhook_secret');
-        $sig = $request->header('X-FEDAPAY-SIGNATURE'); // exemple; adapte au header réel de ton webhook
-        $raw = $request->getContent();
-
-        if ($secret) {
-            $expected = hash_hmac('sha256', $raw, $secret);
-            if (!$sig || !hash_equals($expected, $sig)) {
-                Log::warning('[FedapayWebhook] invalid signature');
-                return response()->json(['message' => 'Invalid signature'], 401);
-            }
-        }
-
         $payload = $request->all();
 
-        // FedaPay envoie souvent un event + data transaction
-        $event = $payload['event'] ?? null;
-        $data = $payload['data'] ?? $payload;
+        // 🔎 Extraction robuste du txId
+        $txId = (string)(
+            data_get($payload, 'data.id')
+            ?? data_get($payload, 'data.transaction.id')
+            ?? data_get($payload, 'transaction.id')
+            ?? data_get($payload, 'id')
+            ?? ''
+        );
 
-        $txId = (string)($data['id'] ?? ($data['transaction']['id'] ?? ''));
-        $status = (string)($data['status'] ?? ($data['attributes']['status'] ?? ''));
-
-        $meta = $data['metadata'] ?? ($data['attributes']['metadata'] ?? []);
-        $paymentId = $meta['payment_id'] ?? null;
-        $invoiceId  = $meta['invoice_id'] ?? null;
+        $event = (string) (data_get($payload, 'event') ?? '');
 
         Log::info('[FedapayWebhook] incoming', [
             'event' => $event,
+            'txId'  => $txId,
+        ]);
+
+        if (!$txId) {
+            Log::warning('[FedapayWebhook] missing txId', ['payload_keys' => array_keys($payload)]);
+            return response()->json(['message' => 'ok'], 200);
+        }
+
+        // ✅ VERIFY API (source de vérité)
+        try {
+            $verified = $this->fedapay->getTransaction($txId);
+        } catch (\Throwable $e) {
+            Log::error('[FedapayWebhook] verify API failed', [
+                'txId' => $txId,
+                'err' => $e->getMessage(),
+            ]);
+            return response()->json(['message' => 'ok'], 200);
+        }
+
+        $tx = data_get($verified, 'response.v1/transaction')
+            ?? data_get($verified, 'v1/transaction')
+            ?? data_get($verified, 'data')
+            ?? $verified;
+
+        $realStatus = strtolower((string) (data_get($tx, 'status') ?? ''));
+
+        $meta = data_get($tx, 'metadata')
+            ?? data_get($tx, 'attributes.metadata')
+            ?? [];
+
+        $paymentId = $meta['payment_id'] ?? null;
+
+        Log::info('[FedapayWebhook] verified', [
             'txId' => $txId,
-            'status' => $status,
+            'realStatus' => $realStatus,
             'paymentId' => $paymentId,
-            'invoiceId' => $invoiceId,
         ]);
 
         // ✅ retrouver Payment
         $payment = null;
         if ($paymentId) $payment = Payment::find($paymentId);
-        if (!$payment && $txId) $payment = Payment::where('fedapay_transaction_id', $txId)->first();
+        if (!$payment) $payment = Payment::where('provider', 'fedapay')->where('fedapay_transaction_id', $txId)->first();
+        if (!$payment) $payment = Payment::where('provider', 'fedapay')->where('fedapay_reference', (string) (data_get($tx, 'reference') ?? ''))->first();
 
         if (!$payment) {
-            return response()->json(['message' => 'Payment not found'], 200);
+            Log::warning('[FedapayWebhook] Payment not found', [
+                'txId' => $txId,
+                'paymentId' => $paymentId,
+            ]);
+            return response()->json(['message' => 'ok'], 200);
+        }
+
+        // ✅ sync txId si manquant
+        if (empty($payment->fedapay_transaction_id)) {
+            $payment->fedapay_transaction_id = $txId;
+            $payment->save();
         }
 
         $invoice = Invoice::find($payment->invoice_id);
         if (!$invoice) {
-            return response()->json(['message' => 'Invoice not found'], 200);
+            Log::warning('[FedapayWebhook] Invoice not found', [
+                'payment_id' => $payment->id,
+                'invoice_id' => $payment->invoice_id,
+            ]);
+            return response()->json(['message' => 'ok'], 200);
         }
 
-        // ✅ mapping statuts (adapter si FedaPay renvoie approved/paid/success)
-        $approved = in_array($status, ['approved', 'paid', 'successful', 'success'], true);
+        $isPaid = in_array($realStatus, ['approved', 'paid', 'successful', 'success', 'completed'], true);
+        $isFailed = in_array($realStatus, ['declined', 'failed', 'canceled', 'cancelled', 'refunded'], true);
 
-        if ($approved) {
-            // idempotent
-            if ($payment->status !== 'approved') {
-                $payment->update([
-                    'status' => 'approved',
-                    'paid_at' => now(),
-                    'provider_payload' => array_merge($payment->provider_payload ?? [], [
-                        'webhook' => $payload,
-                    ]),
+        DB::transaction(function () use ($payment, $invoice, $payload, $verified, $isPaid, $isFailed, $realStatus, $txId) {
+            // stocker payloads
+            $payment->provider_payload = array_merge($payment->provider_payload ?? [], [
+                'webhook' => $payload,
+                'verified' => $verified,
+            ]);
+
+            if ($isPaid) {
+                if ($payment->status !== 'paid') {
+                    $payment->status = 'paid';
+                    $payment->paid_at = now();
+                }
+
+                // facture payée
+                if (strtolower((string) $invoice->status) !== 'paid') {
+                    $invoice->amount_paid = $invoice->amount_total;
+                    $invoice->status = 'paid';
+                    $invoice->save();
+                }
+
+                // transaction interne idempotente
+                Transaction::firstOrCreate(
+                    [
+                        'invoice_id' => $invoice->id,
+                        'transaction_reference' => $payment->fedapay_transaction_id ?? $txId,
+                    ],
+                    [
+                        'payment_method' => 'fedapay',
+                        'amount' => (float) $invoice->amount_total,
+                        'payment_date' => now()->toDateString(),
+                        'notes' => 'Paiement via FedaPay',
+                        'recorded_by' => null,
+                    ]
+                );
+            } elseif ($isFailed) {
+                $payment->status = 'failed';
+            } else {
+                $payment->status = 'pending';
+            }
+
+            $payment->save();
+        });
+
+        // quittance après transaction (hors DB::transaction)
+        if ($isPaid) {
+            try {
+                $this->receipts->generateForInvoice($invoice);
+            } catch (\Throwable $e) {
+                Log::warning('[FedapayWebhook] receipt generation failed', [
+                    'invoice_id' => $invoice->id,
+                    'err' => $e->getMessage(),
                 ]);
             }
 
-            // Marquer facture payée + créer transaction (si tu veux garder ton modèle Transaction)
-            // On utilise ton modèle Transaction -> il met à jour invoice.amount_paid et status automatiquement
-            Transaction::firstOrCreate(
-                [
-                    'invoice_id' => $invoice->id,
-                    'transaction_reference' => $payment->fedapay_transaction_id ?? $txId ?? ('FEDAPAY-' . $payment->id),
-                ],
-                [
-                    'payment_method' => 'fedapay',
-                    'amount' => $invoice->balance_due, // reste à payer
-                    'payment_date' => now()->toDateString(),
-                    'notes' => 'Paiement via FedaPay',
-                    'recorded_by' => null,
-                ]
-            );
-
-            // Générer quittance (1 par facture)
-            $this->receipts->generateForInvoice($invoice);
-
-            // Marquer facture comme payée (idempotent)
-            try {
-                $invoice->update(['status' => 'paid']);
-            } catch (\Throwable $e) {
-                // ignore
-            }
-
-            // Invalider les pay-links associés
             try {
                 \App\Models\PaymentLink::where('invoice_id', $invoice->id)->update(['used_at' => now()]);
             } catch (\Throwable $e) {
                 // ignore
             }
-
-            return response()->json(['message' => 'ok'], 200);
         }
 
-        // sinon statut refusé/annulé
-        if (in_array($status, ['declined', 'cancelled', 'failed'], true)) {
-            $payment->update([
-                'status' => $status,
-                'provider_payload' => array_merge($payment->provider_payload ?? [], [
-                    'webhook' => $payload,
-                ]),
-            ]);
-            return response()->json(['message' => 'ok'], 200);
-        }
-
-        // pending, processing, etc.
-        $payment->update([
-            'status' => 'pending',
-            'provider_payload' => array_merge($payment->provider_payload ?? [], [
-                'webhook' => $payload,
-            ]),
+        Log::info('[FedapayWebhook] done', [
+            'payment_id' => $payment->id,
+            'payment_status' => $payment->status,
+            'invoice_id' => $invoice->id,
+            'invoice_status' => $invoice->status,
         ]);
 
         return response()->json(['message' => 'ok'], 200);

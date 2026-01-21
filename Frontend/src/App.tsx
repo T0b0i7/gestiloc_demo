@@ -36,9 +36,11 @@ import Demo from "./pages/Demo";
 import NotFound from "./pages/NotFound";
 import LocataireApp from "./pages/Locataire/App";
 import ProprietaireApp from "./pages/Proprietaire/App";
+import CoproprietaireApp from "./pages/Coproprietaire/App";
 import AdminApp from "./pages/Admin/App";
 import TenantActivation from "./pages/Proprietaire/components/LocataireActivation";
 import PayLinkPage from "./pages/Locataire/components/PayLinkPage";
+import { CoOwnerActivation } from "./pages/Coproprietaire/components/CoOwnerActivation";
 
 const queryClient = new QueryClient();
 
@@ -163,6 +165,8 @@ const ProtectedRoute = ({ children, roles = [] }: { children: JSX.Element, roles
       defaultPath = '/proprietaire';
     } else if (userRole && ['locataire', 'tenant'].includes(userRole)) {
       defaultPath = '/locataire';
+    } else if (userRole && ['coproprietaire', 'co_owner'].includes(userRole)) {
+      defaultPath = '/coproprietaire/dashboard';
     }
     
     console.log('Redirection vers:', defaultPath);
@@ -207,6 +211,7 @@ const AppContent = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/activation/locataire" element={<TenantActivation />} />
+      <Route path="/activation/coproprietaire" element={<CoOwnerActivation />} />
       <Route path="/pay-link/:token" element={<PayLinkPage />} />
 
 
@@ -227,6 +232,11 @@ const AppContent = () => {
       <Route path="/demo" element={<AppShell><Demo /></AppShell>} />
 
       {/* Tableau de bord Locataire */}
+      <Route path="/locataire" element={
+        <ProtectedRoute roles={['locataire']}>
+          <Navigate to="/locataire/dashboard" replace />
+        </ProtectedRoute>
+      } />
       <Route path="/locataire/*" element={
         <ProtectedRoute roles={['locataire']}>
           <LocataireApp />
@@ -236,12 +246,24 @@ const AppContent = () => {
       {/* Tableau de bord Propriétaire */}
       <Route path="/proprietaire" element={
         <ProtectedRoute roles={['proprietaire', 'landlord']}>
-          <Navigate to="dashboard" replace />
+          <Navigate to="/proprietaire/dashboard" replace />
         </ProtectedRoute>
       } />
       <Route path="/proprietaire/*" element={
         <ProtectedRoute roles={['proprietaire', 'landlord']}>
           <ProprietaireApp />
+        </ProtectedRoute>
+      } />
+
+      {/* Tableau de bord Co-propriétaire */}
+      <Route path="/coproprietaire" element={
+        <ProtectedRoute roles={['coproprietaire', 'co_owner']}>
+          <Navigate to="/coproprietaire/dashboard" replace />
+        </ProtectedRoute>
+      } />
+      <Route path="/coproprietaire/*" element={
+        <ProtectedRoute roles={['coproprietaire', 'co_owner']}>
+          <CoproprietaireApp />
         </ProtectedRoute>
       } />
 

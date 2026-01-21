@@ -130,9 +130,9 @@ export interface CreatePropertyPayload {
   longitude?: string | null;
 
   surface?: number | null;
-  room_count?: number | null;
-  bedroom_count?: number | null;
-  bathroom_count?: number | null;
+  room_count?: number | null;        // Nombre de pièces
+  bedroom_count?: number | null;     // Nombre de chambres
+  bathroom_count?: number | null;    // Nombre de salles de bain
 
   rent_amount?: number | null;
   charges_amount?: number | null;
@@ -141,7 +141,17 @@ export interface CreatePropertyPayload {
   reference_code?: string | null;
   amenities?: string[] | null;
   photos?: string[] | null;
-  meta?: Record<string, unknown> | null;
+  meta?: {
+    terrace?: boolean;           // Terrasse
+    balcony?: boolean;           // Balcon
+    garden?: boolean;            // Jardin
+    parking?: boolean;           // Parking
+    floor?: number;             // Étage
+    elevator?: boolean;          // Ascenseur
+    furnished?: boolean;         // Meublé
+    heating_type?: string;       // Type de chauffage
+    energy_class?: string;       // Classe énergétique
+  } | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -568,6 +578,10 @@ export const tenantService = {
   }> => {
     try {
       await initializeCsrfToken();
+
+      console.log('🚀 Frontend tenantService.inviteTenant payload:', payload);
+      console.log('📞 Phone in payload:', payload.phone);
+      console.log('📦 Full payload structure:', JSON.stringify(payload, null, 2));
 
       const response = await api.post('/tenants/invite', payload);
       return response.data;

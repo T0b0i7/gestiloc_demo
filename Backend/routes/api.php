@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\CoOwnerController;
+use App\Http\Controllers\Api\CoOwnerMeController;
 use App\Http\Controllers\Api\PropertyController;
 use App\Http\Controllers\Api\LeaseController;
 use App\Http\Controllers\Api\PropertyDelegationController;
@@ -25,6 +26,8 @@ use App\Http\Controllers\Api\FedapayWebhookController;
 use App\Http\Controllers\Api\TenantQuittanceController;
 use App\Http\Controllers\Api\PaymentLinkController;
 use App\Http\Controllers\Api\Landlord\FedapayController as LandlordFedapayController;
+use App\Http\Controllers\Api\CoOwner\FedapayController as CoOwnerFedapayController;
+use App\Http\Controllers\Api\FedapayReturnController;
 
 /*
 |--------------------------------------------------------------------------
@@ -56,6 +59,7 @@ Route::get('auth/co-owner/accept-invitation/{invitationId}', [AuthController::cl
 
 // webhook: pas d'auth (public)
 Route::post('/webhooks/fedapay', [FedapayWebhookController::class, 'handle']);
+Route::get('/fedapay/return', [FedapayReturnController::class, 'handle']);
 
 // ✅ pay-link public (le locataire n'est pas connecté)
 Route::get('/pay-links/{token}', [\App\Http\Controllers\Api\PaymentLinkController::class, 'show']);
@@ -190,9 +194,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
         // Delegations
         Route::get('landlords/delegations', [PropertyDelegationController::class, 'listLandlordDelegations']);
+        Route::get('landlords/co-owners/{coOwner}/delegations', [PropertyDelegationController::class, 'listLandlordCoOwnerDelegations']);
         Route::post('properties/{property}/delegate', [PropertyDelegationController::class, 'delegate']);
         Route::post('properties/{property}/revoke-delegation', [PropertyDelegationController::class, 'revoke']);
         Route::put('delegations/{delegation}', [PropertyDelegationController::class, 'update']);
+        
+        // Audit trails
+        Route::get('delegations/{delegation}/audits', [\App\Http\Controllers\Api\DelegationAuditController::class, 'index']);
+        Route::get('properties/{property}/delegation-audits', [\App\Http\Controllers\Api\DelegationAuditController::class, 'propertyAudits']);
+        Route::get('landlords/delegation-audit-stats', [\App\Http\Controllers\Api\DelegationAuditController::class, 'stats']);
 
         // ✅ Fedapay settings (payout)
         Route::get('landlord/fedapay', [LandlordFedapayController::class, 'show']);
@@ -202,10 +212,33 @@ Route::middleware(['auth:sanctum'])->group(function () {
     /* =========================
     |  CO_OWNER ONLY
     |========================= */
-    Route::middleware(['role:co_owner'])->group(function () {
-        Route::get('co-owners/{coOwner}/delegations', [PropertyDelegationController::class, 'listCoOwnerDelegations']);
-        Route::post('landlords/invite', [CoOwnerController::class, 'invite']);
-        Route::get('my-invitations', [CoOwnerController::class, 'index']);
+    Route::middleware(['auth:sanctum'])->group(function () {
+        // Routes pour le co-propriétaire connecté (co-owners/me/*)
+        Route::get('co-owners/me/profile', [CoOwnerMeController::class, 'getProfile']);
+        Route::put('co-owners/me/profile', [CoOwnerMeController::class, 'updateProfile']);
+        Route::get('co-owners/me/delegated-properties', [CoOwnerMeController::class, 'getDelegatedProperties']);
+        Route::get('co-owners/me/leases', [CoOwnerMeController::class, 'getLeases']);
+        Route::get('co-owners/me/receipts', [CoOwnerMeController::class, 'getRentReceipts']);
+        Route::get('co-owners/me/tenants', [CoOwnerMeController::class, 'getTenants']);
+        Route::get('co-owners/me/notices', [CoOwnerMeController::class, 'getNotices']);
+        Route::get('co-owners/me/delegations', [CoOwnerMeController::class, 'getDelegations']);
+        
+        // Routes pour les factures (co-propriétaire)
+        Route::post('invoices', [InvoiceController::class, 'store']);
+        Route::post('invoices/{id}/pay-link', [PaymentLinkController::class, 'create']);
+        
+        // Routes FedaPay (co-propriétaire)
+        Route::get('co-owners/me/fedapay', [CoOwnerFedapayController::class, 'show']);
+        Route::post('co-owners/me/fedapay/subaccount', [CoOwnerFedapayController::class, 'createOrUpdate']);
+        
+        // Routes pour les propriétés
+        Route::put('co-owners/me/properties/{propertyId}', [CoOwnerMeController::class, 'updateProperty']);
+        
+        Route::middleware(['role:co_owner'])->group(function () {
+            Route::get('co-owners/{coOwner}/delegations', [PropertyDelegationController::class, 'listCoOwnerDelegations']);
+            Route::post('landlords/invite', [CoOwnerController::class, 'invite']);
+            Route::get('my-invitations', [CoOwnerController::class, 'index']);
+        });
     });
 
     /* =========================
@@ -215,4 +248,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // admin routes...
     });
 
+    
 });

@@ -697,6 +697,11 @@ export const AjouterLocataire: React.FC = () => {
         phone: formData.phone.trim() || undefined,
       };
 
+      console.log('📋 FormData before sending:', formData);
+      console.log('📞 Phone in formData:', formData.phone);
+      console.log('📦 InvitePayload before sending:', invitePayload);
+      console.log('📞 Phone in invitePayload:', invitePayload.phone);
+
       const response = await tenantService.inviteTenant(invitePayload);
       console.log("Réponse API inviteTenant :", response);
 

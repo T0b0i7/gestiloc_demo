@@ -36,14 +36,13 @@ class User extends Authenticatable
 
 
 public function landlord(): HasOne
-{
-    return $this->hasOne(Landlord::class, 'user_id');
-}
-
-
-    public function coOwner(): BelongsTo
     {
-        return $this->belongsTo(Landlord::class, 'co_owner_id');
+        return $this->hasOne(Landlord::class, 'user_id');
+    }
+
+    public function coOwner(): HasOne
+    {
+        return $this->hasOne(CoOwner::class, 'user_id');
     }
 
     public function agency(): BelongsTo

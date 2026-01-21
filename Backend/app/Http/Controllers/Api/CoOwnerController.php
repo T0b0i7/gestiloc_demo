@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\InviteCoOwnerRequest;
+use App\Models\CoOwner;
 use App\Models\CoOwnerInvitation;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -209,6 +211,23 @@ HTML;
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
+        // Vérifier les doublons d'invitation
+        $existingInvitation = CoOwnerInvitation::where('email', $data['email'])
+            ->whereNull('accepted_at')
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if ($existingInvitation) {
+            return response()->json([
+                'message' => 'Une invitation est déjà en cours pour cet email',
+                'invitation' => [
+                    'id' => $existingInvitation->id,
+                    'email' => $existingInvitation->email,
+                    'expires_at' => $existingInvitation->expires_at,
+                ]
+            ], 409);
+        }
+
         // Déterminer qui invite et qui est la cible
         if ($user->isLandlord()) {
             $invitedByType = 'landlord';
@@ -231,6 +250,19 @@ HTML;
             $emailTitle = 'Invitation à créer votre compte propriétaire ✉️';
             $confirmationTitle = 'Invitation propriétaire envoyée ✅';
             $confirmationSubject = "✅ Invitation propriétaire envoyée : ";
+        }
+
+        // Vérifier si l'utilisateur existe déjà avec le rôle approprié
+        $existingUser = User::where('email', $data['email'])->first();
+        if ($existingUser) {
+            $hasTargetRole = ($targetType === 'co_owner' && $existingUser->isCoOwner()) ||
+                           ($targetType === 'landlord' && $existingUser->isLandlord());
+            
+            if ($hasTargetRole) {
+                return response()->json([
+                    'message' => 'Cet utilisateur existe déjà avec ce rôle'
+                ], 409);
+            }
         }
 
         return DB::transaction(function () use ($data, $invitedByType, $invitedById, $targetType, $landlordId, $coOwnerUserId, $emailSubject, $emailTitle, $confirmationTitle, $confirmationSubject, $request, $user) {
@@ -341,12 +373,7 @@ HTML;
         $landlord = $user->landlord;
 
         // Récupérer les copropriétaires existants
-        $coOwners = CoOwner::whereHas('user', function ($query) use ($landlord) {
-                $query->whereHas('coOwnerInvitations', function ($q) use ($landlord) {
-                    $q->where('landlord_id', $landlord->id);
-                });
-            })
-            ->with('user:id,email')
+        $coOwners = CoOwner::with('user:id,email')
             ->get(['id', 'user_id', 'first_name', 'last_name', 'company_name', 'is_professional']);
 
         $coOwnersList = $coOwners->map(function (CoOwner $coOwner) {

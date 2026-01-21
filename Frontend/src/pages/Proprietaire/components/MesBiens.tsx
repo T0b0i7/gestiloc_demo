@@ -247,6 +247,52 @@ const styles = `
     color: #4b5563;
   }
 
+  .property-rooms {
+    display: flex;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 4px;
+  }
+
+  .property-rooms span {
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  .property-features {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: 0.7rem;
+    color: #9ca3af;
+    margin-top: 4px;
+  }
+
+  .property-features span {
+    background: #f9fafb;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid #e5e7eb;
+  }
+
+  .energy-badge {
+    font-weight: 600;
+    padding: 2px 6px !important;
+    border-radius: 3px !important;
+    color: white !important;
+  }
+
+  .energy-A { background: #10b981 !important; }
+  .energy-B { background: #22c55e !important; }
+  .energy-C { background: #84cc16 !important; }
+  .energy-D { background: #eab308 !important; }
+  .energy-E { background: #f97316 !important; }
+  .energy-F { background: #ef4444 !important; }
+  .energy-G { background: #dc2626 !important; }
+
   .property-footer {
     padding: 0.85rem 1.5rem 1rem;
     border-top: 1px solid #e5e7eb;
@@ -588,11 +634,15 @@ const resolvePhotoUrl = (p?: string | null) => {
   if (p.startsWith("/storage/")) return `${origin}${p}`;
 
   // Cas DB : "properties/xxx.png" (ou parfois "properties\xxx.png")
-  const normalized = p.replaceAll("\\", "/").replace(/^\/+/, "");
+  const normalized = p.replace(/\\/g, "/").replace(/^\/+/, "");
   return `${origin}/storage/${normalized}`;
 };
 
-export const MesBiens: React.FC = () => {
+interface MesBiensProps {
+  notify?: (msg: string, type: "success" | "info" | "error") => void;
+}
+
+export const MesBiens: React.FC<MesBiensProps> = ({ notify }) => {
   const [data, setData] = useState<PaginatedResponse<Property> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -967,6 +1017,28 @@ export const MesBiens: React.FC = () => {
                         <div className="property-surface">
                           {formatSurface(property.surface)}
                         </div>
+
+                        {/* Nouveaux détails */}
+                        {(property.room_count || property.bedroom_count || property.bathroom_count) && (
+                          <div className="property-rooms" style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                            {property.room_count && <span>{property.room_count}p</span>}
+                            {property.bedroom_count && <span>{property.bedroom_count}ch</span>}
+                            {property.bathroom_count && <span>{property.bathroom_count}sdb</span>}
+                          </div>
+                        )}
+
+                        {/* Caractéristiques principales */}
+                        {property.meta && (
+                          <div className="property-features" style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                            {typeof property.meta.floor === 'number' && <span>Étage {property.meta.floor}</span>}
+                            {property.meta.terrace === true && <span>Terrasse</span>}
+                            {property.meta.balcony === true && <span>Balcon</span>}
+                            {property.meta.parking === true && <span>Parking</span>}
+                            {property.meta.elevator === true && <span>Ascenseur</span>}
+                            {property.meta.furnished === true && <span>Meublé</span>}
+                            {typeof property.meta.energy_class === 'string' && <span className="energy-badge energy-{property.meta.energy_class}">{property.meta.energy_class}</span>}
+                          </div>
+                        )}
                       </div>
                     </div>
 

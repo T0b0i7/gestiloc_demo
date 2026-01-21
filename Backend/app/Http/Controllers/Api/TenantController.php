@@ -181,6 +181,8 @@ HTML;
 
         return DB::transaction(function () use ($data, $landlord, $request) {
 
+            Log::info('Tenant invitation data received:', $data);
+
             $invitation = TenantInvitation::create([
                 'landlord_id'    => $landlord->id,
                 'tenant_user_id' => null,
@@ -188,6 +190,17 @@ HTML;
                 'name'           => trim(($data['first_name'] ?? '') . ' ' . ($data['last_name'] ?? '')),
                 'token'          => TenantInvitation::makeToken(),
                 'expires_at'     => now()->addDays(7),
+                'meta'           => [
+                    'first_name' => $data['first_name'] ?? null,
+                    'last_name'  => $data['last_name'] ?? null,
+                    'phone'      => $data['phone'] ?? null,
+                ],
+            ]);
+
+            Log::info('Tenant invitation created:', [
+                'id' => $invitation->id,
+                'meta' => $invitation->meta,
+                'phone_in_meta' => $invitation->meta['phone'] ?? 'null'
             ]);
 
             $signedUrl = URL::temporarySignedRoute(

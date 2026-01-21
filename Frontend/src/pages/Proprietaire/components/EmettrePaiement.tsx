@@ -1,4 +1,4 @@
-// src/pages/Proprietaire/Finance/CreatePaymentRequest.tsx
+// src/pages/Proprietaire/components/EmettrePaiement.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import {
   CheckCircle2,
@@ -181,7 +181,7 @@ function Chip({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function CreatePaymentRequest({ onCreated, notify }: Props) {
+export default function EmettrePaiement({ onCreated, notify }: Props) {
   const pushNotify = (msg: string, type: "success" | "info" | "error") => {
     if (notify) notify(msg, type);
     else alert(msg);
@@ -239,16 +239,13 @@ export default function CreatePaymentRequest({ onCreated, notify }: Props) {
     setPageError(null);
 
     try {
-      const [list, invoices] = await Promise.allSettled([
-        leaseService.listLeases(),
-        landlordPayments.listInvoices(),
-      ]);
+      const [list, invoices] = await Promise.allSettled([leaseService.listLeases(), landlordPayments.listInvoices()]);
 
       if (list.status === "fulfilled") {
         const arr = Array.isArray(list.value) ? (list.value as LeaseLite[]) : [];
         setLeases(arr);
       } else {
-        console.warn("[CreatePaymentRequest] listLeases failed", list.reason);
+        console.warn("[EmettrePaiement] listLeases failed", list.reason);
       }
 
       if (invoices.status === "fulfilled") {
@@ -256,7 +253,7 @@ export default function CreatePaymentRequest({ onCreated, notify }: Props) {
         const last = [...inv].sort((a, b) => (Number(b.id) || 0) - (Number(a.id) || 0))[0];
         if (last?.payment_method) setPaymentMethod(String(last.payment_method));
       } else {
-        console.warn("[CreatePaymentRequest] listInvoices failed", invoices.reason);
+        console.warn("[EmettrePaiement] listInvoices failed", invoices.reason);
       }
     } catch (e: any) {
       const msg = normalizeApiError(e as ApiErr, "Erreur lors du chargement.");
@@ -605,7 +602,8 @@ export default function CreatePaymentRequest({ onCreated, notify }: Props) {
                     </div>
 
                     <div className="mt-2 text-sm font-semibold text-gray-700">
-                      Montant: <span className="font-extrabold text-gray-900">{money(createdInvoice.amount_total)} XOF</span>{" "}
+                      Montant:{" "}
+                      <span className="font-extrabold text-gray-900">{money(createdInvoice.amount_total)} XOF</span>{" "}
                       · Échéance: <span className="font-extrabold text-gray-900">{createdInvoice.due_date}</span>
                     </div>
                   </div>
