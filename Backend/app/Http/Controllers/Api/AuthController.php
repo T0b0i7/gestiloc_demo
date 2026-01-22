@@ -77,7 +77,7 @@ class AuthController extends Controller
           <tr>
             <td style="padding:18px 22px;border-top:1px solid #eef2f7;background:#fbfcff;">
               <div style="font-size:12px;color:#6b7280;line-height:1.6;">
-                Cet email a été envoyé automatiquement. Si vous n’êtes pas concerné, vous pouvez l’ignorer.
+                Cet email a été envoyé automatiquement. Si vous n’êtes pas concerné, vous pouvez l'ignorer.
               </div>
               <div style="font-size:12px;color:#6b7280;margin-top:8px;">
                 © {$year} {$appName}
@@ -438,21 +438,26 @@ HTML;
         $firstName = $invitation->meta['first_name'] ?? $parts[0] ?? ($invitation->name ?? 'Copropriétaire');
         $lastName  = $invitation->meta['last_name'] ?? $parts[1] ?? '';
 
-        $coOwner = CoOwner::firstOrCreate(
+        // ✅ CORRECTION ICI : Utiliser updateOrCreate au lieu de firstOrCreate
+        // Cela garantit que le landlord_id sera toujours défini
+        $coOwner = CoOwner::updateOrCreate(
             ['user_id' => $user->id],
             [
                 'first_name' => $firstName,
                 'last_name' => $lastName,
                 'company_name' => $invitation->meta['company_name'] ?? null,
                 'address_billing' => $invitation->meta['address_billing'] ?? null,
+                'phone' => $invitation->meta['phone'] ?? null,
                 'license_number' => $invitation->meta['license_number'] ?? null,
                 'is_professional' => $invitation->meta['is_professional'] ?? false,
                 'ifu' => $invitation->meta['ifu'] ?? null,
                 'rccm' => $invitation->meta['rccm'] ?? null,
                 'vat_number' => $invitation->meta['vat_number'] ?? null,
                 'meta' => $invitation->meta ?? null,
-                'landlord_id' => $invitation->landlord_id,
+                'landlord_id' => $invitation->landlord_id, // ⭐ TOUJOURS défini maintenant
                 'invitation_id' => $invitation->id,
+                'status' => 'active',
+                'joined_at' => now(),
             ]
         );
 

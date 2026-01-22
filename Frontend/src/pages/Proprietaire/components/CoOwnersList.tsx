@@ -24,6 +24,12 @@ import {
   UserCheck,
   CalendarDays,
   Home,
+  Building2,
+  Briefcase,
+  User,
+  Hash,
+  MapPin,
+  Phone,
 } from 'lucide-react';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
@@ -63,11 +69,17 @@ interface CoOwner {
   phone?: string;
   address_billing?: string;
   is_professional: boolean;
+  invitation_type: 'co_owner' | 'agency';
   license_number?: string;
   status: 'active' | 'inactive' | 'suspended';
   joined_at?: string;
   meta?: any;
   delegations?: Delegation[];
+  ifu?: string;
+  rccm?: string;
+  vat_number?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface CoOwnerInvitation {
@@ -81,6 +93,8 @@ interface CoOwnerInvitation {
   invited_by_type: 'landlord' | 'co_owner';
   target_type: 'co_owner' | 'landlord';
   meta?: any;
+  invitation_type: 'co_owner' | 'agency';
+  is_professional: boolean;
 }
 
 interface CoOwnersListProps {
@@ -93,7 +107,7 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<'coowners' | 'invitations'>('coowners');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
   const [selectedCoOwner, setSelectedCoOwner] = useState<CoOwner | null>(null);
   const [showDelegateModal, setShowDelegateModal] = useState(false);
   const [expandedCoOwners, setExpandedCoOwners] = useState<Set<number>>(new Set());
@@ -102,77 +116,160 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
     try {
       setLoading(true);
       console.log('=== DÉBUT FETCH CO-OWNERS ===');
-      const token = localStorage.getItem('token');
       
-      if (!token) {
-        console.error('❌ Pas de token trouvé');
-        notify('Erreur: non authentifié', 'error');
-        return;
+      const response = await api.get('/co-owners');
+      console.log('📥 Réponse API complète:', response.data);
+      
+      // ✅ EXTRACTION SIMPLIFIÉE selon la structure du backend
+      let coOwnersData: any[] = [];
+      let invitationsData: any[] = [];
+      
+      // Le backend retourne maintenant : { data: { co_owners: [...], invitations: [...] } }
+      if (response.data?.data?.co_owners) {
+        console.log('✅ Structure détectée: response.data.data');
+        coOwnersData = response.data.data.co_owners;
+        invitationsData = response.data.data.invitations || [];
       }
-
-      console.log('✅ Token trouvé:', token.substring(0, 20) + '...');
+      // Fallback: ancienne structure
+      else if (response.data?.co_owners) {
+        console.log('✅ Structure détectée: response.data');
+        coOwnersData = response.data.co_owners;
+        invitationsData = response.data.invitations || [];
+      }
+      // Dernière tentative: array direct
+      else if (Array.isArray(response.data)) {
+        console.log('✅ Structure détectée: array direct');
+        coOwnersData = response.data;
+      }
+      else {
+        console.error('❌ Structure non reconnue:', Object.keys(response.data || {}));
+        notify('Format de réponse inattendu', 'error');
+        coOwnersData = [];
+      }
       
-      // Récupérer les co-propriétaires avec leurs délégations
-      const coOwnersResponse = await api.get('/co-owners');
-      console.log('📥 Co-owners response complète:', coOwnersResponse);
-      console.log('📥 Co-owners response data:', coOwnersResponse.data);
-
-      if (coOwnersResponse.data?.co_owners) {
-        console.log('✅ Structure correcte, co_owners trouvés:', coOwnersResponse.data.co_owners.length);
-        const coOwnersWithDelegations = await Promise.all(
-          coOwnersResponse.data.co_owners.map(async (coOwner: CoOwner) => {
-            console.log(`🔄 Récupération délégations pour co-owner ${coOwner.id}...`);
-            try {
-              const delegationsResponse = await api.get(`/landlords/co-owners/${coOwner.id}/delegations`);
-              console.log(`📥 Délegations response pour ${coOwner.id}:`, delegationsResponse.data);
-              console.log(`📊 Structure complète:`, JSON.stringify(delegationsResponse.data, null, 2));
-              console.log(`📊 Type de delegationsResponse.data:`, typeof delegationsResponse.data);
-              console.log(`📊 delegationsResponse.data.data:`, delegationsResponse.data.data);
-              console.log(`📊 Type de data.data:`, typeof delegationsResponse.data.data);
-              console.log(`📊 delegationsResponse.data.data.data:`, delegationsResponse.data.data?.data);
-              console.log(`📊 Type de data.data.data:`, typeof delegationsResponse.data.data?.data);
-              console.log(`📊 Est data.data.data un array?`, Array.isArray(delegationsResponse.data.data?.data));
-              console.log(`📊 Longueur de data.data.data:`, delegationsResponse.data.data?.data?.length || 0);
-              return {
-                ...coOwner,
-                delegations: delegationsResponse.data.data?.data || []
-              };
-            } catch (error) {
-              console.error(`❌ Erreur délégations pour co-owner ${coOwner.id}:`, error);
-              return {
-                ...coOwner,
-                delegations: []
-              };
+      console.log(`📊 ${coOwnersData.length} co-owners trouvés:`, coOwnersData);
+      console.log(`📊 ${invitationsData.length} invitations trouvées`);
+      
+      // Transformer les co-owners
+      const transformedCoOwners = await Promise.all(
+        coOwnersData.map(async (coOwner: any) => {
+          console.log(`🔄 Transformation co-owner ${coOwner.id}:`, coOwner);
+          
+          const meta = coOwner.meta || {};
+          const invitationType = coOwner.invitation_type || 
+                               (coOwner.is_professional ? 'agency' : 'co_owner');
+          
+          // Récupérer les délégations
+          let delegations: Delegation[] = [];
+          try {
+            const delegationsResponse = await api.get(`/landlords/co-owners/${coOwner.id}/delegations`);
+            console.log(`📥 Délégations pour ${coOwner.id}:`, delegationsResponse.data);
+            
+            if (delegationsResponse.data?.data) {
+              delegations = delegationsResponse.data.data;
+            } else if (Array.isArray(delegationsResponse.data)) {
+              delegations = delegationsResponse.data;
+            } else if (delegationsResponse.data?.delegations) {
+              delegations = delegationsResponse.data.delegations;
             }
-          })
-        );
-        
-        console.log('✅ Co-owners avec délégations:', coOwnersWithDelegations);
-        setCoOwners(coOwnersWithDelegations);
-      } else {
-        console.error('❌ Structure incorrecte:', coOwnersResponse.data);
-        setCoOwners([]);
-        
-        if (coOwnersResponse.statusText) {
-          notify(`Erreur ${coOwnersResponse.status}: ${coOwnersResponse.statusText}`, 'error');
-        } else {
-          notify('Erreur lors de la récupération des données', 'error');
-        }
-      }
-
-    } catch (error) {
-      console.error('❌ Erreur générale fetchCoOwners:', error);
+          } catch (error) {
+            console.error(`❌ Erreur délégations pour ${coOwner.id}:`, error);
+          }
+          
+          return {
+            id: coOwner.id,
+            user_id: coOwner.user_id,
+            first_name: coOwner.first_name || '',
+            last_name: coOwner.last_name || '',
+            email: coOwner.email || '',
+            company_name: coOwner.company_name || '',
+            phone: coOwner.phone || meta.phone || '',
+            address_billing: coOwner.address_billing || '',
+            is_professional: coOwner.is_professional || false,
+            invitation_type: invitationType as 'co_owner' | 'agency',
+            license_number: coOwner.license_number || '',
+            status: coOwner.status || 'active',
+            joined_at: coOwner.joined_at || coOwner.created_at,
+            meta: meta,
+            ifu: coOwner.ifu || meta.ifu || '',
+            rccm: coOwner.rccm || meta.rccm || '',
+            vat_number: coOwner.vat_number || meta.vat_number || '',
+            delegations: delegations,
+            created_at: coOwner.created_at,
+            updated_at: coOwner.updated_at
+          };
+        })
+      );
       
-      if (error instanceof SyntaxError) {
-        notify('Erreur de format de réponse du serveur', 'error');
-      } else if (error instanceof Error) {
-        notify(`Erreur: ${error.message}`, 'error');
+      console.log('✅ Co-owners transformés:', transformedCoOwners);
+      setCoOwners(transformedCoOwners);
+      
+      // Transformer les invitations
+      const transformedInvitations = invitationsData.map((inv: any) => {
+        const meta = inv.meta || {};
+        return {
+          id: inv.id,
+          email: inv.email,
+          name: inv.name,
+          token: inv.token || '',
+          expires_at: inv.expires_at,
+          created_at: inv.created_at,
+          invited_by_type: 'landlord',
+          target_type: 'co_owner',
+          is_professional: meta.is_professional || inv.is_professional || false,
+          invitation_type: inv.invitation_type || 
+                         (meta.is_professional || inv.is_professional ? 'agency' : 'co_owner'),
+          meta: meta
+        };
+      });
+      
+      setInvitations(transformedInvitations);
+      
+      if (transformedCoOwners.length === 0 && transformedInvitations.length === 0) {
+        notify('Aucun gestionnaire ou invitation trouvé', 'info');
       } else {
-        notify('Erreur lors du chargement des données', 'error');
+        console.log(`✅ Chargement terminé: ${transformedCoOwners.length} co-owners, ${transformedInvitations.length} invitations`);
       }
+      
+    } catch (error: any) {
+      console.error('❌ Erreur fetchCoOwners:', error);
+      notify(`Erreur: ${error.message || 'Impossible de charger les données'}`, 'error');
     } finally {
       setLoading(false);
       console.log('=== FIN FETCH CO-OWNERS ===');
+    }
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'agency':
+        return <Building2 className="w-4 h-4" />;
+      case 'co_owner':
+        return <UserCheck className="w-4 h-4" />;
+      default:
+        return <Users className="w-4 h-4" />;
+    }
+  };
+
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'agency':
+        return 'Agence';
+      case 'co_owner':
+        return 'Co-propriétaire';
+      default:
+        return type;
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'agency':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'co_owner':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -274,14 +371,54 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
     fetchCoOwners();
   };
 
+  const formatDate = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  const formatDateTime = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
   const filteredCoOwners = coOwners.filter(coOwner => {
-    const matchesSearch = coOwner.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          coOwner.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          coOwner.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = 
+      (coOwner.first_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (coOwner.last_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (coOwner.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (coOwner.company_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (coOwner.phone?.toLowerCase() || '').includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || coOwner.status === statusFilter;
+    const matchesType = typeFilter === 'all' || coOwner.invitation_type === typeFilter;
     
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesType;
+  });
+
+  const filteredInvitations = invitations.filter(invitation => {
+    const matchesSearch = 
+      (invitation.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (invitation.name?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+    
+    const matchesType = typeFilter === 'all' || invitation.invitation_type === typeFilter;
+    
+    return matchesSearch && matchesType;
   });
 
   useEffect(() => {
@@ -292,18 +429,18 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Co-propriétaires</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Co-propriétaires & Agences</h1>
         </div>
         <Card className="p-6">
           <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
+            {[...Array(3)].map((_, i) => (
               <div key={i} className="border rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-48"></div>
-                    <div className="h-3 bg-gray-200 rounded w-32"></div>
+                    <div className="h-4 bg-gray-200 rounded w-48 animate-pulse"></div>
+                    <div className="h-3 bg-gray-200 rounded w-32 animate-pulse"></div>
                   </div>
-                  <div className="h-6 bg-gray-200 rounded w-20"></div>
+                  <div className="h-6 bg-gray-200 rounded w-20 animate-pulse"></div>
                 </div>
               </div>
             ))}
@@ -318,9 +455,9 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
       {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Co-propriétaires</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Co-propriétaires & Agences</h2>
           <p className="text-gray-600 mt-1">
-            Gérez vos co-propriétaires et leurs délégations
+            Gérez vos gestionnaires et leurs délégations
           </p>
         </div>
         <div className="flex gap-3">
@@ -330,7 +467,7 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
             className="flex items-center gap-2"
           >
             <UserPlus className="w-4 h-4" />
-            Inviter un co-propriétaire
+            Inviter un gestionnaire
           </Button>
           <Button
             variant="outline"
@@ -350,68 +487,169 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
             type="text"
-            placeholder="Rechercher un co-propriétaire..."
+            placeholder="Rechercher par nom, email, téléphone ou entreprise..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as any)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        >
-          <option value="all">Tous les statuts</option>
-          <option value="active">Actifs</option>
-          <option value="inactive">Inactifs</option>
-          <option value="suspended">Suspendus</option>
-        </select>
+        <div className="flex gap-2">
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="all">Tous les types</option>
+            <option value="co_owner">Co-propriétaires</option>
+            <option value="agency">Agences</option>
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="all">Tous les statuts</option>
+            <option value="active">Actifs</option>
+            <option value="inactive">Inactifs</option>
+            <option value="suspended">Suspendus</option>
+          </select>
+        </div>
       </div>
 
-      {/* Liste des co-propriétaires */}
-      {filteredCoOwners.length === 0 ? (
+      {/* Statistiques */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total</p>
+              <p className="text-2xl font-bold text-gray-900">{coOwners.length}</p>
+            </div>
+            <div className="p-3 bg-blue-100 rounded-lg">
+              <Users className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Co-propriétaires</p>
+              <p className="text-2xl font-bold text-blue-600">
+                {coOwners.filter(c => c.invitation_type === 'co_owner').length}
+              </p>
+            </div>
+            <div className="p-3 bg-blue-100 rounded-lg">
+              <UserCheck className="w-6 h-6 text-blue-600" />
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Agences</p>
+              <p className="text-2xl font-bold text-purple-600">
+                {coOwners.filter(c => c.invitation_type === 'agency').length}
+              </p>
+            </div>
+            <div className="p-3 bg-purple-100 rounded-lg">
+              <Building2 className="w-6 h-6 text-purple-600" />
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">En attente</p>
+              <p className="text-2xl font-bold text-yellow-600">
+                {invitations.length}
+              </p>
+            </div>
+            <div className="p-3 bg-yellow-100 rounded-lg">
+              <Clock className="w-6 h-6 text-yellow-600" />
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Liste des gestionnaires */}
+      {filteredCoOwners.length === 0 && filteredInvitations.length === 0 ? (
         <Card className="p-12 text-center">
           <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {searchTerm || statusFilter !== 'all' ? 'Aucun co-propriétaire trouvé' : 'Aucun co-propriétaire'}
+            {searchTerm || statusFilter !== 'all' || typeFilter !== 'all' 
+              ? 'Aucun gestionnaire trouvé' 
+              : 'Aucun gestionnaire'}
           </h3>
           <p className="text-gray-600">
-            {searchTerm || statusFilter !== 'all' 
+            {searchTerm || statusFilter !== 'all' || typeFilter !== 'all'
               ? 'Essayez d\'ajuster vos filtres de recherche'
-              : 'Commencez par inviter votre premier co-propriétaire'
+              : 'Commencez par inviter votre premier gestionnaire'
             }
           </p>
+          <div className="mt-4">
+            <Button className="flex items-center gap-2">
+              <UserPlus className="w-4 h-4" />
+              Inviter un gestionnaire
+            </Button>
+          </div>
         </Card>
       ) : (
         <div className="space-y-4">
           {filteredCoOwners.map((coOwner) => (
             <Card key={coOwner.id} className="overflow-hidden">
-              {/* En-tête du co-propriétaire */}
-              <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
+              {/* En-tête */}
+              <div className={`p-6 border-b border-gray-200 ${
+                coOwner.invitation_type === 'agency' 
+                  ? 'bg-gradient-to-r from-purple-50 to-indigo-50' 
+                  : 'bg-gradient-to-r from-blue-50 to-indigo-50'
+              }`}>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                      {coOwner.first_name.charAt(0)}{coOwner.last_name.charAt(0)}
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold ${
+                      coOwner.invitation_type === 'agency' ? 'bg-purple-600' : 'bg-blue-600'
+                    }`}>
+                      {coOwner.invitation_type === 'agency' 
+                        ? <Building2 className="w-6 h-6" />
+                        : `${coOwner.first_name?.charAt(0) || ''}${coOwner.last_name?.charAt(0) || ''}`
+                      }
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {coOwner.first_name} {coOwner.last_name}
-                      </h3>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {coOwner.invitation_type === 'agency' 
+                            ? coOwner.company_name || `${coOwner.first_name} ${coOwner.last_name}`
+                            : `${coOwner.first_name} ${coOwner.last_name}`
+                          }
+                        </h3>
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getTypeColor(coOwner.invitation_type)}`}>
+                          {getTypeIcon(coOwner.invitation_type)}
+                          {getTypeLabel(coOwner.invitation_type)}
+                        </span>
+                      </div>
                       <p className="text-sm text-gray-600">{coOwner.email}</p>
-                      {coOwner.company_name && (
+                      {coOwner.invitation_type === 'co_owner' && coOwner.company_name && (
                         <p className="text-sm text-gray-500">{coOwner.company_name}</p>
+                      )}
+                      {coOwner.invitation_type === 'agency' && (
+                        <p className="text-sm text-gray-500">
+                          {coOwner.first_name} {coOwner.last_name}
+                          {coOwner.phone && ` • ${coOwner.phone}`}
+                        </p>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(coOwner.status)}`}>
+                  <div className="flex flex-col items-end gap-2">
+                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(coOwner.status)}`}>
                       {getStatusIcon(coOwner.status)}
                       {coOwner.status === 'active' ? 'Actif' : coOwner.status === 'inactive' ? 'Inactif' : 'Suspendu'}
                     </span>
-                    {coOwner.is_professional && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
-                        <Shield className="w-3 h-3" />
-                        Pro
+                    {coOwner.joined_at && (
+                      <span className="text-xs text-gray-500">
+                        Rejoint le {formatDate(coOwner.joined_at)}
+                      </span>
+                    )}
+                    {coOwner.created_at && (
+                      <span className="text-xs text-gray-400">
+                        Créé le {formatDate(coOwner.created_at)}
                       </span>
                     )}
                   </div>
@@ -424,14 +662,18 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
                   <div className="flex items-center space-x-4 text-sm text-gray-600">
                     {coOwner.phone && (
                       <span className="flex items-center gap-1">
-                        <Hand className="w-4 h-4" />
+                        <Phone className="w-4 h-4" />
                         {coOwner.phone}
                       </span>
                     )}
-                    {coOwner.joined_at && (
+                    <span className="flex items-center gap-1">
+                      <Hash className="w-4 h-4" />
+                      {coOwner.delegations?.length || 0} biens délégués
+                    </span>
+                    {coOwner.address_billing && (
                       <span className="flex items-center gap-1">
-                        <CalendarDays className="w-4 h-4" />
-                        Rejoint le {new Date(coOwner.joined_at).toLocaleDateString('fr-FR')}
+                        <MapPin className="w-4 h-4" />
+                        {coOwner.address_billing}
                       </span>
                     )}
                   </div>
@@ -445,12 +687,12 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
                       {expandedCoOwners.has(coOwner.id) ? (
                         <>
                           <ChevronUp className="w-4 h-4" />
-                          Masquer les détails
+                          Masquer
                         </>
                       ) : (
                         <>
                           <ChevronDown className="w-4 h-4" />
-                          Voir les détails
+                          Détails
                         </>
                       )}
                     </Button>
@@ -470,11 +712,98 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
               {/* Détails développés */}
               {expandedCoOwners.has(coOwner.id) && (
                 <div className="p-6 space-y-6">
+                  {/* Informations spécifiques au type */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Informations générales */}
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h5 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        Informations {coOwner.invitation_type === 'agency' ? 'de l\'agence' : 'personnelles'}
+                      </h5>
+                      <div className="space-y-3 text-sm">
+                        <div>
+                          <strong className="text-gray-700 block text-xs">Nom complet:</strong>
+                          <span className="text-gray-900">{coOwner.first_name} {coOwner.last_name}</span>
+                        </div>
+                        <div>
+                          <strong className="text-gray-700 block text-xs">Email:</strong>
+                          <span className="text-gray-900">{coOwner.email}</span>
+                        </div>
+                        {coOwner.phone && (
+                          <div>
+                            <strong className="text-gray-700 block text-xs">Téléphone:</strong>
+                            <span className="text-gray-900">{coOwner.phone}</span>
+                          </div>
+                        )}
+                        {coOwner.company_name && (
+                          <div>
+                            <strong className="text-gray-700 block text-xs">Entreprise:</strong>
+                            <span className="text-gray-900">{coOwner.company_name}</span>
+                          </div>
+                        )}
+                        {coOwner.address_billing && (
+                          <div>
+                            <strong className="text-gray-700 block text-xs">Adresse:</strong>
+                            <span className="text-gray-900">{coOwner.address_billing}</span>
+                          </div>
+                        )}
+                        {coOwner.joined_at && (
+                          <div>
+                            <strong className="text-gray-700 block text-xs">Rejoint le:</strong>
+                            <span className="text-gray-900">{formatDate(coOwner.joined_at)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Informations professionnelles (pour agences) */}
+                    {coOwner.invitation_type === 'agency' && (
+                      <div className="bg-purple-50 p-4 rounded-lg">
+                        <h5 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                          <Briefcase className="w-4 h-4" />
+                          Informations professionnelles
+                        </h5>
+                        <div className="space-y-3 text-sm">
+                          {coOwner.license_number && (
+                            <div>
+                              <strong className="text-gray-700 block text-xs">Numéro de license:</strong>
+                              <span className="text-gray-900">{coOwner.license_number}</span>
+                            </div>
+                          )}
+                          {coOwner.ifu && (
+                            <div>
+                              <strong className="text-gray-700 block text-xs">IFU:</strong>
+                              <span className="text-gray-900">{coOwner.ifu}</span>
+                            </div>
+                          )}
+                          {coOwner.rccm && (
+                            <div>
+                              <strong className="text-gray-700 block text-xs">RCCM:</strong>
+                              <span className="text-gray-900">{coOwner.rccm}</span>
+                            </div>
+                          )}
+                          {coOwner.vat_number && (
+                            <div>
+                              <strong className="text-gray-700 block text-xs">Numéro TVA:</strong>
+                              <span className="text-gray-900">{coOwner.vat_number}</span>
+                            </div>
+                          )}
+                          {coOwner.is_professional && (
+                            <div>
+                              <strong className="text-gray-700 block text-xs">Statut:</strong>
+                              <span className="text-gray-900">Professionnel</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   {/* Délégations existantes */}
                   <div>
                     <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                       <Key className="w-5 h-5 text-blue-600" />
-                      Délégations actives ({coOwner.delegations?.length || 0})
+                      Délégations ({coOwner.delegations?.length || 0})
                     </h4>
                     
                     {coOwner.delegations && coOwner.delegations.length > 0 ? (
@@ -486,24 +815,28 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
                                 <div className="flex items-center gap-2 mb-2">
                                   <Home className="w-4 h-4 text-blue-600" />
                                   <h5 className="font-medium text-gray-900">
-                                    {delegation.property.name}
+                                    {delegation.property?.name || 'Bien sans nom'}
                                   </h5>
-                                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getDelegationStatusColor(delegation.status)}`}>
+                                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getDelegationStatusColor(delegation.status)}`}>
                                     {delegation.status === 'active' ? 'Active' : delegation.status === 'revoked' ? 'Révoquée' : 'Expirée'}
                                   </span>
                                 </div>
                                 
                                 <div className="text-sm text-gray-600 space-y-1">
-                                  <p><strong>Adresse:</strong> {delegation.property.address}, {delegation.property.city}</p>
-                                  {delegation.property.surface && (
-                                    <p><strong>Surface:</strong> {delegation.property.surface} m²</p>
+                                  {delegation.property && (
+                                    <>
+                                      <p><strong>Adresse:</strong> {delegation.property.address}, {delegation.property.city}</p>
+                                      {delegation.property.surface && (
+                                        <p><strong>Surface:</strong> {delegation.property.surface} m²</p>
+                                      )}
+                                      {delegation.property.rent_amount && (
+                                        <p><strong>Loyer:</strong> {delegation.property.rent_amount} €/mois</p>
+                                      )}
+                                    </>
                                   )}
-                                  {delegation.property.rent_amount && (
-                                    <p><strong>Loyer:</strong> {delegation.property.rent_amount} €/mois</p>
-                                  )}
-                                  <p><strong>Déléguée le:</strong> {new Date(delegation.delegated_at).toLocaleDateString('fr-FR')}</p>
+                                  <p><strong>Déléguée le:</strong> {formatDate(delegation.delegated_at)}</p>
                                   {delegation.expires_at && (
-                                    <p><strong>Expire le:</strong> {new Date(delegation.expires_at).toLocaleDateString('fr-FR')}</p>
+                                    <p><strong>Expire le:</strong> {formatDate(delegation.expires_at)}</p>
                                   )}
                                   {delegation.notes && (
                                     <p><strong>Notes:</strong> {delegation.notes}</p>
@@ -512,10 +845,10 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
                               </div>
                               
                               {/* Permissions */}
-                              <div className="ml-4">
+                              <div className="ml-4 min-w-[200px]">
                                 <p className="text-sm font-medium text-gray-700 mb-2">Permissions:</p>
-                                <div className="flex flex-wrap gap-2">
-                                  {delegation.permissions.map((permission) => (
+                                <div className="flex flex-wrap gap-1">
+                                  {delegation.permissions?.map((permission) => (
                                     <span
                                       key={permission}
                                       className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs"
@@ -531,45 +864,82 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-8 text-gray-500">
+                      <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
                         <Building className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                         <p>Aucune délégation active</p>
-                        <p className="text-sm mt-1">Utilisez le bouton "Déléguer un bien" pour commencer</p>
+                        <p className="text-sm mt-1">Utilisez le bouton "Déléguer un bien" pour assigner un bien</p>
                       </div>
                     )}
-                  </div>
-
-                  {/* Informations supplémentaires */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h5 className="font-medium text-gray-900 mb-2">Informations personnelles</h5>
-                      <div className="space-y-1 text-sm">
-                        {coOwner.phone && (
-                          <p><strong>Téléphone:</strong> {coOwner.phone}</p>
-                        )}
-                        {coOwner.company_name && (
-                          <p><strong>Entreprise:</strong> {coOwner.company_name}</p>
-                        )}
-                        {coOwner.license_number && (
-                          <p><strong>License:</strong> {coOwner.license_number}</p>
-                        )}
-                        {coOwner.address_billing && (
-                          <p><strong>Adresse:</strong> {coOwner.address_billing}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h5 className="font-medium text-gray-900 mb-2">Statistiques</h5>
-                      <div className="space-y-1 text-sm">
-                        <p><strong>Biens délégués:</strong> {coOwner.delegations?.length || 0}</p>
-                        <p><strong>Type:</strong> {coOwner.is_professional ? 'Professionnel' : 'Particulier'}</p>
-                      </div>
-                    </div>
                   </div>
                 </div>
               )}
             </Card>
           ))}
+
+          {/* Section des invitations en attente */}
+          {filteredInvitations.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Invitations en attente</h3>
+              <div className="space-y-3">
+                {filteredInvitations.map((invitation) => (
+                  <Card key={invitation.id} className="p-4 border border-yellow-200 bg-yellow-50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="p-2 bg-yellow-100 rounded-lg">
+                            <Mail className="w-5 h-5 text-yellow-600" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">{invitation.name}</p>
+                            <p className="text-sm text-gray-600">{invitation.email}</p>
+                            <p className="text-xs text-gray-500">
+                              Type: {getTypeLabel(invitation.invitation_type)} • 
+                              Professionnel: {invitation.is_professional ? 'Oui' : 'Non'} • 
+                              Expire le {formatDateTime(invitation.expires_at)}
+                            </p>
+                          </div>
+                        </div>
+                        {invitation.meta && (
+                          <div className="mt-2 text-sm text-gray-700 bg-white p-2 rounded">
+                            <strong>Informations:</strong>
+                            <div className="grid grid-cols-2 gap-1 mt-1">
+                              {invitation.meta.first_name && (
+                                <div>Prénom: {invitation.meta.first_name}</div>
+                              )}
+                              {invitation.meta.last_name && (
+                                <div>Nom: {invitation.meta.last_name}</div>
+                              )}
+                              {invitation.meta.company_name && (
+                                <div>Entreprise: {invitation.meta.company_name}</div>
+                              )}
+                              {invitation.meta.phone && (
+                                <div>Téléphone: {invitation.meta.phone}</div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
+                          En attente
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            // TODO: Implémenter la réinvitation
+                            notify('Fonctionnalité à venir', 'info');
+                          }}
+                        >
+                          Renvoyer l'invitation
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -582,7 +952,8 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
             id: selectedCoOwner.id,
             first_name: selectedCoOwner.first_name,
             last_name: selectedCoOwner.last_name,
-            email: selectedCoOwner.email
+            email: selectedCoOwner.email,
+            invitation_type: selectedCoOwner.invitation_type
           }}
           notify={notify}
         />

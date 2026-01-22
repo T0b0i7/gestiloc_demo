@@ -12,22 +12,24 @@ class CoOwner extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'user_id',
-        'first_name',
-        'last_name',
-        'company_name',
-        'address_billing',
-        'phone',
-        'license_number',
-        'is_professional',
-        'ifu',
-        'rccm',
-        'vat_number',
-        'meta',
-        'status', // active, inactive, suspended
-        'joined_at',
-    ];
+  protected $fillable = [
+    'user_id',
+    'landlord_id',  // AJOUTEZ CELLE-CI
+    'first_name',
+    'last_name',
+    'company_name',
+    'address_billing',
+    'phone',
+    'license_number',
+    'is_professional',
+    'ifu',
+    'rccm',
+    'vat_number',
+    'meta',
+    'status',
+    'joined_at',
+    'invitation_id'  // Celle-ci est déjà là
+];
 
     protected $casts = [
         'is_professional' => 'boolean',
