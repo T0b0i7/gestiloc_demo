@@ -119,6 +119,41 @@ export interface CoOwnerNotice {
   updated_at?: string;
 }
 
+export interface CoOwnerProperty {
+  id: number;
+  uuid: string;
+  landlord_id: number;
+  type: string;
+  name: string;
+  description: string | null;
+  reference_code: string | null;
+
+  address: string;
+  district: string | null;
+  city: string;
+  state: string | null;
+  zip_code: string | null;
+  latitude: string | null;
+  longitude: string | null;
+
+  surface: string | null;
+  room_count: number | null;
+  bedroom_count: number | null;
+  bathroom_count: number | null;
+
+  rent_amount: string | null;
+  charges_amount: string | null;
+  status: string;
+
+  amenities: string[] | null;
+  photos: string[] | null;
+  meta: Record<string, unknown> | null;
+
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+}
+
 class CoOwnerApiService {
   private getAuthHeaders() {
     const token = localStorage.getItem('token');
@@ -128,11 +163,37 @@ class CoOwnerApiService {
   // Profil du co-propriétaire
   async getProfile(): Promise<CoOwner> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/co-owners/me`, {
+      const response = await axios.get(`${API_BASE_URL}/co-owners/me/profile`, {
         headers: this.getAuthHeaders(),
       });
       return response.data.data;
-    } catch (error) {
+    } catch (error: any) {
+      // Si l'endpoint n'existe pas encore (404), retourner un profil par défaut
+      if (error.response?.status === 404) {
+        console.log('getProfile: Endpoint not implemented yet, returning default profile');
+        // Retourner un profil par défaut basé sur l'utilisateur connecté
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const user = JSON.parse(userStr);
+          return {
+            id: user.id,
+            user_id: user.id,
+            first_name: user.first_name || '',
+            last_name: user.last_name || '',
+            company_name: undefined,
+            address_billing: undefined,
+            phone: user.phone || undefined,
+            license_number: undefined,
+            is_professional: false,
+            ifu: undefined,
+            rccm: undefined,
+            vat_number: undefined,
+            status: 'active' as const,
+            joined_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+          };
+        }
+      }
       console.error('Error fetching co-owner profile:', error);
       throw error;
     }
@@ -151,15 +212,38 @@ class CoOwnerApiService {
   }
 
   // Délégations
+  async getDelegatedProperties(): Promise<CoOwnerProperty[]> {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/co-owners/me/delegated-properties`, {
+        headers: this.getAuthHeaders(),
+      });
+      return response.data.data || [];
+    } catch (error: any) {
+      // Si l'endpoint n'existe pas encore (404), retourner un tableau vide sans erreur
+      if (error.response?.status === 404) {
+        console.log('getDelegatedProperties: Endpoint not implemented yet, returning empty array');
+        return [];
+      }
+      console.error('Error fetching delegated properties:', error);
+      // En cas d'erreur, retourner un tableau vide pour éviter les crashes
+      return [];
+    }
+  }
+
   async getDelegations(): Promise<PropertyDelegation[]> {
     try {
       const response = await axios.get(`${API_BASE_URL}/co-owners/me/delegations`, {
         headers: this.getAuthHeaders(),
       });
       return response.data.data || [];
-    } catch (error) {
+    } catch (error: any) {
+      // Si l'endpoint n'existe pas encore (404), retourner un tableau vide
+      if (error.response?.status === 404) {
+        console.log('getDelegations: Endpoint not implemented yet, returning empty array');
+        return [];
+      }
       console.error('Error fetching delegations:', error);
-      throw error;
+      return [];
     }
   }
 

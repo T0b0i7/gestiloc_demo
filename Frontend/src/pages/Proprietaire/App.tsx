@@ -44,6 +44,7 @@ const ProprietaireApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [toastIdCounter, setToastIdCounter] = useState(0);
 
   // Vérifier l'authentification au chargement
   useEffect(() => {
@@ -89,8 +90,9 @@ const ProprietaireApp: React.FC = () => {
 
   // Toast System
   const notify = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    const id = Date.now();
+    const id = toastIdCounter + 1;
     setToasts(prev => [...prev, { id, message, type }]);
+    setToastIdCounter(id);
   };
 
   const removeToast = (id: number) => {

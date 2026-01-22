@@ -299,6 +299,9 @@ export default function Auth() {
         } else if (roles.includes("landlord") || roles.includes("proprietaire")) {
           redirectPath = "/proprietaire";
           userRole = "proprietaire";
+        } else if (roles.includes("coproprietaire") || roles.includes("co_owner")) {
+          redirectPath = "/coproprietaire";
+          userRole = "coproprietaire";
         } else if (roles.includes("tenant") || roles.includes("locataire")) {
           redirectPath = "/locataire";
           userRole = "locataire";
