@@ -234,6 +234,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('co-owners/me/receipts', [CoOwnerMeController::class, 'getRentReceipts']);
         Route::get('co-owners/me/tenants', [CoOwnerMeController::class, 'getTenants']);
         Route::get('co-owners/me/notices', [CoOwnerMeController::class, 'getNotices']);
+        /* ========= CO-OWNER: Gestion des photos ========= */
+Route::post('/co-owners/me/properties/{propertyId}/photos', [CoOwnerMeController::class, 'uploadPropertyPhotos']);
         
         // Routes FedaPay (co-propriétaire)
         Route::get('co-owners/me/fedapay', [CoOwnerFedapayController::class, 'show']);

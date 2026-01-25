@@ -21,6 +21,7 @@ import { Button } from '../../Proprietaire/components/ui/Button';
 import { Card } from '../../Proprietaire/components/ui/Card';
 import { coOwnerApi, CoOwnerProperty } from '../../../services/coOwnerApi';
 import { PropertyModal } from './PropertyModal';
+import { PropertyEditModal } from './PropertyEditModal';
 
 interface DelegatedPropertiesProps {
   onNavigate: (tab: string) => void;
@@ -33,7 +34,9 @@ export const DelegatedProperties: React.FC<DelegatedPropertiesProps> = ({ onNavi
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'rented' | 'maintenance'>('all');
   const [selectedProperty, setSelectedProperty] = useState<CoOwnerProperty | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedEditProperty, setSelectedEditProperty] = useState<CoOwnerProperty | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     fetchProperties();
@@ -106,19 +109,15 @@ export const DelegatedProperties: React.FC<DelegatedPropertiesProps> = ({ onNavi
   };
 
   const getPropertyImage = (property: CoOwnerProperty) => {
-    // Vérifier si la propriété a des photos
     if (property.photos && property.photos.length > 0) {
       const firstPhoto = property.photos[0];
-      // Si c'est déjà une URL complète, l'utiliser directement
       if (typeof firstPhoto === 'string' && firstPhoto.startsWith('http')) {
         return firstPhoto;
       }
-      // Si c'est un chemin relatif, le préfixer avec l'URL de base
       if (typeof firstPhoto === 'string') {
         return `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/storage/${firstPhoto}`;
       }
     }
-    // Image par défaut si aucune photo
     return "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=400";
   };
 
@@ -139,16 +138,27 @@ export const DelegatedProperties: React.FC<DelegatedPropertiesProps> = ({ onNavi
 
   const handleViewProperty = (property: CoOwnerProperty) => {
     setSelectedProperty(property);
-    setIsModalOpen(true);
+    setIsViewModalOpen(true);
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
+  const handleEditProperty = (property: CoOwnerProperty) => {
+    setSelectedEditProperty(property);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseViewModal = () => {
+    setIsViewModalOpen(false);
     setSelectedProperty(null);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setSelectedEditProperty(null);
   };
 
   const handlePropertyUpdated = () => {
     fetchProperties(); // Rafraîchir la liste
+    notify('Modification envoyée au propriétaire pour approbation', 'info');
   };
 
   if (loading) {
@@ -182,13 +192,6 @@ export const DelegatedProperties: React.FC<DelegatedPropertiesProps> = ({ onNavi
             Gérez les biens qui vous ont été délégués
           </p>
         </div>
-        <Button
-          onClick={() => onNavigate('ajouter-bien')}
-          className="flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Ajouter un bien
-        </Button>
       </div>
 
       {/* Stats */}
@@ -285,11 +288,6 @@ export const DelegatedProperties: React.FC<DelegatedPropertiesProps> = ({ onNavi
               : 'Les biens qui vous seront délégués apparaîtront ici'
             }
           </p>
-          {!searchTerm && statusFilter === 'all' && (
-            <Button onClick={() => onNavigate('ajouter-bien')}>
-              Ajouter votre premier bien
-            </Button>
-          )}
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -302,7 +300,6 @@ export const DelegatedProperties: React.FC<DelegatedPropertiesProps> = ({ onNavi
                   alt={property.name}
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    // Si l'image ne charge pas, utiliser l'image par défaut
                     (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=400";
                   }}
                 />
@@ -363,23 +360,27 @@ export const DelegatedProperties: React.FC<DelegatedPropertiesProps> = ({ onNavi
                     <Eye className="w-4 h-4 mr-1" />
                     Détails
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleViewProperty(property)}
-                    className="flex-1"
-                  >
-                    <Edit className="w-4 h-4 mr-1" />
-                    Modifier
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeleteProperty(property.id)}
-                    className="text-red-600 hover:text-red-700 hover:border-red-300"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  {property.delegation?.permissions?.includes('edit') && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditProperty(property)}
+                      className="flex-1"
+                    >
+                      <Edit className="w-4 h-4 mr-1" />
+                      Modifier
+                    </Button>
+                  )}
+                  {property.delegation?.permissions?.includes('delete') && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteProperty(property.id)}
+                      className="text-red-600 hover:text-red-700 hover:border-red-300"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
             </Card>
@@ -387,11 +388,20 @@ export const DelegatedProperties: React.FC<DelegatedPropertiesProps> = ({ onNavi
         </div>
       )}
 
-      {/* Property Modal */}
+      {/* Property View Modal */}
       <PropertyModal
         property={selectedProperty}
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
+        isOpen={isViewModalOpen}
+        onClose={handleCloseViewModal}
+        notify={notify}
+        onUpdate={handlePropertyUpdated}
+      />
+
+      {/* Property Edit Modal */}
+      <PropertyEditModal
+        property={selectedEditProperty}
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
         notify={notify}
         onUpdate={handlePropertyUpdated}
       />

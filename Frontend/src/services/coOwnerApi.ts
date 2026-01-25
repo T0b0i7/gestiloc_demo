@@ -127,31 +127,45 @@ export interface CoOwnerProperty {
   name: string;
   description: string | null;
   reference_code: string | null;
-
   address: string;
   district: string | null;
   city: string;
   state: string | null;
   zip_code: string | null;
+  country: string | null;
   latitude: string | null;
   longitude: string | null;
-
   surface: string | null;
+  floor: number | null;
+  total_floors: number | null;
   room_count: number | null;
   bedroom_count: number | null;
   bathroom_count: number | null;
-
+  wc_count: number | null;
+  construction_year: number | null;
   rent_amount: string | null;
   charges_amount: string | null;
+  property_type: string;
+  has_garage: boolean | null;
+  has_parking: boolean | null;
+  is_furnished: boolean | null;
+  has_elevator: boolean | null;
+  has_balcony: boolean | null;
+  has_terrace: boolean | null;
+  has_cellar: boolean | null;
   status: string;
-
   amenities: string[] | null;
   photos: string[] | null;
   meta: Record<string, unknown> | null;
-
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;
+  delegation?: {
+    id: number;
+    status: string;
+    permissions: string[];
+    expires_at: string;
+  };
 }
 
 class CoOwnerApiService {
@@ -160,7 +174,7 @@ class CoOwnerApiService {
     return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
-  // Profil du co-propriétaire
+  // ============ PROFIL ============
   async getProfile(): Promise<CoOwner> {
     try {
       const response = await axios.get(`${API_BASE_URL}/co-owners/me/profile`, {
@@ -168,10 +182,8 @@ class CoOwnerApiService {
       });
       return response.data.data;
     } catch (error: any) {
-      // Si l'endpoint n'existe pas encore (404), retourner un profil par défaut
       if (error.response?.status === 404) {
         console.log('getProfile: Endpoint not implemented yet, returning default profile');
-        // Retourner un profil par défaut basé sur l'utilisateur connecté
         const userStr = localStorage.getItem('user');
         if (userStr) {
           const user = JSON.parse(userStr);
@@ -201,7 +213,7 @@ class CoOwnerApiService {
 
   async updateProfile(data: Partial<CoOwner>): Promise<CoOwner> {
     try {
-      const response = await axios.put(`${API_BASE_URL}/co-owners/me`, data, {
+      const response = await axios.put(`${API_BASE_URL}/co-owners/me/profile`, data, {
         headers: this.getAuthHeaders(),
       });
       return response.data.data;
@@ -211,7 +223,7 @@ class CoOwnerApiService {
     }
   }
 
-  // Délégations
+  // ============ PROPRIÉTÉS DÉLÉGUÉES ============
   async getDelegatedProperties(): Promise<CoOwnerProperty[]> {
     try {
       const response = await axios.get(`${API_BASE_URL}/co-owners/me/delegated-properties`, {
@@ -219,17 +231,54 @@ class CoOwnerApiService {
       });
       return response.data.data || [];
     } catch (error: any) {
-      // Si l'endpoint n'existe pas encore (404), retourner un tableau vide sans erreur
       if (error.response?.status === 404) {
         console.log('getDelegatedProperties: Endpoint not implemented yet, returning empty array');
         return [];
       }
       console.error('Error fetching delegated properties:', error);
-      // En cas d'erreur, retourner un tableau vide pour éviter les crashes
       return [];
     }
   }
 
+  async updateProperty(propertyId: number, data: any): Promise<any> {
+    try {
+      const response = await axios.put(`${API_BASE_URL}/co-owners/me/properties/${propertyId}`, data, {
+        headers: this.getAuthHeaders(),
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating property:', error);
+      throw error;
+    }
+  }
+
+  async uploadPropertyPhotos(propertyId: number, formData: FormData): Promise<any> {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/co-owners/me/properties/${propertyId}/photos`, formData, {
+        headers: {
+          ...this.getAuthHeaders(),
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error uploading property photos:', error);
+      throw error;
+    }
+  }
+
+  async deleteProperty(propertyId: number): Promise<void> {
+    try {
+      await axios.delete(`${API_BASE_URL}/co-owners/me/properties/${propertyId}`, {
+        headers: this.getAuthHeaders(),
+      });
+    } catch (error) {
+      console.error('Error deleting property:', error);
+      throw error;
+    }
+  }
+
+  // ============ DÉLÉGATIONS ============
   async getDelegations(): Promise<PropertyDelegation[]> {
     try {
       const response = await axios.get(`${API_BASE_URL}/co-owners/me/delegations`, {
@@ -237,7 +286,6 @@ class CoOwnerApiService {
       });
       return response.data.data || [];
     } catch (error: any) {
-      // Si l'endpoint n'existe pas encore (404), retourner un tableau vide
       if (error.response?.status === 404) {
         console.log('getDelegations: Endpoint not implemented yet, returning empty array');
         return [];
@@ -284,7 +332,7 @@ class CoOwnerApiService {
     }
   }
 
-  // Locataires
+  // ============ LOCATAIRES ============
   async getTenants(): Promise<CoOwnerTenant[]> {
     try {
       const response = await axios.get(`${API_BASE_URL}/co-owners/me/tenants`, {
@@ -321,7 +369,18 @@ class CoOwnerApiService {
     }
   }
 
-  // Baux
+  async deleteTenant(id: number): Promise<void> {
+    try {
+      await axios.delete(`${API_BASE_URL}/co-owners/me/tenants/${id}`, {
+        headers: this.getAuthHeaders(),
+      });
+    } catch (error) {
+      console.error('Error deleting tenant:', error);
+      throw error;
+    }
+  }
+
+  // ============ BAUX ============
   async getLeases(): Promise<CoOwnerLease[]> {
     try {
       const response = await axios.get(`${API_BASE_URL}/co-owners/me/leases`, {
@@ -359,7 +418,19 @@ class CoOwnerApiService {
     }
   }
 
-  // Quittances
+  async getDelegatedLeases(): Promise<any[]> {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/co-owners/me/leases`, {
+        headers: this.getAuthHeaders(),
+      });
+      return response.data.data || [];
+    } catch (error) {
+      console.error('Error fetching delegated leases:', error);
+      return [];
+    }
+  }
+
+  // ============ QUITTANCES ============
   async getRentReceipts(): Promise<CoOwnerRentReceipt[]> {
     try {
       const response = await axios.get(`${API_BASE_URL}/co-owners/me/receipts`, {
@@ -385,7 +456,7 @@ class CoOwnerApiService {
     }
   }
 
-  // Notifications
+  // ============ NOTIFICATIONS ============
   async getNotices(): Promise<CoOwnerNotice[]> {
     try {
       const response = await axios.get(`${API_BASE_URL}/co-owners/me/notices`, {
@@ -423,18 +494,32 @@ class CoOwnerApiService {
     }
   }
 
-  async deleteTenant(id: number): Promise<void> {
+  // ============ FACTURES ET PAIEMENTS ============
+  async createInvoice(data: any): Promise<any> {
     try {
-      await axios.delete(`${API_BASE_URL}/co-owners/me/tenants/${id}`, {
+      const response = await axios.post(`${API_BASE_URL}/invoices`, data, {
         headers: this.getAuthHeaders(),
       });
+      return response.data;
     } catch (error) {
-      console.error('Error deleting tenant:', error);
+      console.error('Error creating invoice:', error);
       throw error;
     }
   }
 
-  // Rapports
+  async createPayLink(invoiceId: number, data: any): Promise<any> {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/invoices/${invoiceId}/pay-link`, data, {
+        headers: this.getAuthHeaders(),
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error creating pay link:', error);
+      throw error;
+    }
+  }
+
+  // ============ RAPPORTS ============
   async getFinancialReport(startDate: string, endDate: string): Promise<any> {
     try {
       const response = await axios.get(`${API_BASE_URL}/co-owners/me/reports/financial`, {
@@ -460,61 +545,17 @@ class CoOwnerApiService {
     }
   }
 
-  // Méthodes de paiement
-  async getDelegatedLeases(): Promise<any[]> {
-    try {
-      // Utiliser le même service que le propriétaire mais pour les baux délégués
-      const response = await axios.get(`${API_BASE_URL}/co-owners/me/leases`, {
-        headers: this.getAuthHeaders(),
-      });
-      return response.data.data || [];
-    } catch (error) {
-      console.error('Error fetching delegated leases:', error);
-      // En cas d'erreur, retourner un tableau vide pour éviter les crashes
-      return [];
-    }
-  }
-
-  async createInvoice(data: any): Promise<any> {
-    try {
-      // Utiliser le même endpoint que le propriétaire
-      const response = await axios.post(`${API_BASE_URL}/invoices`, data, {
-        headers: this.getAuthHeaders(),
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error creating invoice:', error);
-      throw error;
-    }
-  }
-
-  async createPayLink(invoiceId: number, data: any): Promise<any> {
-    try {
-      // Utiliser le même endpoint que le propriétaire
-      const response = await axios.post(`${API_BASE_URL}/invoices/${invoiceId}/pay-link`, data, {
-        headers: this.getAuthHeaders(),
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error creating pay link:', error);
-      throw error;
-    }
-  }
-
-  // Méthodes de retrait
+  // ============ MÉTHODES DE RETRAIT ============
   async getWithdrawalMethods(): Promise<any[]> {
     try {
-      // Utiliser le endpoint FedaPay du co-propriétaire avec le bon préfixe
       const response = await axios.get(`${API_BASE_URL}/co-owners/me/fedapay`, {
         headers: this.getAuthHeaders(),
       });
       
       console.log("[coOwnerApi.getWithdrawalMethods] response =>", response.data);
       
-      // Utiliser la même logique de mapping que landlordPayments
       const fedapayData = response.data;
       
-      // Si FedaPay est configuré, retourner la méthode existante
       if (fedapayData.fedapay_subaccount_id && fedapayData.fedapay_meta && fedapayData.fedapay_meta.account_name) {
         const method = {
           id: 1,
@@ -524,7 +565,6 @@ class CoOwnerApiService {
           is_default: true,
           status: "active",
           created_at: new Date().toISOString(),
-          // Ajouter les métadonnées complètes pour compatibilité
           fedapay_subaccount_id: fedapayData.fedapay_subaccount_id,
           fedapay_meta: fedapayData.fedapay_meta,
           is_ready: fedapayData.is_ready || true
@@ -535,19 +575,15 @@ class CoOwnerApiService {
       }
       
       console.log("[coOwnerApi.getWithdrawalMethods] no method found");
-      // Si aucune méthode n'est configurée, retourner tableau vide
       return [];
     } catch (error) {
       console.error('Error fetching withdrawal methods:', error);
-      // En cas d'erreur, retourner tableau vide
       return [];
     }
   }
 
   async getBalance(): Promise<any> {
     try {
-      // Pour le moment, retourner un solde par défaut
-      // TODO: Implémenter un vrai endpoint de solde
       return {
         balance: 0,
         available_balance: 0,
@@ -561,7 +597,6 @@ class CoOwnerApiService {
 
   async createWithdrawalMethod(data: any): Promise<any> {
     try {
-      // Utiliser la même structure que landlordPayments pour le co-propriétaire
       const body = {
         subaccount_reference: data.subaccount_reference || `acc_${Date.now().toString(36)}`,
         payout_type: data.payout_type || "bank",
@@ -597,7 +632,6 @@ class CoOwnerApiService {
 
   async updateWithdrawalMethod(id: number, data: any): Promise<any> {
     try {
-      // Utiliser la même structure que landlordPayments pour le co-propriétaire
       const body = {
         subaccount_reference: data.subaccount_reference || `acc_${Date.now().toString(36)}`,
         payout_type: data.payout_type || "bank",
@@ -633,7 +667,6 @@ class CoOwnerApiService {
 
   async deleteWithdrawalMethod(id: number): Promise<void> {
     try {
-      // Pour FedaPay, on ne supprime pas vraiment, on met à jour avec le bon préfixe
       await axios.post(`${API_BASE_URL}/co-owners/me/fedapay/subaccount`, {
         account_number: "",
         account_name: "Méthode supprimée"
@@ -648,7 +681,6 @@ class CoOwnerApiService {
 
   async setDefaultWithdrawalMethod(id: number): Promise<any> {
     try {
-      // Pour FedaPay, toutes les méthodes sont par défaut
       return {
         id,
         is_default: true,
@@ -657,6 +689,71 @@ class CoOwnerApiService {
     } catch (error) {
       console.error('Error setting default withdrawal method:', error);
       throw error;
+    }
+  }
+
+  // ============ NOUVELLES MÉTHODES POUR L'AUDIT ============
+  async getPropertyModificationAudits(): Promise<any[]> {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/co-owners/me/modification-audits`, {
+        headers: this.getAuthHeaders(),
+      });
+      return response.data.data || [];
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        console.log('getPropertyModificationAudits: Endpoint not implemented yet');
+        return [];
+      }
+      console.error('Error fetching modification audits:', error);
+      return [];
+    }
+  }
+
+  async getAuditDetails(auditId: number): Promise<any> {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/co-owners/me/modification-audits/${auditId}`, {
+        headers: this.getAuthHeaders(),
+      });
+      return response.data.data;
+    } catch (error) {
+      console.error('Error fetching audit details:', error);
+      throw error;
+    }
+  }
+
+  async cancelModification(auditId: number): Promise<void> {
+    try {
+      await axios.delete(`${API_BASE_URL}/co-owners/me/modification-audits/${auditId}`, {
+        headers: this.getAuthHeaders(),
+      });
+    } catch (error) {
+      console.error('Error cancelling modification:', error);
+      throw error;
+    }
+  }
+
+  // ============ MÉTHODES UTILITAIRES ============
+  async getPropertyTypes(): Promise<string[]> {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/property-types`, {
+        headers: this.getAuthHeaders(),
+      });
+      return response.data.data || [];
+    } catch (error) {
+      console.error('Error fetching property types:', error);
+      return ['office', 'apartment', 'house', 'parking', 'warehouse', 'commercial', 'land'];
+    }
+  }
+
+  async getAmenities(): Promise<string[]> {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/amenities`, {
+        headers: this.getAuthHeaders(),
+      });
+      return response.data.data || [];
+    } catch (error) {
+      console.error('Error fetching amenities:', error);
+      return [];
     }
   }
 }

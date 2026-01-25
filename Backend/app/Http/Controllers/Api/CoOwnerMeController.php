@@ -455,90 +455,227 @@ class CoOwnerMeController extends Controller
     /**
      * Mettre à jour une propriété déléguée
      */
-    public function updateProperty(Request $request, $propertyId): JsonResponse
-    {
-        $user = $request->user();
-        
-        if (!$user->isCoOwner()) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
-
-        $coOwner = $user->coOwner;
-        if (!$coOwner) {
-            return response()->json(['message' => 'Co-owner profile missing'], 422);
-        }
-
-        // Vérifier que la propriété est bien déléguée à ce co-propriétaire
-        $delegation = PropertyDelegation::where('co_owner_id', $coOwner->id)
-            ->where('property_id', $propertyId)
-            ->where('status', 'active')
-            ->first();
-
-        if (!$delegation) {
-            return response()->json(['message' => 'Property not delegated to this co-owner'], 403);
-        }
-
-        // Vérifier que la propriété existe
-        $property = Property::find($propertyId);
-        if (!$property) {
-            return response()->json(['message' => 'Property not found'], 404);
-        }
-
-        // Vérifier les permissions de modification
-        if (!in_array('edit', $delegation->permissions ?? [])) {
-            return response()->json(['message' => 'No permission to edit this property'], 403);
-        }
-
-        // Valider les données
-        $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'address' => 'sometimes|string|max:255',
-            'city' => 'sometimes|string|max:255',
-            'postal_code' => 'sometimes|string|max:20',
-            'country' => 'sometimes|string|max:255',
-            'rent_amount' => 'sometimes|numeric|min:0',
-            'surface' => 'sometimes|numeric|min:0',
-            'type' => 'sometimes|string|max:255',
-            'description' => 'sometimes|string|max:2000',
-        ]);
-
-        // Mettre à jour la propriété
-        $property->update($validated);
-
-        // Récupérer les données mises à jour
-        $activeLease = Lease::where('property_id', $property->id)
-            ->where('status', 'active')
-            ->first();
-
-        $propertyData = [
-            'id' => $property->id,
-            'name' => $property->name,
-            'address' => $property->address,
-            'city' => $property->city,
-            'postal_code' => $property->zip_code,
-            'country' => $property->country,
-            'rent_amount' => $property->rent_amount,
-            'surface' => $property->surface,
-            'type' => $property->type,
-            'description' => $property->description,
-            'photos' => $property->photos ?? [],
-            'status' => $activeLease ? 'rented' : 'available',
-            'created_at' => $property->created_at,
-            'updated_at' => $property->updated_at,
-            'landlord_id' => $property->landlord_id,
-            'co_owner_id' => $coOwner->id,
-            'delegation' => [
-                'id' => $delegation->id,
-                'status' => $delegation->status,
-                'permissions' => $delegation->permissions,
-                'expires_at' => $delegation->expires_at,
-            ],
-        ];
-
-        return response()->json([
-            'data' => $propertyData
-        ]);
+    /**
+ * Mettre à jour une propriété déléguée
+ */
+public function updateProperty(Request $request, $propertyId): JsonResponse
+{
+    $user = $request->user();
+    
+    if (!$user->isCoOwner()) {
+        return response()->json(['message' => 'Forbidden'], 403);
     }
+
+    $coOwner = $user->coOwner;
+    if (!$coOwner) {
+        return response()->json(['message' => 'Co-owner profile missing'], 422);
+    }
+
+    // Vérifier que la propriété est bien déléguée à ce co-propriétaire
+    $delegation = PropertyDelegation::where('co_owner_id', $coOwner->id)
+        ->where('property_id', $propertyId)
+        ->where('status', 'active')
+        ->first();
+
+    if (!$delegation) {
+        return response()->json(['message' => 'Property not delegated to this co-owner'], 403);
+    }
+
+    // Vérifier que la propriété existe
+    $property = Property::find($propertyId);
+    if (!$property) {
+        return response()->json(['message' => 'Property not found'], 404);
+    }
+
+    // Vérifier les permissions de modification
+    if (!in_array('edit', $delegation->permissions ?? [])) {
+        return response()->json(['message' => 'No permission to edit this property'], 403);
+    }
+
+    // Valider les données complètes
+    $validated = $request->validate([
+        'name' => 'sometimes|string|max:255',
+        'address' => 'sometimes|string|max:255',
+        'district' => 'sometimes|string|max:255',
+        'city' => 'sometimes|string|max:255',
+        'state' => 'sometimes|string|max:255',
+        'zip_code' => 'sometimes|string|max:20',
+        'country' => 'sometimes|string|max:255',
+        'latitude' => 'sometimes|string|max:50',
+        'longitude' => 'sometimes|string|max:50',
+        'surface' => 'sometimes|numeric|min:0',
+        'floor' => 'sometimes|integer|min:0',
+        'total_floors' => 'sometimes|integer|min:0',
+        'room_count' => 'sometimes|integer|min:0',
+        'bedroom_count' => 'sometimes|integer|min:0',
+        'bathroom_count' => 'sometimes|integer|min:0',
+        'wc_count' => 'sometimes|integer|min:0',
+        'construction_year' => 'sometimes|integer|min:1800',
+        'rent_amount' => 'sometimes|numeric|min:0',
+        'charges_amount' => 'sometimes|numeric|min:0',
+        'property_type' => 'sometimes|string|max:255',
+        'description' => 'sometimes|string|max:2000',
+        'has_garage' => 'sometimes|boolean',
+        'has_parking' => 'sometimes|boolean',
+        'is_furnished' => 'sometimes|boolean',
+        'has_elevator' => 'sometimes|boolean',
+        'has_balcony' => 'sometimes|boolean',
+        'has_terrace' => 'sometimes|boolean',
+        'has_cellar' => 'sometimes|boolean',
+        'reference_code' => 'sometimes|string|max:100',
+    ]);
+
+    // Créer un audit trail pour suivre les modifications
+    $originalData = $property->toArray();
+    
+    // Mettre à jour la propriété
+    $property->update($validated);
+    
+    // Enregistrer l'audit de modification
+    DB::table('property_modification_audits')->insert([
+        'property_id' => $property->id,
+        'co_owner_id' => $coOwner->id,
+        'landlord_id' => $property->landlord_id,
+        'original_data' => json_encode($originalData),
+        'modified_data' => json_encode($validated),
+        'status' => 'pending_approval',
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    // Notifier le propriétaire (vous pouvez implémenter un système de notification ici)
+    // Exemple : 
+    // Notification::create([
+    //     'user_id' => $property->landlord_id,
+    //     'type' => 'property_modification',
+    //     'title' => 'Modification de bien délégué',
+    //     'message' => "Le co-propriétaire {$coOwner->first_name} {$coOwner->last_name} a modifié le bien {$property->name}",
+    //     'data' => [
+    //         'property_id' => $property->id,
+    //         'co_owner_id' => $coOwner->id,
+    //         'modifications' => array_keys($validated),
+    //     ]
+    // ]);
+
+    Log::info('Co-owner updated property', [
+        'co_owner_id' => $coOwner->id,
+        'property_id' => $property->id,
+        'landlord_id' => $property->landlord_id,
+        'modifications' => array_keys($validated),
+    ]);
+
+    // Récupérer les données mises à jour
+    $activeLease = Lease::where('property_id', $property->id)
+        ->where('status', 'active')
+        ->first();
+
+    $propertyData = [
+        'id' => $property->id,
+        'name' => $property->name,
+        'address' => $property->address,
+        'district' => $property->district,
+        'city' => $property->city,
+        'state' => $property->state,
+        'zip_code' => $property->zip_code,
+        'country' => $property->country,
+        'latitude' => $property->latitude,
+        'longitude' => $property->longitude,
+        'rent_amount' => $property->rent_amount,
+        'charges_amount' => $property->charges_amount,
+        'surface' => $property->surface,
+        'floor' => $property->floor,
+        'total_floors' => $property->total_floors,
+        'room_count' => $property->room_count,
+        'bedroom_count' => $property->bedroom_count,
+        'bathroom_count' => $property->bathroom_count,
+        'wc_count' => $property->wc_count,
+        'construction_year' => $property->construction_year,
+        'property_type' => $property->property_type,
+        'description' => $property->description,
+        'has_garage' => $property->has_garage,
+        'has_parking' => $property->has_parking,
+        'is_furnished' => $property->is_furnished,
+        'has_elevator' => $property->has_elevator,
+        'has_balcony' => $property->has_balcony,
+        'has_terrace' => $property->has_terrace,
+        'has_cellar' => $property->has_cellar,
+        'reference_code' => $property->reference_code,
+        'photos' => $property->photos ?? [],
+        'status' => $activeLease ? 'rented' : 'available',
+        'created_at' => $property->created_at,
+        'updated_at' => $property->updated_at,
+        'landlord_id' => $property->landlord_id,
+        'co_owner_id' => $coOwner->id,
+        'delegation' => [
+            'id' => $delegation->id,
+            'status' => $delegation->status,
+            'permissions' => $delegation->permissions,
+            'expires_at' => $delegation->expires_at,
+        ],
+    ];
+
+    return response()->json([
+        'message' => 'Modifications soumises au propriétaire pour approbation',
+        'data' => $propertyData
+    ]);
+}
+
+/**
+ * Uploader des photos pour une propriété
+ */
+public function uploadPropertyPhotos(Request $request, $propertyId): JsonResponse
+{
+    $user = $request->user();
+    
+    if (!$user->isCoOwner()) {
+        return response()->json(['message' => 'Forbidden'], 403);
+    }
+
+    $coOwner = $user->coOwner;
+    if (!$coOwner) {
+        return response()->json(['message' => 'Co-owner profile missing'], 422);
+    }
+
+    // Vérifier que la propriété est bien déléguée
+    $delegation = PropertyDelegation::where('co_owner_id', $coOwner->id)
+        ->where('property_id', $propertyId)
+        ->where('status', 'active')
+        ->first();
+
+    if (!$delegation) {
+        return response()->json(['message' => 'Property not delegated to this co-owner'], 403);
+    }
+
+    $property = Property::find($propertyId);
+    if (!$property) {
+        return response()->json(['message' => 'Property not found'], 404);
+    }
+
+    $request->validate([
+        'photos' => 'required|array',
+        'photos.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+    ]);
+
+    $uploadedPhotos = [];
+    $currentPhotos = $property->photos ?? [];
+
+    if ($request->hasFile('photos')) {
+        foreach ($request->file('photos') as $photo) {
+            $path = $photo->store('properties/' . $propertyId, 'public');
+            $uploadedPhotos[] = $path;
+        }
+    }
+
+    // Fusionner les nouvelles photos avec les existantes
+    $allPhotos = array_merge($currentPhotos, $uploadedPhotos);
+    $property->photos = $allPhotos;
+    $property->save();
+
+    return response()->json([
+        'message' => 'Photos uploaded successfully',
+        'photos' => $allPhotos
+    ]);
+}
 
     /**
      * Accepter une délégation
