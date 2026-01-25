@@ -10,9 +10,11 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 class CoOwnerController extends Controller
 {
@@ -324,13 +326,15 @@ HTML;
 
         $landlord = $user->landlord;
 
-        // ✅ IMPORTANT: Simplifier la requête
-        $coOwners = CoOwner::with(['user:id,email,phone'])
-            ->where('landlord_id', $landlord->id)
-            ->get();
+        // ✅ Charger les co-owners AVEC leurs délégations et les propriétés
+        $coOwners = CoOwner::with([
+            'user:id,email,phone',
+            'delegations.property' // Charger les délégations et les propriétés associées
+        ])
+        ->where('landlord_id', $landlord->id)
+        ->get();
 
-        // Debug: Vérifiez ce que vous récupérez
-        Log::info('CoOwners retrieved:', [
+        Log::info('CoOwners retrieved with delegations:', [
             'landlord_id' => $landlord->id,
             'count' => $coOwners->count(),
             'co_owners' => $coOwners->map(function($co) {
@@ -339,7 +343,9 @@ HTML;
                     'user_id' => $co->user_id,
                     'landlord_id' => $co->landlord_id,
                     'first_name' => $co->first_name,
-                    'email' => $co->user ? $co->user->email : 'no user'
+                    'email' => $co->user ? $co->user->email : 'no user',
+                    'delegations_count' => $co->delegations ? $co->delegations->count() : 0,
+                    'delegations' => $co->delegations ? $co->delegations->toArray() : []
                 ];
             })->toArray()
         ]);
@@ -352,13 +358,42 @@ HTML;
             $invitationType = $meta['invitation_type']
                 ?? ($isProfessional ? 'agency' : 'co_owner');
 
+            // ✅ Transformer les délégations
+            $delegations = $coOwner->delegations ? $coOwner->delegations->map(function ($delegation) {
+                $property = $delegation->property ?? null;
+                
+                return [
+                    'id' => $delegation->id,
+                    'property_id' => $delegation->property_id,
+                    'property' => $property ? [
+                        'id' => $property->id,
+                        'name' => $property->name ?? 'Bien sans nom',
+                        'address' => $property->address ?? '',
+                        'city' => $property->city ?? '',
+                        'postal_code' => $property->postal_code ?? '',
+                        'rent_amount' => $property->rent_amount ?? null,
+                        'surface' => $property->surface ?? null,
+                        'property_type' => $property->property_type ?? '',
+                        'status' => $property->status ?? ''
+                    ] : null,
+                    'status' => $delegation->status,
+                    'permissions' => $delegation->permissions ?? [],
+                    'delegated_at' => $delegation->delegated_at?->toISOString(),
+                    'expires_at' => $delegation->expires_at?->toISOString(),
+                    'notes' => $delegation->notes,
+                    'delegation_type' => $delegation->delegation_type,
+                    'created_at' => $delegation->created_at?->toISOString(),
+                    'updated_at' => $delegation->updated_at?->toISOString()
+                ];
+            })->values()->toArray() : [];
+
             return [
                 'id' => $coOwner->id,
                 'user_id' => $coOwner->user_id,
                 'first_name' => $coOwner->first_name ?? '',
                 'last_name' => $coOwner->last_name ?? '',
                 'full_name' => trim(($coOwner->first_name ?? '') . ' ' . ($coOwner->last_name ?? '')),
-                'email' => $user ? $user->email : '', // Email depuis la table users
+                'email' => $user ? $user->email : '',
                 'company_name' => $coOwner->company_name ?? '',
                 'phone' => $coOwner->phone ?? ($user ? $user->phone : '') ?? ($meta['phone'] ?? ''),
                 'address_billing' => $coOwner->address_billing ?? '',
@@ -373,6 +408,8 @@ HTML;
                 'created_at' => $coOwner->created_at?->toISOString(),
                 'updated_at' => $coOwner->updated_at?->toISOString(),
                 'meta' => $meta,
+                'delegations' => $delegations, // ✅ Ajouter les délégations ici
+                'delegations_count' => count($delegations)
             ];
         })->values();
 

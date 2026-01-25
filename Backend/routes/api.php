@@ -134,6 +134,21 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     /* =========================
+    |  DÉLÉGATIONS DE PROPRIÉTÉ (COMMUN)
+    |========================= */
+    // Routes accessibles par landlords ET co-owners
+    Route::prefix('property-delegations')->group(function () {
+        Route::post('/', [PropertyDelegationController::class, 'delegate']);
+        Route::delete('/{delegation}', [PropertyDelegationController::class, 'revoke']);
+        Route::get('/co-owner/{coOwnerId}', [PropertyDelegationController::class, 'getCoOwnerDelegations']);
+    });
+
+    // Routes pour les co-owners (acceptation/rejet des délégations)
+    Route::get('/co-owners/me/delegations', [CoOwnerMeController::class, 'getDelegations']);
+    Route::post('/co-owners/me/delegations/{delegationId}/accept', [CoOwnerMeController::class, 'acceptDelegation']);
+    Route::post('/co-owners/me/delegations/{delegationId}/reject', [CoOwnerMeController::class, 'rejectDelegation']);
+
+    /* =========================
     |  TENANT ONLY
     |========================= */
     Route::middleware(['role:tenant'])->prefix('tenant')->group(function () {
@@ -153,8 +168,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('incidents/upload', [TenantMaintenanceRequestController::class, 'upload']);
        
         Route::get('invoices', [\App\Http\Controllers\Api\TenantPaymentController::class, 'index']);
-       
-
     });
 
     /* =========================
@@ -192,12 +205,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('incidents/{id}', [LandlordMaintenanceRequestController::class, 'show']);
         Route::put('incidents/{id}', [LandlordMaintenanceRequestController::class, 'update']);
 
-        // Delegations
-        Route::get('landlords/delegations', [PropertyDelegationController::class, 'listLandlordDelegations']);
-        Route::get('landlords/co-owners/{coOwner}/delegations', [PropertyDelegationController::class, 'listLandlordCoOwnerDelegations']);
-        Route::post('properties/{property}/delegate', [PropertyDelegationController::class, 'delegate']);
-        Route::post('properties/{property}/revoke-delegation', [PropertyDelegationController::class, 'revoke']);
-        Route::put('delegations/{delegation}', [PropertyDelegationController::class, 'update']);
+        // Delegations (anciennes routes - DOUBLONS, À SUPPRIMER SI VOUS UTILISEZ LES NOUVELLES)
+        // Route::get('landlords/delegations', [PropertyDelegationController::class, 'listLandlordDelegations']);
+        // Route::get('landlords/co-owners/{coOwner}/delegations', [PropertyDelegationController::class, 'listLandlordCoOwnerDelegations']);
+        // Route::post('properties/{property}/delegate', [PropertyDelegationController::class, 'delegate']);
+        // Route::post('properties/{property}/revoke-delegation', [PropertyDelegationController::class, 'revoke']);
+        // Route::put('delegations/{delegation}', [PropertyDelegationController::class, 'update']);
         
         // Audit trails
         Route::get('delegations/{delegation}/audits', [\App\Http\Controllers\Api\DelegationAuditController::class, 'index']);
@@ -221,11 +234,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('co-owners/me/receipts', [CoOwnerMeController::class, 'getRentReceipts']);
         Route::get('co-owners/me/tenants', [CoOwnerMeController::class, 'getTenants']);
         Route::get('co-owners/me/notices', [CoOwnerMeController::class, 'getNotices']);
-        Route::get('co-owners/me/delegations', [CoOwnerMeController::class, 'getDelegations']);
-        
-        // Routes pour les factures (co-propriétaire)
-        Route::post('invoices', [InvoiceController::class, 'store']);
-        Route::post('invoices/{id}/pay-link', [PaymentLinkController::class, 'create']);
         
         // Routes FedaPay (co-propriétaire)
         Route::get('co-owners/me/fedapay', [CoOwnerFedapayController::class, 'show']);
@@ -235,9 +243,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('co-owners/me/properties/{propertyId}', [CoOwnerMeController::class, 'updateProperty']);
         
         Route::middleware(['role:co_owner'])->group(function () {
-            Route::get('co-owners/{coOwner}/delegations', [PropertyDelegationController::class, 'listCoOwnerDelegations']);
-            Route::post('landlords/invite', [CoOwnerController::class, 'invite']);
-            Route::get('my-invitations', [CoOwnerController::class, 'index']);
+            // Route::get('co-owners/{coOwner}/delegations', [PropertyDelegationController::class, 'listCoOwnerDelegations']);
+            // Route::post('landlords/invite', [CoOwnerController::class, 'invite']);
+            // Route::get('my-invitations', [CoOwnerController::class, 'index']);
         });
     });
 
@@ -247,6 +255,4 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::middleware(['role:admin'])->group(function () {
         // admin routes...
     });
-
-    
 });
