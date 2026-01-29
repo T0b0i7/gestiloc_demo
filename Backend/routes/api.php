@@ -256,6 +256,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('fedapay/subaccount', [CoOwnerFedapayController::class, 'createOrUpdate']);
     });
 
+    
+
     /* =========================
     |  ADMIN ONLY
     |========================= */

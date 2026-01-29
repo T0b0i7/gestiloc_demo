@@ -21,6 +21,7 @@ import {
   DollarSign,
   User,
   Wallet,
+  ExternalLink,
 } from "lucide-react";
 
 import { Tab, ToastMessage } from '../types';
@@ -44,6 +45,8 @@ interface MenuItem {
   path?: string;
   submenu?: MenuItem[];
   badge?: number;
+  isLaravel?: boolean;
+  onClick?: () => void;
 }
 
 type UserData = {
@@ -69,11 +72,8 @@ export const Layout: React.FC<LayoutProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  // Owner (from localStorage)
   const [user, setUser] = useState<UserData | null>(null);
-
-  // ✅ Un seul menu accordéon ouvert à la fois
-  const [expandedMenu, setExpandedMenu] = useState<string | null>("biens");
+  const [expandedMenu, setExpandedMenu] = useState<string | null>("gestion-locative");
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -104,23 +104,73 @@ export const Layout: React.FC<LayoutProps> = ({
     return initials || (user.email?.[0] || "C").toUpperCase();
   }, [user]);
 
-  // Menu spécifique pour les co-propriétaires
+  // ✅ Fonction de navigation CORRIGÉE
+  const handleNavigation = (path: string, isLaravel = false) => {
+    console.log('Navigation vers:', path, 'Laravel:', isLaravel);
+    
+    // Vérifier si c'est une route Laravel explicite
+    const isLaravelRoute = isLaravel || 
+      path.startsWith('/coproprietaire/') || 
+      path.startsWith('/test-laravel');
+    
+    if (isLaravelRoute) {
+      // URL de base Laravel
+      const laravelBaseUrl = 'http://localhost:8000';
+      
+      // S'assurer que le chemin n'a pas déjà la base URL
+      let fullPath = path;
+      if (fullPath.startsWith('http://localhost:8080')) {
+        // Si le chemin contient déjà localhost:8080, le remplacer
+        fullPath = fullPath.replace('http://localhost:8080', laravelBaseUrl);
+      } else if (fullPath.startsWith('/')) {
+        // Si c'est un chemin relatif, l'ajouter à la base URL
+        fullPath = `${laravelBaseUrl}${fullPath}`;
+      }
+      
+      // S'assurer qu'on n'a pas de duplication de /coproprietaire/
+      // Corriger les chemins comme /coproprietaire/coproprietaire/tenants
+      fullPath = fullPath.replace(/\/coproprietaire\/coproprietaire\//, '/coproprietaire/');
+      
+      // Ajouter timestamp pour éviter le cache
+      const separator = fullPath.includes('?') ? '&' : '?';
+      const fullUrl = `${fullPath}${separator}_t=${Date.now()}`;
+      
+      console.log('Redirection Laravel vers:', fullUrl);
+      window.location.href = fullUrl;
+      return; // IMPORTANT: Arrêter l'exécution ici
+    }
+    
+    // Pour les routes React
+    onNavigate(path as Tab);
+  };
+
+  // Menu avec navigation directe vers Laravel
   const menuItems: MenuItem[] = [
     {
       id: 'dashboard',
       label: 'Tableau de bord',
       icon: LayoutDashboard,
-      path: "/coproprietaire/dashboard",
+      path: "/dashboard",
     },
 
     {
       id: "biens",
       label: "Gestion des Biens",
       icon: Building,
-      path: "/coproprietaire/biens",
+      path: "/biens",
       submenu: [
-        { id: "biens", label: "Biens délégués", icon: Home, path: "/coproprietaire/biens" },
-        { id: "delegations", label: "Délégations reçues", icon: Building, path: "/coproprietaire/delegations" },
+        { 
+          id: "biens", 
+          label: "Biens délégués", 
+          icon: Home, 
+          path: "/biens" 
+        },
+        { 
+          id: "delegations", 
+          label: "Délégations reçues", 
+          icon: Building, 
+          path: "/delegations" 
+        },
       ],
     },
 
@@ -128,11 +178,41 @@ export const Layout: React.FC<LayoutProps> = ({
       id: "gestion-locative",
       label: "Gestion Locative",
       icon: FileSignature,
-      path: "/coproprietaire/locataires",
+      path: "/locataires",
       submenu: [
-        { id: "locataires", label: "Liste des locataires", icon: Users, path: "/coproprietaire/locataires" },
-        { id: "baux", label: "Baux en cours", icon: FileText, path: "/coproprietaire/baux" },
-        { id: "quittances", label: "Quittances", icon: FileCheck, path: "/coproprietaire/quittances" },
+        { 
+          id: "locataires", 
+          label: "Liste des locataires", 
+          icon: Users, 
+          path: "/coproprietaire/tenants",
+          isLaravel: true
+        },
+        { 
+          id: "create-tenant", 
+          label: "Créer un locataire", 
+          icon: UserPlus, 
+          path: "/coproprietaire/tenants/create",
+          isLaravel: true
+        },
+        { 
+          id: "test-laravel", 
+          label: "Test Laravel", 
+          icon: ExternalLink, 
+          path: "/test-laravel",
+          isLaravel: true
+        },
+        { 
+          id: "baux", 
+          label: "Baux en cours", 
+          icon: FileText, 
+          path: "/baux" 
+        },
+        { 
+          id: "quittances", 
+          label: "Quittances", 
+          icon: FileCheck, 
+          path: "/quittances" 
+        },
       ],
     },
 
@@ -140,10 +220,20 @@ export const Layout: React.FC<LayoutProps> = ({
       id: "documents",
       label: "Documents",
       icon: FileText,
-      path: "/coproprietaire/documents",
+      path: "/documents",
       submenu: [
-        { id: "documents", label: "Mes documents", icon: FileText, path: "/coproprietaire/documents" },
-        { id: "finances", label: "Finances", icon: DollarSign, path: "/coproprietaire/finances" },
+        { 
+          id: "documents", 
+          label: "Mes documents", 
+          icon: FileText, 
+          path: "/documents" 
+        },
+        { 
+          id: "finances", 
+          label: "Finances", 
+          icon: DollarSign, 
+          path: "/finances" 
+        },
       ],
     },
 
@@ -151,39 +241,7 @@ export const Layout: React.FC<LayoutProps> = ({
       id: "profile",
       label: "Profil",
       icon: User,
-      path: "/coproprietaire/profile",
-    },
-
-    {
-      id: "delegations",
-      label: "Délégations",
-      icon: Users,
-      submenu: [
-        { id: "mes-delegations", label: "Mes délégations", icon: Users },
-        { id: "demandes-delegation", label: "Demandes reçues", icon: UserPlus },
-        { id: "inviter-proprietaire", label: "Inviter un propriétaire", icon: UserPlus },
-      ],
-    },
-
-    {
-      id: "finances",
-      label: "Finances",
-      icon: CreditCard,
-      path: "/coproprietaire/finances",
-      submenu: [
-        {
-          id: "emettre-paiement",
-          label: "Émettre un paiement",
-          icon: CreditCard,
-          path: "/coproprietaire/emettre-paiement",
-        },
-        {
-          id: "retrait-methode",
-          label: "Méthode de retrait",
-          icon: Wallet,
-          path: "/coproprietaire/retrait-methode",
-        },
-      ],
+      path: "/profile",
     },
   ];
 
@@ -204,45 +262,20 @@ export const Layout: React.FC<LayoutProps> = ({
     return found?.label ?? "Tableau de bord";
   }, [activeTab, flatMenu]);
 
-  // ✅ Auto-open du menu parent du sous-menu actif
-  useEffect(() => {
-    const parent = menuItems.find((m) => m.submenu?.some((s) => s.path === activeTab || s.id === activeTab));
-    if (parent?.id) setExpandedMenu(String(parent.id));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
-
-  const handleNavigate = (tab: Tab | string) => {
-    console.log('Layout handleNavigate called with:', tab);
-    const menuItem = flatMenu.find((i) => i.id === tab || i.path === tab);
-    console.log('Found menu item:', menuItem);
+  // ✅ Navigation unique et simplifiée
+  const handleMenuItemClick = (item: MenuItem) => {
+    console.log('Click menu:', item.label, 'path:', item.path, 'Laravel?', item.isLaravel);
     
-    // Si c'est une URL absolue qui commence par /, naviguer directement
-    if (typeof tab === 'string' && tab.startsWith('/')) {
-      console.log('Navigating to absolute path:', tab);
-      onNavigate(tab as Tab);
-      setIsMobileMenuOpen(false);
-      setShowNotifications(false);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
+    if (item.path) {
+      // Navigation avec gestion des types de routes
+      handleNavigation(item.path, item.isLaravel);
     }
     
-    // Pour le dashboard qui n'a pas de path, utiliser l'ID
-    if (menuItem?.path) {
-      console.log('Navigating to menu item path:', menuItem.path);
-      onNavigate(menuItem.path as Tab);
-    } else {
-      // Sinon, traiter comme un tab normal
-      const tabValue = tab as Tab;
-      console.log('Navigating to tab value:', tabValue);
-      onNavigate(tabValue);
-    }
-
+    // Fermer les menus mobiles
     setIsMobileMenuOpen(false);
     setShowNotifications(false);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // ✅ Un seul ouvert : toggle = ouvrir OU fermer, mais jamais plusieurs
   const toggleMenu = (menuId: string) => {
     setExpandedMenu((prev) => (prev === menuId ? null : menuId));
   };
@@ -291,10 +324,11 @@ export const Layout: React.FC<LayoutProps> = ({
               {item.submenu!.map((sub) => {
                 const SubIcon = sub.icon;
                 const subActive = sub.path === activeTab || sub.id === activeTab;
+                
                 return (
                   <button
                     key={String(sub.id)}
-                    onClick={() => handleNavigate(sub.path ?? sub.id)}
+                    onClick={() => handleMenuItemClick(sub)}
                     className={`${baseBtn} ${
                       subActive ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-600/30" : idleBtn
                     } py-3`}
@@ -308,6 +342,11 @@ export const Layout: React.FC<LayoutProps> = ({
                         }`}
                       />
                       {sub.label}
+                      {sub.isLaravel && (
+                        <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                          Laravel
+                        </span>
+                      )}
                     </div>
                     {subActive && (
                       <ChevronRight
@@ -327,7 +366,7 @@ export const Layout: React.FC<LayoutProps> = ({
     return (
       <button
         key={String(item.id)}
-        onClick={() => handleNavigate(item.path ?? item.id)}
+        onClick={() => handleMenuItemClick(item)}
         className={`${baseBtn} ${isActive ? activeBtn : idleBtn}`}
         type="button"
       >
@@ -337,6 +376,11 @@ export const Layout: React.FC<LayoutProps> = ({
             className={`${isActive ? "text-white" : "text-gray-600 group-hover:text-blue-600"}`}
           />
           {item.label}
+          {item.isLaravel && (
+            <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+              Laravel
+            </span>
+          )}
         </div>
         {isActive && (
           <ChevronRight
@@ -351,7 +395,6 @@ export const Layout: React.FC<LayoutProps> = ({
   return (
     <>
       <style>{`
-        /* Style global pour assurer un fond blanc */
         body, #root {
           background-color: white !important;
         }
@@ -360,25 +403,14 @@ export const Layout: React.FC<LayoutProps> = ({
           background-color: #ffffff !important;
         }
         
-        .bg-gray-900 {
-          background-color: #f9fafb !important;
-        }
-        
-        .dark .bg-gray-900 {
-          background-color: white !important;
-        }
-        
-        /* Ajustements pour les pages enfants */
         main {
           background-color: white !important;
         }
         
-        /* Cartes et conteneurs */
         .bg-white {
           background-color: white !important;
         }
         
-        /* Sidebar */
         .border-gray-200 {
           border-color: #e5e7eb !important;
         }
@@ -453,7 +485,6 @@ export const Layout: React.FC<LayoutProps> = ({
                   </div>
                 </div>
                 <div className="ml-4 flex items-center md:ml-6 space-x-4">
-                  {/* Theme toggle */}
                   <button
                     onClick={toggleTheme}
                     className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors duration-200"
@@ -461,7 +492,6 @@ export const Layout: React.FC<LayoutProps> = ({
                     {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                   </button>
 
-                  {/* Logout */}
                   <button
                     onClick={onLogout}
                     className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors duration-200"

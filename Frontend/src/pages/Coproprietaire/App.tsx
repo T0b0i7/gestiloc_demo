@@ -56,8 +56,13 @@ const CoproprietaireApp: React.FC = () => {
         }
 
         // Mettre à jour l'onglet actif en fonction de l'URL
-        const path = location.pathname.split('/').pop() || 'dashboard';
-        setActiveTab(path as Tab);
+        // Exclure les routes Laravel de la détection
+        const currentPath = location.pathname;
+        if (!currentPath.startsWith('/coproprietaire/tenants') && 
+            !currentPath.startsWith('/test-laravel')) {
+          const path = currentPath.split('/').pop() || 'dashboard';
+          setActiveTab(path as Tab);
+        }
       } catch (error) {
         console.error('Erreur de vérification de l\'authentification:', error);
         navigate('/login');
@@ -67,7 +72,7 @@ const CoproprietaireApp: React.FC = () => {
     };
 
     checkAuth();
-  }, []); // Supprimé navigate de la dépendance
+  }, [location.pathname, navigate]);
 
   // Toast System
   const notify = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
@@ -94,6 +99,18 @@ const CoproprietaireApp: React.FC = () => {
 
   const handleNavigation = (tab: Tab | string) => {
     console.log('App handleNavigation called with:', tab);
+    
+    // Vérifier si c'est une route Laravel
+    if (typeof tab === 'string' && (
+        tab.startsWith('/coproprietaire/tenants') ||
+        tab.startsWith('/test-laravel')
+    )) {
+        // Pour les routes Laravel, rediriger directement
+        console.log('Redirecting to Laravel route:', tab);
+        window.location.href = tab;
+        return;
+    }
+    
     if (typeof tab === 'string' && tab.startsWith('/')) {
       // Si c'est déjà une URL absolue, naviguer directement
       console.log('Navigating to absolute URL:', tab);
@@ -118,6 +135,12 @@ const CoproprietaireApp: React.FC = () => {
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
+  }
+
+  // Si on est sur une route Laravel, ne pas rendre l'app React
+  if (location.pathname.startsWith('/coproprietaire/tenants') || 
+      location.pathname.startsWith('/test-laravel')) {
+    return null; // Laisser Laravel gérer cette route
   }
 
   if (location.pathname === '/coproprietaire') {
@@ -204,7 +227,7 @@ const CoproprietaireApp: React.FC = () => {
           </Layout>
         } />
 
-        {/* Locataires */}
+        {/* Locataires - NOTE: Cette route React ne doit PAS capturer /coproprietaire/tenants */}
         <Route path="locataires" element={
           <Layout
             activeTab="locataires"
@@ -325,7 +348,6 @@ const CoproprietaireApp: React.FC = () => {
         } />
 
         {/* Modules communs */}
-
         <Route path="parametres" element={
           <Layout
             activeTab="parametres"
@@ -340,6 +362,7 @@ const CoproprietaireApp: React.FC = () => {
           </Layout>
         } />
 
+        {/* NE PAS CAPTURER LES ROUTES LARAVEL ICI */}
         <Route path="*" element={<Navigate to="dashboard" replace />} />
       </Routes>
     </div>
