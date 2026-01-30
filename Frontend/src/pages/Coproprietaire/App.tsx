@@ -27,6 +27,14 @@ const CoproprietaireApp: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [toastIdCounter, setToastIdCounter] = useState(0);
 
+  // Liste des routes Laravel qui ne doivent pas être gérées par React
+  const laravelRoutes = [
+    '/coproprietaire/tenants',
+    '/coproprietaire/assign-property',
+    '/test-laravel',
+    '/test-laravel-page'
+  ];
+
   // Vérifier l'authentification au chargement
   useEffect(() => {
     const checkAuth = async () => {
@@ -56,10 +64,11 @@ const CoproprietaireApp: React.FC = () => {
         }
 
         // Mettre à jour l'onglet actif en fonction de l'URL
-        // Exclure les routes Laravel de la détection
+        // Ignorer si c'est une route Laravel
         const currentPath = location.pathname;
-        if (!currentPath.startsWith('/coproprietaire/tenants') && 
-            !currentPath.startsWith('/test-laravel')) {
+        const isLaravelRoute = laravelRoutes.some(route => currentPath.startsWith(route));
+        
+        if (!isLaravelRoute) {
           const path = currentPath.split('/').pop() || 'dashboard';
           setActiveTab(path as Tab);
         }
@@ -101,13 +110,14 @@ const CoproprietaireApp: React.FC = () => {
     console.log('App handleNavigation called with:', tab);
     
     // Vérifier si c'est une route Laravel
-    if (typeof tab === 'string' && (
-        tab.startsWith('/coproprietaire/tenants') ||
-        tab.startsWith('/test-laravel')
-    )) {
+    const isLaravelRoute = laravelRoutes.some(route => 
+      typeof tab === 'string' && tab.startsWith(route)
+    );
+    
+    if (isLaravelRoute) {
         // Pour les routes Laravel, rediriger directement
         console.log('Redirecting to Laravel route:', tab);
-        window.location.href = tab;
+        window.location.href = tab as string;
         return;
     }
     
@@ -124,11 +134,6 @@ const CoproprietaireApp: React.FC = () => {
     }
   };
 
-  const handleTabChange = (tab: Tab) => {
-    setActiveTab(tab);
-    navigate(`/coproprietaire/${tab}`);
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -138,8 +143,8 @@ const CoproprietaireApp: React.FC = () => {
   }
 
   // Si on est sur une route Laravel, ne pas rendre l'app React
-  if (location.pathname.startsWith('/coproprietaire/tenants') || 
-      location.pathname.startsWith('/test-laravel')) {
+  const isLaravelRoute = laravelRoutes.some(route => location.pathname.startsWith(route));
+  if (isLaravelRoute) {
     return null; // Laisser Laravel gérer cette route
   }
 
@@ -227,7 +232,7 @@ const CoproprietaireApp: React.FC = () => {
           </Layout>
         } />
 
-        {/* Locataires - NOTE: Cette route React ne doit PAS capturer /coproprietaire/tenants */}
+        {/* Locataires - React */}
         <Route path="locataires" element={
           <Layout
             activeTab="locataires"
@@ -347,7 +352,7 @@ const CoproprietaireApp: React.FC = () => {
           </Layout>
         } />
 
-        {/* Modules communs */}
+        {/* Paramètres */}
         <Route path="parametres" element={
           <Layout
             activeTab="parametres"
@@ -362,7 +367,7 @@ const CoproprietaireApp: React.FC = () => {
           </Layout>
         } />
 
-        {/* NE PAS CAPTURER LES ROUTES LARAVEL ICI */}
+        {/* Redirection pour toute autre route */}
         <Route path="*" element={<Navigate to="dashboard" replace />} />
       </Routes>
     </div>

@@ -26,7 +26,9 @@ import {
   Maximize2,
   Camera,
   ExternalLink,
-  Building2, // J'ajoute Building2 ici
+  Building2,
+  Briefcase,
+  Handshake,
 } from 'lucide-react';
 
 interface PropertyModalProps {
@@ -35,6 +37,7 @@ interface PropertyModalProps {
   onClose: () => void;
   notify: (msg: string, type: "success" | "info" | "error") => void;
   onUpdate: () => void;
+  isAgency?: boolean;
 }
 
 export const PropertyModal: React.FC<PropertyModalProps> = ({
@@ -43,6 +46,7 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
   onClose,
   notify,
   onUpdate,
+  isAgency = false,
 }) => {
   if (!isOpen || !property) return null;
 
@@ -65,14 +69,63 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
     return "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=1200";
   };
 
+  // Récupérer le titre adapté
+  const getModalTitle = () => {
+    return isAgency ? "Propriété Gérée" : "Propriété Déléguée";
+  };
+
+  // Récupérer la description adaptée
+  const getModalDescription = () => {
+    return isAgency 
+      ? "Informations détaillées de la propriété que vous gérez"
+      : "Informations détaillées de la propriété qui vous est déléguée";
+  };
+
+  // Obtenir l'icône en fonction du type
+  const getHeaderIcon = () => {
+    return isAgency ? <Briefcase size={24} /> : <Building2 size={24} />;
+  };
+
+  // Obtenir l'icône de gestion/délégation
+  const getManagementIcon = () => {
+    return isAgency ? <Briefcase size={16} /> : <Handshake size={16} />;
+  };
+
+  // Obtenir le titre de la section gestion/délégation
+  const getManagementTitle = () => {
+    return isAgency ? "Gestion" : "Délégation";
+  };
+
+  // Obtenir la couleur principale en fonction du type
+  const getPrimaryColor = () => {
+    return isAgency ? 'indigo' : 'purple';
+  };
+
+  // Obtenir les couleurs de gradient en fonction du type
+  const getGradientColors = () => {
+    if (isAgency) {
+      return {
+        gradA: '#4f46e5', // Indigo
+        gradB: '#7c3aed', // Violet
+      };
+    }
+    return {
+      gradA: '#7c3aed', // Violet
+      gradB: '#9333ea', // Violet plus foncé
+    };
+  };
+
+  const gradientColors = getGradientColors();
+
   return (
     <>
       <style>{`
         :root{
-          --gradA:#667eea;
-          --gradB:#764ba2;
-          --indigo:#4f46e5;
-          --violet:#7c3aed;
+          --gradA:${gradientColors.gradA};
+          --gradB:${gradientColors.gradB};
+          --primary:${isAgency ? '#4f46e5' : '#7c3aed'};
+          --primary-light:${isAgency ? 'rgba(79,70,229,.1)' : 'rgba(124,58,237,.1)'};
+          --primary-dark:${isAgency ? '#4338ca' : '#6d28d9'};
           --emerald:#10b981;
           --rose:#f43f5e;
           
@@ -88,8 +141,8 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
           --shadow2: 0 12px 35px rgba(15,23,42,.10);
           --shadow3: 0 8px 18px rgba(15,23,42,.08);
 
-          --ring: 0 0 0 4px rgba(79,70,229,.14);
-          --halo: 0 0 40px rgba(79,70,229,.12);
+          --ring: 0 0 0 4px var(--primary-light);
+          --halo: 0 0 40px var(--primary-light);
         }
 
         *{ box-sizing:border-box; }
@@ -142,9 +195,9 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
           inset:0;
           pointer-events:none;
           background:
-            radial-gradient(circle at 20% 10%, rgba(102,126,234,.08), rgba(102,126,234,0) 60%),
-            radial-gradient(circle at 80% 20%, rgba(118,75,162,.06), rgba(118,75,162,0) 60%),
-            radial-gradient(circle at 40% 90%, rgba(16,185,129,.04), rgba(16,185,129,0) 60%);
+            radial-gradient(circle at 20% 10%, var(--primary-light), transparent 60%),
+            radial-gradient(circle at 80% 20%, rgba(102,126,234,.06), transparent 60%),
+            radial-gradient(circle at 40% 90%, rgba(16,185,129,.04), transparent 60%);
           z-index: 0;
         }
 
@@ -340,7 +393,7 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
         .section-premium:hover{
           transform: translateY(-2px);
           box-shadow: 0 18px 40px rgba(15,23,42,.12);
-          border-color: rgba(79,70,229,.15);
+          border-color: var(--primary-light);
         }
 
         .section-premium::before{
@@ -348,8 +401,8 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
           position:absolute;
           inset:0;
           background:
-            radial-gradient(500px 200px at 90% 0%, rgba(124,58,237,.04), transparent 62%),
-            radial-gradient(500px 200px at 10% 0%, rgba(79,70,229,.05), transparent 62%);
+            radial-gradient(500px 200px at 90% 0%, var(--primary-light), transparent 62%),
+            radial-gradient(500px 200px at 10% 0%, var(--primary-light), transparent 62%);
           pointer-events:none;
         }
 
@@ -360,7 +413,7 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
           gap: 10px;
           margin-bottom: 1rem;
           padding-bottom: .75rem;
-          border-bottom: 2px solid rgba(102,126,234,.18);
+          border-bottom: 2px solid var(--primary-light);
         }
 
         .section-title-premium{
@@ -378,11 +431,11 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
           width: 32px;
           height: 32px;
           border-radius: 10px;
-          background: linear-gradient(135deg, rgba(102,126,234,.1), rgba(118,75,162,.1));
+          background: var(--primary-light);
           display: flex;
           align-items: center;
           justify-content: center;
-          color: var(--indigo);
+          color: var(--primary);
         }
 
         .pill-premium{
@@ -391,13 +444,13 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
           gap: .45rem;
           padding: .4rem .8rem;
           border-radius: 999px;
-          background: rgba(79,70,229,.08);
-          border: 1px solid rgba(79,70,229,.18);
-          color: #4338ca;
+          background: var(--primary-light);
+          border: 1px solid rgba(var(--primary),.18);
+          color: var(--primary-dark);
           font-weight: 950;
           font-size: .78rem;
           white-space: nowrap;
-          box-shadow: 0 4px 12px rgba(79,70,229,.08);
+          box-shadow: 0 4px 12px var(--primary-light);
         }
 
         .info-grid{
@@ -436,9 +489,9 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
         }
 
         .info-value-highlight{
-          background: linear-gradient(135deg, rgba(102,126,234,.08), rgba(118,75,162,.08));
-          border-color: rgba(102,126,234,.2);
-          color: var(--indigo);
+          background: var(--primary-light);
+          border-color: rgba(var(--primary),.2);
+          color: var(--primary);
           font-weight: 850;
         }
 
@@ -464,8 +517,8 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
         .equipment-badge:hover{
           transform: translateY(-1px);
           background: rgba(255,255,255,1);
-          border-color: rgba(79,70,229,.3);
-          box-shadow: 0 6px 16px rgba(79,70,229,.08);
+          border-color: var(--primary-light);
+          box-shadow: 0 6px 16px var(--primary-light);
         }
 
         .description-box{
@@ -489,9 +542,9 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
         }
 
         .btn-premium{
-          border: 2px solid rgba(67,56,202,.20);
+          border: 2px solid rgba(var(--primary-dark),.20);
           background: rgba(255,255,255,.92);
-          color: #4338ca;
+          color: var(--primary-dark);
           border-radius: 14px;
           padding: 12px 24px;
           font-weight: 950;
@@ -507,7 +560,7 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
         }
         .btn-premium:hover:not(:disabled){
           transform: translateY(-2px);
-          background: rgba(67,56,202,.06);
+          background: rgba(var(--primary-dark),.06);
           box-shadow: 0 14px 32px rgba(15,23,42,.10);
         }
 
@@ -520,11 +573,11 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
         .btn-premium-primary{
           border: none;
           color:#fff;
-          background: linear-gradient(135deg, var(--indigo) 0%, var(--violet) 100%);
-          box-shadow: 0 14px 30px rgba(79,70,229,.22), 0 0 0 1px rgba(255,255,255,.2);
+          background: linear-gradient(135deg, var(--gradA) 0%, var(--gradB) 100%);
+          box-shadow: 0 14px 30px rgba(var(--primary),.22), 0 0 0 1px rgba(255,255,255,.2);
         }
         .btn-premium-primary:hover:not(:disabled){
-          box-shadow: 0 18px 34px rgba(79,70,229,.28), 0 0 0 1px rgba(255,255,255,.3);
+          box-shadow: 0 18px 34px rgba(var(--primary),.28), 0 0 0 1px rgba(255,255,255,.3);
           transform: translateY(-2px);
         }
 
@@ -569,7 +622,7 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
               <div className="modal-header-row-premium">
                 <div className="modal-title-wrap-premium">
                   <h1 className="modal-title-premium">
-                    <Building2 size={24} />
+                    {getHeaderIcon()}
                     {property.name}
                     <span className="pill-premium">
                       <Star size={12} />
@@ -589,7 +642,7 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
                   </span>
                   <span className="modal-pill-head-premium">
                     <Award size={16} />
-                    {property.status || 'Disponible'}
+                    {getModalTitle()}
                   </span>
                 </div>
               </div>
@@ -933,17 +986,19 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
                     )}
                   </div>
 
-                  {/* Délégation */}
+                  {/* Gestion/Délégation */}
                   {property.delegation && (
                     <div className="section-premium">
                       <div className="section-head-premium">
                         <h2 className="section-title-premium">
                           <div className="section-icon-premium">
-                            <Users size={16} />
+                            {getManagementIcon()}
                           </div>
-                          Délégation
+                          {getManagementTitle()}
                         </h2>
-                        <span className="pill-premium">Gestion</span>
+                        <span className="pill-premium">
+                          {isAgency ? 'Contrat' : 'Délégation'}
+                        </span>
                       </div>
                       
                       <div className="info-grid">
@@ -960,7 +1015,7 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
                         <div className="info-item">
                           <div className="info-label">
                             <Calendar size={12} />
-                            Expire le
+                            {isAgency ? 'Expire le' : 'Délégation expirant le'}
                           </div>
                           <div className="info-value">
                             {property.delegation.expires_at 
@@ -972,7 +1027,7 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
                         <div className="info-item" style={{ gridColumn: 'span 2' }}>
                           <div className="info-label">
                             <CheckCircle size={12} />
-                            Permissions
+                            {isAgency ? 'Droits de gestion' : 'Permissions'}
                           </div>
                           <div className="info-value">
                             {property.delegation.permissions?.join(', ') || 'Aucune'}
@@ -1001,19 +1056,23 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
                     className="btn-premium btn-premium-primary"
                     onClick={() => {
                       onClose();
-                      notify('Utilisez le bouton "Modifier" sur la carte du bien', 'info');
+                      notify(
+                        isAgency 
+                          ? 'Utilisez le bouton "Modifier" dans votre espace de gestion' 
+                          : 'Utilisez le bouton "Modifier" sur la carte du bien', 
+                        'info'
+                      );
                     }}
                   >
                     <Edit size={16} />
-                    Modifier ce bien
-                    <span>Édition</span>
+                    {isAgency ? 'Gérer cette propriété' : 'Modifier ce bien'}
+                    <span>{isAgency ? 'Gestion' : 'Édition'}</span>
                   </button>
                 )}
                 
                 <button
                   className="btn-premium"
                   onClick={() => {
-                    // Action pour voir les détails avancés
                     notify('Vue détaillée activée', 'info');
                   }}
                 >

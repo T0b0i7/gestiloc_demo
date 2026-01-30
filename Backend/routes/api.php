@@ -256,7 +256,28 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('fedapay/subaccount', [CoOwnerFedapayController::class, 'createOrUpdate']);
     });
 
-    
+    /* =========================
+    |  ROUTES API POUR RÉACT
+    |========================= */
+    // Routes pour les biens délégués
+    Route::get('/co-owners/me/delegated-properties', [CoOwnerMeController::class, 'getDelegatedProperties']);
+
+    // Routes pour les délégations
+    Route::get('/co-owners/me/delegations', [CoOwnerMeController::class, 'getDelegations']);
+    Route::post('/co-owners/me/delegations/{delegationId}/accept', [CoOwnerMeController::class, 'acceptDelegation']);
+    Route::post('/co-owners/me/delegations/{delegationId}/reject', [CoOwnerMeController::class, 'rejectDelegation']);
+
+    // Routes pour les locataires (co-owner)
+    Route::get('/co-owners/me/tenants', [CoOwnerMeController::class, 'getTenants']);
+
+    // Routes pour les baux (co-owner)
+    Route::get('/co-owners/me/leases', [CoOwnerMeController::class, 'getLeases']);
+
+    // Routes pour les quittances (co-owner)
+    Route::get('/co-owners/me/receipts', [CoOwnerMeController::class, 'getRentReceipts']);
+
+    // Routes pour les notifications (co-owner)
+    Route::get('/co-owners/me/notices', [CoOwnerMeController::class, 'getNotices']);
 
     /* =========================
     |  ADMIN ONLY

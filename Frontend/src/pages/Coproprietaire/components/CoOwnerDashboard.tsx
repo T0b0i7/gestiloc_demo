@@ -12,6 +12,8 @@ import {
   MapPin,
   FileText,
   Handshake,
+  Briefcase,
+  Users,
 } from "lucide-react";
 import { Card } from "../../Proprietaire/components/ui/Card";
 import { Button } from "../../Proprietaire/components/ui/Button";
@@ -26,6 +28,7 @@ import {
   type CoOwnerRentReceipt,
   type CoOwnerNotice,
   type PropertyDelegation,
+  type CoOwnerProfile,
 } from "@/services/coOwnerApi";
 
 interface CoOwnerDashboardProps {
@@ -47,19 +50,15 @@ const toNumber = (v: any) => {
 };
 
 const getPropertyImage = (property: CoOwnerProperty) => {
-  // Vérifier si la propriété a des photos
   if (property.photos && property.photos.length > 0) {
     const firstPhoto = property.photos[0];
-    // Si c'est déjà une URL complète, l'utiliser directement
     if (typeof firstPhoto === 'string' && firstPhoto.startsWith('http')) {
       return firstPhoto;
     }
-    // Si c'est un chemin relatif, le préfixer avec l'URL de base
     if (typeof firstPhoto === 'string') {
       return `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/storage/${firstPhoto}`;
     }
   }
-  // Image par défaut si aucune photo
   return "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=400";
 };
 
@@ -69,6 +68,7 @@ type ActivityItem =
 
 export const CoOwnerDashboard: React.FC<CoOwnerDashboardProps> = ({ onNavigate, notify }) => {
   const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<CoOwnerProfile | null>(null);
   const [properties, setProperties] = useState<CoOwnerProperty[]>([]);
   const [leases, setLeases] = useState<CoOwnerLease[]>([]);
   const [receipts, setReceipts] = useState<CoOwnerRentReceipt[]>([]);
@@ -79,6 +79,11 @@ export const CoOwnerDashboard: React.FC<CoOwnerDashboardProps> = ({ onNavigate, 
   const fetchAll = async () => {
     setLoading(true);
     try {
+      // Récupérer le profil d'abord
+      const profileData = await coOwnerApi.getProfile();
+      setProfile(profileData);
+
+      // Récupérer les autres données
       const promises = {
         props: coOwnerApi.getDelegatedProperties(),
         leases: coOwnerApi.getLeases(),
@@ -122,6 +127,16 @@ export const CoOwnerDashboard: React.FC<CoOwnerDashboardProps> = ({ onNavigate, 
     fetchAll();
   }, []);
 
+  // Déterminer le type de profil
+  const isAgency = useMemo(() => {
+    return profile?.is_professional || profile?.invitation_type === 'agency';
+  }, [profile]);
+
+  const profileType = useMemo(() => {
+    if (isAgency) return "Agence Immobilière";
+    return "Copropriétaire";
+  }, [isAgency]);
+
   const activeLeases = useMemo(
     () => leases.filter((l) => (l.status || "").toLowerCase() === "active"),
     [leases]
@@ -148,11 +163,12 @@ export const CoOwnerDashboard: React.FC<CoOwnerDashboardProps> = ({ onNavigate, 
     return pendingDelegations.length;
   }, [delegations]);
 
+  // Adaptez les KPIs en fonction du type de profil
   const kpis = useMemo(() => {
     const totalProps = properties.length;
     const occPct = totalProps ? (occupancy.rented / totalProps) * 100 : 0;
 
-    return [
+    const kpiData = [
       {
         label: "Loyers attendus",
         value: eur(monthlyExpectedRent),
@@ -170,12 +186,14 @@ export const CoOwnerDashboard: React.FC<CoOwnerDashboardProps> = ({ onNavigate, 
         color: "bg-blue-100 text-blue-700",
       },
       {
-        label: "Biens délégués",
+        label: isAgency ? "Contrats actifs" : "Biens délégués",
         value: String(delegations.length),
-        trend: `${delegations.filter((d: PropertyDelegation) => d.status === 'active').length} actifs`,
+        trend: isAgency 
+          ? `${delegations.filter((d: PropertyDelegation) => d.status === 'active').length} gérés`
+          : `${delegations.filter((d: PropertyDelegation) => d.status === 'active').length} actifs`,
         isPositive: true,
-        icon: <Handshake className="w-6 h-6" />,
-        color: "bg-purple-100 text-purple-700",
+        icon: isAgency ? <Briefcase className="w-6 h-6" /> : <Handshake className="w-6 h-6" />,
+        color: isAgency ? "bg-indigo-100 text-indigo-700" : "bg-purple-100 text-purple-700",
       },
       {
         label: "Alertes",
@@ -186,7 +204,21 @@ export const CoOwnerDashboard: React.FC<CoOwnerDashboardProps> = ({ onNavigate, 
         color: "bg-orange-100 text-orange-700",
       },
     ];
-  }, [properties.length, occupancy, monthlyExpectedRent, activeAlerts, delegations]);
+
+    // Pour une agence, ajouter un KPI supplémentaire pour les locataires si disponible
+    if (isAgency) {
+      kpiData.splice(2, 0, {
+        label: "Locataires",
+        value: String(activeLeases.length),
+        trend: `${activeLeases.length} contrats actifs`,
+        isPositive: true,
+        icon: <Users className="w-6 h-6" />,
+        color: "bg-cyan-100 text-cyan-700",
+      });
+    }
+
+    return kpiData;
+  }, [properties.length, occupancy, monthlyExpectedRent, activeAlerts, delegations, isAgency, activeLeases.length]);
 
   const recentProperties = useMemo(() => {
     return properties
@@ -215,16 +247,15 @@ export const CoOwnerDashboard: React.FC<CoOwnerDashboardProps> = ({ onNavigate, 
       .map<ActivityItem>((d: PropertyDelegation) => ({
         kind: "delegation",
         date: d.created_at,
-        title: `Délégation ${d.status}`,
+        title: isAgency ? `Contrat ${d.status}` : `Délégation ${d.status}`,
         subtitle: d.property?.name || 'Propriété',
         action: d.status,
       }));
 
     return [...lastReceipts, ...lastDelegations].slice(0, 6);
-  }, [receipts, delegations]);
+  }, [receipts, delegations, isAgency]);
 
   const handleViewProperty = (property: CoOwnerProperty) => {
-    // Trouver la propriété complète dans la liste des propriétés
     const fullProperty = properties.find(p => p.id === property.id);
     if (fullProperty) {
       setSelectedProperty(fullProperty);
@@ -238,10 +269,9 @@ export const CoOwnerDashboard: React.FC<CoOwnerDashboardProps> = ({ onNavigate, 
   };
 
   const handlePropertyUpdated = () => {
-    fetchAll(); // Rafraîchir toutes les données
+    fetchAll();
   };
 
-  // Helper pour obtenir une propriété affichable
   const getDisplayProperty = (property: CoOwnerProperty) => {
     const isRented = rentedPropertyIds.has(property.id);
     return {
@@ -270,23 +300,47 @@ export const CoOwnerDashboard: React.FC<CoOwnerDashboardProps> = ({ onNavigate, 
 
   return (
     <div className="space-y-8">
+      {/* En-tête avec le type de profil */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-slate-900">Tableau de Bord Co-propriétaire</h1>
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-4xl font-bold text-slate-900">
+              Tableau de Bord {profileType}
+            </h1>
+            <span className={`
+              px-3 py-1 rounded-full text-sm font-semibold
+              ${isAgency 
+                ? 'bg-indigo-100 text-indigo-800 border border-indigo-200' 
+                : 'bg-purple-100 text-purple-800 border border-purple-200'
+              }
+            `}>
+              {profile?.company_name || profile?.full_name || profileType}
+            </span>
+          </div>
           <p className="text-slate-500 mt-2 text-lg">
-            Synthèse en temps réel (biens, délégations, alertes)
+            {isAgency 
+              ? "Gestion de vos propriétés et contrats en temps réel" 
+              : "Synthèse en temps réel (biens, délégations, alertes)"
+            }
           </p>
+          {profile?.company_name && (
+            <div className="flex items-center gap-2 mt-2 text-sm text-slate-600">
+              <Building size={14} />
+              <span>{profile.company_name}</span>
+            </div>
+          )}
         </div>
         <div className="flex gap-3">
           <Button variant="secondary" onClick={() => onNavigate("documents")}>
             Mes Documents
           </Button>
           <Button variant="default" onClick={() => onNavigate("delegations")}>
-            Gérer les délégations
+            {isAgency ? "Gérer les contrats" : "Gérer les délégations"}
           </Button>
         </div>
       </div>
 
+      {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {kpis.map((kpi, idx) => (
           <div
@@ -319,7 +373,9 @@ export const CoOwnerDashboard: React.FC<CoOwnerDashboardProps> = ({ onNavigate, 
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-slate-900">Biens délégués</h2>
+              <h2 className="text-xl font-bold text-slate-900">
+                {isAgency ? "Propriétés gérées" : "Biens délégués"}
+              </h2>
               <Button variant="ghost" size="sm" onClick={() => onNavigate("biens")}>
                 Voir tous →
               </Button>
@@ -340,7 +396,6 @@ export const CoOwnerDashboard: React.FC<CoOwnerDashboardProps> = ({ onNavigate, 
                         alt={property.name || `Bien #${property.id}`}
                         className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
-                          // Si l'image ne charge pas, utiliser l'image par défaut
                           (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=400";
                         }}
                       />
@@ -380,7 +435,10 @@ export const CoOwnerDashboard: React.FC<CoOwnerDashboardProps> = ({ onNavigate, 
 
               {!recentProperties.length && (
                 <div className="text-sm text-slate-500 col-span-full">
-                  Aucun bien délégué pour le moment.
+                  {isAgency 
+                    ? "Aucune propriété gérée pour le moment." 
+                    : "Aucun bien délégué pour le moment."
+                  }
                 </div>
               )}
             </div>
@@ -401,10 +459,13 @@ export const CoOwnerDashboard: React.FC<CoOwnerDashboardProps> = ({ onNavigate, 
                     <div
                       className={[
                         "w-9 h-9 rounded-full flex items-center justify-center text-white",
-                        item.kind === "receipt" ? "bg-emerald-600" : "bg-purple-600",
+                        item.kind === "receipt" 
+                          ? "bg-emerald-600" 
+                          : (isAgency ? "bg-indigo-600" : "bg-purple-600"),
                       ].join(" ")}
                     >
-                      {item.kind === "receipt" ? <FileText size={16} /> : <Handshake size={16} />}
+                      {item.kind === "receipt" ? <FileText size={16} /> : 
+                       (isAgency ? <Briefcase size={16} /> : <Handshake size={16} />)}
                     </div>
 
                     <div className="min-w-0">
@@ -420,7 +481,10 @@ export const CoOwnerDashboard: React.FC<CoOwnerDashboardProps> = ({ onNavigate, 
                     {item.kind === "receipt" ? (
                       <p className="text-sm font-bold text-emerald-700">+ {eur(item.amount)}</p>
                     ) : (
-                      <p className="text-sm font-bold text-slate-700">—</p>
+                      <p className="text-sm font-bold text-slate-700">
+                        {item.action === 'active' ? 'Actif' : 
+                         item.action === 'pending' ? 'En attente' : 'Rejeté'}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -441,6 +505,7 @@ export const CoOwnerDashboard: React.FC<CoOwnerDashboardProps> = ({ onNavigate, 
         onClose={handleCloseModal}
         notify={notify}
         onUpdate={handlePropertyUpdated}
+        isAgency={isAgency}
       />
     </div>
   );
