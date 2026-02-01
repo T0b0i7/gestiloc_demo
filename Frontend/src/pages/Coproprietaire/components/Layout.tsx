@@ -5,6 +5,7 @@ import {
   Home,
   Users,
   FileSignature,
+  Bell,
   FileText,
   FileCheck,
   UserPlus,
@@ -187,18 +188,18 @@ export const Layout: React.FC<LayoutProps> = ({
           isLaravel: true
         },
 
-        { 
-  id: "leases-index", 
-  label: "Contrats de bail", 
-  icon: FileText, 
+{
+  id: "leases-index",
+  label: "Contrats de bail",
+  icon: FileSignature,   // 📄✍️ contrat / signature
   path: "/coproprietaire/leases",
   isLaravel: true
 },
 
-{ 
-  id: "co-owner-notices-index", 
-  label: "Préavis", 
-  icon: Bell, 
+{
+  id: "co-owner-notices-index",
+  label: "Préavis",
+  icon: Bell,            // 🔔 notification / préavis
   path: "/coproprietaire/notices",
   isLaravel: true
 },

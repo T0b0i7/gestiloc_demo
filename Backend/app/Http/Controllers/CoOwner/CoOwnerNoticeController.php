@@ -9,6 +9,7 @@ use App\Models\Property;
 use App\Models\Tenant;
 use App\Models\CoOwner;
 use App\Models\PropertyDelegation;
+use Laravel\Sanctum\PersonalAccessToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -297,15 +298,12 @@ HTML;
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Statistiques
-        $stats = [
-            'total' => $notices->count(),
-            'pending' => $notices->where('status', 'pending')->count(),
-            'confirmed' => $notices->where('status', 'confirmed')->count(),
-            'cancelled' => $notices->where('status', 'cancelled')->count(),
-        ];
+        // Récupérer les baux actifs pour les statistiques
+        $leases = Lease::whereIn('property_id', $delegatedPropertyIds)
+            ->where('status', 'active')
+            ->get();
 
-        return view('co-owner.notices.index', compact('notices', 'stats', 'user'));
+        return view('co-owner.notices.index', compact('notices', 'leases', 'user'));
     }
 
     /**

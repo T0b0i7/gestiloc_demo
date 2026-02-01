@@ -5,6 +5,7 @@ use App\Http\Controllers\CoOwner\CoOwnerTenantController;
 use App\Http\Controllers\CoOwner\CoOwnerAssignPropertyController;
 use App\Http\Controllers\CoOwner\CoOwnerLeaseController;
 use App\Http\Controllers\CoOwner\CoOwnerLeaseDocumentController;
+use App\Http\Controllers\CoOwner\CoOwnerNoticeController;
 use App\Http\Controllers\ReactRedirectController;
 
 // Page d'accueil Laravel
@@ -48,7 +49,8 @@ Route::prefix('coproprietaire')->name('co-owner.')->group(function () {
 
 
 // Routes pour les préavis des co-propriétaires
-Route::prefix('coproprietaire/notices')->name('co-owner.notices.')->group(function () {
+Route::prefix('notices')->name('notices.')->group(function () {
+
     // Liste des préavis
     Route::get('/', [CoOwnerNoticeController::class, 'index'])
         ->name('index');
