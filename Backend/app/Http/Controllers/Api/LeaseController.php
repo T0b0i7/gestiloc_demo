@@ -7,6 +7,7 @@ use App\Http\Requests\StoreLeaseRequest;
 use App\Models\Lease;
 use App\Models\Property;
 use App\Models\Tenant;
+use App\Models\PropertyUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,13 +21,11 @@ class LeaseController extends Controller
      */
     private const PROPERTY_STATUS_RENTED = 'rented';
 
-    // ⚠️ Mets ici le vrai statut “disponible” chez toi.
-    // Si tu utilises réellement "available", laisse comme ça.
+    // ⚠️ Mets ici le vrai statut "disponible" chez toi
     private const PROPERTY_STATUS_AVAILABLE = 'available';
 
     /**
-     * ✅ Statuts de bail considérés comme “en cours”
-     * (si dans TA table leases.status tu as "rented", ajoute-le ici)
+     * ✅ Statuts de bail considérés comme "en cours"
      */
     private const LEASE_OPEN_STATUSES = ['active', 'pending'];
 
@@ -55,10 +54,10 @@ class LeaseController extends Controller
 
     private function propertyLabel(?Property $property): string
     {
-        if (!$property) return '—';
+        if (!$property) return '-';
         $label = (string) ($property->address ?? '');
         if (!empty($property->city)) $label .= ', ' . $property->city;
-        return trim($label) !== '' ? $label : '—';
+        return trim($label) !== '' ? $label : '-';
     }
 
     private function resolveTenantEmail(?Tenant $tenant, Request $request): ?string
@@ -115,7 +114,7 @@ class LeaseController extends Controller
           <tr>
             <td style="padding:18px 22px;border-top:1px solid #eef2f7;background:#fbfcff;">
               <div style="font-size:12px;color:#6b7280;line-height:1.6;">
-                Cet email a été envoyé automatiquement. Si vous n’êtes pas concerné, vous pouvez l’ignorer.
+                Cet email a été envoyé automatiquement. Si vous n'êtes pas concerné, vous pouvez l'ignorer.
               </div>
               <div style="font-size:12px;color:#6b7280;margin-top:8px;">
                 © {$year} {$appName}
@@ -146,21 +145,21 @@ HTML;
     {
         $property = e($this->propertyLabel($lease->property ?? null));
 
-        $tenantName = '—';
+        $tenantName = '-';
         if ($lease->tenant) {
             $tenantName = trim((string) ($lease->tenant->first_name ?? '') . ' ' . (string) ($lease->tenant->last_name ?? ''));
-            if ($tenantName === '') $tenantName = '—';
+            if ($tenantName === '') $tenantName = '-';
         }
         $tenantName = e($tenantName);
 
-        $start = $lease->start_date ? e(Carbon::parse($lease->start_date)->format('d/m/Y')) : '—';
-        $end = $lease->end_date ? e(Carbon::parse($lease->end_date)->format('d/m/Y')) : '—';
+        $start = $lease->start_date ? e(Carbon::parse($lease->start_date)->format('d/m/Y')) : '-';
+        $end = $lease->end_date ? e(Carbon::parse($lease->end_date)->format('d/m/Y')) : '-';
 
         $rent = e($this->formatMoney($lease->rent_amount ?? 0));
         $deposit = e($this->formatMoney($lease->deposit ?? 0));
 
-        $status = e((string) ($lease->status ?? '—'));
-        $type = e((string) ($lease->type ?? '—'));
+        $status = e((string) ($lease->status ?? '-'));
+        $type = e((string) ($lease->type ?? '-'));
 
         return <<<HTML
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #eef2f7;border-radius:14px;overflow:hidden;">
@@ -227,7 +226,7 @@ HTML;
             $content = <<<HTML
 <div style="font-size:14px;color:#374151;line-height:1.7;">
   Bonjour,<br><br>
-  Un nouveau bail vient d’être créé pour vous. Vous pouvez consulter les détails depuis votre espace.
+  Un nouveau bail vient d'être créé pour vous. Vous pouvez consulter les détails depuis votre espace.
 </div>
 <div style="height:14px"></div>
 {$this->leaseCardHtml($lease)}
@@ -304,7 +303,7 @@ HTML;
             $content = <<<HTML
 <div style="font-size:14px;color:#374151;line-height:1.7;">
   Bonjour,<br><br>
-  Le bail a été résilié. Date de fin : <strong>{$end}</strong>. Le bien est maintenant “disponible”.
+  Le bail a été résilié. Date de fin : <strong>{$end}</strong>. Le bien est maintenant "disponible".
 </div>
 <div style="height:14px"></div>
 {$this->leaseCardHtml($lease)}
@@ -321,8 +320,7 @@ HTML;
     }
 
     /**
-     * ✅ Create a lease — only landlord owning the property can create
-     * ✅ One property can have only ONE open lease at a time
+     * ✅ Créer un bail + attribution automatique dans property_user
      */
     public function store(StoreLeaseRequest $request): JsonResponse
     {
@@ -338,19 +336,19 @@ HTML;
             return response()->json(['message' => 'Landlord profile missing'], 422);
         }
 
-        return DB::transaction(function () use ($data, $landlord, $request) {
+        return DB::transaction(function () use ($data, $landlord, $request, $user) {
 
-            // 🔒 Lock du bien (MySQL/InnoDB) : empêche 2 créations simultanées
+            // 🔒 Lock du bien pour éviter les conflits
             $property = Property::whereKey($data['property_id'])
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            // Ownership check
+            // Vérifier que le bien appartient au landlord
             if ((int) $property->landlord_id !== (int) $landlord->id) {
                 return response()->json(['message' => 'You do not own this property'], 403);
             }
 
-            // ✅ Blocage immédiat si le bien est déjà loué
+            // ✅ Vérifier si le bien est déjà loué
             if (($property->status ?? null) === self::PROPERTY_STATUS_RENTED) {
                 return response()->json([
                     'message' => 'Ce bien est déjà loué.',
@@ -360,7 +358,7 @@ HTML;
                 ], 422);
             }
 
-            // ✅ Vérifie qu’il n’existe PAS déjà un bail “en cours”
+            // ✅ Vérifier qu'il n'existe pas déjà un bail "en cours"
             $alreadyOpen = Lease::query()
                 ->where('property_id', $property->id)
                 ->whereIn('status', self::LEASE_OPEN_STATUSES)
@@ -377,6 +375,7 @@ HTML;
 
             $tenant = Tenant::findOrFail($data['tenant_id']);
 
+            // ✅ 1. Créer le bail
             $lease = Lease::create([
                 'property_id' => $property->id,
                 'tenant_id'   => $tenant->id,
@@ -389,18 +388,59 @@ HTML;
                 'terms'       => $data['terms'] ?? null,
             ]);
 
-            // ✅ Dès qu’un bail est créé (active/pending), on marque le bien loué
-            // (si tu veux le faire seulement pour "active", dis-le)
+            // ✅ 2. Mettre à jour le statut du bien
             $property->status = self::PROPERTY_STATUS_RENTED;
             $property->save();
 
+            // ✅ 3. CRITIQUE : Créer l'attribution dans property_user
+            try {
+                $propertyUser = PropertyUser::create([
+                    'property_id' => $property->id,
+                    'user_id' => $tenant->user_id,
+                    'tenant_id' => $tenant->id,
+                    'lease_id' => $lease->id,
+                    'landlord_id' => $landlord->id,
+                    'role' => 'tenant',
+                    'share_percentage' => 100,
+                    'start_date' => $data['start_date'],
+                    'end_date' => $data['end_date'] ?? null,
+                    'status' => 'active',
+                ]);
+
+                \Log::info('PropertyUser created for lease', [
+                    'lease_id' => $lease->id,
+                    'property_user_id' => $propertyUser->id,
+                    'property_id' => $property->id,
+                    'tenant_id' => $tenant->id,
+                    'user_id' => $tenant->user_id
+                ]);
+
+            } catch (\Exception $e) {
+                \Log::error('Failed to create PropertyUser for lease', [
+                    'lease_id' => $lease->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+
+                // Annuler la transaction si l'attribution échoue
+                throw $e;
+            }
+
+            // ✅ 4. Envoyer les emails
             $this->sendLeaseCreatedMails($request, $lease);
 
-            return response()->json($lease->load(['property', 'tenant', 'tenant.user']), 201);
+            // ✅ 5. Retourner la réponse avec toutes les relations
+            $lease->load(['property', 'tenant', 'tenant.user', 'propertyAssignments']);
+
+            return response()->json([
+                'message' => 'Bail créé avec succès et locataire attribué au bien',
+                'lease' => $lease,
+                'property_assignment' => $propertyUser ?? null,
+            ], 201);
         });
     }
 
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $user = $request->user();
 
@@ -412,7 +452,7 @@ HTML;
             ->whereHas('property', function ($q) use ($user) {
                 $q->where('landlord_id', $user->landlord->id);
             })
-            ->with(['property', 'tenant', 'tenant.user'])
+            ->with(['property', 'tenant', 'tenant.user', 'propertyAssignments'])
             ->orderByDesc('created_at')
             ->get();
 
@@ -420,8 +460,7 @@ HTML;
     }
 
     /**
-     * Terminate a lease (end_date + status = terminated) and free property.
-     * POST /api/leases/{uuid}/terminate
+     * ✅ Résilier un bail + terminer l'attribution dans property_user
      */
     public function terminate(Request $request, string $uuid): JsonResponse
     {
@@ -443,33 +482,155 @@ HTML;
             : now()->toDateString();
 
         $lease = Lease::where('uuid', $uuid)
-            ->with(['property', 'tenant', 'tenant.user'])
+            ->with(['property', 'tenant', 'tenant.user', 'propertyAssignments'])
             ->firstOrFail();
 
         if ((int) $lease->property?->landlord_id !== $landlordId) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        DB::transaction(function () use ($lease, $endDateYmd) {
+        DB::transaction(function () use ($lease, $endDateYmd, $user) {
+            // ✅ 1. Mettre à jour le bail
             $lease->update([
                 'status'   => 'terminated',
                 'end_date' => $endDateYmd,
             ]);
 
+            // ✅ 2. Libérer le bien
             if ($lease->property) {
-                // ✅ Libère le bien (⚠️ ajuste PROPERTY_STATUS_AVAILABLE si besoin)
                 $lease->property->update(['status' => self::PROPERTY_STATUS_AVAILABLE]);
+            }
+
+            // ✅ 3. CRITIQUE : Terminer l'attribution dans property_user
+            $propertyAssignments = PropertyUser::where('lease_id', $lease->id)
+                ->orWhere(function($query) use ($lease) {
+                    $query->where('property_id', $lease->property_id)
+                          ->where('tenant_id', $lease->tenant_id)
+                          ->where('status', 'active');
+                })
+                ->get();
+
+            foreach ($propertyAssignments as $assignment) {
+                $assignment->update([
+                    'end_date' => $endDateYmd,
+                    'status' => 'terminated',
+                ]);
+
+                \Log::info('PropertyUser terminated for lease', [
+                    'lease_id' => $lease->id,
+                    'property_user_id' => $assignment->id,
+                    'end_date' => $endDateYmd
+                ]);
             }
         });
 
-        $lease = $lease->fresh()->load(['property', 'tenant', 'tenant.user']);
+        $lease = $lease->fresh()->load(['property', 'tenant', 'tenant.user', 'propertyAssignments']);
 
-        // ✅ Emails (locataire + bailleur)
+        // ✅ 4. Envoyer les emails
         $this->sendLeaseTerminatedMails($request, $lease, $endDateYmd);
 
         return response()->json([
-            'message' => 'Bail résilié avec succès. Le bien est à nouveau disponible.',
+            'message' => 'Bail résilié avec succès. Le bien est maintenant disponible.',
             'lease' => $lease,
+        ]);
+    }
+
+    /**
+     * ✅ Récupérer un bail spécifique
+     */
+    public function show($uuid): JsonResponse
+    {
+        $lease = Lease::where('uuid', $uuid)
+            ->with(['property', 'tenant', 'tenant.user', 'propertyAssignments.property'])
+            ->firstOrFail();
+
+        return response()->json($lease);
+    }
+
+    /**
+     * ✅ Mettre à jour un bail
+     */
+    public function update(Request $request, $uuid): JsonResponse
+    {
+        $lease = Lease::where('uuid', $uuid)
+            ->with(['property', 'tenant'])
+            ->firstOrFail();
+
+        $user = $request->user();
+        if (!$user || !$user->isLandlord() || !$user->landlord) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        if ((int) $lease->property?->landlord_id !== (int) $user->landlord->id) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $data = $request->validate([
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after:start_date',
+            'rent_amount' => 'nullable|numeric|min:0',
+            'status' => 'nullable|in:pending,active,terminated',
+        ]);
+
+        DB::transaction(function () use ($lease, $data) {
+            // Mettre à jour le bail
+            $lease->update($data);
+
+            // Si la date de fin change, mettre à jour l'attribution property_user
+            if (isset($data['end_date']) && $lease->propertyAssignments->isNotEmpty()) {
+                foreach ($lease->propertyAssignments as $assignment) {
+                    $assignment->update([
+                        'end_date' => $data['end_date'],
+                        'status' => $data['status'] ?? $assignment->status,
+                    ]);
+                }
+            }
+
+            // Si le statut change, mettre à jour l'attribution
+            if (isset($data['status'])) {
+                foreach ($lease->propertyAssignments as $assignment) {
+                    $assignment->update(['status' => $data['status']]);
+                }
+            }
+        });
+
+        $lease->refresh()->load(['property', 'tenant', 'tenant.user', 'propertyAssignments']);
+
+        return response()->json([
+            'message' => 'Bail mis à jour avec succès',
+            'lease' => $lease,
+        ]);
+    }
+
+    /**
+     * ✅ Supprimer un bail (soft delete)
+     */
+    public function destroy($uuid): JsonResponse
+    {
+        $lease = Lease::where('uuid', $uuid)
+            ->with(['property', 'propertyAssignments'])
+            ->firstOrFail();
+
+        DB::transaction(function () use ($lease) {
+            // 1. Terminer les attributions property_user
+            foreach ($lease->propertyAssignments as $assignment) {
+                $assignment->update([
+                    'end_date' => now(),
+                    'status' => 'terminated',
+                ]);
+            }
+
+            // 2. Libérer le bien si nécessaire
+            if ($lease->property && $lease->status !== 'terminated') {
+                $lease->property->update(['status' => self::PROPERTY_STATUS_AVAILABLE]);
+            }
+
+            // 3. Soft delete le bail
+            $lease->delete();
+        });
+
+        return response()->json([
+            'message' => 'Bail supprimé avec succès',
         ]);
     }
 }

@@ -27,7 +27,6 @@ class RentReceipt extends Model
         'status',
         'notes',
 
-        // si tu as une colonne pdf_path (recommandé)
         'pdf_path',
     ];
 

@@ -262,14 +262,25 @@ export default function Auth() {
 
       const response = await authService.login(data.email, data.password);
 
-      // Selon ton LoginResponse actuel: { status, message, data: { access_token, user } }
-      // Et ton ancien code attendait response.data.user => on gère les deux formats.
-      const user = (response as any)?.data?.user ?? (response as any)?.data?.data?.user ?? (response as any)?.data?.user ?? (response as any)?.data?.data?.user;
+      const responseData = (response as any).data;
 
-      const token =
-        (response as any)?.data?.access_token ??
-        (response as any)?.data?.data?.access_token ??
-        (response as any)?.data?.data?.access_token;
+      // Gérer les deux formats possibles de réponse
+      let user: any = null;
+      let token: string | null = null;
+
+      if (responseData?.access_token && responseData?.user) {
+        // Format : { data: { access_token, user } }
+        token = responseData.access_token;
+        user = responseData.user;
+      } else if (responseData?.access_token) {
+        // Format : { access_token, user } à la racine
+        token = responseData.access_token;
+        user = responseData.user;
+      } else if ((response as any)?.access_token && (response as any)?.user) {
+        // Format : { access_token, user } à la racine
+        token = (response as any).access_token;
+        user = (response as any).user;
+      }
 
       if (token) localStorage.setItem("token", token);
       if (user) localStorage.setItem("user", JSON.stringify(user));
@@ -288,6 +299,9 @@ export default function Auth() {
         } else if (roles.includes("landlord") || roles.includes("proprietaire")) {
           redirectPath = "/proprietaire";
           userRole = "proprietaire";
+        } else if (roles.includes("coproprietaire") || roles.includes("co_owner")) {
+          redirectPath = "/coproprietaire";
+          userRole = "coproprietaire";
         } else if (roles.includes("tenant") || roles.includes("locataire")) {
           redirectPath = "/locataire";
           userRole = "locataire";
@@ -868,11 +882,14 @@ export default function Auth() {
                               <Input
                                 id="register-password"
                                 type="password"
-                                placeholder="Minimum 8 caractères"
+                                placeholder="Ex : G3$t!L0c/2026***"
                                 {...registerForm.register("password")}
                                 className="pl-10 h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
                               />
                             </div>
+                            <p className="text-xs text-slate-500">
+                              Le mot de passe doit contenir au moins 8 caractères, avec des lettres, des chiffres et des caractères spéciaux.
+                            </p>
                             {registerForm.formState.errors.password && (
                               <p className="text-sm text-red-600">{registerForm.formState.errors.password.message}</p>
                             )}
@@ -889,7 +906,7 @@ export default function Auth() {
                             <Input
                               id="confirmPassword"
                               type="password"
-                              placeholder="Répétez votre mot de passe"
+                              placeholder="Répétez le mot de passe"
                               {...registerForm.register("confirmPassword")}
                               className="h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
                             />

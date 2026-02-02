@@ -378,6 +378,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, notify }) => {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
+      <br />
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-4xl font-bold text-slate-900">Tableau de Bord Propriétaire</h1>

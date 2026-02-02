@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -77,7 +79,7 @@ class AuthController extends Controller
           <tr>
             <td style="padding:18px 22px;border-top:1px solid #eef2f7;background:#fbfcff;">
               <div style="font-size:12px;color:#6b7280;line-height:1.6;">
-                Cet email a été envoyé automatiquement. Si vous n’êtes pas concerné, vous pouvez l’ignorer.
+                Cet email a été envoyé automatiquement. Si vous n'êtes pas concerné, vous pouvez l'ignorer.
               </div>
               <div style="font-size:12px;color:#6b7280;margin-top:8px;">
                 © {$year} {$appName}
@@ -107,7 +109,6 @@ HTML;
 
     private function sendHtmlEmail(string $to, string $subject, string $html): void
     {
-        // ✅ Laravel 10/11 ok: Mail::html()
         Mail::html($html, function ($message) use ($to, $subject) {
             $message->to($to)->subject($subject);
         });
@@ -141,17 +142,14 @@ HTML;
 
     private function resolveLandlordEmailFromInvitation(TenantInvitation $invitation): ?string
     {
-        // Cas A: relation ->landlord->user->email
         $email = $invitation->landlord?->user?->email ?? null;
         if ($email) return $email;
 
-        // Cas B: landlord_id est un users.id (rare mais possible)
         if (!empty($invitation->landlord_id)) {
             $u = User::find($invitation->landlord_id);
             if ($u?->email) return $u->email;
         }
 
-        // Cas C: landlord_id est un landlords.id -> on retrouve user via landlord.user_id
         if (!empty($invitation->landlord_id)) {
             $landlord = Landlord::find($invitation->landlord_id);
             if ($landlord && !empty($landlord->user_id)) {
@@ -341,7 +339,7 @@ HTML;
     {
         $data = $request->validated();
         $result = $this->authService->registerCoOwner($data);
-        
+
         return response()->json([
             'status' => 'success',
             'message' => 'Co-owner registered successfully',
@@ -388,113 +386,185 @@ HTML;
      */
     public function setCoOwnerPassword(Request $request)
     {
-        $data = $request->validate([
-            'token' => 'required|string',
-            'email' => 'required|email',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
-
-        $invitation = CoOwnerInvitation::where('token', $data['token'])
-            ->where('email', $data['email'])
-            ->whereNull('accepted_at')
-            ->where('expires_at', '>', now())
-            ->first();
-
-        if (! $invitation) {
-            throw ValidationException::withMessages([
-                'token' => ['Invitation invalide ou expirée.'],
+        try {
+            $data = $request->validate([
+                'token' => 'required|string',
+                'email' => 'required|email',
+                'password' => 'required|string|min:8|confirmed',
             ]);
-        }
 
-        // ✅ Prépare ref email
-        $ref = $this->coOwnerInvitationRef($invitation);
+            $invitation = CoOwnerInvitation::where('token', $data['token'])
+                ->where('email', $data['email'])
+                ->whereNull('accepted_at')
+                ->where('expires_at', '>', now())
+                ->first();
 
-        // 1) Récupérer ou créer le user
-        $user = User::where('email', $data['email'])->first();
-
-        if (! $user) {
-            $user = User::create([
-                'email' => $invitation->email,
-                'password' => Hash::make($data['password']),
-                'phone' => $invitation->meta['phone'] ?? null,
-                'email_verified_at' => now(),
-            ]);
-        } else {
-            $user->password = Hash::make($data['password']);
-            $user->email_verified_at = $user->email_verified_at ?? now();
-            if (isset($invitation->meta['phone'])) {
-                $user->phone = $invitation->meta['phone'];
+            if (!$invitation) {
+                throw ValidationException::withMessages([
+                    'token' => ['Invitation invalide ou expirée.'],
+                ]);
             }
-            $user->save();
-        }
 
-        // 2) Rôle co_owner
-        if (method_exists($user, 'assignRole')) {
-            $user->assignRole('co_owner');
-        }
+            // ✅ Prépare ref email
+            $ref = $this->coOwnerInvitationRef($invitation);
 
-        // 3) Créer / lier le CoOwner
-        $parts = preg_split('/\s+/', (string) $invitation->name, 2);
-        $firstName = $invitation->meta['first_name'] ?? $parts[0] ?? ($invitation->name ?? 'Copropriétaire');
-        $lastName  = $invitation->meta['last_name'] ?? $parts[1] ?? '';
+            // Utiliser une transaction pour gérer les erreurs
+            return DB::transaction(function () use ($data, $invitation, $ref) {
+                // 1) Récupérer ou créer le user avec vérification du téléphone
+                $user = User::where('email', $data['email'])->first();
+                $phoneFromInvitation = $invitation->meta['phone'] ?? null;
 
-        $coOwner = CoOwner::firstOrCreate(
-            ['user_id' => $user->id],
-            [
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'company_name' => $invitation->meta['company_name'] ?? null,
-                'address_billing' => $invitation->meta['address_billing'] ?? null,
-                'license_number' => $invitation->meta['license_number'] ?? null,
-                'is_professional' => $invitation->meta['is_professional'] ?? false,
-                'ifu' => $invitation->meta['ifu'] ?? null,
-                'rccm' => $invitation->meta['rccm'] ?? null,
-                'vat_number' => $invitation->meta['vat_number'] ?? null,
-                'meta' => $invitation->meta ?? null,
-            ]
-        );
+                if (!$user) {
+                    // Vérifier si le numéro de téléphone existe déjà avant de créer l'utilisateur
+                    if ($phoneFromInvitation && User::where('phone', $phoneFromInvitation)->exists()) {
+                        throw ValidationException::withMessages([
+                            'phone' => ['Ce numéro de téléphone est déjà utilisé par un autre compte. Veuillez utiliser un numéro différent.'],
+                        ]);
+                    }
 
-        // 4) Marquer l'invitation comme acceptée
-        $invitation->accepted_at = now();
-        $invitation->co_owner_user_id = $user->id;
-        $invitation->save();
+                    $user = User::create([
+                        'email' => $invitation->email,
+                        'password' => Hash::make($data['password']),
+                        'phone' => $phoneFromInvitation,
+                        'email_verified_at' => now(),
+                    ]);
+                } else {
+                    // Vérifier si on essaie de mettre à jour avec un téléphone déjà utilisé par un autre utilisateur
+                    if ($phoneFromInvitation &&
+                        $user->phone !== $phoneFromInvitation &&
+                        User::where('phone', $phoneFromInvitation)->where('id', '!=', $user->id)->exists()) {
+                        throw ValidationException::withMessages([
+                            'phone' => ['Ce numéro de téléphone est déjà utilisé par un autre compte. Veuillez utiliser un numéro différent.'],
+                        ]);
+                    }
 
-        // 5) Générer un token pour connexion auto
-        $token = $user->createToken('co-owner-login')->plainTextToken;
+                    $user->password = Hash::make($data['password']);
+                    $user->email_verified_at = $user->email_verified_at ?? now();
+                    if ($phoneFromInvitation) {
+                        $user->phone = $phoneFromInvitation;
+                    }
+                    $user->save();
+                }
 
-        // ✅ EMAILS (les vrais)
-        // A) Bienvenue copropriétaire
-        $coOwnerTitle = 'Bienvenue ! Votre compte copropriétaire est activé ✅';
-        $coOwnerSubject = "🎉 Bienvenue sur {$this->appName()}";
-        $coOwnerContent = $this->welcomeCoOwnerContentHtml($user, $coOwner);
-        $this->trySendMail($user->email, $coOwnerSubject, $coOwnerTitle, $ref, $coOwnerContent);
+                // 2) Rôle co_owner
+                if (method_exists($user, 'assignRole')) {
+                    $user->assignRole('co_owner');
+                }
 
-        // B) Info bailleur
-        $landlordEmail = $this->resolveLandlordEmailFromCoOwnerInvitation($invitation);
-        if ($landlordEmail) {
-            $landlordTitle = 'Copropriétaire activé ✅';
-            $landlordSubject = "✅ Copropriétaire activé : {$user->email}";
-            $landlordContent = $this->landlordCoOwnerActivatedContentHtml($invitation, $user, $coOwner);
-            $this->trySendMail($landlordEmail, $landlordSubject, $landlordTitle, $ref, $landlordContent);
-        } else {
-            Log::warning('[auth-mail] landlord email missing (co-owner activation)', [
-                'invitation_id' => $invitation->id,
-                'landlord_id' => $invitation->landlord_id,
+                // 3) Créer / lier le CoOwner
+                $parts = preg_split('/\s+/', (string) $invitation->name, 2);
+                $firstName = $invitation->meta['first_name'] ?? $parts[0] ?? ($invitation->name ?? 'Copropriétaire');
+                $lastName  = $invitation->meta['last_name'] ?? $parts[1] ?? '';
+
+                // ✅ CORRECTION ICI : Utiliser updateOrCreate au lieu de firstOrCreate
+                $coOwner = CoOwner::updateOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'first_name' => $firstName,
+                        'last_name' => $lastName,
+                        'company_name' => $invitation->meta['company_name'] ?? null,
+                        'address_billing' => $invitation->meta['address_billing'] ?? null,
+                        'phone' => $invitation->meta['phone'] ?? null,
+                        'license_number' => $invitation->meta['license_number'] ?? null,
+                        'is_professional' => $invitation->meta['is_professional'] ?? false,
+                        'ifu' => $invitation->meta['ifu'] ?? null,
+                        'rccm' => $invitation->meta['rccm'] ?? null,
+                        'vat_number' => $invitation->meta['vat_number'] ?? null,
+                        'meta' => $invitation->meta ?? null,
+                        'landlord_id' => $invitation->landlord_id,
+                        'invitation_id' => $invitation->id,
+                        'status' => 'active',
+                        'joined_at' => now(),
+                    ]
+                );
+
+                // 4) Marquer l'invitation comme acceptée
+                $invitation->accepted_at = now();
+                $invitation->co_owner_user_id = $user->id;
+                $invitation->save();
+
+                // 5) Générer un token pour connexion auto
+                $token = $user->createToken('co-owner-login')->plainTextToken;
+
+                // ✅ EMAILS (les vrais)
+                // A) Bienvenue copropriétaire
+                $coOwnerTitle = 'Bienvenue ! Votre compte copropriétaire est activé ✅';
+                $coOwnerSubject = "🎉 Bienvenue sur {$this->appName()}";
+                $coOwnerContent = $this->welcomeCoOwnerContentHtml($user, $coOwner);
+                $this->trySendMail($user->email, $coOwnerSubject, $coOwnerTitle, $ref, $coOwnerContent);
+
+                // B) Info bailleur
+                $landlordEmail = $this->resolveLandlordEmailFromCoOwnerInvitation($invitation);
+                if ($landlordEmail) {
+                    $landlordTitle = 'Copropriétaire activé ✅';
+                    $landlordSubject = "✅ Copropriétaire activé : {$user->email}";
+                    $landlordContent = $this->landlordCoOwnerActivatedContentHtml($invitation, $user, $coOwner);
+                    $this->trySendMail($landlordEmail, $landlordSubject, $landlordTitle, $ref, $landlordContent);
+                } else {
+                    Log::warning('[auth-mail] landlord email missing (co-owner activation)', [
+                        'invitation_id' => $invitation->id,
+                        'landlord_id' => $invitation->landlord_id,
+                    ]);
+                }
+
+                return response()->json([
+                    'message' => 'Compte copropriétaire créé avec succès.',
+                    'token'   => $token,
+                    'user'    => [
+                        'id'    => $user->id,
+                        'email' => $user->email,
+                        'roles' => method_exists($user, 'getRoleNames')
+                            ? $user->getRoleNames()
+                            : ['co_owner'],
+                    ],
+                    'co_owner' => $coOwner,
+                ]);
+            });
+
+        } catch (ValidationException $e) {
+            // Erreur de validation (y compris notre vérification de téléphone)
+            throw $e;
+
+        } catch (QueryException $e) {
+            // Erreur SQL (contrainte d'unicité)
+            if ($e->getCode() == '23000' && str_contains($e->getMessage(), 'users_phone_unique')) {
+                Log::error('Erreur téléphone dupliqué lors de la création de co-owner', [
+                    'email' => $data['email'] ?? null,
+                    'phone' => $invitation->meta['phone'] ?? null,
+                    'error' => $e->getMessage(),
+                ]);
+
+                throw ValidationException::withMessages([
+                    'phone' => [
+                        'Ce numéro de téléphone est déjà utilisé dans le système. ' .
+                        'Si c\'est votre numéro, veuillez contacter l\'assistance. ' .
+                        'Sinon, utilisez un numéro différent.'
+                    ],
+                ]);
+            }
+
+            // Autre erreur SQL
+            Log::error('Erreur SQL lors de la création de co-owner', [
+                'email' => $data['email'] ?? null,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw ValidationException::withMessages([
+                'database' => ['Une erreur de base de données est survenue. Veuillez réessayer plus tard.'],
+            ]);
+
+        } catch (\Exception $e) {
+            // Erreur générale
+            Log::error('Erreur lors de la création de co-owner', [
+                'email' => $data['email'] ?? null,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            throw ValidationException::withMessages([
+                'general' => ['Une erreur est survenue lors de la création de votre compte. Veuillez réessayer.'],
             ]);
         }
-
-        return response()->json([
-            'message' => 'Compte copropriétaire créé avec succès.',
-            'token'   => $token,
-            'user'    => [
-                'id'    => $user->id,
-                'email' => $user->email,
-                'roles' => method_exists($user, 'getRoleNames')
-                    ? $user->getRoleNames()
-                    : ['co_owner'],
-            ],
-            'co_owner' => $coOwner,
-        ]);
     }
 
     private function resolveLandlordEmailFromCoOwnerInvitation(CoOwnerInvitation $invitation): ?string
@@ -548,108 +618,188 @@ HTML;
      */
     public function completeTenantRegistration(Request $request)
     {
-        $data = $request->validate([
-            'token' => 'required|string',
-            'email' => 'required|email',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
-
-        $invitation = TenantInvitation::where('token', $data['token'])
-            ->where('email', $data['email'])
-            ->whereNull('accepted_at')
-            ->where('expires_at', '>', now())
-            ->first();
-
-        if (! $invitation) {
-            throw ValidationException::withMessages([
-                'token' => ['Invitation invalide ou expirée.'],
+        try {
+            $data = $request->validate([
+                'token' => 'required|string',
+                'email' => 'required|email',
+                'password' => 'required|string|min:8|confirmed',
             ]);
-        }
 
-        // ✅ Prépare ref email
-        $ref = $this->invitationRef($invitation);
+            $invitation = TenantInvitation::where('token', $data['token'])
+                ->where('email', $data['email'])
+                ->whereNull('accepted_at')
+                ->where('expires_at', '>', now())
+                ->first();
 
-        // 1) Récupérer ou créer le user
-        $user = User::where('email', $data['email'])->first();
+            if (!$invitation) {
+                throw ValidationException::withMessages([
+                    'token' => ['Invitation invalide ou expirée.'],
+                ]);
+            }
 
-        if (! $user) {
-            $user = User::create([
+            Log::info('Tenant invitation found:', [
+                'id' => $invitation->id,
                 'email' => $invitation->email,
-                'password' => Hash::make($data['password']),
-                'phone' => null,
-                'email_verified_at' => now(),
+                'meta' => $invitation->meta,
+                'phone_in_meta' => $invitation->meta['phone'] ?? 'null'
             ]);
-        } else {
-            $user->password = Hash::make($data['password']);
-            $user->email_verified_at = $user->email_verified_at ?? now();
-            $user->save();
-        }
 
-        // 2) Rôle tenant
-        if (method_exists($user, 'assignRole')) {
-            $user->assignRole('tenant');
-        }
+            // ✅ Prépare ref email
+            $ref = $this->invitationRef($invitation);
 
-        // 3) Créer / lier le Tenant
-        $parts = preg_split('/\s+/', (string) $invitation->name, 2);
-        $firstName = $parts[0] ?? ($invitation->name ?? 'Locataire');
-        $lastName  = $parts[1] ?? '';
+            // Utiliser une transaction pour gérer les erreurs
+            return DB::transaction(function () use ($data, $invitation, $ref) {
+                // 1) Récupérer ou créer le user avec vérification du téléphone
+                $user = User::where('email', $data['email'])->first();
+                $phoneFromInvitation = $invitation->meta['phone'] ?? null;
 
-        $tenant = Tenant::firstOrCreate(
-            ['user_id' => $user->id],
-            [
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'status' => 'active',
-                'solvency_score' => 0,
-                'meta' => [
-                    'invitation_email' => $invitation->email,
-                    'landlord_id' => $invitation->landlord_id,
-                    'invitation_id' => $invitation->id,
-                ],
-            ]
-        );
+                if (!$user) {
+                    // Vérifier si le numéro de téléphone existe déjà avant de créer l'utilisateur
+                    if ($phoneFromInvitation && User::where('phone', $phoneFromInvitation)->exists()) {
+                        throw ValidationException::withMessages([
+                            'phone' => ['Ce numéro de téléphone est déjà utilisé par un autre compte. Veuillez utiliser un numéro différent.'],
+                        ]);
+                    }
 
-        // 4) Marquer l'invitation comme acceptée
-        $invitation->accepted_at = now();
-        $invitation->tenant_user_id = $user->id;
-        $invitation->save();
+                    $user = User::create([
+                        'email' => $invitation->email,
+                        'password' => Hash::make($data['password']),
+                        'phone' => $phoneFromInvitation,
+                        'email_verified_at' => now(),
+                    ]);
 
-        // 5) Générer un token pour connexion auto
-        $token = $user->createToken('tenant-login')->plainTextToken;
+                    Log::info('New tenant user created:', ['id' => $user->id, 'phone' => $user->phone]);
+                } else {
+                    // Vérifier si on essaie de mettre à jour avec un téléphone déjà utilisé par un autre utilisateur
+                    if ($phoneFromInvitation &&
+                        $user->phone !== $phoneFromInvitation &&
+                        User::where('phone', $phoneFromInvitation)->where('id', '!=', $user->id)->exists()) {
+                        throw ValidationException::withMessages([
+                            'phone' => ['Ce numéro de téléphone est déjà utilisé par un autre compte. Veuillez utiliser un numéro différent.'],
+                        ]);
+                    }
 
-        // ✅ EMAILS (les vrais)
-        // A) Bienvenue locataire
-        $tenantTitle = 'Bienvenue ! Votre compte est activé ✅';
-        $tenantSubject = "🎉 Bienvenue sur {$this->appName()}";
-        $tenantContent = $this->welcomeTenantContentHtml($user, $tenant);
-        $this->trySendMail($user->email, $tenantSubject, $tenantTitle, $ref, $tenantContent);
+                    $user->password = Hash::make($data['password']);
+                    $user->email_verified_at = $user->email_verified_at ?? now();
+                    if ($phoneFromInvitation) {
+                        $user->phone = $phoneFromInvitation;
+                    }
+                    $user->save();
 
-        // B) Info bailleur
-        $landlordEmail = $this->resolveLandlordEmailFromInvitation($invitation);
-        if ($landlordEmail) {
-            $landlordTitle = 'Locataire activé ✅';
-            $landlordSubject = "✅ Locataire activé : {$user->email}";
-            $landlordContent = $this->landlordTenantActivatedContentHtml($invitation, $user, $tenant);
-            $this->trySendMail($landlordEmail, $landlordSubject, $landlordTitle, $ref, $landlordContent);
-        } else {
-            Log::warning('[auth-mail] landlord email missing (tenant activation)', [
-                'invitation_id' => $invitation->id,
-                'landlord_id' => $invitation->landlord_id,
+                    Log::info('Existing tenant user updated:', ['id' => $user->id, 'phone' => $user->phone]);
+                }
+
+                // 2) Rôle tenant
+                if (method_exists($user, 'assignRole')) {
+                    $user->assignRole('tenant');
+                }
+
+                // 3) Créer / lier le Tenant
+                $parts = preg_split('/\s+/', (string) $invitation->name, 2);
+                $firstName = $parts[0] ?? ($invitation->name ?? 'Locataire');
+                $lastName  = $parts[1] ?? '';
+
+                $tenant = Tenant::firstOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'first_name' => $firstName,
+                        'last_name' => $lastName,
+                        'status' => 'active',
+                        'solvency_score' => 0,
+                        'meta' => [
+                            'invitation_email' => $invitation->email,
+                            'landlord_id' => $invitation->landlord_id,
+                            'invitation_id' => $invitation->id,
+                        ],
+                    ]
+                );
+
+                // 4) Marquer l'invitation comme acceptée
+                $invitation->accepted_at = now();
+                $invitation->tenant_user_id = $user->id;
+                $invitation->save();
+
+                // 5) Générer un token pour connexion auto
+                $token = $user->createToken('tenant-login')->plainTextToken;
+
+                // ✅ EMAILS (les vrais)
+                // A) Bienvenue locataire
+                $tenantTitle = 'Bienvenue ! Votre compte est activé ✅';
+                $tenantSubject = "🎉 Bienvenue sur {$this->appName()}";
+                $tenantContent = $this->welcomeTenantContentHtml($user, $tenant);
+                $this->trySendMail($user->email, $tenantSubject, $tenantTitle, $ref, $tenantContent);
+
+                // B) Info bailleur
+                $landlordEmail = $this->resolveLandlordEmailFromInvitation($invitation);
+                if ($landlordEmail) {
+                    $landlordTitle = 'Locataire activé ✅';
+                    $landlordSubject = "✅ Locataire activé : {$user->email}";
+                    $landlordContent = $this->landlordTenantActivatedContentHtml($invitation, $user, $tenant);
+                    $this->trySendMail($landlordEmail, $landlordSubject, $landlordTitle, $ref, $landlordContent);
+                } else {
+                    Log::warning('[auth-mail] landlord email missing (tenant activation)', [
+                        'invitation_id' => $invitation->id,
+                        'landlord_id' => $invitation->landlord_id,
+                    ]);
+                }
+
+                return response()->json([
+                    'message' => 'Compte locataire créé avec succès.',
+                    'token'   => $token,
+                    'user'    => [
+                        'id'    => $user->id,
+                        'email' => $user->email,
+                        'roles' => method_exists($user, 'getRoleNames')
+                            ? $user->getRoleNames()
+                            : ['tenant'],
+                    ],
+                    'tenant' => $tenant,
+                ]);
+            });
+
+        } catch (ValidationException $e) {
+            // Erreur de validation (y compris notre vérification de téléphone)
+            throw $e;
+
+        } catch (QueryException $e) {
+            // Erreur SQL (contrainte d'unicité)
+            if ($e->getCode() == '23000' && str_contains($e->getMessage(), 'users_phone_unique')) {
+                Log::error('Erreur téléphone dupliqué lors de la création de locataire', [
+                    'email' => $data['email'] ?? null,
+                    'phone' => $invitation->meta['phone'] ?? null,
+                    'error' => $e->getMessage(),
+                ]);
+
+                throw ValidationException::withMessages([
+                    'phone' => [
+                        'Ce numéro de téléphone est déjà utilisé dans le système. ' .
+                        'Si c\'est votre numéro, veuillez contacter l\'assistance. ' .
+                        'Sinon, utilisez un numéro différent.'
+                    ],
+                ]);
+            }
+
+            // Autre erreur SQL
+            Log::error('Erreur SQL lors de la création de locataire', [
+                'email' => $data['email'] ?? null,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw ValidationException::withMessages([
+                'database' => ['Une erreur de base de données est survenue. Veuillez réessayer plus tard.'],
+            ]);
+
+        } catch (\Exception $e) {
+            // Erreur générale
+            Log::error('Erreur lors de la création de locataire', [
+                'email' => $data['email'] ?? null,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            throw ValidationException::withMessages([
+                'general' => ['Une erreur est survenue lors de la création de votre compte. Veuillez réessayer.'],
             ]);
         }
-
-        return response()->json([
-            'message' => 'Compte locataire créé avec succès.',
-            'token'   => $token,
-            'user'    => [
-                'id'    => $user->id,
-                'email' => $user->email,
-                'roles' => method_exists($user, 'getRoleNames')
-                    ? $user->getRoleNames()
-                    : ['tenant'],
-            ],
-            'tenant' => $tenant,
-        ]);
     }
 }

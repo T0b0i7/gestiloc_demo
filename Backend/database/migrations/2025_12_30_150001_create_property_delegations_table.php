@@ -10,25 +10,25 @@ return new class extends Migration
     {
         Schema::create('property_delegations', function (Blueprint $table) {
             $table->id();
-            
+
             // Clés étrangères
             $table->foreignId('property_id')->constrained()->onDelete('cascade');
             $table->foreignId('landlord_id')->constrained()->onDelete('cascade');
-            
-            // Relation polymorphe pour le co-owner (landlord ou agency)
+
+         
             $table->unsignedBigInteger('co_owner_id')->nullable();
-            $table->string('co_owner_type')->nullable(); // 'landlord' ou 'agency'
-            
+            $table->string('co_owner_type')->nullable();
+
             // Statut et dates
             $table->enum('status', ['active', 'revoked', 'expired'])->default('active');
             $table->timestamp('delegated_at')->default(now());
             $table->timestamp('revoked_at')->nullable();
             $table->timestamp('expires_at')->nullable();
-            
+
             // Conditions de délégation
             $table->text('notes')->nullable();
             $table->json('permissions')->nullable(); // ex: ["manage_lease", "collect_rent", "manage_maintenance"]
-            
+
             $table->timestamps();
 
             // Index pour la performance

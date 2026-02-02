@@ -58,9 +58,8 @@ export type PayoutType = "bank" | "mobile_money" | "bank_card";
 
 /**
  * IMPORTANT:
- * Ton backend actuel ne valide QUE subaccount_reference (acc_xxx)
- * et ignore le reste.
- * On peut quand même garder les champs “payout” pour futur.
+ * Ton backend valide au minimum subaccount_reference (acc_xxx).
+ * Désormais, ton backend accepte AUSSI les champs de config et les stocke dans fedapay_meta.
  */
 export interface UpsertSubaccountPayload {
   subaccount_reference: string; // required by backend (acc_xxx)
@@ -71,13 +70,16 @@ export interface UpsertSubaccountPayload {
   currency?: string;
   account_name?: string;
 
+  // mobile money
   provider?: string;
   phone?: string;
 
+  // bank
   bank_name?: string;
   iban?: string;
   account_number?: string;
 
+  // card token
   card_token?: string;
   card_last4?: string;
   card_brand?: string;
@@ -142,8 +144,7 @@ const normalizeAccRef = (raw: string) => {
   // déjà bon
   if (ACC_REF_REGEX.test(v)) return v;
 
-  // si on a "acc_1" => ok, sinon on fabrique "acc_<alnum>"
-  // on garde uniquement alphanum
+  // on fabrique acc_<alnum>
   const only = v.replace(/[^A-Za-z0-9]/g, "");
   const token = only.length ? only : Date.now().toString(36);
 
@@ -199,12 +200,11 @@ const validateCreateInvoicePayload = (p: CreateInvoicePayload) => {
 };
 
 /* =========================
-   PROFILE MAPPING (fix “Aucun moyen enregistré”)
+   PROFILE MAPPING
 ========================= */
 
 const mapFedapayProfile = (data: any): LandlordFedapayProfile => {
-  // Ton backend: { subaccount_reference, is_ready, fedapay_meta }
-  // Ancien front: { fedapay_subaccount_id, fedapay_meta }
+  // Backend: { fedapay_subaccount_id, subaccount_reference, is_ready, fedapay_meta }
   const ref =
     data?.fedapay_subaccount_id ??
     data?.subaccount_reference ??
@@ -216,6 +216,58 @@ const mapFedapayProfile = (data: any): LandlordFedapayProfile => {
     fedapay_meta: data?.fedapay_meta ?? null,
     is_ready: typeof data?.is_ready === "boolean" ? data.is_ready : undefined,
   };
+};
+
+/* =========================
+   UPSERT NORMALIZATION (Withdrawal)
+========================= */
+
+const normalizeUpsertSubaccountPayload = (payload: UpsertSubaccountPayload): UpsertSubaccountPayload => {
+  const normalizedRef = normalizeAccRef(payload.subaccount_reference);
+
+  const clean: UpsertSubaccountPayload = {
+    ...payload,
+    subaccount_reference: normalizedRef,
+  };
+
+  // normalisation légère
+  if (clean.country) clean.country = String(clean.country).trim().toUpperCase();
+  if (clean.currency) clean.currency = String(clean.currency).trim().toUpperCase();
+  if (clean.account_name) clean.account_name = String(clean.account_name).trim();
+
+  if (clean.provider) clean.provider = String(clean.provider).trim();
+  if (clean.phone) clean.phone = String(clean.phone).trim();
+
+  if (clean.bank_name) clean.bank_name = String(clean.bank_name).trim();
+  if (clean.iban) clean.iban = String(clean.iban).trim();
+  if (clean.account_number) clean.account_number = String(clean.account_number).trim();
+
+  if (clean.card_token) clean.card_token = String(clean.card_token).trim();
+  if (clean.card_brand) clean.card_brand = String(clean.card_brand).trim();
+  if (clean.card_last4) clean.card_last4 = String(clean.card_last4).trim();
+  if (clean.card_exp_month) clean.card_exp_month = String(clean.card_exp_month).trim();
+  if (clean.card_exp_year) clean.card_exp_year = String(clean.card_exp_year).trim();
+
+  return clean;
+};
+
+const validateUpsertSubaccountPayload = (p: UpsertSubaccountPayload) => {
+  const errors: string[] = [];
+
+  if (!isNonEmpty(p.subaccount_reference)) errors.push("subaccount_reference est requis");
+  if (!validateAccRef(p.subaccount_reference)) errors.push("subaccount_reference invalide (attendu: acc_XXXX)");
+
+  // Le backend accepte nullable sur ces champs, donc validation légère.
+  // On garde quand même une logique UI minimum si tu veux.
+  if (p.payout_type && !["bank", "mobile_money", "bank_card"].includes(p.payout_type)) {
+    errors.push("payout_type invalide");
+  }
+
+  if (errors.length) {
+    const e = new Error(errors.join(" | "));
+    (e as any).code = "FRONT_VALIDATION";
+    throw e;
+  }
 };
 
 /* =========================
@@ -287,7 +339,7 @@ export const landlordPayments = {
     }
   },
 
-  // 4) Get fedapay profile (✅ fixed mapping)
+  // 4) Get fedapay profile
   async getFedapayProfile(): Promise<LandlordFedapayProfile> {
     console.log("[landlordPayments.getFedapayProfile] GET /landlord/fedapay");
 
@@ -304,19 +356,65 @@ export const landlordPayments = {
     }
   },
 
-  // 5) Save / update subaccount_reference (✅ avoid 422 format invalid)
+  // 5) Save / update subaccount_reference + meta (✅ now sends full payload)
   async createOrUpdateSubaccount(payload: UpsertSubaccountPayload): Promise<any> {
-    const normalizedRef = normalizeAccRef(payload.subaccount_reference);
+    const normalized = normalizeUpsertSubaccountPayload(payload);
 
-    if (!validateAccRef(normalizedRef)) {
-      throw new Error("subaccount_reference invalide (attendu: acc_XXXX)");
+    validateUpsertSubaccountPayload(normalized);
+
+    // ✅ On envoie TOUT : le backend stocke ces champs dans fedapay_meta
+    // (et utilise subaccount_reference pour fedapay_subaccount_id)
+    const body: Record<string, any> = {
+      subaccount_reference: normalized.subaccount_reference,
+
+      payout_type: normalized.payout_type ?? null,
+      country: normalized.country ?? null,
+      currency: normalized.currency ?? null,
+      account_name: normalized.account_name ?? null,
+
+      provider: normalized.provider ?? null,
+      phone: normalized.phone ?? null,
+
+      bank_name: normalized.bank_name ?? null,
+      iban: normalized.iban ?? null,
+      account_number: normalized.account_number ?? null,
+
+      card_token: normalized.card_token ?? null,
+      card_last4: normalized.card_last4 ?? null,
+      card_brand: normalized.card_brand ?? null,
+      card_exp_month: normalized.card_exp_month ?? null,
+      card_exp_year: normalized.card_exp_year ?? null,
+    };
+
+    // petite optimisation: ne pas envoyer les champs non pertinents selon payout_type
+    // (le backend accepte nullable, mais ça évite d’écraser des infos par null)
+    if (normalized.payout_type === "mobile_money") {
+      delete body.bank_name;
+      delete body.iban;
+      delete body.account_number;
+      delete body.card_token;
+      delete body.card_last4;
+      delete body.card_brand;
+      delete body.card_exp_month;
+      delete body.card_exp_year;
+    } else if (normalized.payout_type === "bank") {
+      delete body.provider;
+      delete body.phone;
+      delete body.card_token;
+      delete body.card_last4;
+      delete body.card_brand;
+      delete body.card_exp_month;
+      delete body.card_exp_year;
+    } else if (normalized.payout_type === "bank_card") {
+      delete body.provider;
+      delete body.phone;
+      delete body.bank_name;
+      delete body.iban;
+      delete body.account_number;
     }
 
-    // ⚠️ Ton backend ne valide que subaccount_reference.
-    // On envoie seulement ça => zéro risque de validation future.
-    const body = { subaccount_reference: normalizedRef };
-
     console.log("[landlordPayments.createOrUpdateSubaccount] payload(raw) =>", payload);
+    console.log("[landlordPayments.createOrUpdateSubaccount] payload(normalized) =>", normalized);
     console.log("[landlordPayments.createOrUpdateSubaccount] body(sent) =>", body);
 
     try {

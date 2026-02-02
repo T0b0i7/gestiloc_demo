@@ -5,8 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class PropertyDelegation extends Model
 {
@@ -16,13 +14,14 @@ class PropertyDelegation extends Model
         'property_id',
         'landlord_id',
         'co_owner_id',
-        'co_owner_type',
+        'co_owner_type', // 'co_owner' ou 'agency'
         'status',
         'delegated_at',
         'revoked_at',
         'expires_at',
         'notes',
         'permissions',
+        'delegation_type',
     ];
 
     protected $casts = [
@@ -49,11 +48,11 @@ class PropertyDelegation extends Model
     }
 
     /**
-     * Le copropriétaire qui reçoit la délégation (relation polymorphe)
+     * RELATION SIMPLE : Un co-owner (pas de morphTo)
      */
-    public function coOwner(): MorphTo
+    public function coOwner(): BelongsTo
     {
-        return $this->morphTo();
+        return $this->belongsTo(CoOwner::class, 'co_owner_id');
     }
 
     /**
@@ -61,7 +60,7 @@ class PropertyDelegation extends Model
      */
     public function isActive(): bool
     {
-        return $this->status === 'active' 
+        return $this->status === 'active'
             && (!$this->expires_at || $this->expires_at->isFuture());
     }
 
@@ -70,7 +69,7 @@ class PropertyDelegation extends Model
      */
     public function hasPermission(string $permission): bool
     {
-        return $this->isActive() 
+        return $this->isActive()
             && in_array($permission, $this->permissions ?? []);
     }
 }

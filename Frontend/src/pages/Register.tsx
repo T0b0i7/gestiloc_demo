@@ -173,9 +173,13 @@ export default function Register() {
               <Input
                 id="password"
                 type="password"
+                placeholder="Ex : G3$t!L0c/2026***"
                 {...register("password")}
                 aria-invalid={errors.password ? "true" : "false"}
               />
+              <p className="text-xs text-muted-foreground">
+                Le mot de passe doit contenir au moins 8 caractères, avec des lettres, des chiffres et des caractères spéciaux.
+              </p>
               {errors.password && (
                 <p className="text-sm text-destructive" role="alert">
                   {errors.password.message}
@@ -188,6 +192,7 @@ export default function Register() {
               <Input
                 id="confirmPassword"
                 type="password"
+                placeholder="Répétez le mot de passe"
                 {...register("confirmPassword")}
                 aria-invalid={errors.confirmPassword ? "true" : "false"}
               />

@@ -8,6 +8,7 @@ use App\Models\PropertyDelegation;
 use App\Models\User;
 use App\Models\Lease;
 use App\Models\PropertyConditionReport;
+use App\Models\PropertyUser;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Str;
 
 class Property extends Model
@@ -70,18 +72,67 @@ class Property extends Model
     }
 
     /**
-     * Tous les locataires passés/présents du bien, via les baux.
+     * ✅ NOUVELLE RELATION : Locataires via property_user
      */
-    public function tenants(): HasManyThrough
+    public function tenants(): BelongsToMany
     {
-        return $this->hasManyThrough(
-            Tenant::class,  // modèle final
-            Lease::class,   // modèle intermédiaire
-            'property_id',  // clé étrangère sur leases
-            'id',           // clé primaire sur tenants
-            'id',           // clé locale sur properties
-            'tenant_id'     // clé locale sur leases
-        );
+        return $this->belongsToMany(Tenant::class, 'property_user', 'property_id', 'tenant_id')
+                    ->withPivot('id', 'user_id', 'role', 'share_percentage', 'start_date', 'end_date', 'status', 'lease_id', 'landlord_id')
+                    ->withTimestamps();
+    }
+
+    /**
+     * ✅ NOUVELLE RELATION : Assignations property_user
+     */
+    public function propertyAssignments(): HasMany
+    {
+        return $this->hasMany(PropertyUser::class, 'property_id');
+    }
+
+    /**
+     * ✅ Locataires actuellement actifs sur le bien
+     */
+    public function currentTenants(): BelongsToMany
+    {
+        return $this->tenants()
+            ->wherePivot('status', 'active')
+            ->where(function($query) {
+                $query->whereNull('property_user.end_date')
+                      ->orWhere('property_user.end_date', '>=', now());
+            });
+    }
+
+    /**
+     * ✅ Anciens locataires du bien
+     */
+    public function pastTenants(): BelongsToMany
+    {
+        return $this->tenants()
+            ->where(function($query) {
+                $query->where('property_user.status', 'terminated')
+                      ->orWhere(function($q) {
+                          $q->where('property_user.status', 'active')
+                            ->where('property_user.end_date', '<', now());
+                      });
+            });
+    }
+
+    /**
+     * ✅ Vérifie si le bien est actuellement occupé
+     */
+    public function isCurrentlyOccupied(): bool
+    {
+        return $this->currentTenants()->exists();
+    }
+
+    /**
+     * ✅ Récupère l'historique complet d'occupation
+     */
+    public function getOccupancyHistory()
+    {
+        return $this->tenants()
+            ->orderBy('property_user.start_date', 'desc')
+            ->get();
     }
 
     /**
@@ -119,4 +170,33 @@ class Property extends Model
     {
         return $query->where('city', $city);
     }
+
+    /**
+     * ✅ NOUVEAU SCOPE : Biens avec locataires actifs
+     */
+    public function scopeOccupied($query)
+    {
+        return $query->whereHas('currentTenants');
+    }
+
+    /**
+     * ✅ NOUVEAU SCOPE : Biens disponibles (sans locataires actifs)
+     */
+    public function scopeVacant($query)
+    {
+        return $query->whereDoesntHave('currentTenants');
+    }
+
+    /**
+     * ✅ NOUVEAU SCOPE : Biens d'un locataire spécifique
+     */
+    public function scopeOfTenant($query, $tenantId)
+    {
+        return $query->whereHas('tenants', function($q) use ($tenantId) {
+            $q->where('tenants.id', $tenantId);
+        });
+    }
+
+
+    
 }

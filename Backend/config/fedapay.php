@@ -10,4 +10,5 @@ return [
     'currency' => env('FEDAPAY_CURRENCY', 'XOF'),
     'commission_rate' => (float) env('FEDAPAY_COMMISSION_RATE'),
     'front_url' => env('FRONT_URL', 'http://localhost:8080'),
+    'back_url' => env('FEDAPAY_BACK_URL', env('APP_URL')),
 ];

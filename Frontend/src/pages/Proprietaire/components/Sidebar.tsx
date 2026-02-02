@@ -19,7 +19,6 @@ import {
   LogOut 
 } from 'lucide-react';
 import { Tab } from '../types';
-import { useAppContext } from '../../../context/AppContext';
 
 interface SidebarProps {
   activeTab: Tab;
@@ -47,8 +46,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onClose, 
   onLogout 
 }) => {
-  const { t } = useAppContext();
   const [expandedMenus, setExpandedMenus] = React.useState<string[]>([]);
+
+  // Fonction de traduction simplifiée
+  const t = (key: string, fallback: string) => fallback;
 
   const toggleMenu = (menuId: string) => {
     setExpandedMenus(prev =>
@@ -106,6 +107,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
           id: 'list-tenants', 
           label: t('sidebar.tenantsList', 'Liste des locataires'), 
           icon: Users 
+        }
+      ]
+    },
+    { 
+      id: 'coproprietaires', 
+      label: t('sidebar.coOwners', 'Co-propriétaires'), 
+      icon: Users,
+      submenu: [
+        { 
+          id: 'coproprietaires', 
+          label: t('sidebar.coOwnersList', 'Liste des co-propriétaires'), 
+          icon: Users 
+        },
+        { 
+          id: 'inviter-coproprietaire', 
+          label: t('sidebar.inviteCoOwner', 'Inviter un co-propriétaire'), 
+          icon: UserPlus 
         }
       ]
     },

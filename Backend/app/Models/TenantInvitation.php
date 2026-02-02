@@ -19,12 +19,14 @@ class TenantInvitation extends Model
         'name',
         'token',
         'expires_at',
-        'used'
+        'used',
+        'meta'
     ];
 
     protected $casts = [
         'expires_at' => 'datetime',
         'used' => 'boolean',
+        'meta' => 'array',
     ];
 
     public static function makeToken(): string

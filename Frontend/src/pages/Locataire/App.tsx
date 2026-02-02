@@ -35,6 +35,7 @@ const AppContent = () => {
   const navigate = useNavigate();
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [user, setUser] = useState<UserData | null>(null);
+  const [toastIdCounter, setToastIdCounter] = useState(0);
 
   // Récupère l'onglet actif à partir de l'URL
   const getActiveTab = useCallback((): Tab => {
@@ -117,8 +118,9 @@ const AppContent = () => {
 
   // Toast System
   const notify = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    const id = Date.now();
+    const id = toastIdCounter + 1;
     setToasts(prev => [...prev, { id, message, type }]);
+    setToastIdCounter(id);
   };
 
   const removeToast = (id: number) => {

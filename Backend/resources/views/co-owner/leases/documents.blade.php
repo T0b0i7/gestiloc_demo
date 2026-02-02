@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documents du bail - {{ $lease->property->name ?? 'Bien sans nom' }}</title>
+     <link rel="shortcut icon" href="{{ asset('images/logo.webp') }}" type="image/x-icon">
+
+    <!-- Import des icônes Lucide -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+    <style>
+        :root {
+            --gradA: #667eea;
+            --gradB: #764ba2;
+            --indigo: #4f46e5;
+            --violet: #7c3aed;
+            --emerald: #10b981;
+            --ink: #0f172a;
+            --muted: #64748b;
+            --muted2: #94a3b8;
+            --line: rgba(15, 23, 42, .10);
+            --line2: rgba(15, 23, 42, .08);
+            --shadow: 0 22px 70px rgba(0, 0, 0, .18);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            min-height: 100vh;
+            background-color: white;
+        }
+
+        .app-container {
+            display: flex;
+            height: 100vh;
+            background: white;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            width: 256px;
+            flex-shrink: 0;
+            background: white;
+            border-right: 1px solid #e5e7eb;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            height: 64px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.25rem;
+            font-weight: bold;
+            background: linear-gradient(to right, #4f46e5, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 1.5rem 1rem;
+            overflow-y: auto;
+        }
+
+        .menu-item {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.875rem 1rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            border-radius: 1rem;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            cursor: pointer;
+            background: transparent;
+            color: #374151;
+        }
+
+        .menu-item:hover {
+            background: #eff6ff;
+            color: #2563eb;
+            border-color: #dbeafe;
+        }
+
+        .menu-item.active {
+            background: linear-gradient(to right, #2563eb, #3b82f6);
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+        }
+
+        .menu-item-content {
+            display: flex;
+            align-items: center;
+            gap: 0.875rem;
+        }
+
+        .submenu {
+            padding-left: 2rem;
+            display: none;
+        }
+
+        .submenu-item {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.25rem;
+            font-size: 0.875rem;
+            border-radius: 0.75rem;
+            background: transparent;
+            color: #374151;
+            cursor: pointer;
+            border: none;
+            text-align: left;
+        }
+
+        .submenu-item:hover {
+            background: #f3f4f6;
+            color: #2563eb;
+        }
+
+        .submenu-item.active {
+            background: linear-gradient(to right, #2563eb, #3b82f6);
+            color: white;
+        }
+
+        .sidebar-footer {
+            padding: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .user-avatar {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 9999px;
+            background: linear-gradient(to right, #3b82f6, #2563eb);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.875rem;
+            font-weight: bold;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .user-role {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .top-bar {
+            height: 64px;
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            background: white;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 0;
+                height: 100vh;
+                z-index: 50;
+                transition: left 0.3s ease;
+                box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 40;
+                display: none;
+            }
+
+            .overlay.active {
+                display: block;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+        }
+
+        .content-container {
+            min-height: 100vh;
+            background: #ffffff;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .content-container::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(900px 520px at 12% -8%, rgba(102, 126, 234, .16) 0%, rgba(102, 126, 234, 0) 62%),
+                radial-gradient(900px 520px at 92% 8%, rgba(118, 75, 162, .14) 0%, rgba(118, 75, 162, 0) 64%),
+                radial-gradient(700px 420px at 40% 110%, rgba(16, 185, 129, .10) 0%, rgba(16, 185, 129, 0) 60%);
+            pointer-events: none;
+            z-index: -2;
+        }
+
+        .content-card {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, .92);
+            border-radius: 22px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            border: 1px solid rgba(102, 126, 234, .18);
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        .content-header {
+            background: linear-gradient(135deg, var(--gradA) 0%, var(--gradB) 100%);
+            padding: 2.5rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .content-header h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            margin: 0 0 0.6rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+
+        .content-header p {
+            opacity: 0.9;
+            font-weight: 650;
+            font-size: 0.95rem;
+        }
+
+        .content-body {
+            padding: 2.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .top-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .button {
+            padding: 0.9rem 1.35rem;
+            border-radius: 14px;
+            font-weight: 950;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: inherit;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+
+        .button-primary {
+            background: linear-gradient(135deg, var(--indigo) 0%, var(--violet) 100%);
+            color: #fff;
+            box-shadow: 0 14px 30px rgba(79, 70, 229, .22);
+        }
+
+        .button-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 18px 34px rgba(79, 70, 229, .28);
+        }
+
+        .button-secondary {
+            background: rgba(255, 255, 255, .92);
+            color: #4338ca;
+            border: 2px solid rgba(67, 56, 202, .20);
+        }
+
+        .button-secondary:hover {
+            background: rgba(67, 56, 202, .06);
+        }
+
+        .button-success {
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+            color: #fff;
+            box-shadow: 0 14px 30px rgba(16, 185, 129, .22);
+        }
+
+        .button-success:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 18px 34px rgba(16, 185, 129, .28);
+        }
+
+        .alert-box {
+            border-radius: 14px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid;
+            font-weight: 850;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .alert-info {
+            background: rgba(239, 246, 255, .92);
+            border-color: rgba(59, 130, 246, .30);
+            color: #1e40af;
+        }
+
+        .alert-success {
+            background: rgba(240, 253, 244, .92);
+            border-color: rgba(74, 222, 128, .30);
+            color: #166534;
+        }
+
+        .alert-error {
+            background: rgba(254, 242, 242, .92);
+            border-color: rgba(248, 113, 113, .30);
+            color: #991b1b;
+        }
+
+        .lease-info-card {
+            background: rgba(255, 255, 255, .95);
+            border: 2px solid rgba(102, 126, 234, .15);
+            border-radius: 16px;
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, .05);
+        }
+
+        .lease-info-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .lease-title {
+            font-size: 1.4rem;
+            font-weight: 950;
+            color: var(--ink);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .lease-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .detail-label {
+            font-size: 0.85rem;
+            font-weight: 850;
+            color: var(--muted);
+        }
+
+        .detail-value {
+            font-size: 1.1rem;
+            font-weight: 950;
+            color: var(--ink);
+        }
+
+        .documents-section {
+            margin-top: 2rem;
+        }
+
+        .documents-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 950;
+            color: var(--ink);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .documents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .document-card {
+            background: rgba(255, 255, 255, .95);
+            border: 2px solid rgba(148, 163, 184, .15);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .document-card:hover {
+            border-color: rgba(102, 126, 234, .35);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, .15);
+            transform: translateY(-2px);
+        }
+
+        .document-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .document-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: rgba(59, 130, 246, .15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1d4ed8;
+            flex-shrink: 0;
+        }
+
+        .document-info {
+            flex: 1;
+        }
+
+        .document-name {
+            font-size: 1rem;
+            font-weight: 950;
+            color: var(--ink);
+            margin-bottom: 0.25rem;
+            word-break: break-word;
+        }
+
+        .document-meta {
+            font-size: 0.85rem;
+            color: var(--muted);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .document-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+            border-radius: 10px;
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, .10);
+            color: #dc2626;
+            border: 2px solid rgba(239, 68, 68, .20);
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, .15);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            border: 2px dashed rgba(148, 163, 184, .35);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, .72);
+        }
+
+        .empty-state-icon {
+            margin: 0 auto 1rem;
+            width: 64px;
+            height: 64px;
+            color: #94a3b8;
+        }
+
+        .empty-state-title {
+            font-size: 1.1rem;
+            font-weight: 950;
+            color: #475569;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state-text {
+            color: #64748b;
+            font-weight: 650;
+            margin-bottom: 1.5rem;
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 850;
+        }
+
+        .badge-active {
+            background: rgba(34, 197, 94, .15);
+            color: #166534;
+            border: 1px solid rgba(34, 197, 94, .25);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="overlay" id="overlay"></div>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1>GestiLoc</h1>
+            </div>
+
+            <nav class="sidebar-nav">
+                <!-- Tableau de bord -->
+                <button class="menu-item" onclick="goToReact('/coproprietaire/dashboard')">
+                    <div class="menu-item-content">
+                        <i data-lucide="layout-dashboard"></i>
+                        <span>Tableau de bord</span>
+                    </div>
+                </button>
+
+                <!-- Gestion des Biens -->
+                <div class="menu-item has-submenu" onclick="toggleSubmenu('biens-menu')">
+                    <div class="menu-item-content">
+                        <i data-lucide="building"></i>
+                        <span>Gestion des Biens</span>
+                    </div>
+                    <i data-lucide="chevron-down"></i>
+                </div>
+                <div class="submenu" id="biens-menu" style="display: none;">
+                    <button class="submenu-item" onclick="goToReact('/coproprietaire/biens')">
+                        <span>Mes biens délégués</span>
+                    </button>
+                    <button class="submenu-item" onclick="goToReact('/coproprietaire/delegations')">
+                        <span>Délégations reçues</span>
+                    </button>
+                </div>
+
+                <!-- Gestion Locative -->
+                <div class="menu-item has-submenu active" onclick="toggleSubmenu('locative-menu')">
+                    <div class="menu-item-content">
+                        <i data-lucide="file-signature"></i>
+                        <span>Gestion Locative</span>
+                    </div>
+                    <i data-lucide="chevron-down"></i>
+                </div>
+                <div class="submenu" id="locative-menu" style="display: block;">
+                    <button class="submenu-item" onclick="navigateTo('/coproprietaire/tenants')">
+                        <span>Liste des locataires</span>
+                    </button>
+                    <button class="submenu-item" onclick="navigateTo('/coproprietaire/tenants/create')">
+                        <span>Créer un locataire</span>
+                    </button>
+                    <button class="submenu-item" onclick="navigateTo('/coproprietaire/assign-property/create')">
+                        <span>Assigner un bien</span>
+                    </button>
+                    <button class="submenu-item" onclick="navigateTo('/coproprietaire/leases')">
+                        <span>Baux en cours</span>
+                    </button>
+                    <button class="submenu-item active">
+                        <span>Documents du bail</span>
+                    </button>
+                    <button class="submenu-item" onclick="goToReact('/coproprietaire/quittances')">
+                        <span>Quittances</span>
+                    </button>
+                </div>
+
+                <!-- Documents -->
+                <div class="menu-item has-submenu" onclick="toggleSubmenu('documents-menu')">
+                    <div class="menu-item-content">
+                        <i data-lucide="file-text"></i>
+                        <span>Documents</span>
+                    </div>
+                    <i data-lucide="chevron-down"></i>
+                </div>
+                <div class="submenu" id="documents-menu" style="display: none;">
+                    <button class="submenu-item" onclick="goToReact('/coproprietaire/documents')">
+                        <span>Mes documents</span>
+                    </button>
+                    <button class="submenu-item" onclick="goToReact('/coproprietaire/finances')">
+                        <span>Finances</span>
+                    </button>
+                </div>
+
+                <!-- Profil -->
+                <button class="menu-item" onclick="goToReact('/coproprietaire/profile')">
+                    <div class="menu-item-content">
+                        <i data-lucide="user"></i>
+                        <span>Profil</span>
+                    </div>
+                </button>
+
+                <!-- Délégations -->
+                <div class="menu-item has-submenu" onclick="toggleSubmenu('delegations-menu')">
+                    <div class="menu-item-content">
+                        <i data-lucide="users"></i>
+                        <span>Délégations</span>
+                    </div>
+                    <i data-lucide="chevron-down"></i>
+                </div>
+                <div class="submenu" id="delegations-menu" style="display: none;">
+                    <button class="submenu-item" onclick="goToReact('/coproprietaire/mes-delegations')">
+                        <span>Mes délégations</span>
+                    </button>
+                    <button class="submenu-item" onclick="goToReact('/coproprietaire/demandes-delegation')">
+                        <span>Demandes reçues</span>
+                    </button>
+                    <button class="submenu-item" onclick="goToReact('/coproprietaire/inviter-proprietaire')">
+                        <span>Inviter un propriétaire</span>
+                    </button>
+                </div>
+
+                <!-- Finances -->
+                <div class="menu-item has-submenu" onclick="toggleSubmenu('finances-menu')">
+                    <div class="menu-item-content">
+                        <i data-lucide="credit-card"></i>
+                        <span>Finances</span>
+                    </div>
+                    <i data-lucide="chevron-down"></i>
+                </div>
+                <div class="submenu" id="finances-menu" style="display: none;">
+                    <button class="submenu-item" onclick="goToReact('/coproprietaire/emettre-paiement')">
+                        <span>Émettre un paiement</span>
+                    </button>
+                    <button class="submenu-item" onclick="goToReact('/coproprietaire/retrait-methode')">
+                        <span>Méthode de retrait</span>
+                    </button>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar">C</div>
+                    <div class="user-info">
+                        <div class="user-name">Co-propriétaire</div>
+                        <div class="user-role">Co-propriétaire</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <div class="main-content">
+            <!-- Top bar -->
+            <header class="top-bar">
+                <button class="mobile-menu-btn" onclick="toggleSidebar()" style="display: none;">
+                    <i data-lucide="menu"></i>
+                </button>
+
+            </header>
+
+            <!-- Contenu -->
+            <div class="content-container">
+                <div class="content-card">
+                    <div class="content-header">
+                        <h1>
+                            <i data-lucide="folder-open" style="width: 32px; height: 32px;"></i>
+                            Documents du bail
+                        </h1>
+                        <p>Contrat de location pour {{ $lease->property->name ?? 'Bien sans nom' }}</p>
+                    </div>
+
+                    <div class="content-body">
+                        <div class="top-actions">
+                            <button onclick="history.back()" class="button button-secondary">
+                                <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>
+                                Retour aux baux
+                            </button>
+                            <div class="top-actions-right">
+                                <a href="{{ route('co-owner.leases.documents.download', $lease) }}"
+                                    class="button button-primary">
+                                    <i data-lucide="file-text" style="width: 16px; height: 16px;"></i>
+                                    Télécharger le contrat PDF
+                                </a>
+                                <a href="{{ route('co-owner.leases.documents.preview', $lease) }}" target="_blank"
+                                    class="button button-success">
+                                    <i data-lucide="eye" style="width: 16px; height: 16px;"></i>
+                                    Prévisualiser
+                                </a>
+                            </div>
+                        </div>
+
+                        @if (session('error'))
+                            <div class="alert-box alert-error">
+                                <i data-lucide="alert-circle" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
+                                <div>
+                                    <strong>Erreur</strong>
+                                    <p style="margin-top: 4px; font-weight: 650; font-size: 0.9rem;">
+                                        {{ session('error') }}</p>
+                                </div>
+                            </div>
+                        @endif
+
+                        @if (session('success'))
+                            <div class="alert-box alert-success">
+                                <i data-lucide="check-circle" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
+                                <div>
+                                    <strong>Succès</strong>
+                                    <p style="margin-top: 4px; font-weight: 650; font-size: 0.9rem;">
+                                        {{ session('success') }}</p>
+                                </div>
+                            </div>
+                        @endif
+
+                        <!-- Informations du bail -->
+                        <div class="lease-info-card">
+                            <div class="lease-info-header">
+                                <div class="lease-title">
+                                    <i data-lucide="home" style="width: 24px; height: 24px;"></i>
+                                    {{ $lease->property->name ?? 'Bien sans nom' }}
+                                    <span class="badge badge-active">
+                                        <i data-lucide="check-circle" style="width: 12px; height: 12px;"></i>
+                                        Actif
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="lease-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">Locataire</span>
+                                    <span class="detail-value">
+                                        {{ $lease->tenant->first_name }} {{ $lease->tenant->last_name }}
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Loyer mensuel</span>
+                                    <span class="detail-value">
+                                        {{ number_format($lease->rent_amount, 0, ',', ' ') }} FCFA
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Charges</span>
+                                    <span class="detail-value">
+                                        {{ number_format($lease->charges_amount, 0, ',', ' ') }} FCFA
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Début du bail</span>
+                                    <span class="detail-value">
+                                        {{ $lease->start_date->format('d/m/Y') }}
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Durée</span>
+                                    <span class="detail-value">
+                                        {{ $lease->end_date ? 'Déterminée' : 'Indéterminée' }}
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Type de bail</span>
+                                    <span class="detail-value">
+                                        {{ $lease->type === 'meuble' ? 'Meublé' : 'Non meublé' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                       <!-- Documents existants -->
+<div class="documents-section">
+<div class="documents-header"
+     style="
+        background: linear-gradient(135deg, #1d4ed8, #2563eb);
+        color: #ffffff;
+        padding: 16px 20px;
+        border-radius: 14px;
+        box-shadow: 0 10px 25px rgba(29, 78, 216, 0.25);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+     ">
+    <i data-lucide="files" style="width: 22px; height: 22px;"></i>
+    <h2 class="section-title" style="margin: 0; font-weight: 600; color:#ffffff;">
+        Historique des documents
+    </h2>
+</div>
+
+
+    @if(count($documents) == 0)
+        <div class="empty-state">
+            <i data-lucide="file-text" class="empty-state-icon" style="width: 64px; height: 64px;"></i>
+            <h3 class="empty-state-title">Aucun document généré</h3>
+            <p class="empty-state-text">Générez votre premier contrat de bail en cliquant sur "Télécharger le contrat PDF".</p>
+        </div>
+    @else
+        <div class="documents-grid">
+            @foreach($documents as $document)
+                <div class="document-card">
+                    <div class="document-header">
+                        <div class="document-icon">
+                            <i data-lucide="file-text" style="width: 24px; height: 24px;"></i>
+                        </div>
+                        <div class="document-info">
+                            <div class="document-name">{{ $document['original_name'] ?? $document['filename'] }}</div>
+                            <div class="document-meta">
+                                <span>{{ strtoupper($document['type'] ?? 'DOCUMENT') }}</span>
+                                <span>•</span>
+                                <span>{{ isset($document['created_at']) ? \Carbon\Carbon::parse($document['created_at'])->format('d/m/Y H:i') : 'Date inconnue' }}</span>
+                                @if(isset($document['size']))
+                                    <span>•</span>
+                                    <span>{{ round($document['size'] / 1024, 1) }} KB</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    <div class="document-actions">
+                        <a href="{{ route('co-owner.leases.documents.download', $lease) }}?regenerate=true"
+                           class="button button-secondary btn-sm">
+                            <i data-lucide="download" style="width: 14px; height: 14px;"></i>
+                            Retélécharger
+                        </a>
+
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @endif
+</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialiser les icônes
+        lucide.createIcons();
+
+        // Fonction UNIFIÉE - React sur 8080, Laravel sur 8000
+        function goToReact(path) {
+            const token = localStorage.getItem('token') || getUrlParam('api_token');
+
+            if (!token) {
+                alert('Session expirée, veuillez vous reconnecter');
+                window.location.href = 'http://localhost:8000/login';
+                return;
+            }
+
+            // Déterminer si c'est une route React ou Laravel
+            const isLaravelRoute = path.includes('/tenants') ||
+                path.includes('/assign-property') ||
+                path.includes('/leases') ||
+                path.includes('/test-laravel');
+
+            let baseUrl = 'http://localhost:';
+
+            if (isLaravelRoute) {
+                baseUrl += '8000'; // Laravel
+            } else {
+                baseUrl += '8080'; // React
+            }
+
+            let fullUrl = baseUrl + path;
+
+            const separator = fullUrl.includes('?') ? '&' : '?';
+            fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
+
+            console.log('Navigation vers:', fullUrl);
+            window.location.href = fullUrl;
+        }
+
+        // Pour les routes Laravel
+        function navigateTo(path) {
+            const token = localStorage.getItem('token') || getUrlParam('api_token');
+
+            if (!token) {
+                alert('Session expirée, veuillez vous reconnecter');
+                window.location.href = 'http://localhost:8000/login';
+                return;
+            }
+
+            const baseUrl = 'http://localhost:8000';
+            let fullUrl = baseUrl + path;
+
+            const separator = fullUrl.includes('?') ? '&' : '?';
+            fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
+
+            console.log('Navigation Laravel vers:', fullUrl);
+            window.location.href = fullUrl;
+        }
+
+        // Helper pour récupérer un paramètre d'URL
+        function getUrlParam(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        // Gestion des sous-menus
+        function toggleSubmenu(menuId) {
+            const submenu = document.getElementById(menuId);
+            const parent = document.querySelector(`[onclick="toggleSubmenu('${menuId}')"]`);
+
+            if (submenu.style.display === 'none' || !submenu.style.display) {
+                submenu.style.display = 'block';
+                parent.classList.add('active');
+            } else {
+                submenu.style.display = 'none';
+                parent.classList.remove('active');
+            }
+        }
+
+        // Gestion de la sidebar mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        document.getElementById('overlay').addEventListener('click', toggleSidebar);
+
+        // Logout
+        function logout() {
+            if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = 'http://localhost:8000/logout';
+            }
+        }
+
+        // Au chargement
+        function checkMobile() {
+            const mobileBtn = document.querySelector('.mobile-menu-btn');
+            if (window.innerWidth <= 768) {
+                mobileBtn.style.display = 'block';
+            } else {
+                mobileBtn.style.display = 'none';
+            }
+        }
+
+        window.addEventListener('resize', checkMobile);
+        checkMobile();
+
+        // Ajouter le token à la page actuelle si présent dans l'URL
+        const urlToken = getUrlParam('api_token');
+        if (urlToken) {
+            localStorage.setItem('token', urlToken);
+        }
+    </script>
+</body>
+
+</html>

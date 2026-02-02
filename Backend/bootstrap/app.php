@@ -31,6 +31,8 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleCors::class,
         ]);
 
+        
+
         $middleware->web([
             HandleCors::class,
         ]);
@@ -42,6 +44,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => RoleMiddleware::class,
             'property.access' => CheckPropertyAccess::class,
+            'workspace.permission' => \App\Http\Middleware\EnsureWorkspacePermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

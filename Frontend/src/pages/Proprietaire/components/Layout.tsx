@@ -161,6 +161,8 @@ export const Layout: React.FC<LayoutProps> = ({
       ],
     },
 
+    
+
     {
       id: "documents",
       label: "Documents",
@@ -170,12 +172,19 @@ export const Layout: React.FC<LayoutProps> = ({
         { id: "baux", label: "Contrats de bail", icon: FileSignature, path: "/proprietaire/documents/baux" },
         { id: "quittances", label: "Quittances", icon: FileText, path: "/proprietaire/quittances" },
         { id: "factures", label: "Factures", icon: FileText, path: "/proprietaire/factures" },
-        // ✅ SUPPRIMÉ: "Émettre une facture"
-        // { id: "émettre-facture", label: "Émettre une facture", icon: FilePlus, path: "/proprietaire/émettre-facture" },
       ],
     },
 
-    // ✅ NEW: FINANCES
+    {
+      id: "coproprietaires",
+      label: "Co-propriétaires",
+      icon: Users,
+      submenu: [
+        { id: "coproprietaires", label: "Liste des co-propriétaires", icon: Users },
+        { id: "inviter-coproprietaire", label: "Inviter un co-propriétaire", icon: UserPlus },
+      ],
+    },
+
     {
       id: "finances",
       label: "Finances",
@@ -194,8 +203,6 @@ export const Layout: React.FC<LayoutProps> = ({
           icon: CreditCard,
           path: "/proprietaire/retrait-methode",
         },
-        // (optionnel) si tu veux ensuite :
-        // { id: "transactions", label: "Transactions", icon: FileText, path: "/proprietaire/finances/transactions" },
       ],
     },
   ];

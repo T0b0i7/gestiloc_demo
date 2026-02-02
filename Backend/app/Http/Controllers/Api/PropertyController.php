@@ -5,211 +5,186 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePropertyRequest;
 use App\Models\Property;
+use App\Models\CoOwner;
+use App\Models\PropertyDelegation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class PropertyController extends Controller
 {
     /* =========================
-     * Helpers (mail)
+     * Helpers
      * ========================= */
 
-    private function appName(): string
+    private function getPhotoUrls(Property $property): array
     {
-        return config('app.name', 'Gestiloc');
-    }
+        $photos = $property->photos ?? [];
+        $urls = [];
 
-    protected $appends = ['photo_urls'];
+        foreach ($photos as $photo) {
+            if (empty($photo)) continue;
 
-public function getPhotoUrlsAttribute()
-{
-    $photos = $this->photos ?? [];
-    return array_map(fn($p) => Storage::disk('public')->url($p), $photos);
-}
+            if (str_starts_with($photo, 'http://') || str_starts_with($photo, 'https://')) {
+                $urls[] = $photo;
+            } else {
+                $cleanPath = str_replace('\\', '/', $photo);
+                $cleanPath = ltrim($cleanPath, '/');
 
-    private function frontendUrl(): string
-    {
-        return rtrim(config('app.frontend_url', env('FRONTEND_URL', config('app.url'))), '/');
-    }
-
-    private function propertyRef(Property $property): string
-    {
-        // si tu as uuid sur Property, tu peux l'utiliser. Ici fallback sur ID.
-        return 'PROP-' . str_pad((string) $property->id, 6, '0', STR_PAD_LEFT);
-    }
-
-    private function mailLayoutHtml(string $title, string $ref, string $contentHtml): string
-    {
-        $appName = e($this->appName());
-        $year = date('Y');
-
-        return <<<HTML
-<!doctype html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-</head>
-<body style="margin:0;padding:0;background:#f6f7fb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:#111827;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f6f7fb;padding:24px 12px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="640" cellspacing="0" cellpadding="0" style="max-width:640px;width:100%;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 12px 30px rgba(17,24,39,0.08);">
-          <tr>
-            <td style="padding:20px 22px;background:linear-gradient(135deg,#111827,#374151);color:#fff;">
-              <div style="font-size:14px;opacity:.9;">{$appName}</div>
-              <div style="font-size:20px;font-weight:700;line-height:1.2;margin-top:6px;">{$title}</div>
-              <div style="font-size:13px;opacity:.9;margin-top:6px;">
-                Référence : <strong>{$ref}</strong>
-              </div>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:22px;">
-              {$contentHtml}
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:18px 22px;border-top:1px solid #eef2f7;background:#fbfcff;">
-              <div style="font-size:12px;color:#6b7280;line-height:1.6;">
-                Cet email a été envoyé automatiquement. Si vous n’êtes pas concerné, vous pouvez l’ignorer.
-              </div>
-              <div style="font-size:12px;color:#6b7280;margin-top:8px;">
-                © {$year} {$appName}
-              </div>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-HTML;
-    }
-
-    private function buttonHtml(string $label, string $url): string
-    {
-        $l = e($label);
-        $u = e($url);
-
-        return <<<HTML
-<a href="{$u}" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;padding:12px 16px;border-radius:12px;font-weight:700;font-size:14px;">
-  {$l}
-</a>
-HTML;
-    }
-
-    private function propertyCardHtml(Property $property): string
-    {
-        $name = e((string) ($property->name ?? '—'));
-        $address = e((string) ($property->address ?? '—'));
-        $city = e((string) ($property->city ?? ''));
-        $status = e((string) ($property->status ?? '—'));
-        $type = e((string) ($property->type ?? '—'));
-        $refCode = e((string) ($property->reference_code ?? '—'));
-
-        $full = trim($address . ($city ? ', ' . $city : ''));
-
-        return <<<HTML
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #eef2f7;border-radius:14px;overflow:hidden;">
-  <tr>
-    <td style="padding:14px 14px;background:#f9fafb;">
-      <div style="font-size:14px;font-weight:800;color:#111827;">Bien</div>
-      <div style="font-size:13px;color:#6b7280;margin-top:4px;">{$name}</div>
-      <div style="font-size:13px;color:#6b7280;margin-top:4px;">{$full}</div>
-    </td>
-  </tr>
-  <tr>
-    <td style="padding:14px;">
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-        <tr>
-          <td style="font-size:13px;color:#374151;padding:6px 0;">Référence</td>
-          <td align="right" style="font-size:13px;color:#111827;font-weight:700;padding:6px 0;">{$refCode}</td>
-        </tr>
-        <tr>
-          <td style="font-size:13px;color:#374151;padding:6px 0;">Type</td>
-          <td align="right" style="font-size:13px;color:#111827;font-weight:700;padding:6px 0;">{$type}</td>
-        </tr>
-        <tr>
-          <td style="font-size:13px;color:#374151;padding:6px 0;">Statut</td>
-          <td align="right" style="font-size:13px;color:#111827;font-weight:700;padding:6px 0;">{$status}</td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-HTML;
-    }
-
-    private function sendHtmlEmail(string $to, string $subject, string $html): void
-    {
-        Mail::html($html, function ($message) use ($to, $subject) {
-            $message->to($to)->subject($subject);
-        });
-
-        Log::info('[property-mail] sent', ['to' => $to, 'subject' => $subject]);
-    }
-
-    private function trySendPropertyMail(string $to, string $subject, string $title, string $ref, string $contentHtml): void
-    {
-        try {
-            $html = $this->mailLayoutHtml($title, e($ref), $contentHtml);
-            $this->sendHtmlEmail($to, $subject, $html);
-        } catch (\Throwable $e) {
-            Log::error('[property-mail] failed', [
-                'to' => $to,
-                'subject' => $subject,
-                'error' => $e->getMessage(),
-            ]);
+                if (Storage::disk('public')->exists($cleanPath)) {
+                    $urls[] = Storage::disk('public')->url($cleanPath);
+                } else {
+                    Log::warning('Photo not found', ['path' => $cleanPath, 'property_id' => $property->id]);
+                }
+            }
         }
+
+        return $urls;
     }
 
-    private function landlordEmail(Request $request): ?string
+    /**
+     * ✅ Vérifier si CE BIEN est délégué à une AGENCE
+     */
+    private function isPropertyDelegatedToAgency(Property $property): bool
     {
-        return $request->user()?->email ?: null;
+        return PropertyDelegation::where('property_id', $property->id)
+            ->where('status', 'active')
+            ->where('co_owner_type', 'agency')
+            ->exists();
     }
 
-    private function computeDiffLines(array $old, array $new): string
+    /**
+     * ✅ Vérifier si CE BIEN est délégué à un CO-PROPRIÉTAIRE SIMPLE
+     */
+    private function isPropertyDelegatedToSimpleCoOwner(Property $property): bool
     {
-        // Compare seulement les clés "intéressantes" (pas landlord_id/user_id/updated_at etc.)
-        $keys = [
-            'name', 'address', 'city', 'status', 'type', 'reference_code',
-            'rooms', 'surface', 'floor', 'description'
+        return PropertyDelegation::where('property_id', $property->id)
+            ->where('status', 'active')
+            ->where('co_owner_type', 'co_owner')
+            ->exists();
+    }
+
+    /**
+     * ✅ Déterminer si l'utilisateur peut MODIFIER une propriété
+     */
+    private function canEditProperty(Property $property, $user): bool
+    {
+        // 1. ADMIN : Peut tout modifier
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        // 2. LANDLORD : Propriétaire du bien
+        if ($user->isLandlord()) {
+            if ($user->landlord && $property->landlord_id === $user->landlord->id) {
+                // ✅ RÈGLE : Si le bien est délégué à une AGENCE, le propriétaire perd ses droits
+                if ($this->isPropertyDelegatedToAgency($property)) {
+                    return false;
+                }
+
+                // ✅ Si le bien est délégué à un co-propriétaire SIMPLE, le propriétaire garde ses droits
+                if ($this->isPropertyDelegatedToSimpleCoOwner($property)) {
+                    return true;
+                }
+
+                return true; // Bien non délégué
+            }
+        }
+
+        // 3. CO-OWNER : Copropriétaire ou Agence
+        if ($user->isCoOwner()) {
+            $coOwner = CoOwner::where('user_id', $user->id)->first();
+
+            if (!$coOwner) {
+                return false;
+            }
+
+            // ✅ AGENCES : Peuvent modifier SEULEMENT les biens qui leur sont délégués
+            $isAgency = ($coOwner->co_owner_type === 'agency');
+
+            if ($isAgency) {
+                // Vérifie si cette agence a une délégation active sur ce bien
+                return PropertyDelegation::where('property_id', $property->id)
+                    ->where('co_owner_id', $coOwner->id)
+                    ->where('status', 'active')
+                    ->exists();
+            }
+
+            // ✅ COPROPRIÉTAIRES SIMPLES : Peuvent modifier les biens du landlord
+            return $coOwner->landlord_id === $property->landlord_id;
+        }
+
+        return false;
+    }
+
+    /**
+     * ✅ Obtenir le TYPE de délégation pour ce bien
+     * Retourne: 'agency', 'co_owner', ou null
+     */
+    private function getDelegationType(Property $property): ?string
+    {
+        $delegation = PropertyDelegation::where('property_id', $property->id)
+            ->where('status', 'active')
+            ->first();
+
+        return $delegation?->co_owner_type;
+    }
+
+    /**
+     * ✅ Obtenir les informations de la délégation
+     */
+    private function getDelegationInfo(Property $property): ?array
+    {
+        $delegation = PropertyDelegation::where('property_id', $property->id)
+            ->where('status', 'active')
+            ->with('coOwner')
+            ->first();
+
+        if (!$delegation || !$delegation->coOwner) {
+            return null;
+        }
+
+        return [
+            'type' => $delegation->co_owner_type,
+            'co_owner_name' => $delegation->coOwner->first_name . ' ' . $delegation->coOwner->last_name,
+            'co_owner_company' => $delegation->coOwner->company_name,
+            'delegated_at' => $delegation->delegated_at,
+            'delegation_type' => $delegation->delegation_type,
+            'permissions' => $delegation->permissions ?? [],
         ];
+    }
 
-        $lines = [];
-        foreach ($keys as $k) {
-            if (!array_key_exists($k, $new)) continue;
+    /**
+     * ✅ Formater les données du bien pour l'API
+     */
+    private function formatPropertyForApi(Property $property, $user): array
+    {
+        $propertyArray = $property->toArray();
 
-            $before = $old[$k] ?? null;
-            $after  = $new[$k] ?? null;
+        // Ajouter les URLs des photos
+        $propertyArray['photo_urls'] = $this->getPhotoUrls($property);
+        $propertyArray['photos'] = $this->getPhotoUrls($property); // Pour compatibilité
 
-            // normalisation simple
-            if (is_string($before)) $before = trim($before);
-            if (is_string($after))  $after  = trim($after);
+        // Ajouter les permissions
+        $propertyArray['can_edit'] = $this->canEditProperty($property, $user);
+        $propertyArray['delegation_type'] = $this->getDelegationType($property);
+        $propertyArray['delegation_info'] = $this->getDelegationInfo($property);
 
-            if ($before === $after) continue;
-
-            $label = ucfirst(str_replace('_', ' ', $k));
-            $lines[] = "<li style=\"margin:6px 0;\"><strong>" . e($label) . " :</strong> "
-                . "<span style=\"color:#6b7280;\">" . e((string)($before ?? '—')) . "</span>"
-                . " → <span style=\"color:#111827;font-weight:700;\">" . e((string)($after ?? '—')) . "</span>"
-                . "</li>";
+        // S'assurer que meta est un array
+        if (is_string($property->meta)) {
+            $propertyArray['meta'] = json_decode($property->meta, true) ?? [];
+        } elseif (is_array($property->meta)) {
+            $propertyArray['meta'] = $property->meta;
+        } else {
+            $propertyArray['meta'] = [];
         }
 
-        if (empty($lines)) {
-            return '<div style="font-size:13px;color:#6b7280;">(Aucun changement détecté sur les champs principaux.)</div>';
-        }
-
-        return '<ul style="margin:10px 0 0 18px;padding:0;font-size:13px;color:#374151;line-height:1.6;">' . implode('', $lines) . '</ul>';
+        return $propertyArray;
     }
 
     /* =========================
-     * Actions
+     * Actions CRUD
      * ========================= */
 
     /**
@@ -219,16 +194,26 @@ HTML;
     {
         $user = $request->user();
 
+        // ADMIN : Voir tout
         if ($user->isAdmin()) {
-            return response()->json(
-                Property::latest()->paginate(20)
-            );
+            $properties = Property::with(['landlord'])->latest()->paginate(20);
+            $formattedProperties = $properties->getCollection()->map(function ($property) use ($user) {
+                return $this->formatPropertyForApi($property, $user);
+            });
+
+            return response()->json([
+                'data' => $formattedProperties,
+                'current_page' => $properties->currentPage(),
+                'last_page' => $properties->lastPage(),
+                'per_page' => $properties->perPage(),
+                'total' => $properties->total(),
+            ]);
         }
 
+        // LANDLORD : Voir ses propres biens
         if ($user->isLandlord()) {
             $landlord = $user->landlord;
-
-            if (! $landlord) {
+            if (!$landlord) {
                 return response()->json([
                     'data' => [],
                     'current_page' => 1,
@@ -238,9 +223,50 @@ HTML;
                 ]);
             }
 
-            return response()->json(
-                $landlord->properties()->latest()->paginate(20)
-            );
+            $properties = $landlord->properties()->with(['landlord'])->latest()->paginate(20);
+            $formattedProperties = $properties->getCollection()->map(function ($property) use ($user) {
+                return $this->formatPropertyForApi($property, $user);
+            });
+
+            return response()->json([
+                'data' => $formattedProperties,
+                'current_page' => $properties->currentPage(),
+                'last_page' => $properties->lastPage(),
+                'per_page' => $properties->perPage(),
+                'total' => $properties->total(),
+            ]);
+        }
+
+        // CO-OWNER : Voir les biens du landlord associé
+        if ($user->isCoOwner()) {
+            $coOwner = CoOwner::where('user_id', $user->id)->first();
+
+            if (!$coOwner) {
+                return response()->json([
+                    'data' => [],
+                    'current_page' => 1,
+                    'last_page' => 1,
+                    'per_page' => 20,
+                    'total' => 0,
+                ]);
+            }
+
+            $properties = Property::with(['landlord'])
+                ->where('landlord_id', $coOwner->landlord_id)
+                ->latest()
+                ->paginate(20);
+
+            $formattedProperties = $properties->getCollection()->map(function ($property) use ($user) {
+                return $this->formatPropertyForApi($property, $user);
+            });
+
+            return response()->json([
+                'data' => $formattedProperties,
+                'current_page' => $properties->currentPage(),
+                'last_page' => $properties->lastPage(),
+                'per_page' => $properties->perPage(),
+                'total' => $properties->total(),
+            ]);
         }
 
         return response()->json(['message' => 'Forbidden'], 403);
@@ -253,47 +279,32 @@ HTML;
     {
         $user = $request->user();
 
-        if (! $user->isLandlord()) {
-            return response()->json(['message' => 'Forbidden'], 403);
+        if (!$user->isLandlord()) {
+            return response()->json(['message' => 'Forbidden - Seuls les propriétaires peuvent créer des biens'], 403);
         }
 
         $landlord = $user->landlord;
-        if (! $landlord) {
+        if (!$landlord) {
             return response()->json(['message' => 'Landlord profile missing'], 422);
         }
 
         $data = $request->validated();
 
-        // Sécurité serveur
+        if (isset($data['photos']) && is_array($data['photos'])) {
+            $data['photos'] = array_filter($data['photos'], function($photo) {
+                return !empty($photo);
+            });
+        }
+
         $data['landlord_id'] = $landlord->id;
         $data['user_id'] = $user->id;
 
         $property = Property::create($data);
+        $formattedProperty = $this->formatPropertyForApi($property, $user);
 
-        // ✅ Mail confirmation au bailleur
-        $to = $this->landlordEmail($request);
-        if ($to) {
-            $ref = $this->propertyRef($property);
-            $title = 'Bien créé avec succès ✅';
-            $subject = "✅ Bien créé : {$ref}";
+        Log::info('[Property] Created successfully', ['property_id' => $property->id, 'user_id' => $user->id]);
 
-            $content = <<<HTML
-<div style="font-size:14px;color:#374151;line-height:1.7;">
-  Bonjour,<br><br>
-  Votre bien a été créé avec succès et est maintenant disponible dans votre espace.
-</div>
-<div style="height:14px"></div>
-{$this->propertyCardHtml($property)}
-<div style="height:16px"></div>
-{$this->buttonHtml('Ouvrir le dashboard', $this->frontendUrl())}
-HTML;
-
-            $this->trySendPropertyMail($to, $subject, $title, $ref, $content);
-        } else {
-            Log::warning('[property-mail] landlord email missing', ['property_id' => $property->id]);
-        }
-
-        return response()->json($property, 201);
+        return response()->json($formattedProperty, 201);
     }
 
     /**
@@ -301,22 +312,30 @@ HTML;
      */
     public function show(Request $request, $id): JsonResponse
     {
-        $property = Property::findOrFail($id);
+        $property = Property::with(['landlord'])->findOrFail($id);
         $user = $request->user();
 
+        $canView = false;
+
         if ($user->isAdmin()) {
-            return response()->json($property);
-        }
-
-        if ($user->isLandlord()) {
-            if (! $user->landlord || $property->landlord_id !== $user->landlord->id) {
-                return response()->json(['message' => 'Forbidden'], 403);
+            $canView = true;
+        } elseif ($user->isLandlord()) {
+            if ($user->landlord && $property->landlord_id === $user->landlord->id) {
+                $canView = true;
             }
-
-            return response()->json($property);
+        } elseif ($user->isCoOwner()) {
+            $coOwner = CoOwner::where('user_id', $user->id)->first();
+            if ($coOwner && $coOwner->landlord_id === $property->landlord_id) {
+                $canView = true;
+            }
         }
 
-        return response()->json(['message' => 'Forbidden'], 403);
+        if (!$canView) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $formattedProperty = $this->formatPropertyForApi($property, $user);
+        return response()->json($formattedProperty);
     }
 
     /**
@@ -324,60 +343,43 @@ HTML;
      */
     public function update(StorePropertyRequest $request, $id): JsonResponse
     {
-        $property = Property::findOrFail($id);
+        $property = Property::with(['landlord'])->findOrFail($id);
         $user = $request->user();
 
-        if (! $user->isAdmin()) {
-            if (! $user->isLandlord()) {
-                return response()->json(['message' => 'Forbidden'], 403);
+        // ✅ VÉRIFICATION : Utiliser canEditProperty
+        if (!$this->canEditProperty($property, $user)) {
+            $message = 'Forbidden - Vous n\'avez pas la permission de modifier ce bien';
+
+            $delegationType = $this->getDelegationType($property);
+            if ($delegationType === 'agency') {
+                $message = 'Forbidden - Ce bien est géré par une agence. Vous avez uniquement un accès en lecture.';
             }
 
-            if (! $user->landlord || $property->landlord_id !== $user->landlord->id) {
-                return response()->json(['message' => 'Forbidden'], 403);
-            }
+            return response()->json(['message' => $message], 403);
         }
-
-        $before = $property->toArray();
 
         $data = $request->validated();
 
-        // 🔒 Protection anti-mass assignment
+        if (isset($data['photos']) && is_array($data['photos'])) {
+            $data['photos'] = array_filter($data['photos'], function($photo) {
+                return !empty($photo);
+            });
+        }
+
+        // Protection anti-mass assignment
         unset($data['landlord_id'], $data['user_id']);
 
         $property->update($data);
-
         $propertyFresh = $property->fresh();
-        $after = $propertyFresh->toArray();
+        $formattedProperty = $this->formatPropertyForApi($propertyFresh, $user);
 
-        // ✅ Mail modification au bailleur
-        $to = $this->landlordEmail($request);
-        if ($to) {
-            $ref = $this->propertyRef($propertyFresh);
-            $title = 'Bien mis à jour ✨';
-            $subject = "✨ Bien mis à jour : {$ref}";
+        Log::info('[Property] Updated successfully', [
+            'property_id' => $propertyFresh->id,
+            'user_id' => $user->id,
+            'user_role' => $user->role
+        ]);
 
-            $diffHtml = $this->computeDiffLines($before, $after);
-
-            $content = <<<HTML
-<div style="font-size:14px;color:#374151;line-height:1.7;">
-  Bonjour,<br><br>
-  Les informations de votre bien ont été mises à jour.
-</div>
-<div style="height:14px"></div>
-{$this->propertyCardHtml($propertyFresh)}
-<div style="height:14px"></div>
-<div style="font-size:14px;font-weight:800;color:#111827;">Changements</div>
-{$diffHtml}
-<div style="height:16px"></div>
-{$this->buttonHtml('Ouvrir le dashboard', $this->frontendUrl())}
-HTML;
-
-            $this->trySendPropertyMail($to, $subject, $title, $ref, $content);
-        } else {
-            Log::warning('[property-mail] landlord email missing', ['property_id' => $propertyFresh->id]);
-        }
-
-        return response()->json($propertyFresh);
+        return response()->json($formattedProperty);
     }
 
     /**
@@ -388,43 +390,21 @@ HTML;
         $property = Property::findOrFail($id);
         $user = $request->user();
 
-        if (! $user->isAdmin()) {
-            if (! $user->isLandlord()) {
-                return response()->json(['message' => 'Forbidden'], 403);
+        if (!$user->isAdmin()) {
+            if (!$user->isLandlord()) {
+                return response()->json(['message' => 'Forbidden - Seuls les propriétaires peuvent supprimer des biens'], 403);
             }
-
-            if (! $user->landlord || $property->landlord_id !== $user->landlord->id) {
-                return response()->json(['message' => 'Forbidden'], 403);
+            if (!$user->landlord || $property->landlord_id !== $user->landlord->id) {
+                return response()->json(['message' => 'Forbidden - Ce bien ne vous appartient pas'], 403);
             }
         }
-
-        // snapshot pour l’email
-        $propertySnapshot = clone $property;
 
         $property->delete();
 
-        // ✅ Mail suppression au bailleur
-        $to = $this->landlordEmail($request);
-        if ($to) {
-            $ref = $this->propertyRef($propertySnapshot);
-            $title = 'Bien supprimé 🗑️';
-            $subject = "🗑️ Bien supprimé : {$ref}";
-
-            $content = <<<HTML
-<div style="font-size:14px;color:#374151;line-height:1.7;">
-  Bonjour,<br><br>
-  Votre bien a été supprimé avec succès.
-</div>
-<div style="height:14px"></div>
-{$this->propertyCardHtml($propertySnapshot)}
-<div style="height:16px"></div>
-{$this->buttonHtml('Ouvrir le dashboard', $this->frontendUrl())}
-HTML;
-
-            $this->trySendPropertyMail($to, $subject, $title, $ref, $content);
-        } else {
-            Log::warning('[property-mail] landlord email missing', ['property_id' => $propertySnapshot->id]);
-        }
+        Log::info('[Property] Deleted successfully', [
+            'property_id' => $id,
+            'user_id' => $user->id
+        ]);
 
         return response()->json(['message' => 'Property deleted']);
     }

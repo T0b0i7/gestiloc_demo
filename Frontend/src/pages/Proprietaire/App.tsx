@@ -20,6 +20,8 @@ import { Onboarding } from './components/Onboarding';
 import { MesBiens } from './components/MesBiens';
 import { Lease } from './components/Lease';
 import EtatsLieux from './components/EtatsLieux';
+import { InviteCoOwner } from './components/InviteCoOwner';
+import { CoOwnersList } from './components/CoOwnersList';
 import { 
   Biens, Locataires, Locations, Inventaires, EtatDesLieux, 
   Finances, Carnet, Candidats, Outils, Corbeille 
@@ -42,6 +44,7 @@ const ProprietaireApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [toastIdCounter, setToastIdCounter] = useState(0);
 
   // Vérifier l'authentification au chargement
   useEffect(() => {
@@ -87,8 +90,9 @@ const ProprietaireApp: React.FC = () => {
 
   // Toast System
   const notify = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    const id = Date.now();
+    const id = toastIdCounter + 1;
     setToasts(prev => [...prev, { id, message, type }]);
+    setToastIdCounter(id);
   };
 
   const removeToast = (id: number) => {
@@ -448,9 +452,39 @@ const ProprietaireApp: React.FC = () => {
             isDarkMode={false}
             toggleTheme={() => {}}
           >
-            <MesBiens />
+            <MesBiens notify={notify} />
           </Layout>
         } />
+
+        {/* Routes co-propriétaires */}
+        <Route path="coproprietaires" element={
+          <Layout
+            activeTab="coproprietaires"
+            onNavigate={handleNavigation}
+            toasts={toasts}
+            removeToast={removeToast}
+            onLogout={handleLogout}
+            isDarkMode={false}
+            toggleTheme={() => {}}
+          >
+            <CoOwnersList notify={notify} />
+          </Layout>
+        } />
+
+        <Route path="inviter-coproprietaire" element={
+          <Layout
+            activeTab="inviter-coproprietaire"
+            onNavigate={handleNavigation}
+            toasts={toasts}
+            removeToast={removeToast}
+            onLogout={handleLogout}
+            isDarkMode={false}
+            toggleTheme={() => {}}
+          >
+            <InviteCoOwner notify={notify} />
+          </Layout>
+        } />
+
         <Route path="*" element={<Navigate to="dashboard" replace />} />
       </Routes>
     </div>

@@ -70,9 +70,28 @@ public function show(string $token)
         $user = auth()->user();
         $invoice = Invoice::findOrFail($id);
 
-        // Vérifier permission: bailleur ou admin
-        if (!($user->landlord || $user->hasRole('admin'))) {
+        // Vérifier permission: bailleur, co-propriétaire ou admin
+        if (!($user->landlord || $user->coOwner || $user->hasRole('admin'))) {
             return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        // Vérifier que le bailleur possède bien cette facture
+        if ($user->landlord && $invoice->lease->property->landlord_id !== $user->landlord->id) {
+            return response()->json(['message' => 'Vous ne pouvez pas créer de lien pour cette facture.'], 403);
+        }
+
+        // Pour les co-propriétaires, vérifier qu'ils ont accès à cette facture via délégation
+        if ($user->coOwner) {
+            $hasDelegation = \App\Models\PropertyDelegation::where('delegated_to', $user->coOwner->id)
+                ->whereHas('property', function($query) use ($invoice) {
+                    $query->where('id', $invoice->lease->property_id);
+                })
+                ->where('status', 'accepted')
+                ->exists();
+                
+            if (!$hasDelegation) {
+                return response()->json(['message' => 'Vous ne pouvez pas créer de lien pour cette facture.'], 403);
+            }
         }
 
         $tenantId = $invoice->lease->tenant_id ?? null;

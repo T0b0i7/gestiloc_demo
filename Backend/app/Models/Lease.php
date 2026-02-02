@@ -20,17 +20,19 @@ class Lease extends Model
         'start_date', 'end_date', 'tacit_renewal',
         'rent_amount', 'charges_amount', 'guarantee_amount', 'prepaid_rent_months',
         'billing_day', 'payment_frequency', 'penalty_rate',
-        'status', 'contract_file_path', 'terms', 'termination_reason'
+        'status', 'contract_file_path', 'terms', 'meta', 'termination_reason' // Ajouté 'meta' ici
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
         'terms' => 'array',
+        'meta' => 'array', // AJOUTÉ ICI - Très important !
         'tacit_renewal' => 'boolean',
         'rent_amount' => 'decimal:2',
         'charges_amount' => 'decimal:2',
         'guarantee_amount' => 'decimal:2',
+        'prepaid_rent_months' => 'integer',
     ];
 
     protected static function boot()
@@ -50,18 +52,23 @@ class Lease extends Model
     {
         return $this->belongsTo(Property::class);
     }
-    
+
+    public function propertyAssignments(): HasMany
+    {
+        return $this->hasMany(PropertyAssignment::class);
+    }
+
     public function conditionReports(): HasMany
     {
         return $this->hasMany(PropertyConditionReport::class);
     }
-    
+
     public function entryConditionReport()
     {
         return $this->hasOne(PropertyConditionReport::class)
             ->where('type', 'entry');
     }
-    
+
     public function exitConditionReport()
     {
         return $this->hasOne(PropertyConditionReport::class)
@@ -76,9 +83,9 @@ class Lease extends Model
     /**
      * Relation avec les factures du bail
      */
-    public function invoices(): HasMany 
-    { 
-        return $this->hasMany(Invoice::class); 
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
     }
 
     // Accesseur : Calcul du total mensuel (Loyer + Charges)
@@ -94,5 +101,70 @@ class Lease extends Model
         return $this->status === 'active'
             && $this->start_date <= $now
             && ($this->end_date === null || $this->end_date >= $now);
+    }
+
+    /**
+     * Accesseur pour meta avec gestion automatique du JSON
+     */
+    public function getMetaAttribute($value)
+    {
+        if (is_string($value)) {
+            return json_decode($value, true) ?? [];
+        }
+
+        return $value ?? [];
+    }
+
+    /**
+     * Mutateur pour meta avec conversion automatique en JSON
+     */
+    public function setMetaAttribute($value)
+    {
+        if (is_array($value)) {
+            $this->attributes['meta'] = json_encode($value);
+        } else {
+            $this->attributes['meta'] = $value;
+        }
+    }
+
+    /**
+     * Ajouter un document à l'historique
+     */
+    public function addDocumentToMeta(array $documentData): void
+    {
+        $meta = $this->meta;
+        $documents = $meta['documents'] ?? [];
+
+        $documents[] = $documentData;
+        $meta['documents'] = $documents;
+
+        $this->meta = $meta;
+        $this->save();
+    }
+
+    /**
+     * Récupérer les documents de l'historique
+     */
+    public function getDocumentsFromMeta(): array
+    {
+        return $this->meta['documents'] ?? [];
+    }
+
+    /**
+     * Supprimer un document de l'historique
+     */
+    public function removeDocumentFromMeta(string $documentId): bool
+    {
+        $meta = $this->meta;
+        $documents = $meta['documents'] ?? [];
+
+        $newDocuments = array_filter($documents, function($doc) use ($documentId) {
+            return ($doc['id'] ?? '') != $documentId;
+        });
+
+        $meta['documents'] = array_values($newDocuments);
+        $this->meta = $meta;
+
+        return $this->save();
     }
 }

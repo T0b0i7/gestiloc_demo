@@ -3,6 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Contrat de Location</title>
+     <link rel="shortcut icon" href="{{ asset('images/logo.webp') }}" type="image/x-icon">
     <style>
         body {
             font-family: DejaVu Sans, sans-serif;
@@ -71,7 +72,7 @@
 
     <div class="section">
         <p>Entre les soussignés :</p>
-        
+
         <div class="parties">
             <div class="party">
                 <div class="section-title">Le Bailleur</div>
@@ -82,7 +83,7 @@
                 <p>Type pièce d'identité : <span class="text-underline">{{ $landlord['id_type'] ?? '' }}</span></p>
                 <p>N° pièce d'identité : <span class="text-underline">{{ $landlord['id_number'] ?? '' }}</span></p>
             </div>
-            
+
             <div class="party">
                 <div class="section-title">Le Locataire</div>
                 <p>Nom et prénoms : <span class="text-underline">{{ $tenant['name'] ?? '' }}</span></p>
@@ -108,14 +109,14 @@
         <div class="section-title">ARTICLE 2 : DESCRIPTION DU LOGEMENT</div>
         <p>Le bailleur donne en location au locataire le logement situé à :</p>
         <p class="text-underline">{{ $property['address'] ?? '' }}</p>
-        
+
         <p>Caractéristiques du logement :</p>
         <p>Étage : <span class="text-underline">{{ $property['floor'] ?? '' }}</span></p>
         <p>Type de logement : <span class="text-underline">{{ $property['type'] ?? '' }}</span></p>
         <p>Superficie : <span class="text-underline">{{ $property['area'] ?? '' }} m²</span></p>
         <p>Nombre de pièces : <span class="text-underline">{{ $property['rooms'] ?? '' }}</span></p>
         <p>Parking : <span class="text-underline">{{ isset($property['has_parking']) ? 'OUI' : 'NON' }}</span></p>
-        
+
         <p>Équipements fournis :</p>
         <ul class="equipment-list">
             @if(!empty($property['equipment']))
@@ -145,7 +146,7 @@
         <div class="section-title">ARTICLE 5 : LOYER</div>
         <p>Le loyer mensuel est fixé à :</p>
         <p>Montant en chiffres : <span class="text-underline">{{ number_format($contract['rent_amount'] ?? 0, 0, ',', ' ') }} FCFA</span></p>
-        
+
         <p>Ce loyer inclut :</p>
         <ul class="equipment-list">
             @if(!empty($contract['included_charges']))
@@ -156,7 +157,7 @@
                 <li>Aucune charge incluse</li>
             @endif
         </ul>
-        
+
         <p>Modalité de paiement : <span class="text-underline">{{ $contract['payment_frequency'] == 'monthly' ? 'Mensuel' : 'Trimestriel' }}</span></p>
         <p>Mode de paiement : <span class="text-underline">
             @if($contract['payment_method'] == 'cash')
@@ -193,7 +194,7 @@
             <li>Entretien courant</li>
             <li>Petites réparations</li>
         </ul>
-        
+
         <p class="mt-4"><strong>À la charge du bailleur :</strong></p>
         <ul class="equipment-list">
             <li>Réparations importantes</li>
@@ -236,7 +237,7 @@
             <li>Entretien du mobilier fourni.</li>
             <li>Nettoyage courant.</li>
         </ul>
-        
+
         <p class="mt-4"><strong>À la charge du bailleur :</strong></p>
         <ul class="equipment-list">
             <li>Réparations structurelles.</li>
@@ -283,28 +284,28 @@
     <div class="section">
         <div class="section-title">ARTICLE 15 : SIGNATURES</div>
         <p>Fait à ......................................... le {{ $current_date }}</p>
-        
+
         <div class="signature">
             <div class="signature-block">
                 <p>Le Bailleur</p>
                 <p>Signature précédée de « Lu et approuvé »</p>
                 <p>............................................................</p>
             </div>
-            
+
             <div class="signature-block">
                 <p>Le Locataire</p>
                 <p>Signature précédée de « Lu et approuvé »</p>
                 <p>............................................................</p>
             </div>
         </div>
-        
+
         <div class="signature mt-4">
             <div class="signature-block">
                 <p>Garant 1 (facultatif)</p>
                 <p>Nom : ......................................</p>
                 <p>Signature : .....................</p>
             </div>
-            
+
             <div class="signature-block">
                 <p>Garant 2 (facultatif)</p>
                 <p>Nom : ......................................</p>
