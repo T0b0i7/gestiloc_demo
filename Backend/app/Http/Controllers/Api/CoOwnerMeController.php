@@ -27,13 +27,51 @@ class CoOwnerMeController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->isCoOwner()) {
-            return response()->json(['message' => 'Forbidden'], 403);
+        Log::info('CoOwnerMeController::getProfile - Début', [
+            'user_id' => $user?->id,
+            'user_email' => $user?->email,
+            'user_phone' => $user?->phone,
+        ]);
+
+        // Vérifier si l'utilisateur a le rôle co_owner
+        if (!$user || !$user->hasRole('co_owner')) {
+            Log::warning('CoOwnerMeController::getProfile - Accès refusé', [
+                'user_has_role' => $user ? $user->hasRole('co_owner') : false,
+            ]);
+            return response()->json(['message' => 'Forbidden - User is not a co-owner'], 403);
         }
 
-        $coOwner = $user->coOwner;
+        // Récupérer le profil co-propriétaire associé à l'utilisateur
+        $coOwner = CoOwner::where('user_id', $user->id)->first();
+
         if (!$coOwner) {
-            return response()->json(['message' => 'Co-owner profile missing'], 422);
+            Log::info('CoOwnerMeController::getProfile - Création du profil co-owner', ['user_id' => $user->id]);
+            // Si aucun profil co-propriétaire n'existe, en créer un basé sur les infos de l'utilisateur
+            $coOwner = CoOwner::create([
+                'user_id' => $user->id,
+                'first_name' => $user->first_name ?? '',
+                'last_name' => $user->last_name ?? '',
+                'email' => $user->email,
+                'phone' => $user->phone ?? '',
+                'status' => 'active',
+                'is_professional' => false,
+                'co_owner_type' => 'simple',
+            ]);
+
+            Log::info('Co-owner profile created automatically', [
+                'user_id' => $user->id,
+                'co_owner_id' => $coOwner->id
+            ]);
+        } else {
+            // Synchroniser le téléphone si incohérence
+            if ($coOwner->phone !== $user->phone) {
+                Log::info('CoOwnerMeController::getProfile - Synchronisation du téléphone', [
+                    'old_phone' => $coOwner->phone,
+                    'new_phone' => $user->phone,
+                    'co_owner_id' => $coOwner->id
+                ]);
+                $coOwner->update(['phone' => $user->phone]);
+            }
         }
 
         // Récupérer les statistiques
@@ -59,20 +97,31 @@ class CoOwnerMeController extends Controller
                 });
         })->where('status', 'paid')->sum('amount_paid');
 
+        // Déterminer le type de co-propriétaire
+        $coOwnerType = $coOwner->co_owner_type;
+        if (!$coOwnerType) {
+            if ($coOwner->is_professional) {
+                $coOwnerType = !empty($coOwner->company_name) ? 'agency' : 'professional';
+            } else {
+                $coOwnerType = 'simple';
+            }
+        }
+
         $profileData = [
             'id' => $coOwner->id,
             'user_id' => $coOwner->user_id,
             'first_name' => $coOwner->first_name,
             'last_name' => $coOwner->last_name,
             'email' => $user->email,
-            'phone' => $coOwner->phone,
+            'phone' => $coOwner->phone ?? $user->phone,
             'address' => $coOwner->address,
             'date_of_birth' => $coOwner->date_of_birth,
             'id_number' => $coOwner->id_number,
             'company_name' => $coOwner->company_name,
             'address_billing' => $coOwner->address_billing,
             'license_number' => $coOwner->license_number,
-            'is_professional' => $coOwner->is_professional,
+            'is_professional' => (bool) $coOwner->is_professional,
+            'co_owner_type' => $coOwnerType,
             'ifu' => $coOwner->ifu,
             'rccm' => $coOwner->rccm,
             'vat_number' => $coOwner->vat_number,
@@ -83,16 +132,23 @@ class CoOwnerMeController extends Controller
             'statistics' => [
                 'delegated_properties_count' => $delegatedPropertiesCount,
                 'active_leases_count' => $activeLeasesCount,
-                'total_rent_collected' => $totalRentCollected,
+                'total_rent_collected' => (float) $totalRentCollected,
             ],
             'user' => [
                 'id' => $user->id,
                 'email' => $user->email,
+                'phone' => $user->phone,
                 'email_verified_at' => $user->email_verified_at,
                 'created_at' => $user->created_at,
                 'last_login_at' => $user->last_login_at,
             ]
         ];
+
+        Log::info('CoOwnerMeController::getProfile - Données retournées', [
+            'co_owner_id' => $coOwner->id,
+            'co_owner_type' => $profileData['co_owner_type'],
+            'phone' => $profileData['phone']
+        ]);
 
         return response()->json([
             'data' => $profileData
@@ -106,42 +162,173 @@ class CoOwnerMeController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->isCoOwner()) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
-
-        $coOwner = $user->coOwner;
-        if (!$coOwner) {
-            return response()->json(['message' => 'Co-owner profile missing'], 422);
-        }
-
-        $validated = $request->validate([
-            'first_name' => 'sometimes|string|max:255',
-            'last_name' => 'sometimes|string|max:255',
-            'phone' => 'sometimes|string|max:20',
-            'address' => 'sometimes|string|max:255',
-            'date_of_birth' => 'sometimes|date',
-            'id_number' => 'sometimes|string|max:50',
-            'company_name' => 'sometimes|string|max:255',
-            'address_billing' => 'sometimes|string|max:255',
-            'license_number' => 'sometimes|string|max:100',
-            'ifu' => 'sometimes|string|max:50',
-            'rccm' => 'sometimes|string|max:50',
-            'vat_number' => 'sometimes|string|max:50',
+        Log::info('CoOwnerMeController::updateProfile - Début', [
+            'user_id' => $user?->id,
+            'user_email' => $user?->email,
+            'user_phone' => $user?->phone,
+            'request_data' => $request->all()
         ]);
+
+        if (!$user || !$user->hasRole('co_owner')) {
+            Log::warning('CoOwnerMeController::updateProfile - Accès refusé');
+            return response()->json(['message' => 'Forbidden - User is not a co-owner'], 403);
+        }
+
+        $coOwner = CoOwner::where('user_id', $user->id)->first();
+        if (!$coOwner) {
+            Log::info('CoOwnerMeController::updateProfile - Création du profil co-owner');
+            // Créer le profil s'il n'existe pas
+            $coOwner = CoOwner::create([
+                'user_id' => $user->id,
+                'first_name' => $user->first_name ?? '',
+                'last_name' => $user->last_name ?? '',
+                'email' => $user->email,
+                'phone' => $user->phone ?? '',
+                'status' => 'active',
+                'is_professional' => false,
+                'co_owner_type' => 'simple',
+            ]);
+        }
+
+        // Validation avec des règles plus flexibles
+        try {
+            $validated = $request->validate([
+                'first_name' => 'sometimes|nullable|string|max:255',
+                'last_name' => 'sometimes|nullable|string|max:255',
+                'phone' => 'sometimes|nullable|string|max:20',
+                'address' => 'sometimes|nullable|string|max:255',
+                'date_of_birth' => 'sometimes|nullable|date|before:today',
+                'id_number' => 'sometimes|nullable|string|max:50',
+                'company_name' => 'sometimes|nullable|string|max:255',
+                'address_billing' => 'sometimes|nullable|string|max:255',
+                'license_number' => 'sometimes|nullable|string|max:100',
+                'ifu' => 'sometimes|nullable|string|max:50',
+                'rccm' => 'sometimes|nullable|string|max:50',
+                'vat_number' => 'sometimes|nullable|string|max:50',
+                'is_professional' => 'sometimes|boolean',
+            ]);
+
+            Log::info('CoOwnerMeController::updateProfile - Données validées', ['validated' => $validated]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('CoOwnerMeController::updateProfile - Erreur de validation', [
+                'errors' => $e->errors(),
+                'request_data' => $request->all()
+            ]);
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        }
+
+        // Nettoyer les données : convertir les chaînes vides en null
+        foreach ($validated as $key => $value) {
+            if ($value === '' || $value === null) {
+                $validated[$key] = null;
+            }
+        }
+
+        // Mettre à jour le téléphone dans la table users si fourni
+        if (isset($validated['phone']) && $validated['phone'] !== $user->phone) {
+            $user->update(['phone' => $validated['phone']]);
+            Log::info('CoOwnerMeController::updateProfile - Téléphone mis à jour dans users', [
+                'old_phone' => $user->phone,
+                'new_phone' => $validated['phone']
+            ]);
+        }
+
+        // Vérifier et traiter le type de co-propriétaire
+        if (isset($validated['is_professional'])) {
+            $coOwner->is_professional = (bool) $validated['is_professional'];
+            if ($validated['is_professional'] && !empty($validated['company_name'])) {
+                $coOwner->co_owner_type = 'agency';
+            } elseif ($validated['is_professional']) {
+                $coOwner->co_owner_type = 'professional';
+            } else {
+                $coOwner->co_owner_type = 'simple';
+            }
+            unset($validated['is_professional']);
+        }
 
         // Mettre à jour le co-propriétaire
         $coOwner->update($validated);
 
         // Mettre à jour l'email utilisateur si fourni
-        if ($request->has('email')) {
-            $request->validate(['email' => 'required|email|unique:users,email,' . $user->id]);
-            $user->update(['email' => $request->email]);
+        if ($request->has('email') && $request->email !== $user->email) {
+            try {
+                $request->validate(['email' => 'required|email|unique:users,email,' . $user->id]);
+                $user->update(['email' => $request->email]);
+                $coOwner->update(['email' => $request->email]);
+                Log::info('CoOwnerMeController::updateProfile - Email mis à jour', [
+                    'old_email' => $user->email,
+                    'new_email' => $request->email
+                ]);
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                Log::error('CoOwnerMeController::updateProfile - Erreur validation email', [
+                    'errors' => $e->errors()
+                ]);
+                // Revenir à l'email original
+                $validated['email'] = $user->email;
+            }
         }
+
+        // Mettre à jour le nom de l'utilisateur si le prénom ou nom a changé
+        $userUpdates = [];
+        if (isset($validated['first_name']) && $validated['first_name'] !== $user->first_name) {
+            $userUpdates['first_name'] = $validated['first_name'];
+        }
+        if (isset($validated['last_name']) && $validated['last_name'] !== $user->last_name) {
+            $userUpdates['last_name'] = $validated['last_name'];
+        }
+
+        if (!empty($userUpdates)) {
+            $user->update($userUpdates);
+            Log::info('CoOwnerMeController::updateProfile - Nom utilisateur mis à jour', $userUpdates);
+        }
+
+        // Rafraîchir les données
+        $coOwner->refresh();
+        $user->refresh();
+
+        // Déterminer le type final
+        $coOwnerType = $coOwner->co_owner_type;
+        if (!$coOwnerType) {
+            if ($coOwner->is_professional) {
+                $coOwnerType = !empty($coOwner->company_name) ? 'agency' : 'professional';
+            } else {
+                $coOwnerType = 'simple';
+            }
+        }
+
+        Log::info('CoOwnerMeController::updateProfile - Profil mis à jour avec succès', [
+            'co_owner_id' => $coOwner->id,
+            'co_owner_type' => $coOwnerType,
+            'phone' => $coOwner->phone
+        ]);
 
         return response()->json([
             'message' => 'Profile updated successfully',
-            'data' => $this->getProfile($request)->getData(true)
+            'data' => [
+                'id' => $coOwner->id,
+                'user_id' => $coOwner->user_id,
+                'first_name' => $coOwner->first_name,
+                'last_name' => $coOwner->last_name,
+                'email' => $user->email,
+                'phone' => $coOwner->phone ?? $user->phone,
+                'address' => $coOwner->address,
+                'date_of_birth' => $coOwner->date_of_birth,
+                'id_number' => $coOwner->id_number,
+                'company_name' => $coOwner->company_name,
+                'address_billing' => $coOwner->address_billing,
+                'license_number' => $coOwner->license_number,
+                'is_professional' => (bool) $coOwner->is_professional,
+                'co_owner_type' => $coOwnerType,
+                'ifu' => $coOwner->ifu,
+                'rccm' => $coOwner->rccm,
+                'vat_number' => $coOwner->vat_number,
+                'status' => $coOwner->status,
+                'joined_at' => $coOwner->created_at,
+            ]
         ]);
     }
 
@@ -155,19 +342,19 @@ class CoOwnerMeController extends Controller
         Log::info('CoOwnerMeController::getDelegatedProperties', [
             'user_id' => $user?->id,
             'user_email' => $user?->email,
-            'user_roles' => $user?->roles,
-            'is_co_owner' => $user?->isCoOwner(),
+            'user_phone' => $user?->phone,
+            'has_co_owner_role' => $user?->hasRole('co_owner'),
         ]);
 
         if (!$user) {
             return response()->json(['message' => 'User not authenticated'], 401);
         }
 
-        if (!$user->isCoOwner()) {
-            return response()->json(['message' => 'Forbidden - User is not a co-owner', 'user_roles' => $user->roles], 403);
+        if (!$user->hasRole('co_owner')) {
+            return response()->json(['message' => 'Forbidden - User is not a co-owner'], 403);
         }
 
-        $coOwner = $user->coOwner;
+        $coOwner = CoOwner::where('user_id', $user->id)->first();
         if (!$coOwner) {
             return response()->json(['message' => 'Co-owner profile missing'], 422);
         }
@@ -226,11 +413,11 @@ class CoOwnerMeController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->isCoOwner()) {
+        if (!$user->hasRole('co_owner')) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $coOwner = $user->coOwner;
+        $coOwner = CoOwner::where('user_id', $user->id)->first();
         if (!$coOwner) {
             return response()->json(['message' => 'Co-owner profile missing'], 422);
         }
@@ -274,11 +461,11 @@ class CoOwnerMeController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->isCoOwner()) {
+        if (!$user->hasRole('co_owner')) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $coOwner = $user->coOwner;
+        $coOwner = CoOwner::where('user_id', $user->id)->first();
         if (!$coOwner) {
             return response()->json(['message' => 'Co-owner profile missing'], 422);
         }
@@ -321,11 +508,11 @@ class CoOwnerMeController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->isCoOwner()) {
+        if (!$user->hasRole('co_owner')) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $coOwner = $user->coOwner;
+        $coOwner = CoOwner::where('user_id', $user->id)->first();
         if (!$coOwner) {
             return response()->json(['message' => 'Co-owner profile missing'], 422);
         }
@@ -368,11 +555,11 @@ class CoOwnerMeController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->isCoOwner()) {
+        if (!$user->hasRole('co_owner')) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $coOwner = $user->coOwner;
+        $coOwner = CoOwner::where('user_id', $user->id)->first();
         if (!$coOwner) {
             return response()->json(['message' => 'Co-owner profile missing'], 422);
         }
@@ -394,10 +581,10 @@ class CoOwnerMeController extends Controller
                 'property_id' => $notice->property_id,
                 'tenant_id' => $notice->tenant_id,
                 'type' => $notice->type,
-                'title' => $notice->reason, // Utiliser 'reason' comme titre
-                'description' => $notice->reason, // Utiliser 'reason' comme description
+                'title' => $notice->reason,
+                'description' => $notice->reason,
                 'status' => $notice->status,
-                'priority' => 'medium', // Champ par défaut
+                'priority' => 'medium',
                 'notice_date' => $notice->notice_date,
                 'end_date' => $notice->end_date,
                 'notes' => $notice->notes,
@@ -420,11 +607,11 @@ class CoOwnerMeController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->isCoOwner()) {
+        if (!$user->hasRole('co_owner')) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $coOwner = $user->coOwner;
+        $coOwner = CoOwner::where('user_id', $user->id)->first();
         if (!$coOwner) {
             return response()->json(['message' => 'Co-owner profile missing'], 422);
         }
@@ -461,11 +648,11 @@ class CoOwnerMeController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->isCoOwner()) {
+        if (!$user->hasRole('co_owner')) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $coOwner = $user->coOwner;
+        $coOwner = CoOwner::where('user_id', $user->id)->first();
         if (!$coOwner) {
             return response()->json(['message' => 'Co-owner profile missing'], 422);
         }
@@ -489,7 +676,6 @@ class CoOwnerMeController extends Controller
             return response()->json(['message' => 'No permission to edit this property'], 403);
         }
 
-        // Log les données reçues
         Log::info('Données reçues pour modification', [
             'property_id' => $propertyId,
             'data' => $request->all(),
@@ -497,7 +683,6 @@ class CoOwnerMeController extends Controller
         ]);
 
         try {
-            // Valider les données avec des règles qui acceptent null
             $validated = $request->validate([
                 'name' => 'sometimes|nullable|string|max:255',
                 'address' => 'sometimes|nullable|string|max:255',
@@ -527,19 +712,15 @@ class CoOwnerMeController extends Controller
                 'has_balcony' => 'sometimes|boolean',
                 'has_terrace' => 'sometimes|boolean',
                 'has_cellar' => 'sometimes|boolean',
-                'reference_code' => 'required|string|max:100',
+                'reference_code' => 'sometimes|string|max:100',
                 'status' => 'sometimes|nullable|string|in:available,rented,maintenance,renovation',
                 'amenities' => 'sometimes|nullable|array',
                 'amenities.*' => 'sometimes|string',
             ]);
 
-            Log::info('Données validées', [
-                'validated' => $validated,
-                'has_reference_code' => isset($validated['reference_code'])
-            ]);
+            Log::info('Données validées', ['validated' => $validated]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            // Log détaillé des erreurs de validation
             Log::error('Erreur de validation', [
                 'errors' => $e->errors(),
                 'data' => $request->all()
@@ -551,19 +732,17 @@ class CoOwnerMeController extends Controller
             ], 422);
         }
 
-        // Nettoyer les données : convertir les chaînes vides en null
+        // Nettoyer les données
         foreach ($validated as $key => $value) {
             if ($value === '' || $value === null) {
                 $validated[$key] = null;
             }
         }
 
-        // S'assurer que reference_code existe
         if (!isset($validated['reference_code']) || empty($validated['reference_code'])) {
             $validated['reference_code'] = $property->reference_code ?: 'REF-' . time();
         }
 
-        // Convertir les booléens
         $booleanFields = ['has_garage', 'has_parking', 'is_furnished', 'has_elevator', 'has_balcony', 'has_terrace', 'has_cellar'];
         foreach ($booleanFields as $field) {
             if (isset($validated[$field])) {
@@ -571,14 +750,11 @@ class CoOwnerMeController extends Controller
             }
         }
 
-        // Sauvegarder les anciennes données
         $originalData = $property->toArray();
 
         try {
-            // Mettre à jour la propriété
             $property->update($validated);
 
-            // Audit
             DB::table('property_modification_audits')->insert([
                 'property_id' => $property->id,
                 'co_owner_id' => $coOwner->id,
@@ -591,7 +767,6 @@ class CoOwnerMeController extends Controller
                 'updated_at' => now(),
             ]);
 
-            // Envoyer un email au propriétaire
             try {
                 $landlord = User::find($property->landlord_id);
                 if ($landlord && $landlord->email) {
@@ -601,23 +776,15 @@ class CoOwnerMeController extends Controller
                         $originalData,
                         $validated
                     ));
-
-                    Log::info('Email envoyé au propriétaire', [
-                        'property_id' => $property->id,
-                        'co_owner_id' => $coOwner->id
-                    ]);
                 }
             } catch (\Exception $e) {
                 Log::error('Erreur lors de l\'envoi de l\'email', [
                     'error' => $e->getMessage(),
-                    'property_id' => $property->id,
-                    'co_owner_id' => $coOwner->id
                 ]);
             }
 
             Log::info('Propriété mise à jour avec succès', [
                 'property_id' => $property->id,
-                'modifications' => array_keys($validated)
             ]);
 
             $property->refresh();
@@ -631,7 +798,6 @@ class CoOwnerMeController extends Controller
             Log::error('Erreur base de données', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'validated_data' => $validated
             ]);
 
             return response()->json([
@@ -696,16 +862,15 @@ class CoOwnerMeController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->isCoOwner()) {
+        if (!$user->hasRole('co_owner')) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $coOwner = $user->coOwner;
+        $coOwner = CoOwner::where('user_id', $user->id)->first();
         if (!$coOwner) {
             return response()->json(['message' => 'Co-owner profile missing'], 422);
         }
 
-        // Vérifier que la propriété est bien déléguée
         $delegation = PropertyDelegation::where('co_owner_id', $coOwner->id)
             ->where('property_id', $propertyId)
             ->where('status', 'active')
@@ -735,15 +900,10 @@ class CoOwnerMeController extends Controller
             }
         }
 
-        // Sauvegarder les anciennes photos pour l'audit
-        $originalPhotos = $property->photos;
-
-        // Fusionner les nouvelles photos avec les existantes
         $allPhotos = array_merge($currentPhotos, $uploadedPhotos);
         $property->photos = $allPhotos;
         $property->save();
 
-        // Envoyer un email de notification au propriétaire pour les photos
         try {
             $landlord = User::find($property->landlord_id);
             if ($landlord && $landlord->email) {
@@ -756,7 +916,6 @@ class CoOwnerMeController extends Controller
         } catch (\Exception $e) {
             Log::error('Erreur lors de l\'envoi de l\'email pour photos', [
                 'error' => $e->getMessage(),
-                'property_id' => $property->id
             ]);
         }
 
@@ -773,11 +932,11 @@ class CoOwnerMeController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->isCoOwner()) {
+        if (!$user->hasRole('co_owner')) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $coOwner = $user->coOwner;
+        $coOwner = CoOwner::where('user_id', $user->id)->first();
         if (!$coOwner) {
             return response()->json(['message' => 'Co-owner profile missing'], 422);
         }
@@ -816,11 +975,11 @@ class CoOwnerMeController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->isCoOwner()) {
+        if (!$user->hasRole('co_owner')) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $coOwner = $user->coOwner;
+        $coOwner = CoOwner::where('user_id', $user->id)->first();
         if (!$coOwner) {
             return response()->json(['message' => 'Co-owner profile missing'], 422);
         }
@@ -859,16 +1018,15 @@ class CoOwnerMeController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->isCoOwner()) {
+        if (!$user->hasRole('co_owner')) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        $coOwner = $user->coOwner;
+        $coOwner = CoOwner::where('user_id', $user->id)->first();
         if (!$coOwner) {
             return response()->json(['message' => 'Co-owner profile missing'], 422);
         }
 
-        // Vérifier que la propriété est déléguée
         $delegation = PropertyDelegation::where('co_owner_id', $coOwner->id)
             ->where('property_id', $propertyId)
             ->where('status', 'active')
@@ -878,7 +1036,6 @@ class CoOwnerMeController extends Controller
             return response()->json(['message' => 'Property not delegated to this co-owner'], 403);
         }
 
-        // Récupérer l'historique d'audit
         $audits = DB::table('property_modification_audits')
             ->where('property_id', $propertyId)
             ->where('co_owner_id', $coOwner->id)

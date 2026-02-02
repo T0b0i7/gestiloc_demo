@@ -8,6 +8,7 @@ import {
   Bell,
   FileText,
   FileCheck,
+  Wrench,
   UserPlus,
   LogOut,
   ChevronRight,
@@ -159,6 +160,9 @@ export const Layout: React.FC<LayoutProps> = ({
           icon: Building, 
           path: "/coproprietaire/delegations" 
         },
+
+
+        
       ],
     },
     {
@@ -199,8 +203,16 @@ export const Layout: React.FC<LayoutProps> = ({
 {
   id: "co-owner-notices-index",
   label: "Préavis",
-  icon: Bell,            // 🔔 notification / préavis
+  icon: Bell,          
   path: "/coproprietaire/notices",
+  isLaravel: true
+},
+
+{
+  id: "co-owner-maintenance-index",
+  label: "Demandes de maintenance",
+  icon: Wrench, 
+  path: "/coproprietaire/maintenance",
   isLaravel: true
 },
   
@@ -243,31 +255,7 @@ export const Layout: React.FC<LayoutProps> = ({
       icon: User,
       path: "/coproprietaire/profile",
     },
-    {
-      id: "delegations",
-      label: "Délégations",
-      icon: Users,
-      submenu: [
-        { 
-          id: "mes-delegations", 
-          label: "Mes délégations", 
-          icon: Users,
-          path: "/coproprietaire/mes-delegations"
-        },
-        { 
-          id: "demandes-delegation", 
-          label: "Demandes reçues", 
-          icon: UserPlus,
-          path: "/coproprietaire/demandes-delegation"
-        },
-        { 
-          id: "inviter-proprietaire", 
-          label: "Inviter un propriétaire", 
-          icon: UserPlus,
-          path: "/coproprietaire/inviter-proprietaire"
-        },
-      ],
-    },
+    
     {
       id: "finances",
       label: "Finances",

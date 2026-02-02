@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Préavis - Co-propriétaire</title>
+    <title>Demandes de maintenance - Copropriétaire</title>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <style>
         :root {
@@ -429,6 +429,11 @@
             color: #7c3aed;
         }
 
+        .stat-icon.red {
+            background: rgba(239,68,68,.15);
+            color: #991b1b;
+        }
+
         .stat-info {
             flex: 1;
         }
@@ -549,13 +554,19 @@
             gap: 0.25rem;
         }
 
-        .badge-pending {
+        .badge-open {
             background: rgba(245,158,11,.15);
             color: #92400e;
             border: 1px solid rgba(245,158,11,.25);
         }
 
-        .badge-confirmed {
+        .badge-in_progress {
+            background: rgba(59,130,246,.15);
+            color: #1d4ed8;
+            border: 1px solid rgba(59,130,246,.25);
+        }
+
+        .badge-resolved {
             background: rgba(34,197,94,.15);
             color: #166534;
             border: 1px solid rgba(34,197,94,.25);
@@ -565,6 +576,96 @@
             background: rgba(148,163,184,.15);
             color: #475569;
             border: 1px solid rgba(148,163,184,.25);
+        }
+
+        .badge-emergency {
+            background: rgba(239,68,68,.15);
+            color: #991b1b;
+            border: 1px solid rgba(239,68,68,.25);
+        }
+
+        .badge-high {
+            background: rgba(245,158,11,.15);
+            color: #92400e;
+            border: 1px solid rgba(245,158,11,.25);
+        }
+
+        .badge-medium {
+            background: rgba(59,130,246,.15);
+            color: #1d4ed8;
+            border: 1px solid rgba(59,130,246,.25);
+        }
+
+        .badge-low {
+            background: rgba(34,197,94,.15);
+            color: #166534;
+            border: 1px solid rgba(34,197,94,.25);
+        }
+
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            background: rgba(255,255,255,.9);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 2px solid rgba(102,126,234,.10);
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            min-width: 180px;
+        }
+
+        .filter-label {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--ink);
+        }
+
+        .filter-select {
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            border: 1px solid rgba(102,126,234,.25);
+            background: white;
+            color: var(--ink);
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--indigo);
+            box-shadow: 0 0 0 3px rgba(79,70,229,.15);
+        }
+
+        .top-bar-content {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid rgba(100, 116, 139, 0.2);
+            color: #64748b;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.3);
         }
     </style>
 </head>
@@ -626,8 +727,12 @@
                     <button class="submenu-item" onclick="navigateTo('/coproprietaire/leases')">
                         <span>Baux en cours</span>
                     </button>
-                    <button class="submenu-item active">
+                    <button class="submenu-item" onclick="navigateTo('/coproprietaire/notices')">
                         <span>Préavis</span>
+                    </button>
+                    <!-- 👇 NOUVEAU MENU POUR LES INTERVENTIONS -->
+                    <button class="submenu-item active" onclick="navigateTo('/coproprietaire/maintenance')">
+                        <span>Demandes de maintenance</span>
                     </button>
                     <button class="submenu-item" onclick="goToReact('/coproprietaire/quittances')">
                         <span>Quittances</span>
@@ -699,10 +804,16 @@
 
             <div class="sidebar-footer">
                 <div class="user-profile">
-                    <div class="user-avatar">C</div>
+                    <div class="user-avatar"><?php echo strtoupper(substr($coOwner->first_name ?? 'C', 0, 1)); ?></div>
                     <div class="user-info">
-                        <div class="user-name">Co-propriétaire</div>
-                        <div class="user-role">Co-propriétaire</div>
+                        <div class="user-name"><?php echo e($coOwner->first_name ?? 'Co-propriétaire'); ?> <?php echo e($coOwner->last_name ?? ''); ?></div>
+                        <div class="user-role">
+                            <?php if($coOwner->co_owner_type === 'agency'): ?>
+                                Agence Immobilière
+                            <?php else: ?>
+                                Co-propriétaire
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -716,64 +827,50 @@
                     <i data-lucide="menu"></i>
                 </button>
 
-            </header>
-
             
+            </header>
 
             <!-- Contenu -->
             <div class="content-container">
                 <div class="content-card">
                     <div class="content-header">
                         <h1>
-                            <i data-lucide="bell" style="width: 32px; height: 32px;"></i>
-                            Gestion des préavis
+                            <i data-lucide="wrench" style="width: 32px; height: 32px;"></i>
+                            Demandes de maintenance
                         </h1>
-                        <p>Gérez les préavis de départ pour les biens qui vous sont délégués</p>
+                        <p>Gérez les demandes de réparation pour les biens qui vous sont délégués</p>
                     </div>
 
                     <div class="content-body">
-                        <div class="top-actions">
-                            <a href="{{ route('co-owner.notices.create') }}" class="button button-primary">
-                                <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
-                                Nouveau préavis
-                            </a>
-                            <div class="top-actions-right">
-                                <button onclick="refreshData()" class="button button-secondary">
-                                    <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i>
-                                    Actualiser
-                                </button>
-                            </div>
-                        </div>
-
-                        @if(session('error'))
-                            <div class="alert-box alert-error">
-                                <i data-lucide="alert-circle" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
-                                <div>
-                                    <strong>Erreur</strong>
-                                    <p style="margin-top: 4px; font-weight: 650; font-size: 0.9rem;">{{ session('error') }}</p>
-                                </div>
-                            </div>
-                        @endif
-
-                        @if(session('success'))
+                        <?php if(session('success')): ?>
                             <div class="alert-box alert-success">
                                 <i data-lucide="check-circle" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
                                 <div>
                                     <strong>Succès</strong>
-                                    <p style="margin-top: 4px; font-weight: 650; font-size: 0.9rem;">{{ session('success') }}</p>
+                                    <p style="margin-top: 4px; font-weight: 650; font-size: 0.9rem;"><?php echo e(session('success')); ?></p>
                                 </div>
                             </div>
-                        @endif
+                        <?php endif; ?>
+
+                        <?php if(session('error')): ?>
+                            <div class="alert-box alert-error">
+                                <i data-lucide="alert-circle" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
+                                <div>
+                                    <strong>Erreur</strong>
+                                    <p style="margin-top: 4px; font-weight: 650; font-size: 0.9rem;"><?php echo e(session('error')); ?></p>
+                                </div>
+                            </div>
+                        <?php endif; ?>
 
                         <!-- Statistiques -->
                         <div class="stats-grid">
                             <div class="stat-card">
                                 <div class="stat-icon blue">
-                                    <i data-lucide="bell" style="width: 24px; height: 24px;"></i>
+                                    <i data-lucide="wrench" style="width: 24px; height: 24px;"></i>
                                 </div>
                                 <div class="stat-info">
-                                    <div class="stat-value">{{ $notices->count() }}</div>
-                                    <div class="stat-label">Préavis</div>
+                                    <div class="stat-value"><?php echo e($stats['total']); ?></div>
+                                    <div class="stat-label">Demandes totales</div>
                                 </div>
                             </div>
 
@@ -782,8 +879,18 @@
                                     <i data-lucide="clock" style="width: 24px; height: 24px;"></i>
                                 </div>
                                 <div class="stat-info">
-                                    <div class="stat-value">{{ $notices->where('status', 'pending')->count() }}</div>
+                                    <div class="stat-value"><?php echo e($stats['open']); ?></div>
                                     <div class="stat-label">En attente</div>
+                                </div>
+                            </div>
+
+                            <div class="stat-card">
+                                <div class="stat-icon purple">
+                                    <i data-lucide="loader" style="width: 24px; height: 24px;"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <div class="stat-value"><?php echo e($stats['in_progress']); ?></div>
+                                    <div class="stat-label">En cours</div>
                                 </div>
                             </div>
 
@@ -792,87 +899,184 @@
                                     <i data-lucide="check-circle" style="width: 24px; height: 24px;"></i>
                                 </div>
                                 <div class="stat-info">
-                                    <div class="stat-value">{{ $notices->where('status', 'confirmed')->count() }}</div>
-                                    <div class="stat-label">Confirmés</div>
+                                    <div class="stat-value"><?php echo e($stats['resolved']); ?></div>
+                                    <div class="stat-label">Résolues</div>
                                 </div>
                             </div>
 
                             <div class="stat-card">
-                                <div class="stat-icon purple">
+                                <div class="stat-icon red">
                                     <i data-lucide="home" style="width: 24px; height: 24px;"></i>
                                 </div>
                                 <div class="stat-info">
-                                    <div class="stat-value">{{ $leases->count() }}</div>
-                                    <div class="stat-label">Baux actifs</div>
+                                    <div class="stat-value"><?php echo e($stats['properties']); ?></div>
+                                    <div class="stat-label">Biens délégués</div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Liste des préavis -->
-                        @if($notices->isEmpty())
-                            <div class="empty-state">
-                                <i data-lucide="bell" class="empty-state-icon" style="width: 64px; height: 64px;"></i>
-                                <h3 class="empty-state-title">Aucun préavis</h3>
-                                <p class="empty-state-text">Créez votre premier préavis en cliquant sur "Nouveau préavis".</p>
-                                <a href="{{ route('co-owner.notices.create') }}" class="button button-primary">
-                                    <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
-                                    Créer un préavis
-                                </a>
+                        <!-- Filtres -->
+                        <div class="filters">
+                            <div class="filter-group">
+                                <label class="filter-label">Statut</label>
+                                <select class="filter-select" onchange="filterByStatus(this.value)">
+                                    <option value="all">Tous les statuts</option>
+                                    <option value="open">En attente</option>
+                                    <option value="in_progress">En cours</option>
+                                    <option value="resolved">Résolu</option>
+                                    <option value="cancelled">Annulé</option>
+                                </select>
                             </div>
-                        @else
+
+                            <div class="filter-group">
+                                <label class="filter-label">Priorité</label>
+                                <select class="filter-select" onchange="filterByPriority(this.value)">
+                                    <option value="all">Toutes priorités</option>
+                                    <option value="emergency">Urgence</option>
+                                    <option value="high">Élevée</option>
+                                    <option value="medium">Moyenne</option>
+                                    <option value="low">Faible</option>
+                                </select>
+                            </div>
+
+                            <div class="filter-group">
+                                <label class="filter-label">Bien</label>
+                                <select class="filter-select" onchange="filterByProperty(this.value)">
+                                    <option value="all">Tous les biens</option>
+                                    <?php $__currentLoopData = $delegations; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $delegation): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php if($delegation->property): ?>
+                                            <option value="<?php echo e($delegation->property->id); ?>">
+                                                <?php echo e($delegation->property->address); ?> - <?php echo e($delegation->property->city); ?>
+
+                                            </option>
+                                        <?php endif; ?>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                </select>
+                            </div>
+
+                            <div class="filter-group" style="align-self: flex-end;">
+                                <button onclick="resetFilters()" class="button button-secondary">
+                                    <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i>
+                                    Réinitialiser
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Liste des demandes -->
+                        <?php if($maintenanceRequests->isEmpty()): ?>
+                            <div class="empty-state">
+                                <i data-lucide="wrench" class="empty-state-icon" style="width: 64px; height: 64px;"></i>
+                                <h3 class="empty-state-title">Aucune demande de maintenance</h3>
+                                <p class="empty-state-text">
+                                    Les locataires des biens délégués n'ont créé aucune demande de maintenance pour le moment.
+                                </p>
+                                <?php if($stats['properties'] === 0): ?>
+                                    <div class="alert-box alert-info" style="max-width: 500px; margin: 1rem auto;">
+                                        <i data-lucide="info" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
+                                        <div>
+                                            <strong>Information</strong>
+                                            <p style="margin-top: 4px; font-weight: 650; font-size: 0.9rem;">
+                                                Vous n'avez aucun bien délégué. Contactez le propriétaire principal pour obtenir des délégations.
+                                            </p>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        <?php else: ?>
                             <div class="notices-list">
-                                @foreach($notices as $notice)
-                                    <div class="notice-card">
+                                <?php $__currentLoopData = $maintenanceRequests; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $request): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <div class="notice-card"
+                                         data-status="<?php echo e($request->status); ?>"
+                                         data-priority="<?php echo e($request->priority); ?>"
+                                         data-property="<?php echo e($request->property_id); ?>">
                                         <div class="notice-info">
                                             <div class="notice-title">
-                                                <i data-lucide="home" style="width: 18px; height: 18px; color: var(--indigo);"></i>
-                                                {{ $notice->property->address ?? 'Bien sans nom' }}
-                                                <span class="badge badge-{{ $notice->status }}">
-                                                    @if($notice->status == 'pending')
+                                                <i data-lucide="wrench" style="width: 18px; height: 18px; color: var(--indigo);"></i>
+                                                <?php echo e($request->title); ?>
+
+                                                <span class="badge badge-<?php echo e($request->status); ?>">
+                                                    <?php if($request->status == 'open'): ?>
                                                         <i data-lucide="clock" style="width: 12px; height: 12px;"></i> En attente
-                                                    @elseif($notice->status == 'confirmed')
-                                                        <i data-lucide="check-circle" style="width: 12px; height: 12px;"></i> Confirmé
-                                                    @else
+                                                    <?php elseif($request->status == 'in_progress'): ?>
+                                                        <i data-lucide="loader" style="width: 12px; height: 12px;"></i> En cours
+                                                    <?php elseif($request->status == 'resolved'): ?>
+                                                        <i data-lucide="check-circle" style="width: 12px; height: 12px;"></i> Résolu
+                                                    <?php else: ?>
                                                         <i data-lucide="x-circle" style="width: 12px; height: 12px;"></i> Annulé
-                                                    @endif
+                                                    <?php endif; ?>
+                                                </span>
+                                                <span class="badge badge-<?php echo e($request->priority); ?>">
+                                                    <?php if($request->priority == 'emergency'): ?>
+                                                        <i data-lucide="alert-triangle" style="width: 12px; height: 12px;"></i> Urgence
+                                                    <?php elseif($request->priority == 'high'): ?>
+                                                        <i data-lucide="alert-circle" style="width: 12px; height: 12px;"></i> Élevée
+                                                    <?php elseif($request->priority == 'medium'): ?>
+                                                        <i data-lucide="info" style="width: 12px; height: 12px;"></i> Moyenne
+                                                    <?php else: ?>
+                                                        <i data-lucide="check" style="width: 12px; height: 12px;"></i> Faible
+                                                    <?php endif; ?>
                                                 </span>
                                             </div>
                                             <div class="notice-meta">
                                                 <span class="notice-meta-item">
+                                                    <i data-lucide="home" style="width: 14px; height: 14px;"></i>
+                                                    <?php echo e($request->property->address ?? 'Bien inconnu'); ?>
+
+                                                </span>
+                                                <span class="notice-meta-item">
                                                     <i data-lucide="user" style="width: 14px; height: 14px;"></i>
-                                                    {{ $notice->tenant->user->name ?? 'Locataire' }}
+                                                    <?php echo e($request->tenant->user->name ?? 'Locataire inconnu'); ?>
+
                                                 </span>
                                                 <span class="notice-meta-item">
                                                     <i data-lucide="calendar" style="width: 14px; height: 14px;"></i>
-                                                    Départ le {{ \Carbon\Carbon::parse($notice->end_date)->format('d/m/Y') }}
-                                                </span>
-                                                <span class="notice-meta-item">
-                                                    <i data-lucide="file-text" style="width: 14px; height: 14px;"></i>
-                                                    {{ $notice->type == 'landlord' ? 'Bailleur' : 'Locataire' }}
+                                                    <?php echo e($request->created_at->format('d/m/Y H:i')); ?>
+
                                                 </span>
                                             </div>
+                                            <?php if($request->description): ?>
+                                                <div style="margin-top: 8px; font-size: 0.875rem; color: #64748b;">
+                                                    <?php echo e(Str::limit($request->description, 100)); ?>
+
+                                                </div>
+                                            <?php endif; ?>
                                         </div>
                                         <div class="notice-meta">
-                                            <div><strong>Motif:</strong> {{ Str::limit($notice->reason, 50) }}</div>
+                                            <div>
+                                                <strong>Catégorie:</strong>
+                                                <?php
+                                                    $categories = [
+                                                        'plumbing' => 'Plomberie',
+                                                        'electricity' => 'Électricité',
+                                                        'heating' => 'Chauffage',
+                                                        'other' => 'Autre',
+                                                    ];
+                                                    echo $categories[$request->category] ?? $request->category;
+                                                ?>
+                                            </div>
+                                            <?php if($request->assigned_provider): ?>
+                                                <div><strong>Prestataire:</strong> <?php echo e($request->assigned_provider); ?></div>
+                                            <?php endif; ?>
                                         </div>
                                         <div class="notice-actions">
-                                            <a href="{{ route('co-owner.notices.show', $notice) }}" class="button button-secondary">
+                                            <a href="<?php echo e(route('co-owner.maintenance.show', $request)); ?>" class="button button-secondary">
                                                 <i data-lucide="eye" style="width: 16px; height: 16px;"></i>
                                                 Voir
                                             </a>
-                                            <form action="{{ route('co-owner.notices.destroy', $notice) }}" method="POST" onsubmit="return confirm('Supprimer ce préavis ?');" style="display: inline;">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="button button-danger">
-                                                    <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
-                                                    Supprimer
-                                                </button>
-                                            </form>
+                                            <?php if($request->status == 'open'): ?>
+                                                <form action="<?php echo e(route('co-owner.maintenance.start', $request)); ?>" method="POST" style="display: inline;">
+                                                    <?php echo csrf_field(); ?>
+                                                    <button type="submit" class="button button-primary">
+                                                        <i data-lucide="play" style="width: 16px; height: 16px;"></i>
+                                                        Prendre en charge
+                                                    </button>
+                                                </form>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
-                        @endif
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -898,6 +1102,7 @@
                                   path.includes('/assign-property') ||
                                   path.includes('/leases') ||
                                   path.includes('/notices') ||
+                                  path.includes('/maintenance') ||
                                   path.includes('/test-laravel');
 
             let baseUrl = 'http://localhost:';
@@ -996,17 +1201,39 @@
             localStorage.setItem('token', urlToken);
         }
 
-        // Actualiser les données
-        function refreshData() {
-            const button = event.currentTarget;
-            const originalHtml = button.innerHTML;
+        // Filtres
+        function filterByStatus(status) {
+            filterItems('status', status);
+        }
 
-            button.innerHTML = '<i data-lucide="loader" style="width: 16px; height: 16px; animation: spin 1s linear infinite;"></i> Actualisation...';
-            button.disabled = true;
+        function filterByPriority(priority) {
+            filterItems('priority', priority);
+        }
 
-            setTimeout(() => {
-                window.location.reload();
-            }, 500);
+        function filterByProperty(propertyId) {
+            filterItems('property', propertyId);
+        }
+
+        function filterItems(type, value) {
+            const cards = document.querySelectorAll('.notice-card');
+            cards.forEach(card => {
+                const cardValue = card.getAttribute(`data-${type}`);
+                if (value === 'all' || cardValue === value) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function resetFilters() {
+            document.querySelectorAll('.filter-select').forEach(select => {
+                select.value = 'all';
+            });
+            const cards = document.querySelectorAll('.notice-card');
+            cards.forEach(card => {
+                card.style.display = '';
+            });
         }
 
         // Ajouter l'animation de spin pour le loader

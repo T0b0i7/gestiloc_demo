@@ -373,8 +373,8 @@ HTML;
                 'phone' => $coOwner->phone ?? ($user ? $user->phone : '') ?? ($meta['phone'] ?? ''),
                 'address_billing' => $coOwner->address_billing ?? '',
                 'is_professional' => $isProfessional,
-                'co_owner_type' => $coOwnerType, // MODIFICATION : renommé de invitation_type à co_owner_type
-                'invitation_type' => $meta['invitation_type'] ?? ($isProfessional ? 'agency' : 'co_owner'), // Garder pour compatibilité
+                'co_owner_type' => $coOwnerType,
+                'invitation_type' => $meta['invitation_type'] ?? ($isProfessional ? 'agency' : 'co_owner'), 
                 'license_number' => $coOwner->license_number ?? '',
                 'ifu' => $coOwner->ifu ?? ($meta['ifu'] ?? ''),
                 'rccm' => $coOwner->rccm ?? ($meta['rccm'] ?? ''),

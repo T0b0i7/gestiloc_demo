@@ -490,6 +490,7 @@ export const PropertyEditModal: React.FC<PropertyEditModalProps> = ({
           font-weight: 650;
           font-size: 14px;
           max-width: 72ch;
+          color: white;
         }
 
         .modal-badge-row{

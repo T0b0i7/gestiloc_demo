@@ -273,6 +273,7 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
           display: flex;
           align-items: center;
           gap: 8px;
+          color: white;
         }
 
         .modal-badge-row-premium{
@@ -446,7 +447,7 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
           border-radius: 999px;
           background: var(--primary-light);
           border: 1px solid rgba(var(--primary),.18);
-          color: var(--primary-dark);
+         color: white;
           font-weight: 950;
           font-size: .78rem;
           white-space: nowrap;
@@ -1053,33 +1054,14 @@ export const PropertyModal: React.FC<PropertyModalProps> = ({
               <div style={{ display: 'flex', gap: '10px' }}>
                 {property.delegation?.permissions?.includes('edit') && (
                   <button
-                    className="btn-premium btn-premium-primary"
-                    onClick={() => {
-                      onClose();
-                      notify(
-                        isAgency 
-                          ? 'Utilisez le bouton "Modifier" dans votre espace de gestion' 
-                          : 'Utilisez le bouton "Modifier" sur la carte du bien', 
-                        'info'
-                      );
-                    }}
+                    className="btn-premium btn-premium-light"
+                    
                   >
-                    <Edit size={16} />
-                    {isAgency ? 'Gérer cette propriété' : 'Modifier ce bien'}
-                    <span>{isAgency ? 'Gestion' : 'Édition'}</span>
+                   
                   </button>
                 )}
                 
-                <button
-                  className="btn-premium"
-                  onClick={() => {
-                    notify('Vue détaillée activée', 'info');
-                  }}
-                >
-                  <ExternalLink size={16} />
-                  Voir les détails
-                  <span>Avancé</span>
-                </button>
+               
               </div>
             </div>
           </div>

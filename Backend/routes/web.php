@@ -5,6 +5,7 @@ use App\Http\Controllers\CoOwner\CoOwnerTenantController;
 use App\Http\Controllers\CoOwner\CoOwnerAssignPropertyController;
 use App\Http\Controllers\CoOwner\CoOwnerLeaseController;
 use App\Http\Controllers\CoOwner\CoOwnerLeaseDocumentController;
+use App\Http\Controllers\CoOwner\CoOwnerMaintenanceController;
 use App\Http\Controllers\CoOwner\CoOwnerNoticeController;
 use App\Http\Controllers\ReactRedirectController;
 
@@ -46,6 +47,43 @@ Route::prefix('coproprietaire')->name('co-owner.')->group(function () {
         Route::post('/store', [CoOwnerAssignPropertyController::class, 'store'])
             ->name('store');
     });
+
+
+    // LA GESTION DES INTERVENTIONS
+    Route::prefix('maintenance')->name('maintenance.')->group(function () {
+        // Liste des demandes de maintenance
+        Route::get('/', [CoOwnerMaintenanceController::class, 'index'])
+            ->name('index');
+
+        // Afficher une demande
+        Route::get('/{maintenance}', [CoOwnerMaintenanceController::class, 'show'])
+            ->name('show');
+
+        // Marquer comme "en cours"
+        Route::post('/{maintenance}/start', [CoOwnerMaintenanceController::class, 'start'])
+            ->name('start');
+
+        // Assigner un prestataire
+        Route::post('/{maintenance}/assign', [CoOwnerMaintenanceController::class, 'assign'])
+            ->name('assign');
+
+        // Marquer comme résolu
+        Route::post('/{maintenance}/resolve', [CoOwnerMaintenanceController::class, 'resolve'])
+            ->name('resolve');
+
+        // Annuler une demande
+        Route::post('/{maintenance}/cancel', [CoOwnerMaintenanceController::class, 'cancel'])
+            ->name('cancel');
+
+        // Ajouter un commentaire/réponse
+        Route::post('/{maintenance}/comment', [CoOwnerMaintenanceController::class, 'comment'])
+            ->name('comment');
+
+        // Répondre au locataire (envoie email)
+        Route::post('/{maintenance}/reply', [CoOwnerMaintenanceController::class, 'replyToTenant'])
+            ->name('reply');
+    });
+
 
 
 // Routes pour les préavis des co-propriétaires
