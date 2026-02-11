@@ -10,9 +10,12 @@ use App\Http\Controllers\CoOwner\CoOwnerRentReceiptController;
 use App\Http\Controllers\CoOwner\CoOwnerNoticeController;
 use App\Http\Controllers\CoOwner\CoOwnerPaymentController;
 use App\Http\Controllers\CoOwner\CoOwnerAccountingController;
+use App\Http\Controllers\CoOwner\CoOwnerInvoiceController;
+use App\Http\Controllers\CoOwner\CoOwnerPropertyController;
 use App\Http\Controllers\CoOwner\CoOwnerConditionReportController;
 use App\Http\Controllers\ReactRedirectController;
 use App\Http\Controllers\Auth\LoginController;
+
 
 // Page d'accueil Laravel
 Route::get('/', function () {
@@ -122,11 +125,9 @@ Route::get('/redirect/{path?}', [ReactRedirectController::class, 'redirect'])
 
 /*
 |--------------------------------------------------------------------------
-| ROUTES LARAVEL SPÉCIFIQUES - DOIVENT ÊTRE DÉFINIES AVANT
+| ROUTES LARAVEL SPÉCIFIQUES - DOIVENT ÊTRE DÉFINIES EN PREMIER
 |--------------------------------------------------------------------------
 */
-
-
 
 // Routes pour les locataires
 Route::prefix('coproprietaire/tenants')->name('co-owner.tenants.')->group(function () {
@@ -138,15 +139,9 @@ Route::prefix('coproprietaire/tenants')->name('co-owner.tenants.')->group(functi
     Route::post('/{tenant}/assign', [CoOwnerTenantController::class, 'assignProperty'])->name('assign');
     Route::delete('/{tenant}/unassign/{property}', [CoOwnerTenantController::class, 'unassignProperty'])->name('unassign');
     Route::post('/{tenant}/resend-invitation', [CoOwnerTenantController::class, 'resendInvitation'])->name('resend-invitation');
-
-    // CORRECTION : Utiliser la même structure de chemin
-    Route::put('/{tenant}/archive', [CoOwnerTenantController::class, 'archive'])
-        ->name('archive');
-
-    Route::put('/{tenant}/restore', [CoOwnerTenantController::class, 'restore'])
-        ->name('restore');
+    Route::put('/{tenant}/archive', [CoOwnerTenantController::class, 'archive'])->name('archive');
+    Route::put('/{tenant}/restore', [CoOwnerTenantController::class, 'restore'])->name('restore');
 });
-
 
 // Routes pour la gestion des paiements
 Route::prefix('coproprietaire/paiements')->name('co-owner.payments.')->group(function () {
@@ -160,21 +155,26 @@ Route::prefix('coproprietaire/paiements')->name('co-owner.payments.')->group(fun
     Route::put('/{payment}/archive', [CoOwnerPaymentController::class, 'archive'])->name('archive');
 });
 
-
-// Routes pour les états des lieux (copropriétaire)
+//Route etat des lieux
 Route::prefix('coproprietaire/etats-des-lieux')->name('co-owner.condition-reports.')->group(function () {
-    Route::get('/', [CoOwnerConditionReportController::class, 'index'])->name('index');
+    // ✅ EN PREMIER - TOUJOURS
     Route::get('/create', [CoOwnerConditionReportController::class, 'create'])->name('create');
+
+    // ✅ ENSUITE les routes sans paramètres
+    Route::get('/', [CoOwnerConditionReportController::class, 'index'])->name('index');
     Route::post('/', [CoOwnerConditionReportController::class, 'store'])->name('store');
+
+    // ✅ ENSUITE les routes avec paramètres FIXES (bien/{id})
+    Route::get('/bien/{propertyId}', [CoOwnerConditionReportController::class, 'index'])->name('by-property');
+
+    // ✅ ENSUITE les routes avec paramètres dynamiques {id}
+    Route::get('/{id}/edit', [CoOwnerConditionReportController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [CoOwnerConditionReportController::class, 'update'])->name('update');
     Route::get('/{id}', [CoOwnerConditionReportController::class, 'show'])->name('show');
     Route::post('/{id}/photos', [CoOwnerConditionReportController::class, 'addPhotos'])->name('add-photos');
     Route::delete('/{id}', [CoOwnerConditionReportController::class, 'destroy'])->name('destroy');
     Route::get('/{id}/download', [CoOwnerConditionReportController::class, 'downloadPdf'])->name('download');
-
-    // Pour les états des lieux d'un bien spécifique
-    Route::get('/bien/{propertyId}', [CoOwnerConditionReportController::class, 'index'])->name('by-property');
 });
-
 
 // Routes pour assigner un bien
 Route::prefix('coproprietaire/assign-property')->name('co-owner.assign-property.')->group(function () {
@@ -192,6 +192,36 @@ Route::prefix('coproprietaire/quittances')->name('co-owner.quittances.')->group(
     Route::delete('/{receipt}', [CoOwnerRentReceiptController::class, 'destroy'])->name('destroy');
 });
 
+
+/*
+|--------------------------------------------------------------------------
+| ROUTES FACTURES COPROPRIÉTAIRE
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('coproprietaire/factures')->name('co-owner.invoices.')->group(function () {
+    Route::get('/', [CoOwnerInvoiceController::class, 'index'])->name('index');
+    Route::get('/creer', [CoOwnerInvoiceController::class, 'create'])->name('create');
+    Route::post('/', [CoOwnerInvoiceController::class, 'store'])->name('store');
+    Route::get('/{id}', [CoOwnerInvoiceController::class, 'show'])->name('show');
+    Route::get('/{id}/pdf', [CoOwnerInvoiceController::class, 'downloadPdf'])->name('pdf');
+    Route::post('/{id}/rappel', [CoOwnerInvoiceController::class, 'sendReminder'])->name('reminder');
+});
+
+/*
+|--------------------------------------------------------------------------
+| ROUTES BIENS COPROPRIÉTAIRE (SANS INDEX)
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('coproprietaire/biens')->name('co-owner.properties.')->group(function () {
+    // UNIQUEMENT create et store - PAS de index
+    Route::get('/create', [CoOwnerPropertyController::class, 'create'])->name('create');
+    Route::post('/store', [CoOwnerPropertyController::class, 'store'])->name('store');
+});
+
+
+//Routes pour les preavis 
 // Routes pour les préavis
 Route::prefix('coproprietaire/notices')->name('co-owner.notices.')->group(function () {
     Route::get('/', [CoOwnerNoticeController::class, 'index'])->name('index');
@@ -206,21 +236,15 @@ Route::prefix('coproprietaire/notices')->name('co-owner.notices.')->group(functi
 
 // Routes pour la maintenance
 Route::prefix('coproprietaire/maintenance')->name('co-owner.maintenance.')->group(function () {
-
-    Route::post('/{maintenance}/start', [CoOwnerMaintenanceController::class, 'start'])->name('start');
-
-    Route::post('/{maintenance}/comment', [CoOwnerMaintenanceController::class, 'comment'])->name('comment');
-    Route::post('/{maintenance}/reply', [CoOwnerMaintenanceController::class, 'replyToTenant'])->name('reply');
-
-      Route::get('/', [CoOwnerMaintenanceController::class, 'index'])->name('index');
+    Route::get('/', [CoOwnerMaintenanceController::class, 'index'])->name('index');
     Route::get('/create', [CoOwnerMaintenanceController::class, 'create'])->name('create');
     Route::post('/store', [CoOwnerMaintenanceController::class, 'store'])->name('store');
-        Route::get('/{maintenance}/edit', [CoOwnerMaintenanceController::class, 'edit'])->name('edit');
-    Route::put('/{maintenance}/update', [CoOwnerMaintenanceController::class, 'update'])->name('update');
     Route::get('/{maintenance}', [CoOwnerMaintenanceController::class, 'show'])->name('show');
     Route::get('/{maintenance}/edit', [CoOwnerMaintenanceController::class, 'edit'])->name('edit');
     Route::put('/{maintenance}/update', [CoOwnerMaintenanceController::class, 'update'])->name('update');
     Route::post('/{maintenance}/start', [CoOwnerMaintenanceController::class, 'start'])->name('start');
+    Route::post('/{maintenance}/comment', [CoOwnerMaintenanceController::class, 'comment'])->name('comment');
+    Route::post('/{maintenance}/reply', [CoOwnerMaintenanceController::class, 'replyToTenant'])->name('reply');
     Route::post('/{maintenance}/assign', [CoOwnerMaintenanceController::class, 'assign'])->name('assign');
     Route::post('/{maintenance}/resolve', [CoOwnerMaintenanceController::class, 'resolve'])->name('resolve');
     Route::post('/{maintenance}/cancel', [CoOwnerMaintenanceController::class, 'cancel'])->name('cancel');
@@ -235,25 +259,50 @@ Route::prefix('coproprietaire/leases')->name('co-owner.leases.')->group(function
     Route::get('/documents/{lease}/preview', [CoOwnerLeaseDocumentController::class, 'previewPdf'])->name('documents.preview');
 });
 
-
-//Route pour comptabilites et travaux
-
+// Route pour comptabilites et travaux
 Route::prefix('coproprietaire/comptabilite')->name('co-owner.accounting.')->group(function () {
     Route::get('/', [CoOwnerAccountingController::class, 'index'])->name('index');
     Route::get('/data', [CoOwnerAccountingController::class, 'getChartData'])->name('data');
     Route::get('/transactions', [CoOwnerAccountingController::class, 'getTransactions'])->name('transactions');
 });
 
+// Routes pour les statistiques globales (Admin)
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::prefix('statistiques')->name('statistiques.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\StatistiqueController::class, 'index'])->name('index');
+        Route::get('/export/{type}', [\App\Http\Controllers\Admin\StatistiqueController::class, 'export'])->name('export');
+        Route::get('/api/user-growth', function () {
+            $controller = new \App\Http\Controllers\Admin\StatistiqueController();
+            return response()->json($controller->getChartData()['user_growth']);
+        })->name('api.user-growth');
+        Route::get('/api/revenue-trend', function () {
+            $controller = new \App\Http\Controllers\Admin\StatistiqueController();
+            return response()->json($controller->getChartData()['revenue_trend']);
+        })->name('api.revenue-trend');
+    });
+});
+
+// Routes pour les logs système (Admin)
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::prefix('logs')->name('logs.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\LogController::class, 'index'])->name('index');
+        Route::get('/download/{filename}', [\App\Http\Controllers\Admin\LogController::class, 'download'])->name('download');
+        Route::get('/clear/{filename}', [\App\Http\Controllers\Admin\LogController::class, 'clear'])->name('clear');
+        Route::get('/clear-all', [\App\Http\Controllers\Admin\LogController::class, 'clearAll'])->name('clear-all');
+        Route::get('/{filename}/{logId}', [\App\Http\Controllers\Admin\LogController::class, 'show'])->name('show');
+        Route::get('/ajax', [\App\Http\Controllers\Admin\LogController::class, 'getLogsAjax'])->name('ajax');
+        Route::get('/download-database', [\App\Http\Controllers\Admin\LogController::class, 'downloadDatabase'])->name('download-db');
+    });
+});
+
 /*
 |--------------------------------------------------------------------------
-| ROUTES REACT - DÉFINIES APRÈS LES ROUTES LARAVEL
+| ROUTES REACT - DÉFINIES APRÈS TOUTES LES ROUTES LARAVEL
 |--------------------------------------------------------------------------
 */
 
 Route::prefix('coproprietaire')->name('co-owner.react.')->group(function () {
-    // Routes React uniquement
-
-    // AJOUTER CETTE ROUTE POUR LES BIENS
+    // ⚠️ NE PAS METTRE DE ROUTE /etats-des-lieux ICI CAR ELLE EST DÉJÀ DÉFINIE
     Route::get('/biens', function () {
         return view('react-app');
     });
@@ -266,17 +315,14 @@ Route::prefix('coproprietaire')->name('co-owner.react.')->group(function () {
         return view('react-app');
     });
 
-    // Route React pour /locataires (différente de Laravel /tenants)
     Route::get('/locataires', function () {
         return view('react-app');
     });
 
-    // Route React pour /baux (différente de Laravel /leases)
     Route::get('/baux', function () {
         return view('react-app');
     });
 
-    // Route React pour /finances
     Route::get('/finances', function () {
         return view('react-app');
     });
@@ -317,55 +363,14 @@ Route::prefix('coproprietaire')->name('co-owner.react.')->group(function () {
         return view('react-app');
     });
 
-    // Route racine React
     Route::get('/', function () {
         return view('react-app');
     });
 });
 
-
-// Routes pour les statistiques globales (Admin)
-Route::prefix('admin')->name('admin.')->group(function () {
-    Route::prefix('statistiques')->name('statistiques.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\StatistiqueController::class, 'index'])->name('index');
-        Route::get('/export/{type}', [\App\Http\Controllers\Admin\StatistiqueController::class, 'export'])->name('export');
-
-        // Routes API pour les données des graphiques
-        Route::get('/api/user-growth', function () {
-            $controller = new \App\Http\Controllers\Admin\StatistiqueController();
-            return response()->json($controller->getChartData()['user_growth']);
-        })->name('api.user-growth');
-
-        Route::get('/api/revenue-trend', function () {
-            $controller = new \App\Http\Controllers\Admin\StatistiqueController();
-            return response()->json($controller->getChartData()['revenue_trend']);
-        })->name('api.revenue-trend');
-    });
-});
-
-
-// Routes pour les logs système (Admin)
-Route::prefix('admin')->name('admin.')->group(function () {
-    Route::prefix('logs')->name('logs.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\LogController::class, 'index'])->name('index');
-        Route::get('/download/{filename}', [\App\Http\Controllers\Admin\LogController::class, 'download'])->name('download');
-        Route::get('/clear/{filename}', [\App\Http\Controllers\Admin\LogController::class, 'clear'])->name('clear');
-        Route::get('/clear-all', [\App\Http\Controllers\Admin\LogController::class, 'clearAll'])->name('clear-all');
-        Route::get('/{filename}/{logId}', [\App\Http\Controllers\Admin\LogController::class, 'show'])->name('show');
-        Route::get('/ajax', [\App\Http\Controllers\Admin\LogController::class, 'getLogsAjax'])->name('ajax');
-        Route::get('/download-database', [\App\Http\Controllers\Admin\LogController::class, 'downloadDatabase'])->name('download-db');
-    });
-
-    // Routes pour les statistiques (déjà existantes)
-    Route::prefix('statistiques')->name('statistiques.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Admin\StatistiqueController::class, 'index'])->name('index');
-        Route::get('/export/{type}', [\App\Http\Controllers\Admin\StatistiqueController::class, 'export'])->name('export');
-    });
-});
-
 /*
 |--------------------------------------------------------------------------
-| Catch-all React - DOIT ÊTRE ABSOLUMENT LA DERNIÈRE ROUTE
+| Catch-all React - DOIT ÊTRE LA DERNIÈRE ROUTE
 |--------------------------------------------------------------------------
 */
 

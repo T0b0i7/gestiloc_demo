@@ -192,8 +192,8 @@ export const Layout: React.FC<LayoutProps> = ({
           id: "add-property", 
           label: "Ajouter un bien", 
           emoji: '+',
-          path: "/coproprietaire/biens",
-          isReact: true
+          path: "/coproprietaire/biens/create",
+          isLaravel: true
         },
         { 
           id: "my-properties", 
@@ -251,8 +251,8 @@ export const Layout: React.FC<LayoutProps> = ({
           id: "condition-reports", 
           label: "Etats de lieux", 
           emoji: '📄',
-          path: "/coproprietaire/documents",
-          isReact: true
+          path: "/coproprietaire/etats-des-lieux",
+          isLaravel: true
         },
         { 
           id: "due-notices", 
@@ -272,8 +272,8 @@ export const Layout: React.FC<LayoutProps> = ({
           id: "invoices", 
           label: "Factures et documents divers", 
           emoji: '📄',
-          path: "/coproprietaire/documents",
-          isReact: true
+          path: "/coproprietaire/factures",
+          isLaravel: true
         },
         { 
           id: "document-archiving", 

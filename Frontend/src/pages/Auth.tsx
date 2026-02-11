@@ -13,7 +13,7 @@ import {
   Building2,
   User2,
   MapPin,
-  IdCard,
+  Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,11 +23,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { authService } from "@/services/api";
 
-const ID_TYPES = [
-  { value: "CNI", label: "Carte d'identité (CNI)" },
-  { value: "PASSPORT", label: "Passeport" },
-  { value: "PERMIS", label: "Permis de conduire" },
-  { value: "SEJOUR", label: "Titre de séjour" },
+// Couleur primaire personnalisée
+const PRIMARY_COLOR = "#377df4";
+
+// Types d'utilisateur
+const USER_TYPES = [
+  { value: "owner", label: "Je suis propriétaire", icon: Home },
+  { value: "agency", label: "Je suis agence ou entreprise", icon: Building2 },
 ] as const;
 
 // -------------------- SCHEMAS --------------------
@@ -35,86 +37,34 @@ const ID_TYPES = [
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
   password: z.string().min(1, "Mot de passe requis"),
+  rememberMe: z.boolean().default(false),
 });
 
 const registerSchema = z
   .object({
-    // Toggle
-    isProfessional: z.boolean().default(false),
-
-    // ✅ Représentant (désormais requis en Pro aussi)
-    firstName: z.string().optional(),
-    lastName: z.string().optional(),
-
-    // Pro
-    companyName: z.string().optional(),
-    ifu: z.string().optional(),
-    rccm: z.string().optional(),
-
-    // Commun
-    email: z.string().email("Email invalide").toLowerCase(),
-    phone: z.string().min(1, "Le téléphone est requis"),
-    address: z.string().min(5, "L'adresse du bailleur est requise"),
-    idType: z.enum(["CNI", "PASSPORT", "PERMIS", "SEJOUR"], {
-      required_error: "Type de pièce d'identité requis",
+    userType: z.enum(["owner", "agency"], {
+      required_error: "Veuillez sélectionner un type de compte",
     }),
-    idNumber: z.string().optional(),
-
+    firstName: z.string().min(2, "Le prénom doit contenir au moins 2 caractères"),
+    lastName: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
+    email: z.string().email("Email invalide").toLowerCase(),
+    phone: z.string().min(8, "Le téléphone est requis"),
+    address: z.string().min(2, "La ville est requise"),
     password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
     confirmPassword: z.string(),
     acceptTerms: z.boolean().refine((val) => val === true, {
       message: "Vous devez accepter les conditions d'utilisation",
     }),
+    rememberMe: z.boolean().default(false),
   })
   .superRefine((data, ctx) => {
-    // passwords match
+    // Vérification correspondance mots de passe
     if (data.password !== data.confirmPassword) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Les mots de passe ne correspondent pas",
         path: ["confirmPassword"],
       });
-    }
-
-    // ✅ Prénom/Nom requis dans tous les cas (Particulier ET Pro)
-    if (!data.firstName || data.firstName.trim().length < 2) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Le prénom doit contenir au moins 2 caractères",
-        path: ["firstName"],
-      });
-    }
-    if (!data.lastName || data.lastName.trim().length < 2) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Le nom doit contenir au moins 2 caractères",
-        path: ["lastName"],
-      });
-    }
-
-    // Particulier vs Pro rules
-    if (data.isProfessional) {
-      if (!data.companyName || data.companyName.trim().length < 2) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "La raison sociale est requise",
-          path: ["companyName"],
-        });
-      }
-      if (!data.ifu || data.ifu.trim().length < 3) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "L'IFU est requis",
-          path: ["ifu"],
-        });
-      }
-      if (!data.rccm || data.rccm.trim().length < 3) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Le RCCM est requis",
-          path: ["rccm"],
-        });
-      }
     }
   });
 
@@ -181,6 +131,7 @@ export default function Auth() {
   const location = useLocation();
   const [isLogin, setIsLogin] = useState(location.pathname === "/login");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -189,6 +140,9 @@ export default function Auth() {
     mode: "onSubmit",
     reValidateMode: "onChange",
     shouldFocusError: true,
+    defaultValues: {
+      rememberMe: false,
+    },
   });
 
   const registerForm = useForm<RegisterFormData>({
@@ -197,38 +151,25 @@ export default function Auth() {
     reValidateMode: "onChange",
     shouldFocusError: true,
     defaultValues: {
+      userType: "owner",
       acceptTerms: false,
-      isProfessional: false,
-      idType: "CNI",
+      rememberMe: false,
     },
   });
 
-  // maps backend -> form fields
   const registerFieldMap = useMemo(
     () =>
       ({
-        // Commun
         email: "email",
         phone: "phone",
         address: "address",
-        id_type: "idType",
-        id_number: "idNumber",
-
         password: "password",
         password_confirmation: "confirmPassword",
         accept_terms: "acceptTerms",
-
-        // Toggle
-        is_professional: "isProfessional",
-
-        // Représentant / Personne
+        remember_me: "rememberMe",
+        user_type: "userType",
         first_name: "firstName",
         last_name: "lastName",
-
-        // Pro
-        company_name: "companyName",
-        ifu: "ifu",
-        rccm: "rccm",
       }) as Record<string, keyof RegisterFormData>,
     []
   );
@@ -246,7 +187,7 @@ export default function Auth() {
     setError("");
     loginForm.clearErrors();
     registerForm.clearErrors();
-  }, [isLogin]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isLogin]);
 
   const notifyClientValidation = (formErrors: Record<string, any>) => {
     const first = Object.values(formErrors)?.[0];
@@ -282,10 +223,15 @@ export default function Auth() {
         user = (response as any).user;
       }
 
-      if (token) localStorage.setItem("token", token);
-      if (user) localStorage.setItem("user", JSON.stringify(user));
-
+      if (token) {
+        localStorage.setItem("token", token);
+        if (data.rememberMe) {
+          localStorage.setItem("rememberMe", "true");
+        }
+      }
+      
       if (user) {
+        localStorage.setItem("user", JSON.stringify(user));
         toast.success("Connexion réussie !");
 
         const roles = user.roles || [];
@@ -305,6 +251,12 @@ export default function Auth() {
         } else if (roles.includes("tenant") || roles.includes("locataire")) {
           redirectPath = "/locataire";
           userRole = "locataire";
+        } else if (user.user_type === "owner") {
+          redirectPath = "/proprietaire";
+          userRole = "proprietaire";
+        } else if (user.user_type === "agency") {
+          redirectPath = "/agence";
+          userRole = "agence";
         }
 
         const updatedUser = { ...user, role: userRole };
@@ -335,30 +287,26 @@ export default function Auth() {
     try {
       setIsLoading(true);
 
-      const isPro = !!data.isProfessional;
+      // Déterminer le rôle
+      const isProfessional = data.userType === "agency";
+      let role = "proprietaire";
+      
+      if (data.userType === "agency") {
+        role = "agence";
+      }
 
-      // ✅ On envoie first_name/last_name TOUJOURS (représentant)
       const userData: any = {
         email: data.email.toLowerCase().trim(),
         phone: data.phone,
         password: data.password,
         password_confirmation: data.confirmPassword,
-
-        is_professional: isPro,
-
+        user_type: data.userType,
+        is_professional: isProfessional,
+        role: role,
         address: data.address,
-
-        id_type: data.idType,
-        id_number: (data.idNumber || "").trim() || null,
-
-        first_name: (data.firstName || "").trim(),
-        last_name: (data.lastName || "").trim(),
-
-        company_name: isPro ? (data.companyName || "").trim() : null,
-        ifu: isPro ? (data.ifu || "").trim() : null,
-        rccm: isPro ? (data.rccm || "").trim() : null,
-
-        role: "proprietaire",
+        first_name: data.firstName.trim(),
+        last_name: data.lastName.trim(),
+        remember_me: data.rememberMe,
         accept_terms: data.acceptTerms,
       };
 
@@ -370,9 +318,9 @@ export default function Auth() {
         setTimeout(() => {
           setIsLogin(true);
           registerForm.reset({
+            userType: "owner",
             acceptTerms: false,
-            isProfessional: false,
-            idType: "CNI",
+            rememberMe: false,
           });
         }, 1500);
       } else {
@@ -393,399 +341,377 @@ export default function Auth() {
     }
   };
 
-  const isProfessional = registerForm.watch("isProfessional");
+  const selectedUserType = registerForm.watch("userType");
+
+  // Style pour le bouton avec la couleur primaire
+  const buttonStyle = {
+    backgroundColor: PRIMARY_COLOR,
+    color: "white",
+  };
+
+  const linkStyle = {
+    color: PRIMARY_COLOR,
+  };
+
+  const checkboxStyle = {
+    borderColor: PRIMARY_COLOR,
+    color: PRIMARY_COLOR,
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-white">
       <div className="w-full max-w-md">
-        <div className="w-full max-w-md">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-primary mb-2">GestiLoc</h1>
-          </div>
+        {/* Logo centré */}
+        <motion.div 
+          className="text-center mb-6"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1 className="text-4xl font-bold mb-2" style={{ color: PRIMARY_COLOR }}>
+            Gestiloc
+          </h1>
+          <p className="text-sm text-slate-600 max-w-xs mx-auto">
+            Créer de meilleures relations entre les propriétaires et les locataires !
+          </p>
+        </motion.div>
 
-          <motion.div
-            className="flex rounded-lg bg-slate-100 p-1 mb-8"
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <motion.button
-              onClick={() => setIsLogin(true)}
-              className={`flex-1 py-3 px-4 rounded-md text-sm font-medium transition-colors ${
-                isLogin ? "bg-primary text-white shadow-sm" : "text-slate-600 hover:bg-slate-200"
-              }`}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="button"
-            >
-              Connexion
-            </motion.button>
-            <motion.button
-              onClick={() => setIsLogin(false)}
-              className={`flex-1 py-3 px-4 rounded-md text-sm font-medium transition-colors ${
-                !isLogin ? "bg-primary text-white shadow-sm" : "text-slate-600 hover:bg-slate-200"
-              }`}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              type="button"
-            >
-              Inscription
-            </motion.button>
-          </motion.div>
-
-          <div className="relative min-h-[760px]">
-            <AnimatePresence mode="wait">
-              {isLogin ? (
+        <div className="relative">
+          <AnimatePresence mode="wait">
+            {isLogin ? (
+              /* FORMULAIRE DE CONNEXION */
+              <motion.div
+                key="login"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+              >
                 <motion.div
-                  key="login"
-                  initial={{ opacity: 0, x: -50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 50 }}
-                  transition={{ duration: 0.4, ease: "easeInOut" }}
-                  className="absolute top-0 left-0 w-full"
+                  className="bg-white rounded-2xl shadow-xl p-8 border border-slate-200"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.4 }}
                 >
-                  <motion.div
-                    className="bg-white rounded-2xl shadow-xl p-8 border border-slate-200"
-                    initial={{ y: 20, opacity: 0 }}
+                  <motion.h2
+                    className="text-2xl font-bold text-slate-800 mb-6"
+                    initial={{ y: -10, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
                   >
-                    <motion.h2
-                      className="text-2xl font-bold text-slate-800 mb-6"
-                      initial={{ y: -10, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ duration: 0.4, delay: 0.2 }}
-                    >
-                      Connexion à votre compte
-                    </motion.h2>
+                    Connexion à votre compte
+                  </motion.h2>
 
-                    <AnimatePresence>
-                      {error && (
-                        <motion.div
-                          className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-center gap-3"
-                          initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <AlertCircle size={20} className="text-red-600" />
-                          <p className="text-sm text-red-600">{error}</p>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    <form
-                      onSubmit={loginForm.handleSubmit(handleLogin, (errs) => notifyClientValidation(errs))}
-                      className="space-y-6"
-                    >
+                  <AnimatePresence>
+                    {error && (
                       <motion.div
-                        initial={{ x: -20, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        transition={{ duration: 0.4, delay: 0.3 }}
+                        className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-center gap-3"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
                       >
-                        <Label htmlFor="login-email" className="text-slate-700 font-medium">
-                          Adresse email
-                        </Label>
-                        <div className="relative mt-2">
-                          <Mail size={18} className="absolute left-3 top-3.5 text-slate-400" />
-                          <Input
-                            id="login-email"
-                            type="email"
-                            placeholder="votre@email.fr"
-                            {...loginForm.register("email")}
-                            className="pl-10 h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
-                          />
-                        </div>
-                        {loginForm.formState.errors.email && (
-                          <p className="text-sm text-red-600 mt-1">{loginForm.formState.errors.email.message}</p>
-                        )}
+                        <AlertCircle size={20} className="text-red-600" />
+                        <p className="text-sm text-red-600">{error}</p>
                       </motion.div>
+                    )}
+                  </AnimatePresence>
 
-                      <motion.div
-                        initial={{ x: -20, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        transition={{ duration: 0.4, delay: 0.4 }}
-                      >
-                        <Label htmlFor="login-password" className="text-slate-700 font-medium">
-                          Mot de passe
-                        </Label>
-                        <div className="relative mt-2">
-                          <Lock size={18} className="absolute left-3 top-3.5 text-slate-400" />
-                          <Input
-                            id="login-password"
-                            type={showPassword ? "text" : "password"}
-                            placeholder="••••••••"
-                            {...loginForm.register("password")}
-                            className="pl-10 pr-10 h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600"
-                          >
-                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                          </button>
-                        </div>
-                        {loginForm.formState.errors.password && (
-                          <p className="text-sm text-red-600 mt-1">{loginForm.formState.errors.password.message}</p>
-                        )}
-                      </motion.div>
-
-                      <motion.div
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ duration: 0.4, delay: 0.5 }}
-                      >
-                        <Button
-                          type="submit"
-                          className="w-full h-12 text-lg font-medium relative overflow-hidden"
-                          disabled={isLoading}
-                        >
-                          <motion.div
-                            className="flex items-center justify-center gap-2"
-                            animate={isLoading ? { scale: [1, 1.05, 1] } : {}}
-                            transition={{ duration: 1.5, repeat: isLoading ? Infinity : 0 }}
-                          >
-                            {isLoading && (
-                              <motion.div
-                                className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                              />
-                            )}
-                            {isLoading ? "Connexion en cours..." : "Se connecter"}
-                          </motion.div>
-                        </Button>
-                      </motion.div>
-                    </form>
-
+                  <form
+                    onSubmit={loginForm.handleSubmit(handleLogin, (errs) => notifyClientValidation(errs))}
+                    className="space-y-5"
+                  >
+                    {/* Email */}
                     <motion.div
-                      className="mt-6 text-center"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.4, delay: 0.6 }}
+                      initial={{ x: -20, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ duration: 0.3, delay: 0.2 }}
                     >
-                      <a href="/forgot-password" className="text-primary hover:underline text-sm">
+                      <Label htmlFor="login-email" className="text-slate-700 font-medium text-sm">
+                        Email
+                      </Label>
+                      <div className="relative mt-1.5">
+                        <Mail size={18} className="absolute left-3 top-3.5 text-slate-400" />
+                        <Input
+                          id="login-email"
+                          type="email"
+                          placeholder="votre@email.fr"
+                          {...loginForm.register("email")}
+                          className="pl-10 h-12 border-slate-300 focus:border-[#377df4] focus:ring-[#377df4]/20"
+                        />
+                      </div>
+                      {loginForm.formState.errors.email && (
+                        <p className="text-sm text-red-600 mt-1">{loginForm.formState.errors.email.message}</p>
+                      )}
+                    </motion.div>
+
+                    {/* Mot de passe */}
+                    <motion.div
+                      initial={{ x: -20, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ duration: 0.3, delay: 0.3 }}
+                    >
+                      <Label htmlFor="login-password" className="text-slate-700 font-medium text-sm">
+                        Mot de passe
+                      </Label>
+                      <div className="relative mt-1.5">
+                        <Lock size={18} className="absolute left-3 top-3.5 text-slate-400" />
+                        <Input
+                          id="login-password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          {...loginForm.register("password")}
+                          className="pl-10 pr-10 h-12 border-slate-300 focus:border-[#377df4] focus:ring-[#377df4]/20"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600"
+                        >
+                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      </div>
+                      {loginForm.formState.errors.password && (
+                        <p className="text-sm text-red-600 mt-1">{loginForm.formState.errors.password.message}</p>
+                      )}
+                    </motion.div>
+
+                    {/* Se souvenir de moi + Mot de passe oublié */}
+                    <motion.div
+                      className="flex items-center justify-between"
+                      initial={{ y: 10, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.3, delay: 0.4 }}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <Controller
+                          name="rememberMe"
+                          control={loginForm.control}
+                          render={({ field }) => (
+                            <Checkbox
+                              id="remember"
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              style={field.value ? checkboxStyle : {}}
+                            />
+                          )}
+                        />
+                        <Label htmlFor="remember" className="text-sm font-normal text-slate-600 cursor-pointer">
+                          Se souvenir de moi
+                        </Label>
+                      </div>
+                      <a 
+                        href="/forgot-password" 
+                        className="text-sm hover:underline"
+                        style={linkStyle}
+                      >
                         Mot de passe oublié ?
                       </a>
                     </motion.div>
-                  </motion.div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="register"
-                  initial={{ opacity: 0, x: 50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50 }}
-                  transition={{ duration: 0.4, ease: "easeInOut" }}
-                  className="absolute top-0 left-0 w-full"
-                >
-                  <motion.div
-                    className="bg-white rounded-2xl shadow-xl p-8 border border-slate-200"
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                  >
-                    <motion.h2
-                      className="text-2xl font-bold text-slate-800 mb-2"
-                      initial={{ y: -10, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ duration: 0.4, delay: 0.2 }}
-                    >
-                      Créer un compte propriétaire
-                    </motion.h2>
 
-                    <motion.p
-                      className="mb-6 text-slate-700"
+                    {/* Bouton Connexion */}
+                    <motion.div
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.3, delay: 0.5 }}
+                    >
+                      <Button
+                        type="submit"
+                        className="w-full h-12 text-base font-medium relative overflow-hidden border-0"
+                        style={buttonStyle}
+                        disabled={isLoading}
+                      >
+                        <motion.div
+                          className="flex items-center justify-center gap-2"
+                          animate={isLoading ? { scale: [1, 1.05, 1] } : {}}
+                          transition={{ duration: 1.5, repeat: isLoading ? Infinity : 0 }}
+                        >
+                          {isLoading && (
+                            <motion.div
+                              className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            />
+                          )}
+                          {isLoading ? "Connexion en cours..." : "Connexion"}
+                        </motion.div>
+                      </Button>
+                    </motion.div>
+
+                    {/* Lien vers inscription */}
+                    <motion.div
+                      className="mt-4 text-center"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      transition={{ duration: 0.4, delay: 0.3 }}
+                      transition={{ duration: 0.3, delay: 0.6 }}
                     >
-                      Compte gratuit, sans carte bancaire. Vous pourrez ajouter vos locataires ensuite.
-                    </motion.p>
-
-                    {/* Toggle Particulier / Pro */}
-                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 mb-6 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {isProfessional ? (
-                          <Building2 size={18} className="text-slate-600" />
-                        ) : (
-                          <User2 size={18} className="text-slate-600" />
-                        )}
-                        <div>
-                          <p className="text-sm font-semibold text-slate-800">
-                            {isProfessional ? "Professionnel" : "Particulier"}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {isProfessional ? "Société + représentant" : "Prénom + Nom"}
-                          </p>
-                        </div>
-                      </div>
-
-                      <Controller
-                        name="isProfessional"
-                        control={registerForm.control}
-                        render={({ field }) => (
-                          <button
-                            type="button"
-                            onClick={() => field.onChange(!field.value)}
-                            className={`h-9 px-3 rounded-lg text-sm font-medium transition-colors ${
-                              field.value ? "bg-primary text-white" : "bg-white text-slate-700 border border-slate-200"
-                            }`}
-                          >
-                            {field.value ? "Pro" : "Particulier"}
-                          </button>
-                        )}
-                      />
-                    </div>
-
-                    <form onSubmit={registerForm.handleSubmit(handleRegister, (errs) => notifyClientValidation(errs))}>
-                      <ScrollArea className="h-[420px] pr-4">
-                        <motion.div
-                          className="space-y-6 pb-6"
-                          initial="hidden"
-                          animate="visible"
-                          variants={{
-                            hidden: { opacity: 0 },
-                            visible: {
-                              opacity: 1,
-                              transition: { staggerChildren: 0.08, delayChildren: 0.15 },
-                            },
-                          }}
+                      <p className="text-sm text-slate-600">
+                        Pas de compte ?{" "}
+                        <button
+                          type="button"
+                          onClick={() => setIsLogin(false)}
+                          className="font-medium hover:underline"
+                          style={linkStyle}
                         >
-                          {/* ✅ Représentant / Identité (toujours affiché) */}
-                          <motion.div
-                            className="grid grid-cols-2 gap-4"
-                            variants={{ hidden: { y: 12, opacity: 0 }, visible: { y: 0, opacity: 1 } }}
-                          >
-                            <div className="space-y-2">
-                              <Label htmlFor="firstName" className="text-slate-700 font-medium">
-                                {isProfessional ? "Prénom du représentant *" : "Prénom *"}
-                              </Label>
-                              <Input
-                                id="firstName"
-                                placeholder="Jean"
-                                {...registerForm.register("firstName")}
-                                className="h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
-                              />
-                              {registerForm.formState.errors.firstName && (
-                                <p className="text-sm text-red-600">
-                                  {registerForm.formState.errors.firstName.message as any}
-                                </p>
-                              )}
-                            </div>
+                          Cliquez ici
+                        </button>
+                      </p>
+                    </motion.div>
+                  </form>
+                </motion.div>
+              </motion.div>
+            ) : (
+              /* FORMULAIRE D'INSCRIPTION */
+              <motion.div
+                key="register"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <motion.div
+                  className="bg-white rounded-2xl shadow-xl p-8 border border-slate-200"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  <motion.h2
+                    className="text-2xl font-bold text-slate-800 mb-2"
+                    initial={{ y: -10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                  >
+                    Créer un compte
+                  </motion.h2>
 
-                            <div className="space-y-2">
-                              <Label htmlFor="lastName" className="text-slate-700 font-medium">
-                                {isProfessional ? "Nom du représentant *" : "Nom *"}
-                              </Label>
-                              <Input
-                                id="lastName"
-                                placeholder="Dupont"
-                                {...registerForm.register("lastName")}
-                                className="h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
-                              />
-                              {registerForm.formState.errors.lastName && (
-                                <p className="text-sm text-red-600">
-                                  {registerForm.formState.errors.lastName.message as any}
-                                </p>
-                              )}
-                            </div>
-                          </motion.div>
+                  <motion.p
+                    className="mb-6 text-slate-600 text-sm"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3, delay: 0.15 }}
+                  >
+                    Créer de meilleures relations entre les propriétaires et les locataires !
+                  </motion.p>
 
-                          {/* Pro */}
-                          {isProfessional && (
-                            <motion.div
-                              className="space-y-4"
-                              variants={{ hidden: { y: 12, opacity: 0 }, visible: { y: 0, opacity: 1 } }}
-                            >
-                              <div className="space-y-2">
-                                <Label htmlFor="companyName" className="text-slate-700 font-medium">
-                                  Raison sociale *
-                                </Label>
-                                <div className="relative mt-1">
-                                  <Building2 size={18} className="absolute left-3 top-3.5 text-slate-400" />
-                                  <Input
-                                    id="companyName"
-                                    placeholder="MB Pro Services"
-                                    {...registerForm.register("companyName")}
-                                    className="pl-10 h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
-                                  />
-                                </div>
-                                {registerForm.formState.errors.companyName && (
-                                  <p className="text-sm text-red-600">
-                                    {registerForm.formState.errors.companyName.message as any}
-                                  </p>
-                                )}
-                              </div>
-
-                              <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                  <Label htmlFor="ifu" className="text-slate-700 font-medium">
-                                    IFU *
-                                  </Label>
-                                  <Input
-                                    id="ifu"
-                                    placeholder="Ex: 123456789"
-                                    {...registerForm.register("ifu")}
-                                    className="h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
-                                  />
-                                  {registerForm.formState.errors.ifu && (
-                                    <p className="text-sm text-red-600">
-                                      {registerForm.formState.errors.ifu.message as any}
-                                    </p>
-                                  )}
-                                </div>
-
-                                <div className="space-y-2">
-                                  <Label htmlFor="rccm" className="text-slate-700 font-medium">
-                                    RCCM *
-                                  </Label>
-                                  <Input
-                                    id="rccm"
-                                    placeholder="Ex: RB/ABC/2025"
-                                    {...registerForm.register("rccm")}
-                                    className="h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
-                                  />
-                                  {registerForm.formState.errors.rccm && (
-                                    <p className="text-sm text-red-600">
-                                      {registerForm.formState.errors.rccm.message as any}
-                                    </p>
-                                  )}
+                  {/* Sélection du type d'utilisateur */}
+                  <motion.div
+                    className="space-y-3 mb-6"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.2 }}
+                  >
+                    <Label className="text-slate-700 font-medium text-sm block mb-2">
+                      Vous êtes ?
+                    </Label>
+                    <Controller
+                      name="userType"
+                      control={registerForm.control}
+                      render={({ field }) => (
+                        <div className="space-y-2">
+                          {USER_TYPES.map((type) => {
+                            const Icon = type.icon;
+                            const isSelected = field.value === type.value;
+                            return (
+                              <div
+                                key={type.value}
+                                className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                  isSelected 
+                                    ? "border-[#377df4] bg-blue-50" 
+                                    : "border-slate-200 hover:border-slate-300"
+                                }`}
+                                onClick={() => field.onChange(type.value)}
+                              >
+                                <div className="flex items-center flex-1">
+                                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mr-3 ${
+                                    isSelected ? "border-[#377df4]" : "border-slate-400"
+                                  }`}>
+                                    {isSelected && (
+                                      <div className="w-2.5 h-2.5 rounded-full bg-[#377df4]" />
+                                    )}
+                                  </div>
+                                  <Icon size={18} className={`mr-2 ${
+                                    isSelected ? "text-[#377df4]" : "text-slate-500"
+                                  }`} />
+                                  <span className={`text-sm ${
+                                    isSelected ? "text-[#377df4] font-medium" : "text-slate-700"
+                                  }`}>
+                                    {type.label}
+                                  </span>
                                 </div>
                               </div>
-                            </motion.div>
-                          )}
+                            );
+                          })}
+                        </div>
+                      )}
+                    />
+                    {registerForm.formState.errors.userType && (
+                      <p className="text-xs text-red-600">{registerForm.formState.errors.userType.message}</p>
+                    )}
+                  </motion.div>
 
-                          {/* Email */}
-                          <motion.div
-                            className="space-y-2"
-                            variants={{ hidden: { x: -10, opacity: 0 }, visible: { x: 0, opacity: 1 } }}
-                          >
-                            <Label htmlFor="register-email" className="text-slate-700 font-medium">
-                              Adresse email *
+                  <form onSubmit={registerForm.handleSubmit(handleRegister, (errs) => notifyClientValidation(errs))}>
+                    <ScrollArea className="h-[380px] pr-4">
+                      <div className="space-y-4 pb-4">
+                        {/* Prénom & Nom */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <Label htmlFor="firstName" className="text-slate-700 font-medium text-sm">
+                              Prénom *
                             </Label>
-                            <div className="relative mt-1">
-                              <Mail size={18} className="absolute left-3 top-3.5 text-slate-400" />
-                              <Input
-                                id="register-email"
-                                type="email"
-                                placeholder="nom@exemple.fr"
-                                {...registerForm.register("email")}
-                                className="pl-10 h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
-                              />
-                            </div>
-                            {registerForm.formState.errors.email && (
-                              <p className="text-sm text-red-600">{registerForm.formState.errors.email.message}</p>
+                            <Input
+                              id="firstName"
+                              placeholder="Jean"
+                              {...registerForm.register("firstName")}
+                              className="h-11 border-slate-300 focus:border-[#377df4] focus:ring-[#377df4]/20"
+                            />
+                            {registerForm.formState.errors.firstName && (
+                              <p className="text-xs text-red-600">
+                                {registerForm.formState.errors.firstName.message}
+                              </p>
                             )}
-                          </motion.div>
+                          </div>
 
-                          {/* Phone */}
-                          <motion.div
-                            className="space-y-2"
-                            variants={{ hidden: { x: -10, opacity: 0 }, visible: { x: 0, opacity: 1 } }}
-                          >
-                            <Label htmlFor="phone" className="text-slate-700 font-medium">
+                          <div className="space-y-1.5">
+                            <Label htmlFor="lastName" className="text-slate-700 font-medium text-sm">
+                              Nom *
+                            </Label>
+                            <Input
+                              id="lastName"
+                              placeholder="Dupont"
+                              {...registerForm.register("lastName")}
+                              className="h-11 border-slate-300 focus:border-[#377df4] focus:ring-[#377df4]/20"
+                            />
+                            {registerForm.formState.errors.lastName && (
+                              <p className="text-xs text-red-600">
+                                {registerForm.formState.errors.lastName.message}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Email */}
+                        <div className="space-y-1.5">
+                          <Label htmlFor="register-email" className="text-slate-700 font-medium text-sm">
+                            @ Email *
+                          </Label>
+                          <div className="relative">
+                            <Mail size={18} className="absolute left-3 top-2.5 text-slate-400" />
+                            <Input
+                              id="register-email"
+                              type="email"
+                              placeholder="nom@exemple.fr"
+                              {...registerForm.register("email")}
+                              className="pl-10 h-11 border-slate-300 focus:border-[#377df4] focus:ring-[#377df4]/20"
+                            />
+                          </div>
+                          {registerForm.formState.errors.email && (
+                            <p className="text-xs text-red-600">{registerForm.formState.errors.email.message}</p>
+                          )}
+                        </div>
+
+                        {/* Téléphone & Ville */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <Label htmlFor="phone" className="text-slate-700 font-medium text-sm">
                               Téléphone *
                             </Label>
                             <Input
@@ -793,228 +719,221 @@ export default function Auth() {
                               type="tel"
                               placeholder="06 12 34 56 78"
                               {...registerForm.register("phone")}
-                              className="h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
+                              className="h-11 border-slate-300 focus:border-[#377df4] focus:ring-[#377df4]/20"
                             />
                             {registerForm.formState.errors.phone && (
-                              <p className="text-sm text-red-600">{registerForm.formState.errors.phone.message}</p>
+                              <p className="text-xs text-red-600">{registerForm.formState.errors.phone.message}</p>
                             )}
-                          </motion.div>
+                          </div>
 
-                          {/* Address */}
-                          <motion.div
-                            className="space-y-2"
-                            variants={{ hidden: { x: -10, opacity: 0 }, visible: { x: 0, opacity: 1 } }}
-                          >
-                            <Label htmlFor="address" className="text-slate-700 font-medium">
-                              Adresse du bailleur *
+                          <div className="space-y-1.5">
+                            <Label htmlFor="address" className="text-slate-700 font-medium text-sm">
+                              Ville *
                             </Label>
-                            <div className="relative mt-1">
-                              <MapPin size={18} className="absolute left-3 top-3.5 text-slate-400" />
+                            <div className="relative">
+                              <MapPin size={18} className="absolute left-3 top-2.5 text-slate-400" />
                               <Input
                                 id="address"
-                                placeholder="1 rue Marguerin, 75014 Paris"
+                                placeholder="Paris"
                                 {...registerForm.register("address")}
-                                className="pl-10 h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
+                                className="pl-10 h-11 border-slate-300 focus:border-[#377df4] focus:ring-[#377df4]/20"
                               />
                             </div>
                             {registerForm.formState.errors.address && (
-                              <p className="text-sm text-red-600">
-                                {registerForm.formState.errors.address.message as any}
+                              <p className="text-xs text-red-600">
+                                {registerForm.formState.errors.address.message}
                               </p>
                             )}
-                          </motion.div>
+                          </div>
+                        </div>
 
-                          {/* ID Type + Number */}
-                          <motion.div
-                            className="space-y-3"
-                            variants={{ hidden: { y: 10, opacity: 0 }, visible: { y: 0, opacity: 1 } }}
-                          >
-                            <div className="space-y-2">
-                              <Label className="text-slate-700 font-medium">Type de pièce d'identité *</Label>
-                              <div className="relative mt-1">
-                                <IdCard size={18} className="absolute left-3 top-3.5 text-slate-400" />
-                                <select
-                                  className="w-full h-12 pl-10 pr-3 rounded-md border border-slate-300 bg-white text-slate-800 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
-                                  {...registerForm.register("idType")}
-                                >
-                                  {ID_TYPES.map((t) => (
-                                    <option key={t.value} value={t.value}>
-                                      {t.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                              {registerForm.formState.errors.idType && (
-                                <p className="text-sm text-red-600">
-                                  {registerForm.formState.errors.idType.message as any}
-                                </p>
-                              )}
-                            </div>
+                        {/* Mot de passe */}
+                        <div className="space-y-1.5">
+                          <Label htmlFor="register-password" className="text-slate-700 font-medium text-sm">
+                            ☐ Mot de passe *
+                          </Label>
+                          <div className="relative">
+                            <Lock size={18} className="absolute left-3 top-2.5 text-slate-400" />
+                            <Input
+                              id="register-password"
+                              type={showPassword ? "text" : "password"}
+                              placeholder="••••••••"
+                              {...registerForm.register("password")}
+                              className="pl-10 pr-10 h-11 border-slate-300 focus:border-[#377df4] focus:ring-[#377df4]/20"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                            >
+                              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                          </div>
+                          {registerForm.formState.errors.password && (
+                            <p className="text-xs text-red-600">{registerForm.formState.errors.password.message}</p>
+                          )}
+                        </div>
 
-                            <div className="space-y-2">
-                              <Label htmlFor="idNumber" className="text-slate-700 font-medium">
-                                Numéro de la pièce (optionnel)
-                              </Label>
-                              <Input
-                                id="idNumber"
-                                placeholder="Ex: AB123456"
-                                {...registerForm.register("idNumber")}
-                                className="h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
-                              />
-                              {registerForm.formState.errors.idNumber && (
-                                <p className="text-sm text-red-600">
-                                  {registerForm.formState.errors.idNumber.message as any}
-                                </p>
-                              )}
-                            </div>
-                          </motion.div>
-
-                          {/* Password */}
-                          <motion.div
-                            className="space-y-2"
-                            variants={{ hidden: { x: -10, opacity: 0 }, visible: { x: 0, opacity: 1 } }}
-                          >
-                            <Label htmlFor="register-password" className="text-slate-700 font-medium">
-                              Mot de passe *
-                            </Label>
-                            <div className="relative mt-1">
-                              <Lock size={18} className="absolute left-3 top-3.5 text-slate-400" />
-                              <Input
-                                id="register-password"
-                                type="password"
-                                placeholder="Ex : G3$t!L0c/2026***"
-                                {...registerForm.register("password")}
-                                className="pl-10 h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
-                              />
-                            </div>
-                            <p className="text-xs text-slate-500">
-                              Le mot de passe doit contenir au moins 8 caractères, avec des lettres, des chiffres et des caractères spéciaux.
-                            </p>
-                            {registerForm.formState.errors.password && (
-                              <p className="text-sm text-red-600">{registerForm.formState.errors.password.message}</p>
-                            )}
-                          </motion.div>
-
-                          {/* Confirm Password */}
-                          <motion.div
-                            className="space-y-2"
-                            variants={{ hidden: { x: -10, opacity: 0 }, visible: { x: 0, opacity: 1 } }}
-                          >
-                            <Label htmlFor="confirmPassword" className="text-slate-700 font-medium">
-                              Confirmer le mot de passe *
-                            </Label>
+                        {/* Confirmation mot de passe */}
+                        <div className="space-y-1.5">
+                          <Label htmlFor="confirmPassword" className="text-slate-700 font-medium text-sm">
+                            ☑ Confirmer le mot de passe *
+                          </Label>
+                          <div className="relative">
+                            <Lock size={18} className="absolute left-3 top-2.5 text-slate-400" />
                             <Input
                               id="confirmPassword"
-                              type="password"
-                              placeholder="Répétez le mot de passe"
+                              type={showConfirmPassword ? "text" : "password"}
+                              placeholder="••••••••"
                               {...registerForm.register("confirmPassword")}
-                              className="h-12 border-slate-300 focus:border-primary focus:ring-primary/20"
+                              className="pl-10 pr-10 h-11 border-slate-300 focus:border-[#377df4] focus:ring-[#377df4]/20"
                             />
-                            {registerForm.formState.errors.confirmPassword && (
-                              <p className="text-sm text-red-600">
-                                {registerForm.formState.errors.confirmPassword.message as any}
-                              </p>
-                            )}
-                          </motion.div>
-
-                          {/* Terms */}
-                          <motion.div
-                            className="flex items-start space-x-3"
-                            variants={{ hidden: { y: 10, opacity: 0 }, visible: { y: 0, opacity: 1 } }}
-                          >
-                            <Controller
-                              name="acceptTerms"
-                              control={registerForm.control}
-                              render={({ field }) => (
-                                <Checkbox
-                                  id="terms"
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                  className="mt-1"
-                                />
-                              )}
-                            />
-                            <Label
-                              htmlFor="terms"
-                              className="text-sm font-normal leading-relaxed cursor-pointer text-slate-600"
+                            <button
+                              type="button"
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
                             >
-                              J'accepte les{" "}
-                              <a href="/terms" className="text-primary hover:underline font-medium">
-                                conditions d'utilisation
-                              </a>{" "}
-                              et la{" "}
-                              <a href="/privacy" className="text-primary hover:underline font-medium">
-                                politique de confidentialité
-                              </a>{" "}
-                              de GestiLoc *
-                            </Label>
-                          </motion.div>
-                          {registerForm.formState.errors.acceptTerms && (
-                            <p className="text-sm text-red-600">{registerForm.formState.errors.acceptTerms.message}</p>
+                              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                          </div>
+                          {registerForm.formState.errors.confirmPassword && (
+                            <p className="text-xs text-red-600">
+                              {registerForm.formState.errors.confirmPassword.message}
+                            </p>
                           )}
-                        </motion.div>
-                      </ScrollArea>
+                        </div>
 
-                      <motion.div
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ duration: 0.4, delay: 0.25 }}
-                      >
-                        <Button
-                          type="submit"
-                          className="w-full h-12 text-lg font-medium mt-6 relative overflow-hidden"
-                          disabled={isLoading}
-                        >
-                          <motion.div
-                            className="flex items-center justify-center gap-2"
-                            animate={isLoading ? { scale: [1, 1.05, 1] } : {}}
-                            transition={{ duration: 1.5, repeat: isLoading ? Infinity : 0 }}
-                          >
-                            {isLoading && (
-                              <motion.div
-                                className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        {/* Checkbox Conditions d'utilisation */}
+                        <div className="flex items-start space-x-3 pt-2">
+                          <Controller
+                            name="acceptTerms"
+                            control={registerForm.control}
+                            render={({ field }) => (
+                              <Checkbox
+                                id="terms"
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                className="mt-0.5"
+                                style={field.value ? checkboxStyle : {}}
                               />
                             )}
-                            {isLoading ? "Création du compte..." : "Créer mon compte"}
-                          </motion.div>
-                        </Button>
-                      </motion.div>
-
-                      <motion.div
-                        className="mt-6 text-center"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.4, delay: 0.3 }}
-                      >
-                        <p className="text-sm text-secondary">
-                          Déjà un compte ?{" "}
-                          <button
-                            type="button"
-                            onClick={() => setIsLogin(true)}
-                            className="text-primary hover:underline font-medium"
+                          />
+                          <Label
+                            htmlFor="terms"
+                            className="text-xs font-normal leading-relaxed cursor-pointer text-slate-600"
                           >
-                            Se connecter
-                          </button>
-                        </p>
-                      </motion.div>
-                    </form>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                            ☑ J'accepte les{" "}
+                            <a href="/terms" className="font-medium hover:underline" style={linkStyle}>
+                              Conditions d'utilisation
+                            </a>{" "}
+                            et la{" "}
+                            <a href="/privacy" className="font-medium hover:underline" style={linkStyle}>
+                              Politique de Confidentialité
+                            </a>
+                          </Label>
+                        </div>
+                        {registerForm.formState.errors.acceptTerms && (
+                          <p className="text-xs text-red-600">{registerForm.formState.errors.acceptTerms.message}</p>
+                        )}
 
-          <div className="text-center mt-8">
-            <button
-              onClick={() => navigate("/")}
-              className="text-secondary hover:text-primary font-medium transition-colors"
-              type="button"
-            >
-              ← Retour à l'accueil
-            </button>
-          </div>
+                        {/* Checkbox Se souvenir de moi */}
+                        <div className="flex items-center space-x-3">
+                          <Controller
+                            name="rememberMe"
+                            control={registerForm.control}
+                            render={({ field }) => (
+                              <Checkbox
+                                id="remember-register"
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                style={field.value ? checkboxStyle : {}}
+                              />
+                            )}
+                          />
+                          <Label
+                            htmlFor="remember-register"
+                            className="text-xs font-normal cursor-pointer text-slate-600"
+                          >
+                            ☑ Se souvenir de moi
+                          </Label>
+                        </div>
+
+                        {/* Message de confirmation légal */}
+                        <motion.p
+                          className="text-xs text-slate-500 italic mt-4 pt-2 border-t border-slate-100"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.3 }}
+                        >
+                          En vous inscrivant, vous reconnaissez avoir lu et accepté les Conditions d'utilisation et Politique de Confidentialité
+                        </motion.p>
+                      </div>
+                    </ScrollArea>
+
+                    {/* Bouton Créer mon compte */}
+                    <motion.div
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.3, delay: 0.25 }}
+                    >
+                      <Button
+                        type="submit"
+                        className="w-full h-12 text-base font-medium mt-6 relative overflow-hidden border-0"
+                        style={buttonStyle}
+                        disabled={isLoading}
+                      >
+                        <motion.div
+                          className="flex items-center justify-center gap-2"
+                          animate={isLoading ? { scale: [1, 1.05, 1] } : {}}
+                          transition={{ duration: 1.5, repeat: isLoading ? Infinity : 0 }}
+                        >
+                          {isLoading && (
+                            <motion.div
+                              className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            />
+                          )}
+                          {isLoading ? "Création du compte..." : "Créer mon compte"}
+                        </motion.div>
+                      </Button>
+                    </motion.div>
+
+                    {/* Lien vers connexion */}
+                    <motion.div
+                      className="mt-4 text-center"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3, delay: 0.3 }}
+                    >
+                      <p className="text-sm text-slate-600">
+                        Déjà un compte ?{" "}
+                        <button
+                          type="button"
+                          onClick={() => setIsLogin(true)}
+                          className="font-medium hover:underline"
+                          style={linkStyle}
+                        >
+                          Se connecter
+                        </button>
+                      </p>
+                    </motion.div>
+                  </form>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Lien retour accueil */}
+        <div className="text-center mt-6">
+          <button
+            onClick={() => navigate("/")}
+            className="text-sm hover:text-[#377df4] font-medium transition-colors text-slate-500"
+            type="button"
+          >
+            ← Retour à l'accueil
+          </button>
         </div>
       </div>
     </div>

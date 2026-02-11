@@ -552,7 +552,7 @@
                 <!-- GESTIONS DES BIENS -->
                 <div class="menu-group">
                     <div class="menu-group-title">GESTIONS DES BIENS</div>
-                    <button class="menu-item" onclick="goToReact('/coproprietaire/biens')">
+                    <button class="menu-item" onclick="navigateTo('/coproprietaire/biens/create')">
                         <div class="menu-item-content">
                             <span class="nav-emoji">+</span>
                             <span>Ajouter un bien</span>
@@ -623,7 +623,7 @@
                             <span>Quittances de loyers</span>
                         </div>
                     </button>
-                    <button class="menu-item" onclick="goToReact('/coproprietaire/documents')">
+                    <button class="menu-item" onclick="navigateTo('/coproprietaire/factures')">
                         <div class="menu-item-content">
                             <span class="nav-emoji">📄</span>
                             <span>Factures et documents divers</span>

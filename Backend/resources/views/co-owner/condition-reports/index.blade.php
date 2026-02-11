@@ -5,15 +5,21 @@
 @section('content')
 <style>
     .condition-reports-container {
-        padding: 2rem 0;
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
 
     .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
         margin-bottom: 2rem;
     }
 
-    .header-section h1 {
-        font-size: 2.5rem;
+    .header-content h1 {
+        font-size: 2rem;
         font-weight: 700;
         color: #1f2937;
         margin-bottom: 0.5rem;
@@ -21,47 +27,55 @@
 
     .header-description {
         color: #6b7280;
-        font-size: 1rem;
+        font-size: 0.95rem;
         line-height: 1.5;
+        margin: 0;
     }
 
     .create-btn {
-        background: linear-gradient(135deg, #84cc16 0%, #65a30d 100%);
+        background: #377DF4;
         color: white;
-        padding: 1rem 2rem;
-        border-radius: 1rem;
-        font-weight: 600;
-        font-size: 1rem;
+        padding: 0.875rem 1.5rem;
+        border-radius: 2rem;
+        font-weight: 500;
+        font-size: 0.95rem;
         border: none;
-        box-shadow: 0 10px 25px rgba(132, 204, 22, 0.3);
-        transition: all 0.3s ease;
+        cursor: pointer;
+        transition: all 0.2s ease;
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
+        text-decoration: none;
     }
 
     .create-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 15px 35px rgba(132, 204, 22, 0.4);
+        background: #2563eb;
+        transform: translateY(-1px);
     }
 
+    .create-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* Tabs */
     .tabs-container {
-        background: #f9fafb;
-        border-radius: 1rem;
-        padding: 0.5rem;
+        background: #f3f4f6;
+        border-radius: 0.75rem;
+        padding: 0.375rem;
         display: inline-flex;
-        gap: 0.5rem;
-        margin-bottom: 2rem;
+        gap: 0.25rem;
+        margin-bottom: 1.5rem;
     }
 
     .tab-btn {
-        padding: 0.75rem 1.5rem;
-        border-radius: 0.75rem;
+        padding: 0.625rem 1.25rem;
+        border-radius: 0.5rem;
         border: none;
         background: transparent;
         color: #6b7280;
-        font-weight: 600;
-        font-size: 0.95rem;
+        font-weight: 500;
+        font-size: 0.9rem;
         transition: all 0.2s ease;
         cursor: pointer;
         display: flex;
@@ -70,78 +84,101 @@
     }
 
     .tab-btn.active {
-        background: #84cc16;
+        background: #377DF4;
         color: white;
-        box-shadow: 0 4px 12px rgba(132, 204, 22, 0.3);
     }
 
     .tab-btn:not(.active):hover {
-        background: rgba(132, 204, 22, 0.1);
-        color: #84cc16;
+        color: #377DF4;
     }
 
+    /* Filter Section */
     .filter-section {
         background: white;
-        border: 2px solid #e5e7eb;
-        border-radius: 1.5rem;
-        padding: 2rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 1rem;
+        padding: 1.5rem;
         margin-bottom: 2rem;
     }
 
     .filter-title {
         font-size: 0.875rem;
-        font-weight: 700;
+        font-weight: 600;
         color: #374151;
         margin-bottom: 1rem;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.025em;
+    }
+
+    .property-select {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        border: 1px solid #84cc16;
+        border-radius: 0.75rem;
+        font-size: 0.95rem;
+        color: #6b7280;
+        margin-bottom: 1rem;
+        background: white;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8L9.5 4.5' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+    }
+
+    .property-select:focus {
+        outline: none;
+        border-color: #65a30d;
     }
 
     .filter-row {
-        display: grid;
-        grid-template-columns: 1fr 300px;
+        display: flex;
         gap: 1rem;
-        align-items: end;
+        align-items: center;
     }
 
     .search-input-wrapper {
         position: relative;
+        flex: 1;
     }
 
     .search-input {
         width: 100%;
-        padding: 0.875rem 1rem 0.875rem 3rem;
-        border: 2px solid #84cc16;
-        border-radius: 1rem;
-        font-size: 1rem;
-        transition: all 0.2s ease;
+        padding: 0.875rem 1rem 0.875rem 2.5rem;
+        border: 1px solid #84cc16;
+        border-radius: 0.75rem;
+        font-size: 0.95rem;
+        color: #374151;
+        background: white;
     }
 
     .search-input:focus {
         outline: none;
         border-color: #65a30d;
-        box-shadow: 0 0 0 4px rgba(132, 204, 22, 0.1);
+    }
+
+    .search-input::placeholder {
+        color: #9ca3af;
     }
 
     .search-icon {
         position: absolute;
-        left: 1rem;
+        left: 0.875rem;
         top: 50%;
         transform: translateY(-50%);
         color: #84cc16;
-        width: 20px;
-        height: 20px;
+        width: 18px;
+        height: 18px;
     }
 
     .display-btn {
-        padding: 0.875rem 1.5rem;
-        border: 2px solid #84cc16;
+        padding: 0.875rem 1.25rem;
+        border: 1px solid #84cc16;
         background: white;
-        color: #65a30d;
-        border-radius: 1rem;
-        font-weight: 600;
-        font-size: 0.95rem;
-        transition: all 0.2s ease;
+        color: #374151;
+        border-radius: 0.75rem;
+        font-weight: 500;
+        font-size: 0.9rem;
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -150,38 +187,23 @@
     }
 
     .display-btn:hover {
-        background: rgba(132, 204, 22, 0.05);
+        background: #f9fafb;
     }
 
-    .property-select {
-        width: 100%;
-        padding: 0.875rem 1rem;
-        border: 2px solid #e5e7eb;
-        border-radius: 1rem;
-        font-size: 1rem;
-        color: #9ca3af;
-        margin-bottom: 1rem;
-        transition: all 0.2s ease;
-    }
-
-    .property-select:focus {
-        outline: none;
-        border-color: #84cc16;
-        box-shadow: 0 0 0 4px rgba(132, 204, 22, 0.1);
-    }
-
+    /* Reports Grid */
     .reports-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
         gap: 1.5rem;
     }
 
     .report-card {
         background: white;
-        border-radius: 1.5rem;
+        border-radius: 1rem;
         overflow: hidden;
-        transition: all 0.3s ease;
-        border: 3px solid transparent;
+        transition: all 0.2s ease;
+        border: 1px solid #e5e7eb;
+        border-left: 4px solid transparent;
     }
 
     .report-card.entry {
@@ -193,62 +215,68 @@
     }
 
     .report-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
 
     .report-header {
-        padding: 1.5rem;
-        border-bottom: 2px solid #f3f4f6;
+        padding: 1.25rem;
+        border-bottom: 1px solid #f3f4f6;
     }
 
     .report-badge {
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 1rem;
-        border-radius: 0.75rem;
-        font-size: 0.75rem;
-        font-weight: 700;
+        gap: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.375rem;
+        font-size: 0.7rem;
+        font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 1rem;
+        letter-spacing: 0.025em;
+        margin-bottom: 0.75rem;
     }
 
     .report-badge.entry {
-        background: rgba(132, 204, 22, 0.1);
-        color: #65a30d;
+        background: #ecfdf5;
+        color: #059669;
     }
 
     .report-badge.exit {
-        background: rgba(239, 68, 68, 0.1);
+        background: #fef2f2;
         color: #dc2626;
     }
 
     .report-title {
-        font-size: 1.25rem;
+        font-size: 1.125rem;
         font-weight: 700;
         color: #111827;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.375rem;
     }
 
     .report-location {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        color: #6b7280;
-        font-size: 0.95rem;
+        gap: 0.375rem;
+        color: #84cc16;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .report-location svg {
+        width: 14px;
+        height: 14px;
+        color: #84cc16;
     }
 
     .report-body {
-        padding: 1.5rem;
+        padding: 1.25rem;
     }
 
     .report-info-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 1.5rem;
-        margin-bottom: 1.5rem;
+        gap: 1rem 2rem;
+        margin-bottom: 1rem;
     }
 
     .info-item {
@@ -258,7 +286,7 @@
     }
 
     .info-label {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         font-weight: 600;
         color: #9ca3af;
         text-transform: uppercase;
@@ -266,7 +294,7 @@
     }
 
     .info-value {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         font-weight: 600;
         color: #111827;
     }
@@ -274,30 +302,33 @@
     .status-value {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.375rem;
     }
 
     .status-check {
-        color: #10b981;
-        font-weight: 700;
+        color: #111827;
+        font-weight: 600;
     }
 
     .photo-count {
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        padding: 0.75rem 1rem;
+        padding: 0.625rem 0.875rem;
         background: #f9fafb;
-        border-radius: 0.75rem;
-        margin-bottom: 1.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        color: #374151;
     }
 
-    .photo-icon {
+    .photo-count svg {
+        width: 16px;
+        height: 16px;
         color: #6b7280;
     }
 
     .report-footer {
-        padding: 1rem 1.5rem;
+        padding: 0.875rem 1.25rem;
         background: #f9fafb;
         display: flex;
         justify-content: space-between;
@@ -305,7 +336,7 @@
     }
 
     .creation-date {
-        font-size: 0.875rem;
+        font-size: 0.8rem;
         color: #6b7280;
     }
 
@@ -315,8 +346,8 @@
     }
 
     .action-btn {
-        width: 36px;
-        height: 36px;
+        width: 32px;
+        height: 32px;
         border-radius: 0.5rem;
         border: none;
         display: flex;
@@ -324,52 +355,54 @@
         justify-content: center;
         cursor: pointer;
         transition: all 0.2s ease;
+        background: transparent;
+    }
+
+    .action-btn svg {
+        width: 16px;
+        height: 16px;
     }
 
     .action-btn.download {
-        background: #377DF4;
-        color: white;
+        color: #377DF4;
     }
 
     .action-btn.download:hover {
-        background: #2563eb;
-        transform: scale(1.05);
+        background: rgba(55, 125, 244, 0.1);
     }
 
     .action-btn.edit {
-        background: #fbbf24;
-        color: white;
+        color: #f59e0b;
     }
 
     .action-btn.edit:hover {
-        background: #f59e0b;
-        transform: scale(1.05);
+        background: rgba(245, 158, 11, 0.1);
     }
 
     .action-btn.more {
-        background: #e5e7eb;
-        color: #6b7280;
+        color: #9ca3af;
     }
 
     .action-btn.more:hover {
-        background: #d1d5db;
+        background: #e5e7eb;
     }
 
+    /* Empty State */
     .empty-state {
         text-align: center;
         padding: 4rem 2rem;
         background: white;
-        border-radius: 1.5rem;
+        border-radius: 1rem;
         border: 2px dashed #e5e7eb;
     }
 
     .empty-icon {
-        font-size: 4rem;
+        font-size: 3rem;
         margin-bottom: 1rem;
     }
 
     .empty-title {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
         font-weight: 700;
         color: #111827;
         margin-bottom: 0.5rem;
@@ -377,28 +410,42 @@
 
     .empty-description {
         color: #6b7280;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    /* Pagination */
+    .pagination-container {
+        margin-top: 2rem;
+        display: flex;
+        justify-content: center;
     }
 
     @media (max-width: 768px) {
+        .header-section {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
         .reports-grid {
             grid-template-columns: 1fr;
         }
 
         .filter-row {
-            grid-template-columns: 1fr;
+            flex-direction: column;
         }
 
-        .report-info-grid {
-            grid-template-columns: 1fr;
+        .display-btn {
+            width: 100%;
+            justify-content: center;
         }
     }
 </style>
 
 <div class="condition-reports-container">
     <!-- Header -->
-    <div class="header-section d-flex justify-content-between align-items-start">
-        <div>
+    <div class="header-section">
+        <div class="header-content">
             <h1>États des lieux</h1>
             <p class="header-description">
                 Documentez l'état de vos biens avec photos et descriptions détaillées.<br>
@@ -406,189 +453,172 @@
             </p>
         </div>
         <a href="{{ route('co-owner.condition-reports.create') }}" class="create-btn">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <svg viewBox="0 0 20 20" fill="none">
                 <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
             Créer un nouvel état de lieu
         </a>
     </div>
 
-    @if(isset($noProperties) && $noProperties)
+    <!-- Tabs -->
+    <div class="tabs-container">
+        <button class="tab-btn {{ !request('type') ? 'active' : '' }}" onclick="filterByType('')">
+            Tous
+        </button>
+        <button class="tab-btn {{ request('type') == 'entry' ? 'active' : '' }}" onclick="filterByType('entry')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12l7-7 7 7"/>
+            </svg>
+            Entrée
+        </button>
+        <button class="tab-btn {{ request('type') == 'exit' ? 'active' : '' }}" onclick="filterByType('exit')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12l7 7 7-7"/>
+            </svg>
+            Sortie
+        </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-section">
+        <h3 class="filter-title">Filtrer par bien</h3>
+
+        <form id="filterForm" action="{{ route('co-owner.condition-reports.index') }}" method="GET">
+            <input type="hidden" name="type" id="typeInput" value="{{ request('type') }}">
+
+            <select name="property_id" class="property-select" onchange="this.form.submit()">
+                <option value="">Tous les biens</option>
+                @foreach($properties as $property)
+                    <option value="{{ $property->id }}" {{ request('property_id') == $property->id ? 'selected' : '' }}>
+                        {{ $property->name }}
+                    </option>
+                @endforeach
+            </select>
+
+            <div class="filter-row">
+                <div class="search-input-wrapper">
+                    <svg class="search-icon" viewBox="0 0 20 20" fill="none">
+                        <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM19 19l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <input type="text" name="search" class="search-input" placeholder="Rechercher" value="{{ request('search') }}">
+                </div>
+                <button type="button" class="display-btn">
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                        <circle cx="10" cy="10" r="2" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M10 6V2M10 18v-4M6 10H2M18 10h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    Affichage
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Reports Grid -->
+    @if($reports->isEmpty())
         <div class="empty-state">
-            <div class="empty-icon">🏠</div>
-            <h4 class="empty-title">Aucun bien délégué</h4>
-            <p class="empty-description">Vous n'avez actuellement aucun bien délégué pour gérer les états des lieux.</p>
+            <div class="empty-icon">📋</div>
+            <h4 class="empty-title">Aucun état des lieux trouvé</h4>
+            <p class="empty-description">Commencez par créer votre premier état des lieux.</p>
+            <a href="{{ route('co-owner.condition-reports.create') }}" class="create-btn">
+                <svg viewBox="0 0 20 20" fill="none" style="width: 18px; height: 18px;">
+                    <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                Créer un état des lieux
+            </a>
         </div>
     @else
-        <!-- Tabs -->
-        <div class="tabs-container">
-            <button class="tab-btn {{ !request('type') ? 'active' : '' }}" onclick="filterByType('')">
-                Tous
-            </button>
-            <button class="tab-btn {{ request('type') == 'entry' ? 'active' : '' }}" onclick="filterByType('entry')">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                Entrée
-            </button>
-            <button class="tab-btn {{ request('type') == 'exit' ? 'active' : '' }}" onclick="filterByType('exit')">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                Sortie
-            </button>
-        </div>
-
-        <!-- Filters -->
-        <div class="filter-section">
-            <h3 class="filter-title">Filtrer par bien</h3>
-
-            <form id="filterForm" action="{{ route('co-owner.condition-reports.index') }}" method="GET">
-                <input type="hidden" name="type" id="typeInput" value="{{ request('type') }}">
-
-                <select name="property_id" class="property-select" onchange="this.form.submit()">
-                    <option value="">Tous les biens</option>
-                    @foreach(\App\Models\Property::whereIn('id', \App\Models\PropertyDelegation::where('co_owner_id', \App\Models\CoOwner::where('user_id', auth()->id())->first()?->id)->where('status', 'accepted')->pluck('property_id'))->get() as $property)
-                        <option value="{{ $property->id }}" {{ request('property_id') == $property->id ? 'selected' : '' }}>
-                            {{ $property->name }}
-                        </option>
-                    @endforeach
-                </select>
-
-                <div class="filter-row">
-                    <div class="search-input-wrapper">
-                        <svg class="search-icon" viewBox="0 0 20 20" fill="none">
-                            <path d="M9 17A8 8 0 1 0 9 1a8 8 0 0 0 0 16zM18 18l-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <div class="reports-grid">
+            @foreach($reports as $report)
+            <div class="report-card {{ $report->type }}">
+                <!-- Header -->
+                <div class="report-header">
+                    <div class="report-badge {{ $report->type }}">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M12 5v14M5 12h14"/>
                         </svg>
-                        <input type="text" name="search" class="search-input" placeholder="Rechercher" value="{{ request('search') }}">
+                        @if($report->type == 'entry')
+                            État des lieux d'entrée
+                        @else
+                            État des lieux de sortie
+                        @endif
                     </div>
-                    <button type="button" class="display-btn">
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                            <circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="2"/>
-                            <path d="M2 10h3M15 10h3M10 2v3M10 15v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <h3 class="report-title">EDL - {{ $report->tenant_name }}</h3>
+                    <div class="report-location">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                            <circle cx="12" cy="10" r="3"/>
                         </svg>
-                        Affichage
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Reports Grid -->
-        @if($reports->isEmpty())
-            <div class="empty-state">
-                <div class="empty-icon">📋</div>
-                <h4 class="empty-title">Aucun état des lieux trouvé</h4>
-                <p class="empty-description">Commencez par créer votre premier état des lieux.</p>
-                <a href="{{ route('co-owner.condition-reports.create') }}" class="create-btn">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    Créer un état des lieux
-                </a>
-            </div>
-        @else
-            <div class="reports-grid">
-                @foreach($reports as $report)
-                <div class="report-card {{ $report->type }}">
-                    <!-- Header -->
-                    <div class="report-header">
-                        <div class="report-badge {{ $report->type }}">
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                <path d="M6 2V10M2 6H10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                            </svg>
-                            @if($report->type == 'entry')
-                                État des lieux d'entrée
-                            @else
-                                État des lieux de sortie
-                            @endif
-                        </div>
-                        <h3 class="report-title">EDL - {{ $report->lease->tenant->full_name ?? 'N/A' }}</h3>
-                        <div class="report-location">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                <path d="M8 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" fill="currentColor"/>
-                                <path d="M8 1C5.5 1 3.5 3 3.5 5.5c0 3.5 4.5 9 4.5 9s4.5-5.5 4.5-9C12.5 3 10.5 1 8 1z" stroke="currentColor" stroke-width="1.5"/>
-                            </svg>
-                            {{ $report->property->name ?? 'Bien #' . $report->property_id }}
-                        </div>
-                    </div>
-
-                    <!-- Body -->
-                    <div class="report-body">
-                        <div class="report-info-grid">
-                            <div class="info-item">
-                                <span class="info-label">Locataire</span>
-                                <span class="info-value">{{ $report->lease->tenant->full_name ?? 'N/A' }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Date</span>
-                                <span class="info-value">{{ $report->report_date->format('d M Y') }}</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">État général</span>
-                                <span class="info-value">
-                                    @if($report->photos->avg('condition_status') >= 0.8)
-                                        Excellent
-                                    @elseif($report->photos->avg('condition_status') >= 0.5)
-                                        Très bon
-                                    @else
-                                        Bon
-                                    @endif
-                                </span>
-                            </div>
-                            <div class="info-item">
-                                <span class="info-label">Signé</span>
-                                <span class="info-value status-value">
-                                    @if($report->signed_at)
-                                        <span class="status-check">✓</span> Oui
-                                    @else
-                                        <span class="status-check">✓</span> Oui
-                                    @endif
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="photo-count">
-                            <svg class="photo-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                <rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
-                                <circle cx="7" cy="9" r="1.5" fill="currentColor"/>
-                                <path d="M18 13l-4-4-4 4-2-2-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                            </svg>
-                            <span style="font-weight: 600; color: #111827;">{{ $report->photos->count() }} photos</span>
-                        </div>
-                    </div>
-
-                    <!-- Footer -->
-                    <div class="report-footer">
-                        <span class="creation-date">Créé le {{ $report->created_at->format('d M Y') }}</span>
-                        <div class="action-buttons">
-                            <a href="{{ route('co-owner.condition-reports.download', $report->id) }}" class="action-btn download" title="Télécharger PDF">
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                    <path d="M8 1v10M8 11l-3-3M8 11l3-3M2 15h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                                </svg>
-                            </a>
-                            <a href="{{ route('co-owner.condition-reports.show', $report->id) }}" class="action-btn edit" title="Voir/Modifier">
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                    <path d="M11 2l3 3-8 8H3v-3l8-8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                                </svg>
-                            </a>
-                            <button class="action-btn more" title="Plus d'options">
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                    <circle cx="8" cy="3" r="1" fill="currentColor"/>
-                                    <circle cx="8" cy="8" r="1" fill="currentColor"/>
-                                    <circle cx="8" cy="13" r="1" fill="currentColor"/>
-                                </svg>
-                            </button>
-                        </div>
+                        {{ $report->property_name }}
                     </div>
                 </div>
-                @endforeach
-            </div>
 
-            <!-- Pagination -->
-            <div class="mt-4">
-                {{ $reports->links() }}
+                <!-- Body -->
+                <div class="report-body">
+                    <div class="report-info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Locataire</span>
+                            <span class="info-value">{{ $report->tenant_name }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Date</span>
+                            <span class="info-value">{{ \Carbon\Carbon::parse($report->report_date)->format('d M Y') }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">État général</span>
+                            <span class="info-value">{{ $report->general_condition }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Signé</span>
+                            <span class="info-value status-value">
+                                <span class="status-check">✓</span> {{ $report->is_signed ? 'Oui' : 'Non' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="photo-count">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <polyline points="21 15 16 10 5 21"/>
+                        </svg>
+                        <span style="font-weight: 600;">{{ $report->photos_count }} photos</span>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="report-footer">
+                    <span class="creation-date">Créé le {{ $report->created_at->format('d M Y') }}</span>
+                    <div class="action-buttons">
+                        <a href="{{ route('co-owner.condition-reports.download', $report->id) }}" class="action-btn download" title="Télécharger PDF">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                        </a>
+                        <a href="{{ route('co-owner.condition-reports.edit', $report->id) }}" class="action-btn edit" title="Modifier">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                        </a>
+                        <button type="button" class="action-btn more" title="Plus d'options" onclick="showOptions({{ $report->id }})">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="12" cy="5" r="2"/>
+                                <circle cx="12" cy="12" r="2"/>
+                                <circle cx="12" cy="19" r="2"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
-        @endif
+            @endforeach
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-container">
+            {{ $reports->links() }}
+        </div>
     @endif
 </div>
 
@@ -596,6 +626,11 @@
 function filterByType(type) {
     document.getElementById('typeInput').value = type;
     document.getElementById('filterForm').submit();
+}
+
+function showOptions(reportId) {
+    // Afficher un menu contextuel avec options supplémentaires
+    console.log('Options for report:', reportId);
 }
 </script>
 @endsection

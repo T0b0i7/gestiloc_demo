@@ -290,11 +290,7 @@ export const DelegatedProperties: React.FC<DelegatedPropertiesProps> = ({ onNavi
             />
           </div>
           
-          {/* Bouton Ajouter un bien */}
-          <button className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold flex items-center shadow-lg transition-colors whitespace-nowrap">
-            <Plus className="w-5 h-5 mr-2" />
-            Ajouter un bien
-          </button>
+       
         </div>
 
         {/* Filtres horizontaux */}

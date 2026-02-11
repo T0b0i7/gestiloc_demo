@@ -11,36 +11,82 @@ use App\Models\PropertyDelegation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Laravel\Sanctum\PersonalAccessToken;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class CoOwnerPaymentController extends Controller
 {
+    /**
+     * Méthode utilitaire pour récupérer l'utilisateur authentifié (API + Web)
+     */
+    private function getAuthenticatedUser(Request $request)
+    {
+        // Vérifier l'authentification Sanctum (API)
+        if ($request->bearerToken()) {
+            $token = $request->bearerToken();
+            $sanctumToken = PersonalAccessToken::findToken($token);
+
+            if ($sanctumToken) {
+                $user = $sanctumToken->tokenable;
+                auth('web')->login($user);
+                return $user;
+            }
+        }
+
+        // Vérifier le token en paramètre
+        if ($request->has('api_token')) {
+            $token = $request->get('api_token');
+            $sanctumToken = PersonalAccessToken::findToken($token);
+
+            if ($sanctumToken) {
+                $user = $sanctumToken->tokenable;
+                auth('web')->login($user);
+                return $user;
+            }
+        }
+
+        // Vérifier l'authentification web
+        if (auth()->check()) {
+            return auth()->user();
+        }
+
+        return null;
+    }
+
     /**
      * Affiche la page de gestion des paiements avec statistiques et liste
      */
     public function index(Request $request)
     {
-        $user = auth()->user();
-        $landlordId = $user->landlord ? $user->landlord->id : null;
+        // ✅ Utiliser la même méthode qui fonctionne dans l'autre contrôleur
+        $user = $this->getAuthenticatedUser($request);
 
-        // Si c'est un co-propriétaire, récupérer les propriétés déléguées
-        $delegatedPropertyIds = [];
-        if ($user->coOwner) {
-            $delegatedPropertyIds = PropertyDelegation::where('co_owner_id', $user->coOwner->id)
-                ->where('status', 'active') // Correction: 'active' au lieu de 'accepted'
-                ->pluck('property_id')
-                ->toArray();
+        if (!$user) {
+            // Rediriger vers la page de connexion React
+            return redirect('http://localhost:8080/login');
         }
+
+        // Vérifier que l'utilisateur est un co-propriétaire
+        if (!$user->hasRole('co_owner')) {
+            abort(403, 'Accès réservé aux copropriétaires.');
+        }
+
+        $coOwner = $user->coOwner;
+        if (!$coOwner) {
+            abort(403, 'Profil copropriétaire non trouvé.');
+        }
+
+        // Récupérer les propriétés déléguées
+        $delegatedPropertyIds = PropertyDelegation::where('co_owner_id', $coOwner->id)
+            ->where('status', 'active')
+            ->pluck('property_id')
+            ->toArray();
 
         // Base query pour les paiements
         $paymentsQuery = Payment::query()
             ->with(['lease.property', 'lease.tenant.user', 'invoice'])
-            ->when($landlordId, function($q) use ($landlordId) {
-                $q->where('landlord_user_id', $user->id);
-            })
-            ->when(!empty($delegatedPropertyIds), function($q) use ($delegatedPropertyIds) {
-                $q->whereHas('lease.property', function($sq) use ($delegatedPropertyIds) {
-                    $sq->whereIn('id', $delegatedPropertyIds);
-                });
+            ->whereHas('lease.property', function($sq) use ($delegatedPropertyIds) {
+                $sq->whereIn('id', $delegatedPropertyIds);
             });
 
         // Filtre par bien
@@ -106,16 +152,10 @@ class CoOwnerPaymentController extends Controller
         $payments = $paymentsQuery->latest('created_at')->paginate($perPage);
 
         // Liste des biens pour le filtre
-        $properties = Property::when($landlordId, function($q) use ($landlordId) {
-                $q->where('landlord_id', $landlordId);
-            })
-            ->when(!empty($delegatedPropertyIds), function($q) use ($delegatedPropertyIds) {
-                $q->whereIn('id', $delegatedPropertyIds);
-            })
-            ->get();
+        $properties = Property::whereIn('id', $delegatedPropertyIds)->get();
 
-        // Données pour le graphique de tendance (optionnel)
-        $trendData = $this->getRecoveryTrend($user->id, $landlordId, $delegatedPropertyIds);
+        // Données pour le graphique de tendance
+        $trendData = $this->getRecoveryTrend($delegatedPropertyIds);
 
         return view('co-owner.payments.index', compact(
             'payments',
@@ -128,36 +168,74 @@ class CoOwnerPaymentController extends Controller
     }
 
     /**
-     * Affiche le formulaire d'enregistrement d'un paiement manuel
+     * Récupère la tendance de recouvrement sur 6 mois
      */
-    public function create()
+    private function getRecoveryTrend($delegatedPropertyIds = [])
     {
-        $user = auth()->user();
-        $landlordId = $user->landlord ? $user->landlord->id : null;
+        $trend = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $monthStart = $month->copy()->startOfMonth();
+            $monthEnd = $month->copy()->endOfMonth();
 
-        // Si c'est un co-propriétaire, récupérer les propriétés déléguées
-        $delegatedPropertyIds = [];
-        if ($user->coOwner) {
-            $delegatedPropertyIds = PropertyDelegation::where('co_owner_id', $user->coOwner->id)
-                ->where('status', 'active')
-                ->pluck('property_id')
-                ->toArray();
+            $expectedQuery = Payment::whereBetween('created_at', [$monthStart, $monthEnd]);
+            $receivedQuery = Payment::where('status', 'approved')
+                ->whereBetween('paid_at', [$monthStart, $monthEnd]);
+
+            // Filtrer par propriétés déléguées
+            if (!empty($delegatedPropertyIds)) {
+                $expectedQuery->whereHas('lease.property', function($q) use ($delegatedPropertyIds) {
+                    $q->whereIn('id', $delegatedPropertyIds);
+                });
+                $receivedQuery->whereHas('lease.property', function($q) use ($delegatedPropertyIds) {
+                    $q->whereIn('id', $delegatedPropertyIds);
+                });
+            }
+
+            $expected = $expectedQuery->sum('amount_total');
+            $received = $receivedQuery->sum('amount_total');
+
+            $rate = $expected > 0 ? round(($received / $expected) * 100, 0) : 0;
+
+            $trend[] = [
+                'month' => $month->format('M Y'),
+                'rate' => $rate
+            ];
         }
 
-        // Récupérer les baux actifs pour le sélecteur
+        return $trend;
+    }
+
+    /**
+     * Affiche le formulaire d'enregistrement d'un paiement manuel
+     */
+    public function create(Request $request)
+    {
+        $user = $this->getAuthenticatedUser($request);
+
+        if (!$user) {
+            return redirect('http://localhost:8080/login');
+        }
+
+        if (!$user->hasRole('co_owner')) {
+            abort(403, 'Accès réservé aux copropriétaires.');
+        }
+
+        $coOwner = $user->coOwner;
+        if (!$coOwner) {
+            abort(403, 'Profil copropriétaire non trouvé.');
+        }
+
+        $delegatedPropertyIds = PropertyDelegation::where('co_owner_id', $coOwner->id)
+            ->where('status', 'active')
+            ->pluck('property_id')
+            ->toArray();
+
+        // Récupérer les baux actifs pour les biens délégués
         $leases = Lease::with(['tenant.user', 'property'])
             ->where('status', 'active')
-            ->where(function($q) use ($landlordId, $delegatedPropertyIds) {
-                if ($landlordId) {
-                    $q->whereHas('property', function($sq) use ($landlordId) {
-                        $sq->where('landlord_id', $landlordId);
-                    });
-                }
-                if (!empty($delegatedPropertyIds)) {
-                    $q->orWhereHas('property', function($sq) use ($delegatedPropertyIds) {
-                        $sq->whereIn('id', $delegatedPropertyIds);
-                    });
-                }
+            ->whereHas('property', function($q) use ($delegatedPropertyIds) {
+                $q->whereIn('id', $delegatedPropertyIds);
             })
             ->get();
 
@@ -169,6 +247,12 @@ class CoOwnerPaymentController extends Controller
      */
     public function store(Request $request)
     {
+        $user = $this->getAuthenticatedUser($request);
+
+        if (!$user) {
+            return redirect('http://localhost:8080/login');
+        }
+
         $validated = $request->validate([
             'lease_id' => 'required|exists:leases,id',
             'amount_total' => 'required|numeric|min:0.01',
@@ -177,25 +261,34 @@ class CoOwnerPaymentController extends Controller
             'notes' => 'nullable|string|max:500',
         ]);
 
-        $user = auth()->user();
         $lease = Lease::with('tenant')->findOrFail($validated['lease_id']);
+        $coOwner = $user->coOwner;
 
         // Vérification des droits
-        $this->authorize('view', $lease->property);
+        $hasAccess = PropertyDelegation::where('co_owner_id', $coOwner->id)
+            ->where('property_id', $lease->property_id)
+            ->where('status', 'active')
+            ->exists();
+
+        if (!$hasAccess) {
+            return redirect()->back()
+                ->with('error', 'Vous n\'avez pas accès à ce bien.')
+                ->withInput();
+        }
 
         // Calcul des frais (exemple: 5%)
         $feeRate = 0.05;
         $feeAmount = $validated['amount_total'] * $feeRate;
         $amountNet = $validated['amount_total'] - $feeAmount;
 
-        DB::transaction(function () use ($validated, $user, $lease, $feeAmount, $amountNet) {
+        DB::transaction(function () use ($validated, $user, $lease, $feeAmount, $amountNet, $coOwner) {
             Payment::create([
-                'invoice_id' => null, // Ou lier à une facture existante
+                'invoice_id' => null,
                 'lease_id' => $validated['lease_id'],
                 'tenant_id' => $lease->tenant_id,
                 'landlord_user_id' => $user->id,
                 'provider' => 'manual',
-                'status' => 'approved', // Paiement manuel validé immédiatement
+                'status' => 'approved',
                 'amount_total' => $validated['amount_total'],
                 'fee_amount' => $feeAmount,
                 'amount_net' => $amountNet,
@@ -205,6 +298,7 @@ class CoOwnerPaymentController extends Controller
                     'payment_method' => $validated['payment_method'],
                     'notes' => $validated['notes'] ?? null,
                     'recorded_by' => $user->id,
+                    'recorded_by_co_owner' => $coOwner->id,
                 ]),
             ]);
 
@@ -224,9 +318,25 @@ class CoOwnerPaymentController extends Controller
     /**
      * Affiche les détails d'un paiement
      */
-    public function show(Payment $payment)
+    public function show(Request $request, Payment $payment)
     {
-        $this->authorize('view', $payment->lease->property);
+        $user = $this->getAuthenticatedUser($request);
+
+        if (!$user) {
+            return redirect('http://localhost:8080/login');
+        }
+
+        $coOwner = $user->coOwner;
+
+        // Vérification des droits
+        $hasAccess = PropertyDelegation::where('co_owner_id', $coOwner->id)
+            ->where('property_id', $payment->lease->property_id)
+            ->where('status', 'active')
+            ->exists();
+
+        if (!$hasAccess) {
+            abort(403, 'Accès non autorisé.');
+        }
 
         $payment->load(['lease.property', 'lease.tenant.user', 'invoice']);
 
@@ -240,7 +350,6 @@ class CoOwnerPaymentController extends Controller
     {
         $format = $request->input('format', 'csv');
 
-        // Logique d'export selon le format
         if ($format === 'csv') {
             return $this->exportCsv($request);
         }
@@ -253,26 +362,21 @@ class CoOwnerPaymentController extends Controller
      */
     private function exportCsv(Request $request)
     {
-        $user = auth()->user();
-        $landlordId = $user->landlord ? $user->landlord->id : null;
+        $user = $this->getAuthenticatedUser($request);
 
-        // Si c'est un co-propriétaire, récupérer les propriétés déléguées
-        $delegatedPropertyIds = [];
-        if ($user->coOwner) {
-            $delegatedPropertyIds = PropertyDelegation::where('co_owner_id', $user->coOwner->id)
-                ->where('status', 'active')
-                ->pluck('property_id')
-                ->toArray();
+        if (!$user) {
+            abort(401);
         }
 
+        $coOwner = $user->coOwner;
+        $delegatedPropertyIds = PropertyDelegation::where('co_owner_id', $coOwner->id)
+            ->where('status', 'active')
+            ->pluck('property_id')
+            ->toArray();
+
         $payments = Payment::with(['lease.property', 'lease.tenant.user', 'invoice'])
-            ->when($landlordId, function($q) use ($landlordId) {
-                $q->where('landlord_user_id', $user->id);
-            })
-            ->when(!empty($delegatedPropertyIds), function($q) use ($delegatedPropertyIds) {
-                $q->whereHas('lease.property', function($sq) use ($delegatedPropertyIds) {
-                    $sq->whereIn('id', $delegatedPropertyIds);
-                });
+            ->whereHas('lease.property', function($q) use ($delegatedPropertyIds) {
+                $q->whereIn('id', $delegatedPropertyIds);
             })
             ->latest('created_at')
             ->get();
@@ -296,10 +400,10 @@ class CoOwnerPaymentController extends Controller
                     $payment->created_at->format('d/m/Y'),
                     $payment->lease->property->name ?? 'N/A',
                     $payment->lease->tenant->user->name ?? 'N/A',
-                    $payment->amount_total,
-                    $payment->fee_amount,
-                    $payment->amount_net,
-                    $payment->status,
+                    number_format($payment->amount_total, 0, ',', ' '),
+                    number_format($payment->fee_amount, 0, ',', ' '),
+                    number_format($payment->amount_net, 0, ',', ' '),
+                    $this->getStatusLabel($payment->status),
                     $payment->provider_payload ? json_decode($payment->provider_payload)->payment_method ?? 'N/A' : 'N/A',
                     $payment->paid_at ? $payment->paid_at->format('d/m/Y') : 'N/A'
                 ]);
@@ -316,31 +420,26 @@ class CoOwnerPaymentController extends Controller
      */
     private function exportPdf(Request $request)
     {
-        $user = auth()->user();
-        $landlordId = $user->landlord ? $user->landlord->id : null;
+        $user = $this->getAuthenticatedUser($request);
 
-        // Si c'est un co-propriétaire, récupérer les propriétés déléguées
-        $delegatedPropertyIds = [];
-        if ($user->coOwner) {
-            $delegatedPropertyIds = PropertyDelegation::where('co_owner_id', $user->coOwner->id)
-                ->where('status', 'active')
-                ->pluck('property_id')
-                ->toArray();
+        if (!$user) {
+            abort(401);
         }
 
+        $coOwner = $user->coOwner;
+        $delegatedPropertyIds = PropertyDelegation::where('co_owner_id', $coOwner->id)
+            ->where('status', 'active')
+            ->pluck('property_id')
+            ->toArray();
+
         $payments = Payment::with(['lease.property', 'lease.tenant.user', 'invoice'])
-            ->when($landlordId, function($q) use ($landlordId) {
-                $q->where('landlord_user_id', $user->id);
-            })
-            ->when(!empty($delegatedPropertyIds), function($q) use ($delegatedPropertyIds) {
-                $q->whereHas('lease.property', function($sq) use ($delegatedPropertyIds) {
-                    $sq->whereIn('id', $delegatedPropertyIds);
-                });
+            ->whereHas('lease.property', function($q) use ($delegatedPropertyIds) {
+                $q->whereIn('id', $delegatedPropertyIds);
             })
             ->latest('created_at')
             ->get();
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('co-owner.payments.export-pdf', [
+        $pdf = Pdf::loadView('co-owner.payments.export-pdf', [
             'payments' => $payments,
             'user' => $user,
             'date' => now()->format('d/m/Y')
@@ -352,36 +451,27 @@ class CoOwnerPaymentController extends Controller
     /**
      * Génère les rappels de paiement
      */
-    public function reminders()
+    public function reminders(Request $request)
     {
-        $user = auth()->user();
-        $landlordId = $user->landlord ? $user->landlord->id : null;
+        $user = $this->getAuthenticatedUser($request);
 
-        // Si c'est un co-propriétaire, récupérer les propriétés déléguées
-        $delegatedPropertyIds = [];
-        if ($user->coOwner) {
-            $delegatedPropertyIds = PropertyDelegation::where('co_owner_id', $user->coOwner->id)
-                ->where('status', 'active')
-                ->pluck('property_id')
-                ->toArray();
+        if (!$user) {
+            return redirect('http://localhost:8080/login');
         }
+
+        $coOwner = $user->coOwner;
+        $delegatedPropertyIds = PropertyDelegation::where('co_owner_id', $coOwner->id)
+            ->where('status', 'active')
+            ->pluck('property_id')
+            ->toArray();
 
         $latePayments = Payment::with(['lease.tenant.user', 'lease.property'])
             ->where('status', 'pending')
             ->whereHas('invoice', function($q) {
                 $q->where('due_date', '<', now()->subDays(7));
             })
-            ->where(function($q) use ($landlordId, $delegatedPropertyIds) {
-                if ($landlordId) {
-                    $q->whereHas('lease.property', function($sq) use ($landlordId) {
-                        $sq->where('landlord_id', $landlordId);
-                    });
-                }
-                if (!empty($delegatedPropertyIds)) {
-                    $q->orWhereHas('lease.property', function($sq) use ($delegatedPropertyIds) {
-                        $sq->whereIn('id', $delegatedPropertyIds);
-                    });
-                }
+            ->whereHas('lease.property', function($q) use ($delegatedPropertyIds) {
+                $q->whereIn('id', $delegatedPropertyIds);
             })
             ->get();
 
@@ -391,18 +481,37 @@ class CoOwnerPaymentController extends Controller
     /**
      * Envoie un rappel par email
      */
-    public function sendReminder(Payment $payment)
+    public function sendReminder(Request $request, Payment $payment)
     {
-        $this->authorize('view', $payment->lease->property);
+        $user = $this->getAuthenticatedUser($request);
+
+        if (!$user) {
+            return redirect('http://localhost:8080/login');
+        }
+
+        $coOwner = $user->coOwner;
+
+        // Vérification des droits
+        $hasAccess = PropertyDelegation::where('co_owner_id', $coOwner->id)
+            ->where('property_id', $payment->lease->property_id)
+            ->where('status', 'active')
+            ->exists();
+
+        if (!$hasAccess) {
+            return back()->with('error', 'Accès non autorisé.');
+        }
 
         $tenant = $payment->lease->tenant;
 
-        if ($tenant && $tenant->user) {
-            // Envoi de l'email de rappel
-            \Illuminate\Support\Facades\Mail::to($tenant->user->email)
-                ->queue(new \App\Mail\PaymentReminderMail($payment));
+        if ($tenant && $tenant->user && $tenant->user->email) {
+            try {
+                \Illuminate\Support\Facades\Mail::to($tenant->user->email)
+                    ->queue(new \App\Mail\PaymentReminderMail($payment));
 
-            return back()->with('success', 'Rappel envoyé avec succès.');
+                return back()->with('success', 'Rappel envoyé avec succès.');
+            } catch (\Exception $e) {
+                return back()->with('error', 'Erreur lors de l\'envoi du rappel.');
+            }
         }
 
         return back()->with('error', 'Impossible d\'envoyer le rappel : email non trouvé.');
@@ -411,9 +520,25 @@ class CoOwnerPaymentController extends Controller
     /**
      * Archive un paiement
      */
-    public function archive(Payment $payment)
+    public function archive(Request $request, Payment $payment)
     {
-        $this->authorize('view', $payment->lease->property);
+        $user = $this->getAuthenticatedUser($request);
+
+        if (!$user) {
+            return redirect('http://localhost:8080/login');
+        }
+
+        $coOwner = $user->coOwner;
+
+        // Vérification des droits
+        $hasAccess = PropertyDelegation::where('co_owner_id', $coOwner->id)
+            ->where('property_id', $payment->lease->property_id)
+            ->where('status', 'active')
+            ->exists();
+
+        if (!$hasAccess) {
+            return back()->with('error', 'Accès non autorisé.');
+        }
 
         $payment->update(['status' => 'cancelled']);
 
@@ -421,44 +546,18 @@ class CoOwnerPaymentController extends Controller
     }
 
     /**
-     * Récupère la tendance de recouvrement sur 6 mois
+     * Helper pour obtenir le libellé du statut
      */
-    private function getRecoveryTrend($userId, $landlordId, $delegatedPropertyIds)
+    private function getStatusLabel($status)
     {
-        $trend = [];
-        for ($i = 5; $i >= 0; $i--) {
-            $month = now()->subMonths($i);
-            $monthStart = $month->copy()->startOfMonth();
-            $monthEnd = $month->copy()->endOfMonth();
-
-            $expectedQuery = Payment::where('landlord_user_id', $userId)
-                ->whereBetween('created_at', [$monthStart, $monthEnd]);
-
-            $receivedQuery = Payment::where('landlord_user_id', $userId)
-                ->where('status', 'approved')
-                ->whereBetween('paid_at', [$monthStart, $monthEnd]);
-
-            // Filtrer par propriétés déléguées si applicable
-            if (!empty($delegatedPropertyIds)) {
-                $expectedQuery->whereHas('lease.property', function($q) use ($delegatedPropertyIds) {
-                    $q->whereIn('id', $delegatedPropertyIds);
-                });
-                $receivedQuery->whereHas('lease.property', function($q) use ($delegatedPropertyIds) {
-                    $q->whereIn('id', $delegatedPropertyIds);
-                });
-            }
-
-            $expected = $expectedQuery->sum('amount_total');
-            $received = $receivedQuery->sum('amount_total');
-
-            $rate = $expected > 0 ? round(($received / $expected) * 100, 0) : 0;
-
-            $trend[] = [
-                'month' => $month->format('M Y'),
-                'rate' => $rate
-            ];
-        }
-
-        return $trend;
+        return match($status) {
+            'approved' => 'Approuvé',
+            'pending' => 'En attente',
+            'initiated' => 'Initiatié',
+            'cancelled' => 'Annulé',
+            'failed' => 'Échoué',
+            'declined' => 'Refusé',
+            default => $status
+        };
     }
 }
