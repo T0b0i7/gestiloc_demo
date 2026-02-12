@@ -187,7 +187,7 @@ export const CoOwnerDashboard: React.FC<CoOwnerDashboardProps> = ({ onNavigate, 
                 <div 
                   key={action.id}
                   className="flex items-start gap-4 p-4 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition-all cursor-pointer"
-                  onClick={() => onNavigate('biens')}
+                 
                 >
                   <div className="text-2xl font-bold text-blue-600">{(index + 1) + '\uFE0F\u20E3'}</div>
                   <div>
@@ -340,12 +340,7 @@ export const CoOwnerDashboard: React.FC<CoOwnerDashboardProps> = ({ onNavigate, 
                     <div className="text-sm text-slate-500">{doc.date}</div>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => {
-                  // TODO: Implémenter le téléchargement selon le type de document
-                  notify(`Téléchargement de ${doc.title}`, 'info');
-                }}>
-                  <Download className="w-4 h-4" />
-                </Button>
+                
               </div>
             ))
           ) : (
