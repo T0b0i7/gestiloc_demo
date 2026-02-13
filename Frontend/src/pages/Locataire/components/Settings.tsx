@@ -78,10 +78,10 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
       {/* Header */}
-      <div className="bg-[rgba(82,157,33,0.82)] text-white">
+      <div className="text-gray-900">
         <div className="max-w-4xl mx-auto px-6 py-8">
           <h1 className="text-3xl font-bold">Paramètres</h1>
-          <p className="text-lg mt-2 opacity-90">
+          <p className="text-lg mt-2 text-gray-600">
             Gérez vos préférences et paramètres de compte
           </p>
         </div>
