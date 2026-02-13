@@ -84,7 +84,7 @@ const footerNavigation = {
 
 export function Footer() {
   return (
-    <footer className="relative bg-white pt-32 md:pt-40 pb-12 overflow-hidden">
+    <footer className="relative bg-white pt-40 md:pt-48 pb-12 overflow-hidden">
       {/* Fond vert en forme de maison */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 top-12 md:top-16">
         {/* Toit de la maison */}
@@ -348,31 +348,31 @@ export function Footer() {
           <div className="flex gap-4">
             <a
               href="#"
-              className="h-8 w-8 rounded-full border-2 border-gray-400 bg-white text-green-700 flex items-center justify-center hover:bg-gray-50 transition-colors"
+              className="h-10 w-10 rounded-full border-2 border-gray-400 bg-white text-green-700 flex items-center justify-center hover:bg-gray-50 transition-colors"
               aria-label="Facebook"
             >
-              <Facebook className="h-4 w-4" />
+              <Facebook className="h-5 w-5" />
             </a>
             <a
               href="#"
-              className="h-8 w-8 rounded-full border-2 border-gray-400 bg-white text-green-700 flex items-center justify-center hover:bg-gray-50 transition-colors"
+              className="h-10 w-10 rounded-full border-2 border-gray-400 bg-white text-green-700 flex items-center justify-center hover:bg-gray-50 transition-colors"
               aria-label="Twitter"
             >
-              <Twitter className="h-4 w-4" />
+              <Twitter className="h-5 w-5" />
             </a>
             <a
               href="#"
-              className="h-8 w-8 rounded-full border-2 border-gray-400 bg-white text-green-700 flex items-center justify-center hover:bg-gray-50 transition-colors"
+              className="h-10 w-10 rounded-full border-2 border-gray-400 bg-white text-green-700 flex items-center justify-center hover:bg-gray-50 transition-colors"
               aria-label="LinkedIn"
             >
-              <Linkedin className="h-4 w-4" />
+              <Linkedin className="h-5 w-5" />
             </a>
             <a
               href="#"
-              className="h-8 w-8 rounded-full border-2 border-gray-400 bg-white text-green-700 flex items-center justify-center hover:bg-gray-50 transition-colors"
+              className="h-10 w-10 rounded-full border-2 border-gray-400 bg-white text-green-700 flex items-center justify-center hover:bg-gray-50 transition-colors"
               aria-label="Instagram"
             >
-              <Instagram className="h-4 w-4" />
+              <Instagram className="h-5 w-5" />
             </a>
           </div>
 

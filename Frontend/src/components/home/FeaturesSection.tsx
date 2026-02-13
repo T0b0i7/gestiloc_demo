@@ -327,7 +327,7 @@ export default function FeaturesSection() {
                 Pourquoi choisir GestiLoc ?
               </h3>
               <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Le site automatise la création de vos quittances et contrats de location confirmés à la législation béninoise. Pour chaque contrat de location, les loyers et les quittances électroniques sont générés automatiquement chaque mois.
+              Nous sommes accessibles, modernes et pensées pour les propriétaires béninois.
             </p>
             </motion.div>
 
