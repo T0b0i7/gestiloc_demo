@@ -1,19 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card } from './ui/Card';
-import { Button } from './ui/Button';
-import { Plus, Eye, Download, Trash2 } from 'lucide-react';
-import { apiService, Invoice } from '@/services/api';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Card } from "./ui/Card";
+import { Button } from "./ui/Button";
+import { Plus, Eye, Download, Trash2 } from "lucide-react";
+import { apiService, Invoice } from "@/services/api";
 
 interface InvoicesListProps {
-  notify: (msg: string, type: 'success' | 'info' | 'error') => void;
+  notify: (msg: string, type: "success" | "info" | "error") => void;
 }
 
 export const InvoicesList: React.FC<InvoicesListProps> = ({ notify }) => {
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'rent' | 'deposit' | 'charge' | 'repair'>('all');
+  const [filter, setFilter] = useState<
+    "all" | "rent" | "deposit" | "charge" | "repair"
+  >("all");
 
   // Charger les factures
   useEffect(() => {
@@ -24,9 +26,9 @@ export const InvoicesList: React.FC<InvoicesListProps> = ({ notify }) => {
         // S'assurer que c'est un tableau
         setInvoices(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error('Erreur lors du chargement des factures:', error);
+        console.error("Erreur lors du chargement des factures:", error);
         setInvoices([]);
-        notify('Erreur lors du chargement des factures', 'error');
+        notify("Erreur lors du chargement des factures", "error");
       } finally {
         setIsLoading(false);
       }
@@ -36,35 +38,34 @@ export const InvoicesList: React.FC<InvoicesListProps> = ({ notify }) => {
   }, [notify]);
 
   // Filtrer les factures
-  const filteredInvoices = filter === 'all' 
-    ? invoices 
-    : invoices.filter(inv => inv.type === filter);
+  const filteredInvoices =
+    filter === "all" ? invoices : invoices.filter((inv) => inv.type === filter);
 
   // Mapper les types de factures
   const getInvoiceTypeLabel = (type: string): string => {
     const typeMap: Record<string, string> = {
-      rent: 'Loyer',
-      deposit: 'Dépôt de garantie',
-      charge: 'Charge',
-      repair: 'Réparation',
+      rent: "Loyer",
+      deposit: "Dépôt de garantie",
+      charge: "Charge",
+      repair: "Réparation",
     };
     return typeMap[type] || type;
   };
 
   // Formater la date
   const formatDate = (date: string): string => {
-    return new Date(date).toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+    return new Date(date).toLocaleDateString("fr-FR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   // Formater le montant
   const formatAmount = (amount: number): string => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XOF',
+    return new Intl.NumberFormat("fr-FR", {
+      style: "currency",
+      currency: "XOF",
     }).format(amount);
   };
 
@@ -74,12 +75,14 @@ export const InvoicesList: React.FC<InvoicesListProps> = ({ notify }) => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Factures</h1>
-          <p className="text-sm text-gray-500 mt-1">Gérez vos factures émises</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Gérez vos factures émises
+          </p>
         </div>
         <Button
           variant="default"
           className="flex items-center gap-2"
-          onClick={() => navigate('/proprietaire/émettre-facture')}
+          onClick={() => navigate("/proprietaire/émettre-facture")}
         >
           <Plus size={20} />
           Nouvelle facture
@@ -88,19 +91,23 @@ export const InvoicesList: React.FC<InvoicesListProps> = ({ notify }) => {
 
       {/* Filtres */}
       <div className="flex flex-wrap gap-2">
-        {(['all', 'rent', 'deposit', 'charge', 'repair'] as const).map((type) => (
-          <button
-            key={type}
-            onClick={() => setFilter(type)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-              filter === type
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            {type === 'all' ? 'Toutes les factures' : getInvoiceTypeLabel(type)}
-          </button>
-        ))}
+        {(["all", "rent", "deposit", "charge", "repair"] as const).map(
+          (type) => (
+            <button
+              key={type}
+              onClick={() => setFilter(type)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                filter === type
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {type === "all"
+                ? "Toutes les factures"
+                : getInvoiceTypeLabel(type)}
+            </button>
+          ),
+        )}
       </div>
 
       {/* Liste des factures */}
@@ -111,11 +118,13 @@ export const InvoicesList: React.FC<InvoicesListProps> = ({ notify }) => {
       ) : filteredInvoices.length === 0 ? (
         <Card title="Aucune facture">
           <div className="text-center py-12">
-            <p className="text-gray-500 mb-4">Aucune facture n'a été créée pour le moment.</p>
+            <p className="text-gray-500 mb-4">
+              Aucune facture n'a été créée pour le moment.
+            </p>
             <Button
               variant="default"
               className="inline-flex items-center gap-2"
-              onClick={() => navigate('/proprietaire/émettre-facture')}
+              onClick={() => navigate("/proprietaire/émettre-facture")}
             >
               <Plus size={20} />
               Créer une facture
@@ -125,7 +134,10 @@ export const InvoicesList: React.FC<InvoicesListProps> = ({ notify }) => {
       ) : (
         <div className="grid gap-4">
           {filteredInvoices.map((invoice) => (
-            <Card key={invoice.id} className="hover:shadow-lg transition-shadow">
+            <Card
+              key={invoice.id}
+              className="hover:shadow-lg transition-shadow"
+            >
               <div className="p-6">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   {/* Informations */}
@@ -153,7 +165,9 @@ export const InvoicesList: React.FC<InvoicesListProps> = ({ notify }) => {
                       </div>
                       <div>
                         <p className="text-gray-500">N° Location</p>
-                        <p className="font-semibold text-gray-900">{invoice.lease_id}</p>
+                        <p className="font-semibold text-gray-900">
+                          {invoice.lease_id}
+                        </p>
                       </div>
                       <div>
                         <p className="text-gray-500">Statut</p>

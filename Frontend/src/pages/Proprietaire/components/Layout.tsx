@@ -170,7 +170,7 @@ export const Layout: React.FC<LayoutProps> = ({
       path: "/proprietaire/documents",
       submenu: [
         { id: "baux", label: "Contrats de bail", icon: FileSignature, path: "/proprietaire/documents/baux" },
-        { id: "quittances", label: "Quittances", icon: FileText, path: "/proprietaire/quittances" },
+        { id: "quittances", label: "Quittances de loyer", icon: FileText, path: "/proprietaire/quittances" },
         { id: "factures", label: "Factures", icon: FileText, path: "/proprietaire/factures" },
       ],
     },

@@ -652,6 +652,8 @@ export const tenantService = {
 // ================= LEASES SERVICE =================
 
 export interface Lease {
+  tenant: any;
+  property: any;
   id: number;
   uuid: string;
   property_id: number;

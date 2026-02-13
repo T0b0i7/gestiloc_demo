@@ -18,19 +18,19 @@ import { Immeubles } from './components/Immeubles';
 import { TenantsList } from './components/TenantsList';
 import { Onboarding } from './components/Onboarding';
 import { MesBiens } from './components/MesBiens';
-import { Lease } from './components/Lease';
+import { Lease } from "./components/Lease";
 import EtatsLieux from './components/EtatsLieux';
 import { InviteCoOwner } from './components/InviteCoOwner';
 import { CoOwnersList } from './components/CoOwnersList';
 import { 
   Biens, Locataires, Locations, Inventaires, EtatDesLieux, 
-  Finances, Carnet, Candidats, Outils, Corbeille 
+  Finances, Carnet, Candidats, Outils, Corbeille,
 } from './components/SectionPages';
 import { Tab, ToastMessage } from './types';
 import { authService } from '@/services/api';
 import { DocumentsManager } from './components/DocumentsManager';
 import PreavisList from './components/PreavisList';
-import QuittancesIndependants from './components/QuittancesIndependants';
+import QuittancesIndependants from './components/QuittancesLoyers';
 import LandlordIncidentsPage from './components/LandlordIncidentsPage';
 import { EmitInvoice } from './components/EmitInvoice';
 import { InvoicesList } from './components/InvoicesList';
