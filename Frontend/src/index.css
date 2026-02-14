@@ -384,7 +384,7 @@ All colors MUST be HSL.
 
   body {
     color: hsl(var(--foreground));
-    background: hsl(var(--background));
+    background: #FFFFFF;
     font-family: sans-serif;
     font-smooth: antialiased;
     margin: 0;

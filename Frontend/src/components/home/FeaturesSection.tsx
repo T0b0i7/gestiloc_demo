@@ -7,18 +7,18 @@ export default function FeaturesSection() {
       {/* Section Header and Steps */}
       <div className="py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Section Header */}
+          {/* Section Header - Animation améliorée */}
           <motion.div 
             className="text-center mb-16"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
               GestiLoc vous assiste avec votre gestion locative au Bénin
             </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
               Le site automatise la création de vos quittances et contrats de location confirmés à la législation béninoise. Pour chaque contrat de location, les loyers et les quittances électroniques sont générés automatiquement chaque mois.
             </p>
           </motion.div>
@@ -26,23 +26,24 @@ export default function FeaturesSection() {
           {/* Comment ça marche ? Section */}
           <div className="mb-20">
             <motion.h3 
-              className="text-2xl font-bold text-gray-900 text-center mb-12 italic"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              className="text-3xl md:text-4xl font-bold text-gray-900 text-center mb-12 italic"
+              initial={{ opacity: 0, y: 30, rotateX: -10 }}
+              whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
             >
               Comment ça marche ?
             </motion.h3>
           
             <div className="grid md:grid-cols-3 gap-8">
-              {/* Step 1 */}
+              {/* Step 1 - Animation améliorée */}
               <motion.div 
                 className="border-2 border-green-100 rounded-lg p-8 bg-green-50 text-center relative hover:shadow-xl transition-all duration-300 hover:-translate-y-2"
-                initial={{ opacity: 0, x: -50 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, x: -60, y: 30 }}
+                whileInView={{ opacity: 1, x: 0, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.1 }}
+                transition={{ duration: 0.7, delay: 0.1, ease: "easeOut" }}
+                whileHover={{ scale: 1.03 }}
               >
                 <span className="absolute top-4 left-4 flex items-center justify-center w-12 h-12 rounded-full bg-green-400 text-white font-bold text-lg">1</span>
                 <img 
@@ -54,13 +55,14 @@ export default function FeaturesSection() {
                 <p className="text-sm text-gray-700">Ajoutez vos propriétés immobilières en quelques clics</p>
               </motion.div>
 
-              {/* Step 2 */}
+              {/* Step 2 - Animation améliorée */}
               <motion.div 
                 className="border-2 border-orange-100 rounded-lg p-8 bg-orange-50 text-center relative hover:shadow-xl transition-all duration-300 hover:-translate-y-2"
-                initial={{ opacity: 0, y: 50 }}
+                initial={{ opacity: 0, y: 60 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.2 }}
+                transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
+                whileHover={{ scale: 1.03 }}
               >
                 <span className="absolute top-4 left-4 flex items-center justify-center w-12 h-12 rounded-full bg-orange-400 text-white font-bold text-lg">2</span>
                 <img 
@@ -72,13 +74,14 @@ export default function FeaturesSection() {
                 <p className="text-sm text-gray-700">Enregistrez les informations de vos locataires</p>
               </motion.div>
 
-              {/* Step 3 */}
+              {/* Step 3 - Animation améliorée */}
               <motion.div 
                 className="border-2 border-purple-100 rounded-lg p-8 bg-purple-50 text-center relative hover:shadow-xl transition-all duration-300 hover:-translate-y-2"
-                initial={{ opacity: 0, x: 50 }}
-                whileInView={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, x: 60, y: 30 }}
+                whileInView={{ opacity: 1, x: 0, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.3 }}
+                transition={{ duration: 0.7, delay: 0.3, ease: "easeOut" }}
+                whileHover={{ scale: 1.03 }}
               >
                 <span className="absolute top-4 left-4 flex items-center justify-center w-12 h-12 rounded-full bg-purple-400 text-white font-bold text-lg">3</span>
                 <img 
@@ -103,11 +106,11 @@ export default function FeaturesSection() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.h3 
-            className="mb-2"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            className="mb-3"
+            initial={{ opacity: 0, y: 30, scale: 0.9 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             style={{
               fontFamily: "Lora, serif",
               fontWeight: 600,
@@ -126,19 +129,20 @@ export default function FeaturesSection() {
             className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16"
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
+            viewport={{ once: true, amount: 0.2 }}
             variants={{
               hidden: { opacity: 0 },
               visible: {
                 opacity: 1,
-                transition: { staggerChildren: 0.1 }
+                transition: { staggerChildren: 0.15, delayChildren: 0.1 }
               }
             }}
           >
-            {/* Quittances */}
+            {/* Quittances - Animation améliorée */}
             <motion.div 
-              className="flex flex-col items-center hover:scale-105 transition-transform duration-300"
-              variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+              className="flex flex-col items-center hover:scale-110 transition-transform duration-300"
+              variants={{ hidden: { opacity: 0, y: 30, scale: 0.8 }, visible: { opacity: 1, y: 0, scale: 1 } }}
+              transition={{ duration: 0.5 }}
             >
               <img 
                 src="/Ressource_gestiloc/quittances.png" 
@@ -148,10 +152,11 @@ export default function FeaturesSection() {
               <p className="font-semibold text-gray-800">Quittances</p>
             </motion.div>
 
-            {/* Contrats */}
+            {/* Contrats - Animation améliorée */}
             <motion.div 
-              className="flex flex-col items-center hover:scale-105 transition-transform duration-300"
-              variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+              className="flex flex-col items-center hover:scale-110 transition-transform duration-300"
+              variants={{ hidden: { opacity: 0, y: 30, scale: 0.8 }, visible: { opacity: 1, y: 0, scale: 1 } }}
+              transition={{ duration: 0.5 }}
             >
               <img 
                 src="/Ressource_gestiloc/contrats.png" 
@@ -161,10 +166,11 @@ export default function FeaturesSection() {
               <p className="font-semibold text-gray-800">Contrats</p>
             </motion.div>
 
-            {/* Loyers */}
+            {/* Loyers - Animation améliorée */}
             <motion.div 
-              className="flex flex-col items-center hover:scale-105 transition-transform duration-300"
-              variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+              className="flex flex-col items-center hover:scale-110 transition-transform duration-300"
+              variants={{ hidden: { opacity: 0, y: 30, scale: 0.8 }, visible: { opacity: 1, y: 0, scale: 1 } }}
+              transition={{ duration: 0.5 }}
             >
               <img 
                 src="/Ressource_gestiloc/creer_un_locataire.png" 
@@ -174,10 +180,11 @@ export default function FeaturesSection() {
               <p className="font-semibold text-gray-800">Loyers</p>
             </motion.div>
 
-            {/* Rappels */}
+            {/* Rappels - Animation améliorée */}
             <motion.div 
-              className="flex flex-col items-center hover:scale-105 transition-transform duration-300"
-              variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+              className="flex flex-col items-center hover:scale-110 transition-transform duration-300"
+              variants={{ hidden: { opacity: 0, y: 30, scale: 0.8 }, visible: { opacity: 1, y: 0, scale: 1 } }}
+              transition={{ duration: 0.5 }}
             >
               <img 
                 src="/Ressource_gestiloc/rappels.png" 
@@ -323,7 +330,7 @@ export default function FeaturesSection() {
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
             >
-              <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              <h3 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
                 Pourquoi choisir GestiLoc ?
               </h3>
               <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
@@ -331,9 +338,9 @@ export default function FeaturesSection() {
             </p>
             </motion.div>
 
-            {/* Features Grid - 4x3 layout */}
+            {/* Features Grid - 3x4 layout (3 colonnes, 4 lignes) */}
             <motion.div 
-              className="grid grid-cols-2 md:grid-cols-4 gap-4"
+              className="grid grid-cols-2 md:grid-cols-3 gap-4"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, amount: 0.1 }}

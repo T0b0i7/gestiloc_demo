@@ -35,41 +35,44 @@ export default function HeroSection() {
             </p>
           </motion.div>
 
-          {/* Main Title */}
+          {/* Main Title - Taille augmentée */}
           <motion.h1 
-            className="text-4xl md:text-5xl lg:text-6xl text-white leading-tight"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            className="text-5xl md:text-6xl lg:text-7xl text-white leading-tight"
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
             style={{ 
               fontFamily: "Merriweather, serif",
               fontWeight: 700,
               fontStyle: "italic",
-              fontSize: "36px",
               letterSpacing: "-0.17px",
-              lineHeight: "100%"
+              lineHeight: "110%",
+              textShadow: "0 4px 30px rgba(0,0,0,0.3)"
             }}
           >
             Gérez vos biens immobiliers
           </motion.h1>
 
-          {/* Subtitle */}
+          {/* Subtitle - Amélioré */}
           <motion.p 
-            className="text-base md:text-lg text-white/90 leading-relaxed max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 30 }}
+            className="text-lg md:text-xl text-white/95 leading-relaxed max-w-2xl mx-auto"
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            style={{ fontFamily: "Manrope, sans-serif" }}
+            transition={{ duration: 0.7, delay: 0.5, ease: "easeOut" }}
+            style={{ 
+              fontFamily: "Manrope, sans-serif",
+              textShadow: "0 2px 10px rgba(0,0,0,0.2)"
+            }}
           >
             GestiLoc est le meilleur logiciel de gestion locative immobilière en ligne. Suivi des loyers et charges, comptabilité, aide à la déclaration des revenus fonciers… Toutes les étapes de la vie du contrat de location sont couvertes par notre plateforme.
           </motion.p>
 
-          {/* CTA Buttons */}
+          {/* CTA Buttons - Améliorés */}
           <motion.div 
-            className="flex flex-col gap-3 pt-4 w-fit mx-auto items-center"
-            initial={{ opacity: 0, y: 30 }}
+            className="flex flex-col gap-4 pt-6 w-fit mx-auto items-center"
+            initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
+            transition={{ duration: 0.8, delay: 0.7, ease: "easeOut" }}
           >
             <motion.button
               onClick={() => navigate("/register")}
