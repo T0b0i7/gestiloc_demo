@@ -35,7 +35,7 @@ interface InterventionsProps {
 // ✅ Fix valeur par défaut (ton code avait http://https://)
 const apiBase =
   import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ||
-  'http://localhost:8000';
+  'https://wheat-skunk-120710.hostingersite.com';
 
 const categoryMeta: Record<IncidentCategory, { label: string; icon: any; hint: string }> = {
   plumbing: { label: 'Plomberie', icon: Droplet, hint: 'Fuite, évier, WC, robinet...' },

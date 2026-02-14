@@ -125,7 +125,7 @@ export const DelegatedProperties: React.FC<DelegatedPropertiesProps> = ({ onNavi
         return firstPhoto;
       }
       if (typeof firstPhoto === 'string') {
-        return `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/storage/${firstPhoto}`;
+        return `${import.meta.env.VITE_API_URL || 'https://wheat-skunk-120710.hostingersite.com'}/storage/${firstPhoto}`;
       }
     }
     return "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=600";

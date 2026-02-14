@@ -26,11 +26,11 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 0%;
 
-    /* GestiLoc Blue Theme */
-    --primary: 217 91% 60%;
+    /* GestiLoc Green Theme */
+    --primary: 96 65% 37%;
     --primary-foreground: 0 0% 100%;
-    --primary-deep: 217 91% 60%;
-    --primary-light: 213 97% 68%;
+    --primary-deep: 96 65% 37%;
+    --primary-light: 96 50% 56%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222 74% 31%;
     --muted: 220 14% 96%;
@@ -41,7 +41,7 @@ All colors MUST be HSL.
     --destructive-foreground: 0 0% 100%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 217 91% 60%;
+    --ring: 96 65% 37% 0.73;
     --radius: 1rem;
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -302,7 +302,7 @@ All colors MUST be HSL.
 
     /* Button Styles */
     -button-border: #3b82f6;
-    -button-background: #93c5fd;
+    -button-background: #83c757;
     -button-text: #1f2d1b;
     -button-background-hover: #bfdbfe;
     -button-text-hover: #1f2d1b;

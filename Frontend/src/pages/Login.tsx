@@ -1,18 +1,30 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
-import { authService } from '@/services/api';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { AtSign,ArrowLeft, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { toast } from "sonner";
+import { authService } from "@/services/api";
+import { cn } from "@/lib/utils";
 
+// Schéma de validation du formulaire de connexion
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
   password: z.string().min(1, "Mot de passe requis"),
+  rememberMe: z.boolean().optional(),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -20,84 +32,71 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function Login() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
-      password: '',
-    }
+      email: "",
+      password: "",
+      rememberMe: false,
+    },
   });
 
   const handleLogin = async (data: LoginFormData) => {
-    setError('');
+    setError("");
     try {
       setIsLoading(true);
 
       const response = await authService.login(data.email, data.password);
-      
-      if (response && response.data && response.data.user) {
+
+      if (response?.data?.user) {
         const { user } = response.data;
-        toast.success('Connexion réussie !');
-        
-        // Stocker le token et les informations utilisateur
-        localStorage.setItem('token', response.data.access_token);
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        // Vérifier les rôles disponibles
-        const roles = user.roles || [];
-        
-        // Déterminer la route de redirection en fonction du rôle
-        let redirectPath = '/';
-        let userRole = '';
-        
-        // Vérifier d'abord si admin
-        if (roles.includes('admin')) {
-          redirectPath = '/admin';
-          userRole = 'admin';
-        } 
-        // Ensuite vérifier si propriétaire/bailleur
-        else if (roles.includes('landlord') || roles.includes('proprietaire')) {
-          redirectPath = '/proprietaire';
-          userRole = 'proprietaire';
-        } 
-        // Enfin, par défaut, rediriger vers l'espace locataire
-        else if (roles.includes('tenant') || roles.includes('locataire')) {
-          redirectPath = '/locataire';
-          userRole = 'locataire';
+        toast.success("Connexion réussie !");
+
+        localStorage.setItem("token", response.data.access_token);
+        localStorage.setItem("user", JSON.stringify(user));
+
+        const roles = user.roles ?? [];
+        let redirectPath = "/";
+        let userRole = "";
+
+        if (roles.includes("admin")) {
+          redirectPath = "/admin";
+          userRole = "admin";
+        } else if (roles.includes("landlord") || roles.includes("proprietaire")) {
+          redirectPath = "/proprietaire";
+          userRole = "proprietaire";
+        } else if (roles.includes("tenant") || roles.includes("locataire")) {
+          redirectPath = "/locataire";
+          userRole = "locataire";
         }
-        
-        // Mettre à jour le rôle de l'utilisateur dans le stockage local
+
         const updatedUser = { ...user, role: userRole };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        
-        // Rediriger vers la page appropriée
+        localStorage.setItem("user", JSON.stringify(updatedUser));
         navigate(redirectPath, { replace: true });
-        
       } else {
-        throw new Error('Réponse du serveur invalide');
+        throw new Error("Réponse du serveur invalide");
       }
-      
-    } catch (error: unknown) {
-      console.error('Erreur de connexion :', error);
-      let errorMessage = 'Email ou mot de passe incorrect';
+    } catch (err: unknown) {
+      const e = err as {
+        response?: { data?: { message?: string; errors?: Record<string, string[]> } };
+        request?: unknown;
+        message?: string;
+      };
+      let errorMessage = "Email ou mot de passe incorrect";
 
-      const err = error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } }; request?: unknown; message?: string };
-
-      if (err.response) {
-        if (err.response.data?.message) {
-          errorMessage = err.response.data.message;
-        } else if (err.response.data?.errors) {
-          errorMessage = Object.values(err.response.data.errors).flat().join('\n');
-        }
-      } else if (err.request) {
-        errorMessage = 'Le serveur ne répond pas. Vérifiez votre connexion.';
-      } else if (err.message) {
-        errorMessage = err.message;
+      if (e.response?.data?.message) {
+        errorMessage = e.response.data.message;
+      } else if (e.response?.data?.errors) {
+        errorMessage = Object.values(e.response.data.errors).flat().join("\n");
+      } else if (e.request) {
+        errorMessage = "Le serveur ne répond pas. Vérifiez votre connexion.";
+      } else if (e.message) {
+        errorMessage = e.message;
       }
-      
+
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -105,120 +104,148 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <h1 
-            className="text-center"
-            style={{
-              fontFamily: 'Merriweather',
-              fontWeight: 700,
-              fontStyle: 'Bold',
-              fontSize: '36px',
-              lineHeight: '100%',
-              letterSpacing: '-0.17px',
-              verticalAlign: 'middle',
-              color: '#529D21'
-            }}
-          >
-            GestiLoc
-          </h1>
-          <p className="text-gray-600">Gestion Immobilière Intelligente</p>
-        </div>
+    <div className="container flex min-h-[calc(100vh-5rem)] items-center justify-center py-12">
+      <Card className="w-full max-w-md rounded-2xl border-2 border-primary/50 shadow-md">
+        {/* En-tête : logo, titre et sous-titre (aligné Register) */}
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-center">
+            <h1 className="text-4xl font-bold text-primary">Gestiloc</h1>
+          </CardTitle>
+          <CardTitle className="text-center text-lg font-semibold text-foreground">
+            Connexion à votre compte
+          </CardTitle>
+          <CardDescription className="text-center">
+            Créer de meilleures relations entre les propriétaires et les
+            locataires !
+          </CardDescription>
+        </CardHeader>
 
-        {/* Formulaire de connexion */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
-            Connexion
-          </h2>
+        <form onSubmit={loginForm.handleSubmit(handleLogin)}>
+          <CardContent className="space-y-5">
+            {/* Message d'erreur global */}
+            {error && (
+              <div className="flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+                <AlertCircle className="h-5 w-5 shrink-0 text-destructive" />
+                <p className="text-sm font-medium text-destructive">{error}</p>
+              </div>
+            )}
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex items-center gap-2">
-              <AlertCircle size={16} className="text-red-600" />
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          )}
-
-          <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
-            <div>
-              <Label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Adresse email
-              </Label>
+            {/* Champ email avec icône @ */}
+            <div className="space-y-1">
               <div className="relative">
-                <Mail size={18} className="absolute left-3 top-3 text-gray-400" />
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  <AtSign className="h-4 w-4" />
+                </span>
                 <Input
-                  id="email"
+                  id="login-email"
                   type="email"
-                  placeholder="votre@email.fr"
+                  placeholder="Email"
                   {...loginForm.register("email")}
-                  className="pl-10 h-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  className={cn(
+                    "h-11 rounded-lg border border-border bg-muted/50 pl-10",
+                    "focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary",
+                    loginForm.formState.errors.email && "border-destructive"
+                  )}
                 />
               </div>
-              {loginForm.formState.errors.email && (
-                <p className="text-sm text-red-600 mt-1">
+              {loginForm.formState.errors.email?.message && (
+                <p className="text-sm text-destructive">
                   {loginForm.formState.errors.email.message}
                 </p>
               )}
             </div>
 
-            <div>
-              <Label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Mot de passe
-              </Label>
+            {/* Champ mot de passe avec icône œil */}
+            <div className="space-y-1">
               <div className="relative">
-                <Lock size={18} className="absolute left-3 top-3 text-gray-400" />
                 <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
+                  id="login-password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Mot de passe"
                   {...loginForm.register("password")}
-                  className="pl-10 pr-10 h-10 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  className={cn(
+                    "h-11 rounded-lg border border-border bg-muted/50 pr-10",
+                    "focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary",
+                    loginForm.formState.errors.password && "border-destructive"
+                  )}
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                  tabIndex={-1}
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
-              {loginForm.formState.errors.password && (
-                <p className="text-sm text-red-600 mt-1">
+              {loginForm.formState.errors.password?.message && (
+                <p className="text-sm text-destructive">
                   {loginForm.formState.errors.password.message}
                 </p>
               )}
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+            {/* Ligne : case "Se souvenir de moi" à gauche, lien "Mot de passe oublié ?" à droite */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center space-x-2">
+                <Controller
+                  name="rememberMe"
+                  control={loginForm.control}
+                  render={({ field }) => (
+                    <Checkbox
+                      id="remember"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      className="h-4 w-4"
+                    />
+                  )}
+                />
+                <Label
+                  htmlFor="remember"
+                  className="cursor-pointer text-sm font-normal text-foreground"
+                >
+                  Se souvenir de moi
+                </Label>
+              </div>
+              <Link
+                to="/forgot-password"
+                className="text-sm font-medium text-primary hover:underline"
+              >
+                Mot de passe oublié ?
+              </Link>
+            </div>
+          </CardContent>
+
+          <CardFooter className="flex flex-col gap-4 pt-0">
+            <Button
+              type="submit"
+              className="w-full rounded-lg font-medium shadow-sm"
               disabled={isLoading}
             >
-              {isLoading ? 'Connexion en cours...' : 'Se connecter'}
+              {isLoading ? "Connexion en cours..." : "Connexion"}
             </Button>
-          </form>
 
-          <div className="mt-6 text-center">
-            <a
-              href="/forgot-password"
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-            >
-              Mot de passe oublié ?
-            </a>
-          </div>
-        </div>
-
-        {/* Retour à l'accueil */}
-        <div className="text-center mt-6">
-          <button
-            onClick={() => navigate('/')}
-            className="text-gray-600 hover:text-blue-600 text-sm font-medium"
-          >
-            ← Retour à l'accueil
-          </button>
-        </div>
-      </div>
+            <p className="text-center text-sm text-muted-foreground">
+              Pas de compte ?{" "}
+              <Link
+                to="/register"
+                className="font-medium text-primary hover:underline"
+              >
+                Cliquez ici
+              </Link>
+              <br />
+              
+              <Link to="/" className="text-gray-500 underline"><ArrowLeft className="h-4 w-4  inline-block" /> Retour à l'accueil
+              </Link>
+            </p>
+          </CardFooter>
+        </form>
+      </Card>
     </div>
   );
 }

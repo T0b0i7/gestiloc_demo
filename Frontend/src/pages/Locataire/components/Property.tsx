@@ -154,7 +154,7 @@ const Property: React.FC<PropertyProps> = ({ notify }) => {
 
   const photos = useMemo(() => {
     if (!property?.photos || !Array.isArray(property.photos)) return [];
-    const base = import.meta.env.VITE_API_BASE_URL || 'http://http://localhost:8000';
+    const base = import.meta.env.VITE_API_BASE_URL || 'http://https://wheat-skunk-120710.hostingersite.com';
 
     return property.photos
       .filter(Boolean)

@@ -165,8 +165,8 @@ export interface PaginatedResponse<T> {
   total: number;
 }
 
-// 🔹 baseURL = http://localhost:8000/api
-const API_URL = 'http://localhost:8000/api';
+// 🔹 baseURL = https://wheat-skunk-120710.hostingersite.com/api
+const API_URL = 'https://wheat-skunk-120710.hostingersite.com/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -189,7 +189,7 @@ const getCsrfToken = async () => {
   
   // Mode backend : appel réel au serveur Laravel
   try {
-    await axios.get('http://localhost:8000/sanctum/csrf-cookie', {
+    await axios.get('https://wheat-skunk-120710.hostingersite.com/sanctum/csrf-cookie', {
       withCredentials: true,
       headers: {
         Accept: 'application/json',
@@ -665,6 +665,8 @@ export const tenantService = {
 // ================= LEASES SERVICE =================
 
 export interface Lease {
+  tenant: any;
+  property: any;
   id: number;
   uuid: string;
   property_id: number;

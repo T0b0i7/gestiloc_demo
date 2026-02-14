@@ -737,7 +737,7 @@
                 <!-- Tableau de bord -->
                 <button class="menu-item" onclick="goToReact('/coproprietaire/dashboard')">
                     <div class="menu-item-content">
-                        <i data-lucide="layout-dashboard" class="menu-item-icon"></i>
+                        <i data-lucide="layout-dashboard"></i>
                         <span>Tableau de bord</span>
                     </div>
                 </button>
@@ -745,30 +745,33 @@
                 <!-- Gestion des Biens -->
                 <div class="menu-item has-submenu" onclick="toggleSubmenu('biens-menu')">
                     <div class="menu-item-content">
-                        <i data-lucide="building" class="menu-item-icon"></i>
+                        <i data-lucide="building"></i>
                         <span>Gestion des Biens</span>
                     </div>
-                    <i data-lucide="chevron-down" class="menu-item-chevron"></i>
+                    <i data-lucide="chevron-down"></i>
                 </div>
                 <div class="submenu" id="biens-menu" style="display: none;">
                     <button class="submenu-item" onclick="goToReact('/coproprietaire/biens')">
-                        <span>Biens délégués</span>
+                        <span>Mes biens délégués</span>
+
                     </button>
                     <button class="submenu-item" onclick="goToReact('/coproprietaire/delegations')">
                         <span>Délégations reçues</span>
+
                     </button>
                 </div>
 
                 <!-- Gestion Locative -->
-                <div class="menu-item has-submenu active" onclick="toggleSubmenu('locative-menu')">
+                <div class="menu-item has-submenu" onclick="toggleSubmenu('locative-menu')">
                     <div class="menu-item-content">
-                        <i data-lucide="file-signature" class="menu-item-icon"></i>
+                        <i data-lucide="file-signature"></i>
                         <span>Gestion Locative</span>
                     </div>
-                    <i data-lucide="chevron-down" class="menu-item-chevron"></i>
+                    <i data-lucide="chevron-down"></i>
                 </div>
-                <div class="submenu" id="locative-menu">
-                    <button class="submenu-item active" onclick="navigateTo('/coproprietaire/tenants')">
+                <div class="submenu" id="locative-menu" style="display: none;">
+                    <!-- Laravel routes -->
+                    <button class="submenu-item" onclick="navigateTo('/coproprietaire/tenants')">
                         <span>Liste des locataires</span>
 
                     </button>
@@ -776,62 +779,139 @@
                         <span>Créer un locataire</span>
 
                     </button>
-
-                         <button class="submenu-item" onclick="navigateTo('/coproprietaire/assign-property/create')">
+                    <button class="submenu-item" onclick="navigateTo('/coproprietaire/assign-property/create')">
                         <span>Assigner un bien</span>
 
                     </button>
+                    <button class="submenu-item" onclick="navigateTo('/coproprietaire/leases')">
+                        <span>Contrats de bail</span>
 
+                    </button>
+                    <button class="submenu-item" onclick="navigateTo('/coproprietaire/quittances')">
+                        <span>Quittances de loyer</span>
 
+                    </button>
+                    <button class="submenu-item" onclick="navigateTo('/coproprietaire/notices')">
+                        <span>Préavis</span>
+
+                    </button>
+                    <button class="submenu-item" onclick="navigateTo('/coproprietaire/maintenance')">
+                        <span>Demandes de maintenance</span>
+
+                    </button>
+                    <!-- React route -->
                     <button class="submenu-item" onclick="goToReact('/coproprietaire/baux')">
                         <span>Baux en cours</span>
-                    </button>
-                    <button class="submenu-item" onclick="goToReact('/coproprietaire/quittances')">
-                        <span>Quittances</span>
+
                     </button>
                 </div>
 
                 <!-- Documents -->
                 <div class="menu-item has-submenu" onclick="toggleSubmenu('documents-menu')">
                     <div class="menu-item-content">
-                        <i data-lucide="file-text" class="menu-item-icon"></i>
+                        <i data-lucide="file-text"></i>
                         <span>Documents</span>
                     </div>
-                    <i data-lucide="chevron-down" class="menu-item-chevron"></i>
+                    <i data-lucide="chevron-down"></i>
                 </div>
                 <div class="submenu" id="documents-menu" style="display: none;">
                     <button class="submenu-item" onclick="goToReact('/coproprietaire/documents')">
                         <span>Mes documents</span>
+
                     </button>
                     <button class="submenu-item" onclick="goToReact('/coproprietaire/finances')">
                         <span>Finances</span>
+
+                    </button>
+                    <!-- Laravel lease documents -->
+                    <button class="submenu-item" onclick="navigateTo('/coproprietaire/leases')">
+                        <span>Documents de bail</span>
+
                     </button>
                 </div>
 
                 <!-- Profil -->
-                <button class="menu-item" onclick="goToReact('/coproprietaire/profile')">
+                <div class="menu-item has-submenu" onclick="toggleSubmenu('profile-menu')">
                     <div class="menu-item-content">
-                        <i data-lucide="user" class="menu-item-icon"></i>
-                        <span>Profil</span>
+                        <i data-lucide="user"></i>
+                        <span>Profil & Paramètres</span>
                     </div>
-                </button>
+                    <i data-lucide="chevron-down"></i>
+                </div>
+                <div class="submenu" id="profile-menu" style="display: none;">
+                    <button class="submenu-item" onclick="goToReact('/coproprietaire/profile')">
+                        <span>Mon profil</span>
+
+                    </button>
+                    <button class="submenu-item" onclick="goToReact('/coproprietaire/parametres')">
+                        <span>Paramètres</span>
+
+                    </button>
+                    <button class="submenu-item" onclick="goToReact('/coproprietaire/audit')">
+                        <span>Journal d'audit</span>
+
+                    </button>
+                </div>
+
+
+
+                <!-- Finances -->
+                <div class="menu-item has-submenu" onclick="toggleSubmenu('finances-menu')">
+                    <div class="menu-item-content">
+                        <i data-lucide="credit-card"></i>
+                        <span>Finances</span>
+                    </div>
+                    <i data-lucide="chevron-down"></i>
+                </div>
+                <div class="submenu" id="finances-menu" style="display: none;">
+                    <button class="submenu-item" onclick="goToReact('/coproprietaire/emettre-paiement')">
+                        <span>Émettre un paiement</span>
+
+                    </button>
+                    <button class="submenu-item" onclick="goToReact('/coproprietaire/retrait-methode')">
+                        <span>Méthode de retrait</span>
+
+                    </button>
+                    <!-- Laravel finances -->
+                    <button class="submenu-item" onclick="navigateTo('/coproprietaire/quittances')">
+                        <span>Gestion des quittances</span>
+
+                    </button>
+                </div>
+
+
             </nav>
 
             <div class="sidebar-footer">
                 <div class="user-profile">
-                    @if(auth()->check())
-                        <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
-                        <div class="user-info">
-                            <div class="user-name">{{ auth()->user()->name ?? auth()->user()->email }}</div>
-                            <div class="user-role">Co-propriétaire</div>
+                    <div class="user-avatar">
+                        <?php
+                        $user = auth()->user();
+                        $initials = 'C';
+                        if ($user) {
+                            $name = $user->name ?? '';
+                            $email = $user->email ?? '';
+                            if ($name) {
+                                $initials = strtoupper(substr($name, 0, 1));
+                            } elseif ($email) {
+                                $initials = strtoupper(substr($email, 0, 1));
+                            }
+                        }
+                        echo $initials;
+                        ?>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">
+                            <?php
+                            if ($user) {
+                                echo e($user->name ?? 'Co-propriétaire');
+                            } else {
+                                echo 'Co-propriétaire';
+                            }
+                            ?>
                         </div>
-                    @else
-                        <div class="user-avatar">?</div>
-                        <div class="user-info">
-                            <div class="user-name">Non connecté</div>
-                            <div class="user-role">Invité</div>
-                        </div>
-                    @endif
+                        <div class="user-role">Co-propriétaire</div>
+                    </div>
                 </div>
             </div>
         </aside>
@@ -1167,7 +1247,7 @@
 
             if (!token) {
                 alert('Session expirée, veuillez vous reconnecter');
-                window.location.href = 'http://localhost:8000/login';
+                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
                 return;
             }
 
@@ -1187,11 +1267,11 @@
 
             if (!token) {
                 alert('Session expirée, veuillez vous reconnecter');
-                window.location.href = 'http://localhost:8000/login';
+                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
                 return;
             }
 
-            const baseUrl = 'http://localhost:8000';
+            const baseUrl = 'https://wheat-skunk-120710.hostingersite.com';
             let fullUrl = baseUrl + path;
 
             const separator = fullUrl.includes('?') ? '&' : '?';
@@ -1238,7 +1318,7 @@
             if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
-                window.location.href = 'http://localhost:8000/logout';
+                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/logout';
             }
         }
 
@@ -1268,5 +1348,153 @@
             localStorage.setItem('token', urlToken);
         }
     </script>
+
+    <script>
+    // Initialiser les icônes
+    lucide.createIcons();
+
+    // Navigation vers React (8080)
+    function goToReact(path) {
+        const token = localStorage.getItem('token') || getUrlParam('api_token');
+
+        if (!token) {
+            alert('Session expirée, veuillez vous reconnecter');
+            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
+            return;
+        }
+
+        const baseUrl = 'http://localhost:8080';
+        let fullUrl = baseUrl + path;
+
+        const separator = fullUrl.includes('?') ? '&' : '?';
+        fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
+
+        console.log('Navigation React vers:', fullUrl);
+        window.location.href = fullUrl;
+    }
+
+    // Navigation vers Laravel (8000)
+    function navigateTo(path) {
+        const token = localStorage.getItem('token') || getUrlParam('api_token');
+
+        if (!token) {
+            alert('Session expirée, veuillez vous reconnecter');
+            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
+            return;
+        }
+
+        const baseUrl = 'https://wheat-skunk-120710.hostingersite.com';
+        let fullUrl = baseUrl + path;
+
+        const separator = fullUrl.includes('?') ? '&' : '?';
+        fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
+
+        console.log('Navigation Laravel vers:', fullUrl);
+        window.location.href = fullUrl;
+    }
+
+    // Helper pour récupérer un paramètre d'URL
+    function getUrlParam(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+    }
+
+    // Gestion des sous-menus
+    function toggleSubmenu(menuId) {
+        const submenu = document.getElementById(menuId);
+        const parent = document.querySelector(`[onclick="toggleSubmenu('${menuId}')"]`);
+
+        if (submenu.style.display === 'none' || !submenu.style.display) {
+            submenu.style.display = 'block';
+            parent.classList.add('active');
+        } else {
+            submenu.style.display = 'none';
+            parent.classList.remove('active');
+        }
+    }
+
+    // Gestion de la sidebar mobile
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+
+        sidebar.classList.toggle('active');
+        overlay.classList.toggle('active');
+    }
+
+    // Logout
+    function logout() {
+        if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/logout';
+        }
+    }
+
+    // Au chargement
+    function checkMobile() {
+        const mobileBtn = document.querySelector('.mobile-menu-btn');
+        if (window.innerWidth <= 768) {
+            mobileBtn.style.display = 'block';
+        } else {
+            mobileBtn.style.display = 'none';
+        }
+    }
+
+    window.addEventListener('resize', checkMobile);
+    checkMobile();
+
+    // Ajouter le token à la page actuelle si présent dans l'URL
+    const urlToken = getUrlParam('api_token');
+    if (urlToken) {
+        localStorage.setItem('token', urlToken);
+    }
+
+    // Marquer le menu actif en fonction de la page courante
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentPath = window.location.pathname;
+
+        // Définir quel sous-menu doit être ouvert par défaut
+        const menuConfig = {
+            '/coproprietaire/tenants': 'locative-menu',
+            '/coproprietaire/tenants/create': 'locative-menu',
+            '/coproprietaire/assign-property/create': 'locative-menu',
+            '/coproprietaire/leases': 'locative-menu',
+            '/coproprietaire/quittances': 'locative-menu',
+            '/coproprietaire/notices': 'locative-menu',
+            '/coproprietaire/maintenance': 'locative-menu',
+            '/coproprietaire/biens': 'biens-menu',
+            '/coproprietaire/delegations': 'biens-menu',
+            '/coproprietaire/documents': 'documents-menu',
+            '/coproprietaire/finances': 'documents-menu',
+            '/coproprietaire/profile': 'profile-menu',
+            '/coproprietaire/parametres': 'profile-menu',
+            '/coproprietaire/audit': 'profile-menu',
+            '/coproprietaire/mes-delegations': 'delegations-menu',
+            '/coproprietaire/demandes-delegation': 'delegations-menu',
+            '/coproprietaire/inviter-proprietaire': 'delegations-menu',
+            '/coproprietaire/emettre-paiement': 'finances-menu',
+            '/coproprietaire/retrait-methode': 'finances-menu',
+            '/admin/statistiques': 'admin-menu',
+            '/admin/logs': 'admin-menu'
+        };
+
+        // Ouvrir le sous-menu approprié
+        for (const [path, menuId] of Object.entries(menuConfig)) {
+            if (currentPath.includes(path)) {
+                setTimeout(() => toggleSubmenu(menuId), 100);
+                break;
+            }
+        }
+
+        // Marquer l'élément actif
+        document.querySelectorAll('.submenu-item').forEach(item => {
+            const itemPath = item.getAttribute('onclick');
+            if (itemPath && itemPath.includes(currentPath)) {
+                item.classList.add('active');
+            }
+        });
+    });
+</script>
 </body>
 </html>

@@ -15,7 +15,7 @@ export default function PayLinkPage() {
       }
 
       try {
-        const resp = await axios.post(`http://localhost:8000/api/pay-links/${token}/init`);
+        const resp = await axios.post(`https://wheat-skunk-120710.hostingersite.com/api/pay-links/${token}/init`);
         const url = resp.data.checkout_url;
         if (url) {
           window.location.href = url;

@@ -9,6 +9,7 @@ use App\Http\Controllers\CoOwner\CoOwnerMaintenanceController;
 use App\Http\Controllers\CoOwner\CoOwnerRentReceiptController;
 use App\Http\Controllers\CoOwner\CoOwnerNoticeController;
 use App\Http\Controllers\ReactRedirectController;
+use App\Http\Controllers\Auth\LoginController;
 
 // Page d'accueil Laravel
 Route::get('/', function () {
@@ -24,20 +25,92 @@ Route::get('/test-laravel-page', function () {
     return view('test-laravel');
 });
 
-// Routes de login/logout
+// ✅ CORRECTION : Routes de login/logout avec logique correcte
 Route::get('/login', function () {
-    return redirect('/coproprietaire/tenants');
+    // Si l'utilisateur a un token valide, rediriger vers le dashboard React
+    if (request()->has('api_token') || request()->cookie('laravel_session')) {
+        return "
+            <script>
+                // Stocker le token s'il est dans l'URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const apiToken = urlParams.get('api_token');
+                if (apiToken) {
+                    localStorage.setItem('token', apiToken);
+                }
+
+                // Rediriger vers React
+                window.location.href = 'http://localhost:8080/dashboard';
+            </script>
+        ";
+    }
+
+    // Sinon, afficher la page de login
+    return view('auth.login');
 })->name('login');
 
+// ✅ NOUVELLE ROUTE : Déconnexion propre avec redirection vers React
 Route::get('/logout', function () {
+    // Détruire la session Laravel
+    auth()->logout();
+    session()->flush();
+
+    // Retourner une page qui redirigera proprement
     return "
-        <script>
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = '/login';
-        </script>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Déconnexion - GestiLoc</title>
+            <style>
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    margin: 0;
+                }
+                .container {
+                    text-align: center;
+                    background: white;
+                    padding: 3rem;
+                    border-radius: 1rem;
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                }
+                .spinner {
+                    border: 4px solid rgba(0,0,0,0.1);
+                    border-left-color: #667eea;
+                    border-radius: 50%;
+                    width: 40px;
+                    height: 40px;
+                    animation: spin 1s linear infinite;
+                    margin: 0 auto 1rem;
+                }
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
+                }
+            </style>
+        </head>
+        <body>
+            <div class='container'>
+                <div class='spinner'></div>
+                <h2>Déconnexion en cours...</h2>
+                <p>Redirection vers la page de connexion</p>
+            </div>
+            <script>
+                // Nettoyer le localStorage
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+
+                // Rediriger vers la page de login React après 1 seconde
+                setTimeout(() => {
+                    window.location.href = 'http://localhost:8080/login';
+                }, 1000);
+            </script>
+        </body>
+        </html>
     ";
-});
+})->name('logout');
 
 // Route pour les redirections React
 Route::get('/redirect/{path?}', [ReactRedirectController::class, 'redirect'])
@@ -189,6 +262,46 @@ Route::prefix('coproprietaire')->name('co-owner.react.')->group(function () {
     // Route racine React
     Route::get('/', function () {
         return view('react-app');
+    });
+});
+
+
+// Routes pour les statistiques globales (Admin)
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::prefix('statistiques')->name('statistiques.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\StatistiqueController::class, 'index'])->name('index');
+        Route::get('/export/{type}', [\App\Http\Controllers\Admin\StatistiqueController::class, 'export'])->name('export');
+
+        // Routes API pour les données des graphiques
+        Route::get('/api/user-growth', function () {
+            $controller = new \App\Http\Controllers\Admin\StatistiqueController();
+            return response()->json($controller->getChartData()['user_growth']);
+        })->name('api.user-growth');
+
+        Route::get('/api/revenue-trend', function () {
+            $controller = new \App\Http\Controllers\Admin\StatistiqueController();
+            return response()->json($controller->getChartData()['revenue_trend']);
+        })->name('api.revenue-trend');
+    });
+});
+
+
+// Routes pour les logs système (Admin)
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::prefix('logs')->name('logs.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\LogController::class, 'index'])->name('index');
+        Route::get('/download/{filename}', [\App\Http\Controllers\Admin\LogController::class, 'download'])->name('download');
+        Route::get('/clear/{filename}', [\App\Http\Controllers\Admin\LogController::class, 'clear'])->name('clear');
+        Route::get('/clear-all', [\App\Http\Controllers\Admin\LogController::class, 'clearAll'])->name('clear-all');
+        Route::get('/{filename}/{logId}', [\App\Http\Controllers\Admin\LogController::class, 'show'])->name('show');
+        Route::get('/ajax', [\App\Http\Controllers\Admin\LogController::class, 'getLogsAjax'])->name('ajax');
+        Route::get('/download-database', [\App\Http\Controllers\Admin\LogController::class, 'downloadDatabase'])->name('download-db');
+    });
+
+    // Routes pour les statistiques (déjà existantes)
+    Route::prefix('statistiques')->name('statistiques.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\StatistiqueController::class, 'index'])->name('index');
+        Route::get('/export/{type}', [\App\Http\Controllers\Admin\StatistiqueController::class, 'export'])->name('export');
     });
 });
 

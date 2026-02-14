@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'https://wheat-skunk-120710.hostingersite.com',
         changeOrigin: true,
         secure: false,
       }

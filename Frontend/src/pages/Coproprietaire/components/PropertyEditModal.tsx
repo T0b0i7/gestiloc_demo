@@ -102,7 +102,7 @@ export const PropertyEditModal: React.FC<PropertyEditModalProps> = ({
       // Initialiser les images
       if (property.photos && property.photos.length > 0) {
         setPreviewImages(property.photos.map((photo: string) => 
-          photo.startsWith('http') ? photo : `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/storage/${photo}`
+          photo.startsWith('http') ? photo : `${import.meta.env.VITE_API_URL || 'https://wheat-skunk-120710.hostingersite.com'}/storage/${photo}`
         ));
       }
     }

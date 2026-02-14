@@ -14,7 +14,7 @@ export interface TenantInvoice {
   [key: string]: unknown;
 }
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = 'https://wheat-skunk-120710.hostingersite.com/api';
 
 const tenantInvoiceService = {
   // Récupérer les factures du locataire

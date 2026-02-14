@@ -1,3 +1,8 @@
+/**
+ * @deprecated La réinitialisation du mot de passe utilise désormais ResetPassword.tsx.
+ * Les routes /forgot-password et /reset-password affichent la page ResetPassword (email + Envoyer).
+ * Ce composant n'est plus utilisé dans les routes ; conservé pour référence.
+ */
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";

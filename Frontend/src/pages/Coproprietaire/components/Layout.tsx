@@ -108,7 +108,7 @@ export const Layout: React.FC<LayoutProps> = ({
       return;
     }
 
-    const laravelBaseUrl = 'http://localhost:8000';
+    const laravelBaseUrl = 'https://wheat-skunk-120710.hostingersite.com';
     let fullPath = path;
     
     if (fullPath.startsWith('/')) {
@@ -380,7 +380,7 @@ export const Layout: React.FC<LayoutProps> = ({
                         }`}
                       />
                       {sub.label}
-                      {/* SUPPRIMÉ : Le badge "Laravel" a été enlevé ici */}
+                      {/* SUPPRIMÉ : Le badge a été enlevé ici */}
                     </div>
                     {subActive && (
                       <ChevronRight

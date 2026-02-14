@@ -34,15 +34,20 @@
     <div id="root"></div>
 
     <!-- Initial state pour React -->
-    <script>
-        window.Laravel = {
-            csrfToken: "{{ csrf_token() }}",
-            user: @json(auth()->user()),
-            permissions: @json(auth()->user()->getAllPermissions()->pluck('name')),
-            roles: @json(auth()->user()->roles->pluck('name')),
-            appName: "{{ config('app.name') }}",
-            appUrl: "{{ config('app.url') }}"
-        };
-    </script>
+   @php
+    $user = auth()->user();
+@endphp
+
+<script>
+    window.Laravel = {
+        csrfToken: "{{ csrf_token() }}",
+        user: @json($user),
+        permissions: @json($user?->getAllPermissions()?->pluck('name') ?? []),
+        roles: @json($user?->roles?->pluck('name') ?? []),
+        appName: "{{ config('app.name') }}",
+        appUrl: "{{ config('app.url') }}"
+    };
+</script>
+
 </body>
 </html>
