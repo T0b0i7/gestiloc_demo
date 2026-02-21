@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Landlord;
+use App\Models\CoOwner;
 use App\Models\Agency;
 use App\Models\Tenant;
 use App\Models\PropertyUser;
@@ -33,19 +34,40 @@ class User extends Authenticatable
         'deactivation_reason',
         'deactivated_at',
         'deactivated_by',
+        // Nouveaux champs
+        'language',
+        'timezone',
+        'date_format',
+        'currency',
+        'dark_mode',
+        'two_factor_enabled',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'notification_settings',
+        'data_sharing',
+        'last_password_change',
+        'last_login_at',
+        'last_login_ip',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'password_changed_at' => 'datetime',
         'last_activity_at' => 'datetime',
         'suspended_at' => 'datetime',
         'deactivated_at' => 'datetime',
+        'last_password_change' => 'datetime',
+        'last_login_at' => 'datetime',
+        'dark_mode' => 'boolean',
+        'two_factor_enabled' => 'boolean',
+        'data_sharing' => 'boolean',
+        'notification_settings' => 'array',
     ];
 
     public function landlord(): HasOne
@@ -63,23 +85,16 @@ class User extends Authenticatable
         return $this->belongsTo(Agency::class, 'agency_id');
     }
 
-    // One-to-one with Tenant (if user has tenant role)
     public function tenant(): HasOne
     {
         return $this->hasOne(Tenant::class, 'user_id');
     }
 
-    /**
-     * ✅ NOUVELLE RELATION : Assignations property_user
-     */
     public function propertyAssignments(): HasMany
     {
         return $this->hasMany(PropertyUser::class, 'user_id');
     }
 
-    /**
-     * ✅ NOUVELLE RELATION : Biens attribués via property_user
-     */
     public function assignedProperties(): BelongsToMany
     {
         return $this->belongsToMany(Property::class, 'property_user', 'user_id', 'property_id')
@@ -87,9 +102,6 @@ class User extends Authenticatable
                     ->withTimestamps();
     }
 
-    /**
-     * ✅ Biens actuellement actifs de l'utilisateur
-     */
     public function activeProperties()
     {
         return $this->assignedProperties()
@@ -100,9 +112,6 @@ class User extends Authenticatable
             });
     }
 
-    /**
-     * ✅ Biens passés de l'utilisateur
-     */
     public function pastProperties()
     {
         return $this->assignedProperties()
@@ -115,9 +124,6 @@ class User extends Authenticatable
             });
     }
 
-    /**
-     * ✅ Vérifie si l'utilisateur est actif sur un bien spécifique
-     */
     public function isActiveOnProperty($propertyId): bool
     {
         return $this->assignedProperties()
@@ -130,9 +136,6 @@ class User extends Authenticatable
             ->exists();
     }
 
-    /**
-     * ✅ Récupère le rôle sur un bien spécifique
-     */
     public function getRoleOnProperty($propertyId): ?string
     {
         $assignment = $this->propertyAssignments()
@@ -147,7 +150,6 @@ class User extends Authenticatable
         return $assignment ? $assignment->role : null;
     }
 
-    // Helper methods for role checking
     public function isLandlord(): bool
     {
         return $this->hasRole('landlord');
@@ -168,52 +170,33 @@ class User extends Authenticatable
         return $this->hasRole('admin');
     }
 
-    /**
-     * ✅ Vérifie si l'utilisateur est en ligne (activité récente)
-     */
     public function isOnline(): bool
     {
         return $this->last_activity_at &&
                $this->last_activity_at->gt(now()->subMinutes(5));
     }
 
-    /**
-     * ✅ Vérifie si le compte est actif
-     */
     public function isActive(): bool
     {
         return $this->status === 'active';
     }
 
-    /**
-     * ✅ Vérifie si le compte est suspendu
-     */
     public function isSuspended(): bool
     {
         return $this->status === 'suspended';
     }
 
-    /**
-     * ✅ Vérifie si le compte est désactivé
-     */
     public function isDeactivated(): bool
     {
         return $this->status === 'deactivated';
     }
 
-    /**
-     * ✅ Met à jour la dernière activité
-     */
     public function updateLastActivity(): void
     {
         $this->last_activity_at = now();
         $this->save();
     }
 
-
-     /**
-     * Biens délégués à ce copropriétaire
-     */
     public function delegatedProperties(): BelongsToMany
     {
         return $this->belongsToMany(Property::class, 'property_delegations', 'co_owner_id', 'property_id')
@@ -222,11 +205,8 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
-    /**
-     * Vérifie si l'utilisateur est un copropriétaire avec biens délégués
-     */
     public function isCoOwnerWithDelegations(): bool
     {
-        return $this->role === 'co_owner' && $this->delegatedProperties()->exists();
+        return $this->hasRole('co_owner') && $this->delegatedProperties()->exists();
     }
 }

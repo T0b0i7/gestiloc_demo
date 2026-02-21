@@ -23,17 +23,7 @@ import { Button } from "./ui/Button";
 import { Skeleton } from "./ui/Skeleton";
 import { Tab } from "../types";
 import { PaymentModal } from "./PaymentModal";
-
-import { 
-  mockTenantApi, 
-  TenantLease, 
-  TenantIncident,
-  mockRentReceiptService, 
-  RentReceipt,
-  mockInvoiceService, 
-  TenantInvoice,
-  mockNoticeService 
-} from "@/services";
+import api from "@/services/api"; // Service API réel
 
 // ---------- helpers ----------
 const monthKey = (d: Date) =>
@@ -79,11 +69,134 @@ interface UserData {
   default_role: string | null;
 }
 
+interface Lease {
+  id: number;
+  uuid: string;
+  lease_number: string;
+  start_date: string;
+  end_date: string | null;
+  status: string;
+  rent_amount: number;
+  charges_amount: number;
+  total_monthly?: number;
+  type: string;
+  property?: {
+    id: number;
+    name: string;
+    address: string;
+    city: string;
+    postal_code?: string;
+    country?: string;
+  };
+  landlord?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone: string;
+  };
+}
+
+interface Payment {
+  id: number;
+  amount: number;
+  amount_net: number;
+  fee_amount: number;
+  status: string;
+  payment_method: string;
+  paid_at: string;
+  created_at: string;
+  property?: {
+    id: number;
+    name: string;
+    address: string;
+  };
+  month?: string;
+}
+
+interface Receipt {
+  id: number;
+  receipt_number: string;
+  amount: number;
+  paid_month: string;
+  issued_date: string;
+  payment_date: string;
+  status: string;
+  property?: {
+    id: number;
+    name: string;
+  };
+  pdf_url?: string;
+}
+
+interface Incident {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  priority: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  property?: {
+    id: number;
+    name: string;
+  };
+  photos?: string[];
+}
+
+interface Notice {
+  id: number;
+  notice_number: string;
+  notice_date: string;
+  effective_date: string;
+  status: string;
+  reason?: string;
+  created_at: string;
+}
+
+interface Invoice {
+  id: number;
+  invoice_number: string;
+  amount: number;
+  due_date: string;
+  status: string;
+  type: string;
+  description?: string;
+}
+
+interface DashboardData {
+  user: UserData;
+  leases: Lease[];
+  active_lease: Lease | null;
+  payments: Payment[];
+  receipts: Receipt[];
+  incidents: Incident[];
+  notices: Notice[];
+  invoices: Invoice[];
+  stats: {
+    total_monthly: number;
+    is_up_to_date: boolean;
+    months_paid_count: number;
+    open_incidents: number;
+    in_progress_incidents: number;
+    pending_notices: number;
+    total_paid_ytd: number;
+  };
+}
+
 export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify, onNavigate }) => {
-  // Récupérer les données utilisateur depuis localStorage
   const [user, setUser] = useState<UserData | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const currentYM = useMemo(() => monthKey(new Date()), []);
 
   useEffect(() => {
+    // Récupérer les données utilisateur depuis localStorage
     const userData = localStorage.getItem('user');
     if (userData) {
       try {
@@ -94,126 +207,39 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
     }
   }, []);
 
-  const [leases, setLeases] = useState<TenantLease[]>([]);
-  const [lease, setLease] = useState<TenantLease | null>(null);
-  const [receipts, setReceipts] = useState<RentReceipt[]>([]);
-  const [invoices, setInvoices] = useState<TenantInvoice[]>([]);
-  const [incidents, setIncidents] = useState<TenantIncident[]>([]);
-  const [notices, setNotices] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [errLeases, setErrLeases] = useState<string | null>(null);
-  const [errReceipts, setErrReceipts] = useState<string | null>(null);
-  const [errInvoices, setErrInvoices] = useState<string | null>(null);
-  const [errIncidents, setErrIncidents] = useState<string | null>(null);
-  const [errNotices, setErrNotices] = useState<string | null>(null);
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
-
-  const currentYM = useMemo(() => monthKey(new Date()), []);
-  const ytdStartYM = useMemo(() => `${new Date().getFullYear()}-01`, []);
-
   useEffect(() => {
     let cancelled = false;
 
-    const run = async () => {
+    const fetchDashboardData = async () => {
       setLoading(true);
-      setErrLeases(null);
-      setErrReceipts(null);
-      setErrInvoices(null);
-      setErrIncidents(null);
-      setErrNotices(null);
+      setError(null);
 
-      // Lancer toutes les requêtes en parallèle puis traiter les résultats
-      const promises = {
-        leases: mockTenantApi.getLeases(),
-        receipts: mockRentReceiptService.list({ type: "independent" }),
-        invoices: mockInvoiceService.list(),
-        incidents: mockTenantApi.getIncidents(),
-        notices: mockNoticeService.list(),
-      } as const;
-
-      const entries = Object.entries(promises) as [keyof typeof promises, Promise<any>][];
-
-      const results = await Promise.allSettled(entries.map(([, p]) => p));
-
-      if (cancelled) return;
-
-      // Associer résultats dans l'ordre
-      for (let i = 0; i < entries.length; i++) {
-        const key = entries[i][0];
-        const res = results[i];
-        try {
-          if (res.status === "fulfilled") {
-            const value = res.value;
-            switch (key) {
-              case "leases": {
-                const ls = Array.isArray(value) ? value : [];
-                const activeLease =
-                  ls.find((l: any) => String(l.status).toLowerCase() === "active") || ls[0] || null;
-                setLease(activeLease);
-                break;
-              }
-              case "receipts": {
-                setReceipts(Array.isArray(value) ? value : []);
-                break;
-              }
-              case "invoices": {
-                setInvoices(Array.isArray(value) ? value : []);
-                break;
-              }
-              case "incidents": {
-                setIncidents(Array.isArray(value) ? value : []);
-                break;
-              }
-              case "notices": {
-                setNotices(Array.isArray(value) ? value : []);
-                break;
-              }
-              default:
-                break;
-            }
-          } else {
-            // rejected
-            const e = res.reason;
-            switch (key) {
-              case "leases":
-                console.error("[DASH] getLeases", e?.response?.data || e);
-                setErrLeases(e?.response?.data?.message || "Erreur lors du chargement du bail.");
-                setLease(null);
-                break;
-              case "receipts":
-                console.error("[DASH] receipts", e?.response?.data || e);
-                setErrReceipts(e?.response?.data?.message || "Erreur lors du chargement des quittances.");
-                setReceipts([]);
-                break;
-              case "invoices":
-                console.error("[DASH] invoices", e?.response?.data || e);
-                setErrInvoices(e?.response?.data?.message || "Erreur lors du chargement des factures.");
-                setInvoices([]);
-                break;
-              case "incidents":
-                console.error("[DASH] incidents", e?.response?.data || e);
-                setErrIncidents(e?.response?.data?.message || "Erreur lors du chargement des incidents.");
-                setIncidents([]);
-                break;
-              case "notices":
-                console.error("[DASH] notices", e?.response?.data || e);
-                setErrNotices(e?.response?.data?.message || "Erreur lors du chargement des préavis.");
-                setNotices([]);
-                break;
-              default:
-                break;
-            }
+      try {
+        // Appel API réel au lieu des mocks
+        const response = await api.get('/tenant/dashboard');
+        
+        if (!cancelled) {
+          setDashboardData(response.data);
+          
+          // Mettre à jour l'utilisateur si nécessaire
+          if (response.data.user) {
+            setUser(response.data.user);
+            localStorage.setItem('user', JSON.stringify(response.data.user));
           }
-        } catch (err) {
-          console.error("[DASH] processing result", err);
+        }
+      } catch (err: any) {
+        console.error('[DASH] Error fetching dashboard data:', err);
+        if (!cancelled) {
+          setError(err.response?.data?.message || 'Erreur lors du chargement des données');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
         }
       }
-
-      if (!cancelled) setLoading(false);
     };
 
-    run();
+    fetchDashboardData();
 
     return () => {
       cancelled = true;
@@ -221,44 +247,43 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
   }, []);
 
   // ---------- derived stats ----------
-  const rentMonthly = useMemo(() => (lease ? money(lease.rent_amount) : 0), [lease]);
-  const chargesMonthly = useMemo(() => (lease ? money(lease.charges_amount) : 0), [lease]);
+  const rentMonthly = useMemo(() => dashboardData?.active_lease?.rent_amount || 0, [dashboardData]);
+  const chargesMonthly = useMemo(() => dashboardData?.active_lease?.charges_amount || 0, [dashboardData]);
   const totalMonthly = useMemo(() => rentMonthly + chargesMonthly, [rentMonthly, chargesMonthly]);
 
   const receiptsSorted = useMemo(() => {
-    const arr = [...receipts];
+    if (!dashboardData?.receipts) return [];
+    const arr = [...dashboardData.receipts];
     arr.sort((a, b) => {
       const da = safeDate(a.issued_date || "")?.getTime() ?? 0;
       const db = safeDate(b.issued_date || "")?.getTime() ?? 0;
       if (db !== da) return db - da;
-      const ma = (a.paid_month || "").localeCompare(a.paid_month || "");
-      const mb = (b.paid_month || "").localeCompare(b.paid_month || "");
-      return mb - ma;
+      return (b.paid_month || "").localeCompare(a.paid_month || "");
     });
     return arr;
-  }, [receipts]);
+  }, [dashboardData?.receipts]);
 
   const lastReceipt = useMemo(() => receiptsSorted[0] || null, [receiptsSorted]);
 
   const monthsPaidSet = useMemo(() => {
     const s = new Set<string>();
-    receipts.forEach((r) => {
-      if (r.paid_month) s.add(r.paid_month);
+    dashboardData?.payments?.forEach((p) => {
+      if (p.status === 'approved' && p.paid_at) {
+        const month = new Date(p.paid_at).toISOString().slice(0, 7);
+        s.add(month);
+      }
     });
     return s;
-  }, [receipts]);
+  }, [dashboardData?.payments]);
 
-  // À jour si quittance existe pour le mois courant
   const isUpToDate = useMemo(() => monthsPaidSet.has(currentYM), [monthsPaidSet, currentYM]);
 
-  // Streak : mois consécutifs en partant du dernier mois dispo
   const paidStreak = useMemo(() => {
     if (monthsPaidSet.size === 0) return 0;
 
-    // start = mois courant si présent sinon dernier mois du set
     let start = currentYM;
     if (!monthsPaidSet.has(start)) {
-      const all = Array.from(monthsPaidSet).sort(); // asc
+      const all = Array.from(monthsPaidSet).sort();
       start = all[all.length - 1];
     }
 
@@ -273,46 +298,43 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
   }, [monthsPaidSet, currentYM]);
 
   const receiptsYTD = useMemo(() => {
-    return receipts.filter((r) => (r.paid_month || "") >= ytdStartYM);
-  }, [receipts, ytdStartYM]);
+    const ytdStart = `${new Date().getFullYear()}-01`;
+    return (dashboardData?.receipts || []).filter((r) => (r.paid_month || "") >= ytdStart);
+  }, [dashboardData?.receipts]);
 
   const totalPaidYTD = useMemo(() => {
-    return receiptsYTD.reduce((sum, r) => {
-      const a = r.amount_paid != null ? money(r.amount_paid) : totalMonthly;
-      return sum + a;
-    }, 0);
-  }, [receiptsYTD, totalMonthly]);
+    return receiptsYTD.reduce((sum, r) => sum + (r.amount || 0), 0);
+  }, [receiptsYTD]);
 
   const avgPaid = useMemo(() => {
-    if (!receipts.length) return 0;
-    const sum = receipts.reduce(
-      (acc, r) => acc + (r.amount_paid != null ? money(r.amount_paid) : totalMonthly),
-      0
-    );
-    return sum / receipts.length;
-  }, [receipts, totalMonthly]);
+    if (!dashboardData?.receipts?.length) return 0;
+    const sum = dashboardData.receipts.reduce((acc, r) => acc + (r.amount || 0), 0);
+    return sum / dashboardData.receipts.length;
+  }, [dashboardData?.receipts]);
 
   const openIncidents = useMemo(
-    () => incidents.filter((i) => i.status === "open").length,
-    [incidents]
+    () => dashboardData?.incidents?.filter((i) => i.status === "open").length || 0,
+    [dashboardData?.incidents]
   );
+  
   const inProgressIncidents = useMemo(
-    () => incidents.filter((i) => i.status === "in_progress").length,
-    [incidents]
+    () => dashboardData?.incidents?.filter((i) => i.status === "in_progress").length || 0,
+    [dashboardData?.incidents]
   );
 
   const pendingNotices = useMemo(
-    () => notices.filter((n: any) => String(n.status) === "pending").length,
-    [notices]
+    () => dashboardData?.notices?.filter((n) => n.status === "pending").length || 0,
+    [dashboardData?.notices]
   );
 
-  const hasAnyError = errLeases || errReceipts || errIncidents || errNotices;
+  const hasAnyError = error !== null;
 
   // Afficher le contenu selon l'onglet actif
   const renderContent = () => {
+    const activeLease = dashboardData?.active_lease;
+    
     switch (activeTab) {
       case 'home':
-        // Contenu du tableau de bord principal
         return (
           <>
             {/* Welcome Card */}
@@ -320,18 +342,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
               <div className="flex justify-between items-center">
                 <div className="z-10">
                   <h1 className="text-2xl font-bold text-white mb-2">
-                    Bienvenue sur Gestiloc !
+                    Bienvenue sur Gestiloc, {dashboardData?.user?.first_name || 'Locataire'} !
                   </h1>
                   <p className="text-white/90 text-sm max-w-md">
                     Retrouvez ici toutes les informations de location. Gérez vos quittances, contactez votre propriétaire et suivez l'état de votre logement en toute simplicité.
                   </p>
                 </div>
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  <img 
-                    src="/Ressource_gestiloc/hand.png" 
-                    alt="Welcome" 
-                    className="w-32 h-32 object-contain opacity-90"
-                  />
+                <div className="hidden md:block">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4">
+                    <p className="text-white/80 text-sm">Loyer mensuel</p>
+                    <p className="text-2xl font-bold text-white">{fmtMoney(totalMonthly)}</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -386,8 +407,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
                   <div className="flex items-center gap-4">
                     <img src="/Ressource_gestiloc/Key Security.png" alt="Locations" className="w-12 h-12 object-contain" />
                     <div>
-                      <p className="text-3xl font-bold text-gray-900">1</p>
-                      <p className="text-sm text-gray-600">Location</p>
+                      <p className="text-3xl font-bold text-gray-900">{dashboardData?.leases?.length || 0}</p>
+                      <p className="text-sm text-gray-600">Location(s)</p>
                     </div>
                   </div>
                 </div>
@@ -401,21 +422,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
               {/* Loyers en retard */}
               <div className="bg-white rounded-lg shadow p-6 border border-orange-200 hover:shadow-lg transition-all duration-200">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Loyers en retard</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Statut de paiement</h3>
                   <Settings className="w-5 h-5 text-orange-500" />
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <img src="/Ressource_gestiloc/Dollar Bag.png" alt="Loyers" className="w-12 h-12 object-contain" />
                     <div>
-                      <p className="text-3xl font-bold text-gray-900">0</p>
-                      <p className="text-sm text-gray-600">Loyers en retard</p>
+                      <p className={`text-3xl font-bold ${isUpToDate ? 'text-green-600' : 'text-red-600'}`}>
+                        {isUpToDate ? 'À jour' : 'En retard'}
+                      </p>
+                      <p className="text-sm text-gray-600">Ce mois-ci</p>
                     </div>
                   </div>
                 </div>
                 <div className="mt-4 text-right">
                   <button onClick={() => onNavigate?.('payments')} className="text-xs text-orange-400 hover:text-orange-500 transition-colors duration-200 cursor-pointer">
-                    Tout afficher
+                    Voir détails
                   </button>
                 </div>
               </div>
@@ -434,11 +457,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
                       <p className="text-sm text-gray-600">Ouverte</p>
                     </div>
                     <div className="flex flex-col items-center">
-                      <p className="text-3xl font-bold text-gray-900">0</p>
-                      <p className="text-sm text-gray-600">En retard</p>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <p className="text-3xl font-bold text-gray-900">0</p>
+                      <p className="text-3xl font-bold text-gray-900">{inProgressIncidents}</p>
                       <p className="text-sm text-gray-600">En cours</p>
                     </div>
                   </div>
@@ -450,27 +469,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
                 </div>
               </div>
 
-              {/* Tâches */}
+              {/* Quittances */}
               <div className="bg-white rounded-lg shadow p-6 border border-orange-200 hover:shadow-lg transition-all duration-200">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Tâches</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Quittances</h3>
                   <Settings className="w-5 h-5 text-orange-500" />
                 </div>
                 <div className="flex items-center gap-4">
-                  <img src="/Ressource_gestiloc/Inspection.png" alt="Tâches" className="w-12 h-12 object-contain" />
+                  <img src="/Ressource_gestiloc/Inspection.png" alt="Quittances" className="w-12 h-12 object-contain" />
                   <div className="flex gap-6">
                     <div className="flex flex-col items-center">
-                      <p className="text-3xl font-bold text-gray-900">0</p>
-                      <p className="text-sm text-gray-600">Ouverte</p>
+                      <p className="text-3xl font-bold text-gray-900">{dashboardData?.receipts?.length || 0}</p>
+                      <p className="text-sm text-gray-600">Total</p>
                     </div>
                     <div className="flex flex-col items-center">
-                      <p className="text-3xl font-bold text-gray-900">0</p>
-                      <p className="text-sm text-gray-600">En retard</p>
+                      <p className="text-3xl font-bold text-gray-900">{paidStreak}</p>
+                      <p className="text-sm text-gray-600">Mois consécutifs</p>
                     </div>
                   </div>
                 </div>
                 <div className="mt-4 text-right">
-                  <button onClick={() => onNavigate?.('tasks')} className="text-xs text-orange-400 hover:text-orange-500 transition-colors duration-200 cursor-pointer">
+                  <button onClick={() => onNavigate?.('receipts')} className="text-xs text-orange-400 hover:text-orange-500 transition-colors duration-200 cursor-pointer">
                     Tout afficher
                   </button>
                 </div>
@@ -478,41 +497,64 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
             </div>
           </>
         );
+
       case 'location':
         return (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold text-gray-900">Ma Location</h2>
-            {lease && (
+            {dashboardData?.active_lease ? (
               <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold mb-4">{lease.property?.name || 'Détails du logement'}</h3>
+                <h3 className="text-lg font-semibold mb-4">{dashboardData.active_lease.property?.name || 'Détails du logement'}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-500">Adresse</p>
-                    <p className="font-medium">{lease.property?.address || 'Non spécifiée'}</p>
+                    <p className="font-medium">
+                      {dashboardData.active_lease.property?.address || 'Non spécifiée'}, 
+                      {dashboardData.active_lease.property?.city || ''}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Loyer mensuel</p>
+                    <p className="font-medium">{fmtMoney(dashboardData.active_lease.rent_amount || 0)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Charges</p>
+                    <p className="font-medium">{fmtMoney(dashboardData.active_lease.charges_amount || 0)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Total mensuel</p>
                     <p className="font-medium">{fmtMoney(totalMonthly)}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Date de début</p>
-                    <p className="font-medium">{lease.start_date || 'Non spécifiée'}</p>
+                    <p className="font-medium">{new Date(dashboardData.active_lease.start_date).toLocaleDateString('fr-FR')}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Date de fin</p>
-                    <p className="font-medium">{lease.end_date || 'Non spécifiée'}</p>
+                    <p className="font-medium">
+                      {dashboardData.active_lease.end_date 
+                        ? new Date(dashboardData.active_lease.end_date).toLocaleDateString('fr-FR')
+                        : 'Non spécifiée'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Type de bail</p>
+                    <p className="font-medium">
+                      {dashboardData.active_lease.type === 'nu' ? 'Location nue' : 'Location meublée'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Numéro de bail</p>
+                    <p className="font-medium">{dashboardData.active_lease.lease_number}</p>
                   </div>
                 </div>
               </div>
+            ) : (
+              <p className="text-gray-500">Aucune location active</p>
             )}
           </div>
         );
-      case 'landlord':
-        return (
-          <div className="space-y-6">
-            <p className="text-gray-500">Ce contenu a été déplacé vers le composant Landlord.</p>
-          </div>
-        );
+
       case 'receipts':
         return (
           <div className="space-y-6">
@@ -520,21 +562,36 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
             <div className="bg-white rounded-lg shadow">
               <div className="p-6">
                 <h3 className="text-lg font-semibold mb-4">Historique des quittances</h3>
-                {receipts.length > 0 ? (
+                {dashboardData?.receipts && dashboardData.receipts.length > 0 ? (
                   <div className="space-y-3">
-                    {receipts.map((receipt) => (
-                      <div key={receipt.id} className="flex justify-between items-center p-3 border rounded">
+                    {dashboardData.receipts.map((receipt) => (
+                      <div key={receipt.id} className="flex justify-between items-center p-3 border rounded hover:bg-gray-50">
                         <div>
                           <p className="font-medium">Mois: {receipt.paid_month}</p>
-                          <p className="text-sm text-gray-500">Payé le: {receipt.payment_date}</p>
+                          <p className="text-sm text-gray-500">
+                            Émis le: {new Date(receipt.issued_date).toLocaleDateString('fr-FR')}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {receipt.property?.name && `Bien: ${receipt.property.name}`}
+                          </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold">{fmtMoney(receipt.amount_paid)}</p>
+                          <p className="font-semibold">{fmtMoney(receipt.amount)}</p>
                           <span className={`text-xs px-2 py-1 rounded ${
                             receipt.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                           }`}>
                             {receipt.status === 'paid' ? 'Payé' : 'En attente'}
                           </span>
+                          {receipt.pdf_url && (
+                            <a 
+                              href={receipt.pdf_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="ml-2 text-xs text-blue-600 hover:underline"
+                            >
+                              Télécharger
+                            </a>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -546,50 +603,36 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
             </div>
           </div>
         );
-      case 'documents':
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Documents</h2>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold mb-4">Mes Documents</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <FileText className="w-8 h-8 text-blue-600 mb-2" />
-                  <h4 className="font-medium">Contrat de location</h4>
-                  <p className="text-sm text-gray-500">PDF • 2.3 MB</p>
-                </div>
-                <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <FileText className="w-8 h-8 text-green-600 mb-2" />
-                  <h4 className="font-medium">Quittances de loyer</h4>
-                  <p className="text-sm text-gray-500">PDF • 1.1 MB</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
+
       case 'interventions':
         return (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold text-gray-900">Mes Interventions</h2>
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold mb-4">Historique des interventions</h3>
-              {incidents.length > 0 ? (
+              {dashboardData?.incidents && dashboardData.incidents.length > 0 ? (
                 <div className="space-y-3">
-                  {incidents.map((incident) => (
-                    <div key={incident.id} className="flex justify-between items-center p-3 border rounded">
+                  {dashboardData.incidents.map((incident) => (
+                    <div key={incident.id} className="flex justify-between items-center p-3 border rounded hover:bg-gray-50">
                       <div>
                         <p className="font-medium">{incident.title}</p>
-                        <p className="text-sm text-gray-500">{incident.description}</p>
+                        <p className="text-sm text-gray-500">{incident.description.substring(0, 100)}...</p>
+                        <p className="text-xs text-gray-400">
+                          {new Date(incident.created_at).toLocaleDateString('fr-FR')}
+                          {incident.property?.name && ` • ${incident.property.name}`}
+                        </p>
                       </div>
-                      <span className={`text-xs px-2 py-1 rounded ${
-                        incident.status === 'open' ? 'bg-red-100 text-red-800' : 
-                        incident.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' : 
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {incident.status === 'open' ? 'Ouvert' : 
-                         incident.status === 'in_progress' ? 'En cours' : 
-                         'Résolu'}
-                      </span>
+                      <div className="text-right">
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          incident.status === 'open' ? 'bg-red-100 text-red-800' : 
+                          incident.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' : 
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {incident.status === 'open' ? 'Ouvert' : 
+                           incident.status === 'in_progress' ? 'En cours' : 
+                           'Résolu'}
+                        </span>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -599,59 +642,77 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
             </div>
           </div>
         );
-      case 'tasks':
+
+      case 'payments':
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Mes Tâches</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Paiements</h2>
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold mb-4">Liste des tâches</h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 p-3 border rounded">
-                  <input type="checkbox" className="w-4 h-4" />
-                  <span className="flex-1">Signer le contrat de location</span>
-                  <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">En attente</span>
+              <h3 className="text-lg font-semibold mb-4">Historique des paiements</h3>
+              {dashboardData?.payments && dashboardData.payments.length > 0 ? (
+                <div className="space-y-3">
+                  {dashboardData.payments.map((payment) => (
+                    <div key={payment.id} className="flex justify-between items-center p-3 border rounded hover:bg-gray-50">
+                      <div>
+                        <p className="font-medium">
+                          {payment.payment_method === 'card' ? 'Paiement par carte' : 
+                           payment.payment_method === 'mobile_money' ? 'Mobile Money' :
+                           payment.payment_method === 'virement' ? 'Virement' :
+                           payment.payment_method === 'especes' ? 'Espèces' :
+                           payment.payment_method === 'cheque' ? 'Chèque' : 'Paiement'}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Date: {payment.paid_at ? new Date(payment.paid_at).toLocaleDateString('fr-FR') : 'N/A'}
+                        </p>
+                        {payment.property?.name && (
+                          <p className="text-sm text-gray-500">Bien: {payment.property.name}</p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{fmtMoney(payment.amount)}</p>
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          payment.status === 'approved' ? 'bg-green-100 text-green-800' : 
+                          payment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {payment.status === 'approved' ? 'Approuvé' : 
+                           payment.status === 'pending' ? 'En attente' : 
+                           payment.status === 'initiated' ? 'Initiatié' :
+                           payment.status === 'cancelled' ? 'Annulé' :
+                           payment.status === 'failed' ? 'Échoué' : payment.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-center gap-3 p-3 border rounded">
-                  <input type="checkbox" className="w-4 h-4" defaultChecked />
-                  <span className="flex-1 line-through text-gray-500">Fournir les documents justificatifs</span>
-                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Terminé</span>
-                </div>
-              </div>
+              ) : (
+                <p className="text-gray-500">Aucun paiement enregistré</p>
+              )}
             </div>
           </div>
         );
-      case 'notes':
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Mes Notes</h2>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold mb-4">Notes personnelles</h3>
-              <div className="space-y-3">
-                <div className="border rounded-lg p-4">
-                  <p className="font-medium mb-2">Important : Date de paiement</p>
-                  <p className="text-sm text-gray-600">Le loyer doit être payé avant le 5 de chaque mois</p>
-                </div>
-                <div className="border rounded-lg p-4">
-                  <p className="font-medium mb-2">Contact propriétaire</p>
-                  <p className="text-sm text-gray-600">Email: contact@proprietaire.fr - Tel: 01 23 45 67 89</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
+
       case 'notice':
         return (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold text-gray-900">Préavis</h2>
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold mb-4">Gestion du préavis</h3>
-              {notices.length > 0 ? (
+              {dashboardData?.notices && dashboardData.notices.length > 0 ? (
                 <div className="space-y-3">
-                  {notices.map((notice) => (
+                  {dashboardData.notices.map((notice) => (
                     <div key={notice.id} className="flex justify-between items-center p-3 border rounded">
                       <div>
-                        <p className="font-medium">Préavis de départ</p>
-                        <p className="text-sm text-gray-500">Date: {notice.notice_date}</p>
+                        <p className="font-medium">Préavis de départ #{notice.notice_number}</p>
+                        <p className="text-sm text-gray-500">
+                          Date: {new Date(notice.notice_date).toLocaleDateString('fr-FR')}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Effectif le: {new Date(notice.effective_date).toLocaleDateString('fr-FR')}
+                        </p>
+                        {notice.reason && (
+                          <p className="text-sm text-gray-500">Motif: {notice.reason}</p>
+                        )}
                       </div>
                       <span className={`text-xs px-2 py-1 rounded ${
                         notice.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
@@ -667,62 +728,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
             </div>
           </div>
         );
-      case 'payments':
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Paiements</h2>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold mb-4">Historique des paiements</h3>
-              {invoices.length > 0 ? (
-                <div className="space-y-3">
-                  {invoices.map((invoice) => (
-                    <div key={invoice.id} className="flex justify-between items-center p-3 border rounded">
-                      <div>
-                        <p className="font-medium">{invoice.type === 'rent' ? 'Loyer mensuel' : 'Facture'}</p>
-                        <p className="text-sm text-gray-500">Échéance: {invoice.due_date}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold">{fmtMoney(invoice.amount)}</p>
-                        <span className={`text-xs px-2 py-1 rounded ${
-                          invoice.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}>
-                          {invoice.status === 'paid' ? 'Payé' : 'En attente'}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500">Aucun paiement en cours</p>
-              )}
-            </div>
-          </div>
-        );
-      case 'settings':
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Paramètres</h2>
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold mb-4">Préférences</h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span>Notifications par email</span>
-                  <button className="w-12 h-6 bg-green-600 rounded-full relative">
-                    <div className="w-5 h-5 bg-white rounded-full absolute right-0.5 top-0.5"></div>
-                  </button>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Mode sombre</span>
-                  <button className="w-12 h-6 bg-gray-300 rounded-full relative">
-                    <div className="w-5 h-5 bg-white rounded-full absolute left-0.5 top-0.5"></div>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
+
       default:
-        // Par défaut, afficher le tableau de bord
         return (
           <>
             {/* Welcome Card */}
@@ -730,7 +737,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
               <div className="flex justify-between items-center">
                 <div>
                   <h1 className="text-2xl font-bold text-white mb-2">
-                    Bienvenue, {user?.first_name || 'Locataire'} 👋
+                    Bienvenue, {dashboardData?.user?.first_name || user?.first_name || 'Locataire'} 👋
                   </h1>
                   <p className="text-white/90">
                     Gérez votre location en toute simplicité
@@ -795,8 +802,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
                   <div className="flex items-center gap-4">
                     <img src="/Ressource_gestiloc/Key Security.png" alt="Locations" className="w-12 h-12 object-contain" />
                     <div>
-                      <p className="text-3xl font-bold text-gray-900">1</p>
-                      <p className="text-sm text-gray-600">Location</p>
+                      <p className="text-3xl font-bold text-gray-900">{dashboardData?.leases?.length || 0}</p>
+                      <p className="text-sm text-gray-600">Location(s)</p>
                     </div>
                   </div>
                 </div>
@@ -807,24 +814,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
                 </div>
               </div>
 
-              {/* Loyers en retard */}
+              {/* Statut paiement */}
               <div className="bg-white rounded-lg shadow p-6 border border-orange-200 hover:shadow-lg transition-all duration-200">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Loyers en retard</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Statut paiement</h3>
                   <Settings className="w-5 h-5 text-orange-500" />
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <img src="/Ressource_gestiloc/Dollar Bag.png" alt="Loyers" className="w-12 h-12 object-contain" />
+                    <img src="/Ressource_gestiloc/Dollar Bag.png" alt="Paiement" className="w-12 h-12 object-contain" />
                     <div>
-                      <p className="text-3xl font-bold text-gray-900">0</p>
-                      <p className="text-sm text-gray-600">Loyers en retard</p>
+                      <p className={`text-3xl font-bold ${isUpToDate ? 'text-green-600' : 'text-red-600'}`}>
+                        {isUpToDate ? 'À jour' : 'En retard'}
+                      </p>
+                      <p className="text-sm text-gray-600">Ce mois-ci</p>
                     </div>
                   </div>
                 </div>
                 <div className="mt-4 text-right">
                   <button onClick={() => onNavigate?.('payments')} className="text-xs text-orange-400 hover:text-orange-500 transition-colors duration-200 cursor-pointer">
-                    Tout afficher
+                    Voir détails
                   </button>
                 </div>
               </div>
@@ -843,11 +852,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
                       <p className="text-sm text-gray-600">Ouverte</p>
                     </div>
                     <div className="flex flex-col items-center">
-                      <p className="text-3xl font-bold text-gray-900">0</p>
-                      <p className="text-sm text-gray-600">En retard</p>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <p className="text-3xl font-bold text-gray-900">0</p>
+                      <p className="text-3xl font-bold text-gray-900">{inProgressIncidents}</p>
                       <p className="text-sm text-gray-600">En cours</p>
                     </div>
                   </div>
@@ -859,27 +864,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
                 </div>
               </div>
 
-              {/* Tâches */}
+              {/* Quittances */}
               <div className="bg-white rounded-lg shadow p-6 border border-orange-200 hover:shadow-lg transition-all duration-200">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Tâches</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Quittances</h3>
                   <Settings className="w-5 h-5 text-orange-500" />
                 </div>
                 <div className="flex items-center gap-4">
-                  <img src="/Ressource_gestiloc/Inspection.png" alt="Tâches" className="w-12 h-12 object-contain" />
+                  <img src="/Ressource_gestiloc/Inspection.png" alt="Quittances" className="w-12 h-12 object-contain" />
                   <div className="flex gap-6">
                     <div className="flex flex-col items-center">
-                      <p className="text-3xl font-bold text-gray-900">0</p>
-                      <p className="text-sm text-gray-600">Ouverte</p>
+                      <p className="text-3xl font-bold text-gray-900">{dashboardData?.receipts?.length || 0}</p>
+                      <p className="text-sm text-gray-600">Total</p>
                     </div>
                     <div className="flex flex-col items-center">
-                      <p className="text-3xl font-bold text-gray-900">0</p>
-                      <p className="text-sm text-gray-600">En retard</p>
+                      <p className="text-3xl font-bold text-gray-900">{paidStreak}</p>
+                      <p className="text-sm text-gray-600">Mois consécutifs</p>
                     </div>
                   </div>
                 </div>
                 <div className="mt-4 text-right">
-                  <button onClick={() => onNavigate?.('tasks')} className="text-xs text-orange-400 hover:text-orange-500 transition-colors duration-200 cursor-pointer">
+                  <button onClick={() => onNavigate?.('receipts')} className="text-xs text-orange-400 hover:text-orange-500 transition-colors duration-200 cursor-pointer">
                     Tout afficher
                   </button>
                 </div>
@@ -935,9 +940,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
         <div className="mt-20 mb-6 rounded-3xl border border-rose-200 bg-rose-50 p-5 text-rose-800 font-bold relative z-0">
           Certaines données n'ont pas pu être chargées (le dashboard reste utilisable).
           <div className="mt-2 text-sm font-semibold">
-            {errLeases ? <div>• Bail: {errLeases}</div> : null}
-            {errReceipts ? <div>• Quittances: {errReceipts}</div> : null}            {errInvoices ? <div>• Factures: {errInvoices}</div> : null}            {errIncidents ? <div>• Incidents: {errIncidents}</div> : null}
-            {errNotices ? <div>• Préavis: {errNotices}</div> : null}
+            <div>• Erreur: {error}</div>
           </div>
         </div>
       ) : null}

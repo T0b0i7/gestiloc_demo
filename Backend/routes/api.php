@@ -200,6 +200,88 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('incidents/upload', [TenantMaintenanceRequestController::class, 'upload']);
 
         Route::get('invoices', [\App\Http\Controllers\Api\TenantPaymentController::class, 'index']);
+
+
+
+
+
+           // NOUVELLE ROUTE POUR LES INFORMATIONS DU PROPRIÉTAIRE
+        Route::get('landlord-info', [\App\Http\Controllers\Api\Tenant\MyLeaseController::class, 'getLandlordInfo']);
+
+                  Route::get('dashboard', [\App\Http\Controllers\Api\Tenant\MyLeaseController::class, 'dashboardData']);
+
+        Route::get('notifications', [\App\Http\Controllers\Api\Tenant\MyLeaseController::class, 'notifications']);
+        Route::post('notifications/{id}/read', [\App\Http\Controllers\Api\Tenant\MyLeaseController::class, 'markNotificationAsRead']);
+        Route::post('notifications/read-all', [\App\Http\Controllers\Api\Tenant\MyLeaseController::class, 'markAllNotificationsAsRead']);
+
+        //Invitation proprietaire
+           Route::post('/invite-landlord', [\App\Http\Controllers\Api\Tenant\TenantInvitationController::class, 'inviteLandlord']);
+
+                 // Routes pour les tâches
+        Route::apiResource('tasks', \App\Http\Controllers\Api\Tenant\TaskController::class);
+
+              // Routes pour les notes
+        Route::get('/notes', [\App\Http\Controllers\Api\Tenant\NoteController::class, 'index']);
+        Route::get('/notes/{id}', [\App\Http\Controllers\Api\Tenant\NoteController::class, 'show']);
+        Route::post('/notes', [\App\Http\Controllers\Api\Tenant\NoteController::class, 'store']);
+        Route::put('/notes/{id}', [\App\Http\Controllers\Api\Tenant\NoteController::class, 'update']);
+        Route::delete('/notes/{id}', [\App\Http\Controllers\Api\Tenant\NoteController::class, 'destroy']);
+
+        // Routes pour les fichiers
+        Route::post('/notes/{id}/files', [\App\Http\Controllers\Api\Tenant\NoteController::class, 'addFiles']);
+        Route::delete('/notes/{id}/files', [\App\Http\Controllers\Api\Tenant\NoteController::class, 'deleteFile']);
+
+        // Route pour les contacts partageables
+        Route::get('/shareable-contacts', [\App\Http\Controllers\Api\Tenant\NoteController::class, 'getShareableContacts']);
+
+
+        // Routes pour les paramètres
+        Route::get('/settings', [\App\Http\Controllers\Api\Tenant\SettingsController::class, 'index']);
+        Route::put('/settings/password', [\App\Http\Controllers\Api\Tenant\SettingsController::class, 'updatePassword']);
+        Route::put('/settings/preferences', [\App\Http\Controllers\Api\Tenant\SettingsController::class, 'updatePreferences']);
+        Route::put('/settings/notifications', [\App\Http\Controllers\Api\Tenant\SettingsController::class, 'updateNotifications']);
+        Route::put('/settings/privacy', [\App\Http\Controllers\Api\Tenant\SettingsController::class, 'updatePrivacy']);
+        Route::post('/settings/2fa/enable', [\App\Http\Controllers\Api\Tenant\SettingsController::class, 'enableTwoFactor']);
+        Route::post('/settings/2fa/disable', [\App\Http\Controllers\Api\Tenant\SettingsController::class, 'disableTwoFactor']);
+        Route::get('/settings/download-data', [\App\Http\Controllers\Api\Tenant\SettingsController::class, 'downloadData']);
+        Route::delete('/settings/account', [\App\Http\Controllers\Api\Tenant\SettingsController::class, 'deleteAccount']);
+
+// Routes pour le profil du locataire
+Route::prefix('profile')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\Tenant\ProfileController::class, 'show']);
+    Route::put('/personal', [\App\Http\Controllers\Api\Tenant\ProfileController::class, 'updatePersonal']);
+    Route::put('/address', [\App\Http\Controllers\Api\Tenant\ProfileController::class, 'updateAddress']);
+    Route::put('/professional', [\App\Http\Controllers\Api\Tenant\ProfileController::class, 'updateProfessional']);
+    Route::put('/emergency', [\App\Http\Controllers\Api\Tenant\ProfileController::class, 'updateEmergency']);
+    Route::put('/guarantor', [\App\Http\Controllers\Api\Tenant\ProfileController::class, 'updateGuarantor']);
+});
+
+
+// Routes pour les documents
+Route::prefix('documents')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'index']);
+    Route::get('/templates', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'templates']);
+    Route::get('/shareable-contacts', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'getShareableContacts']);
+    Route::get('/filters/options', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'getFilterOptions']);
+    Route::post('/', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'store']);
+    Route::get('/{id}', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'show']);
+    Route::put('/{id}', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'update']);
+    Route::delete('/{id}', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'destroy']);
+    Route::post('/{id}/archive', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'archive']);
+    Route::post('/{id}/restore', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'restore']);
+    Route::get('/{id}/download', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'download']);
+});
+
+// Routes pour le dossier
+Route::prefix('dossier')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\Tenant\DossierController::class, 'show']);
+    Route::put('/', [\App\Http\Controllers\Api\Tenant\DossierController::class, 'update']);
+    Route::get('/shareable-contacts', [\App\Http\Controllers\Api\Tenant\DossierController::class, 'getShareableContacts']);
+    Route::post('/publish', [\App\Http\Controllers\Api\Tenant\DossierController::class, 'publish']);
+    Route::get('/preview', [\App\Http\Controllers\Api\Tenant\DossierController::class, 'preview']);
+});
+
+
     });
 
     /* =========================
@@ -316,7 +398,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     |========================= */
     Route::middleware(['role:admin'])->prefix('admin')->group(function () {
         // Dashboard admin
-       
+
 
         /* ======================
          * GESTION UTILISATEURS
@@ -360,7 +442,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Dashboard admin
         Route::get('dashboard/stats', [DashboardController::class, 'stats'])
             ->name('admin.dashboard.stats');
-        
+
         // admin routes...
     });
 });

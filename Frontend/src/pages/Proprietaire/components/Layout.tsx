@@ -30,6 +30,8 @@ import {
   Calculator,
   Settings,
   HelpCircle,
+  Building2, // Pour les agences
+  UserCog,   // Pour la gestion des utilisateurs
 } from "lucide-react";
 
 import { Tab, Notification, ToastMessage } from "../types";
@@ -99,9 +101,6 @@ export const Layout: React.FC<LayoutProps> = ({
 
   // Owner (from localStorage)
   const [user, setUser] = useState<UserData | null>(null);
-
-  // ✅ Un seul menu accordéon ouvert à la fois
-  const [expandedMenu, setExpandedMenu] = useState<string | null>("biens");
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -179,6 +178,25 @@ export const Layout: React.FC<LayoutProps> = ({
         { id: "comptabilite", label: "Comptabilité et statistiques", icon: Calculator, path: "/proprietaire/comptabilite" },
       ],
     },
+    {
+      title: "GESTION DES COPROPRIÉTAIRES",
+      items: [
+        { 
+          id: "coproprietaires", 
+          label: "Liste des co-propriétaires", 
+          icon: Users, 
+          path: "/proprietaire/coproprietaires" 
+        },
+        { 
+          id: "inviter-coproprietaire", 
+          label: "Inviter un co-propriétaire", 
+          icon: UserPlus, 
+          path: "/proprietaire/inviter-coproprietaire" 
+        },
+      ],
+    },
+
+ 
     {
       title: "CONFIGURATION",
       items: [

@@ -1,14 +1,8 @@
 <?php
 
 return [
-    /*
-    |--------------------------------------------------------------------------
-    | Cross-Origin Resource Sharing (CORS) Configuration
-    |--------------------------------------------------------------------------
-    */
-
-    // On applique CORS à toutes les routes (dev)
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    // On applique CORS à toutes les routes API et sanctum
+    'paths' => ['api/*', 'sanctum/csrf-cookie'], // ✅ C'est déjà bon
 
     'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 
