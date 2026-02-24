@@ -41,7 +41,7 @@ const CoproprietaireApp: React.FC = () => {
       try {
         const token = localStorage.getItem('token');
         const userStr = localStorage.getItem('user');
-        
+
         if (!token || !userStr) {
           navigate('/login');
           return;
@@ -50,7 +50,7 @@ const CoproprietaireApp: React.FC = () => {
         // Vérifier que l'utilisateur a le bon rôle
         const user = JSON.parse(userStr);
         const isCoproprietaire = user && (user.roles?.includes('coproprietaire') || user.roles?.includes('co_owner'));
-        
+
         if (!isCoproprietaire) {
           // Rediriger vers le tableau de bord approprié en fonction du rôle
           if (user?.roles?.includes('admin')) {
@@ -67,7 +67,7 @@ const CoproprietaireApp: React.FC = () => {
         // Ignorer si c'est une route Laravel
         const currentPath = location.pathname;
         const isLaravelRoute = laravelRoutes.some(route => currentPath.startsWith(route));
-        
+
         if (!isLaravelRoute) {
           const path = currentPath.split('/').pop() || 'dashboard';
           setActiveTab(path as Tab);
@@ -108,19 +108,19 @@ const CoproprietaireApp: React.FC = () => {
 
   const handleNavigation = (tab: Tab | string) => {
     console.log('App handleNavigation called with:', tab);
-    
+
     // Vérifier si c'est une route Laravel
-    const isLaravelRoute = laravelRoutes.some(route => 
+    const isLaravelRoute = laravelRoutes.some(route =>
       typeof tab === 'string' && tab.startsWith(route)
     );
-    
+
     if (isLaravelRoute) {
-        // Pour les routes Laravel, rediriger directement
-        console.log('Redirecting to Laravel route:', tab);
-        window.location.href = tab as string;
-        return;
+      // Pour les routes Laravel, rediriger directement
+      console.log('Redirecting to Laravel route:', tab);
+      window.location.href = tab as string;
+      return;
     }
-    
+
     if (typeof tab === 'string' && tab.startsWith('/')) {
       // Si c'est déjà une URL absolue, naviguer directement
       console.log('Navigating to absolute URL:', tab);
@@ -156,7 +156,7 @@ const CoproprietaireApp: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <Routes>
         <Route path="/" element={<Navigate to="dashboard" replace />} />
-        
+
         {/* Dashboard spécifique co-propriétaire */}
         <Route path="dashboard" element={
           <Layout
@@ -166,7 +166,7 @@ const CoproprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <CoOwnerDashboard onNavigate={handleNavigation} notify={notify} />
           </Layout>
@@ -181,7 +181,7 @@ const CoproprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <DelegationsManagement notify={notify} onNavigate={handleNavigation} />
           </Layout>
@@ -196,7 +196,7 @@ const CoproprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <DelegationAudit notify={notify} />
           </Layout>
@@ -211,7 +211,7 @@ const CoproprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <InviteLandlord notify={notify} />
           </Layout>
@@ -226,7 +226,7 @@ const CoproprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <DelegatedProperties notify={notify} onNavigate={handleNavigation} />
           </Layout>
@@ -241,7 +241,7 @@ const CoproprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <TenantsList notify={notify} onNavigate={handleNavigation} />
           </Layout>
@@ -256,7 +256,7 @@ const CoproprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <LeasesList notify={notify} onNavigate={handleNavigation} />
           </Layout>
@@ -271,7 +271,7 @@ const CoproprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <RentReceiptsList notify={notify} onNavigate={handleNavigation} />
           </Layout>
@@ -286,7 +286,7 @@ const CoproprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <Finances notify={notify} onNavigate={handleNavigation} />
           </Layout>
@@ -301,7 +301,7 @@ const CoproprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <EmettrePaiement notify={notify} onNavigate={handleNavigation} />
           </Layout>
@@ -316,7 +316,7 @@ const CoproprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <RetraitMethode notify={notify} onNavigate={handleNavigation} />
           </Layout>
@@ -331,7 +331,7 @@ const CoproprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <CoOwnerDocuments notify={notify} onNavigate={handleNavigation} />
           </Layout>
@@ -346,7 +346,7 @@ const CoproprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <Profile onNavigate={handleNavigation} notify={notify} />
           </Layout>
@@ -361,14 +361,14 @@ const CoproprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <Profile onNavigate={handleNavigation} notify={notify} />
           </Layout>
         } />
 
         {/* Redirection pour toute autre route */}
-        <Route path="*" element={<Navigate to="dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/coproprietaire/dashboard" replace />} />
       </Routes>
     </div>
   );

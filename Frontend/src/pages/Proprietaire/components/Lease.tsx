@@ -12,15 +12,15 @@ import {
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
-import { leaseService, Lease } from '@/services/api';
+import { leaseService, Lease as LeaseData } from '@/services/api';
 
 interface LeaseProps {
   notify: (msg: string, type: 'success' | 'info' | 'error') => void;
 }
 
 export const Lease: React.FC<LeaseProps> = ({ notify }) => {
-  const [leases, setLeases] = useState<Lease[]>([]);
-  const [selectedLease, setSelectedLease] = useState<Lease | null>(null);
+  const [leases, setLeases] = useState<LeaseData[]>([]);
+  const [selectedLease, setSelectedLease] = useState<LeaseData | null>(null);
   const [loading, setLoading] = useState(true);
   const [terminatingId, setTerminatingId] = useState<number | null>(null);
 
@@ -55,7 +55,7 @@ export const Lease: React.FC<LeaseProps> = ({ notify }) => {
     );
   };
 
-  const handleTerminate = async (lease: Lease) => {
+  const handleTerminate = async (lease: LeaseData) => {
     if (!lease.uuid) {
       notify("Impossible de terminer ce bail (UUID manquant).", 'error');
       return;
@@ -82,7 +82,7 @@ export const Lease: React.FC<LeaseProps> = ({ notify }) => {
     }
   };
 
-  const handleEdit = (lease: Lease) => {
+  const handleEdit = (lease: LeaseData) => {
     // À adapter si tu as une page / route d’édition
     // ex: navigate(`/proprietaire/baux/${lease.id}/edit`);
     notify(
@@ -102,16 +102,16 @@ export const Lease: React.FC<LeaseProps> = ({ notify }) => {
     });
   };
 
-  const getStatusVariant = (status: string | undefined) => {
+  const getStatusVariant = (status: string | undefined): 'success' | 'error' | 'info' | 'warning' | 'neutral' => {
     switch (status) {
       case 'active':
         return 'success';
       case 'terminated':
-        return 'destructive';
+        return 'error';
       case 'pending':
-        return 'secondary';
+        return 'warning';
       default:
-        return 'outline';
+        return 'neutral';
     }
   };
 
@@ -166,44 +166,47 @@ export const Lease: React.FC<LeaseProps> = ({ notify }) => {
         {/* Liste des baux */}
         <div className="lg:col-span-1 space-y-3">
           {leases.map((lease) => (
-            <Card
+            <div
               key={lease.id}
-              className={`cursor-pointer transition-all ${
-                selectedLease?.id === lease.id
-                  ? 'ring-2 ring-primary ring-offset-2'
-                  : 'hover:shadow-md'
-              }`}
               onClick={() => setSelectedLease(lease)}
+              style={{ cursor: 'pointer' }}
             >
-              <div className="flex justify-between items-start gap-3">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <FileSignature className="w-4 h-4 text-primary" />
-                    <span className="font-semibold text-sm text-slate-900">
-                      Bail n° {lease.id}
+              <Card
+                className={`cursor-pointer transition-all ${selectedLease?.id === lease.id
+                    ? 'ring-2 ring-primary ring-offset-2'
+                    : 'hover:shadow-md'
+                  }`}
+              >
+                <div className="flex justify-between items-start gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <FileSignature className="w-4 h-4 text-primary" />
+                      <span className="font-semibold text-sm text-slate-900">
+                        Bail n° {lease.id}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      Du {formatDate(lease.start_date)} au{' '}
+                      {lease.end_date ? formatDate(lease.end_date) : '∞'}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Loyer :{' '}
+                      <span className="font-semibold">
+                        {lease.rent_amount} FCFA / mois
+                      </span>
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <Badge variant={getStatusVariant(lease.status)}>
+                      {getStatusLabel(lease.status)}
+                    </Badge>
+                    <span className="text-[11px] uppercase tracking-wide text-slate-400">
+                      {lease.type}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500">
-                    Du {formatDate(lease.start_date)} au{' '}
-                    {lease.end_date ? formatDate(lease.end_date) : '∞'}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Loyer :{' '}
-                    <span className="font-semibold">
-                      {lease.rent_amount} FCFA / mois
-                    </span>
-                  </p>
                 </div>
-                <div className="flex flex-col items-end gap-2">
-                  <Badge variant={getStatusVariant(lease.status)}>
-                    {getStatusLabel(lease.status)}
-                  </Badge>
-                  <span className="text-[11px] uppercase tracking-wide text-slate-400">
-                    {lease.type}
-                  </span>
-                </div>
-              </div>
-            </Card>
+              </Card>
+            </div>
           ))}
         </div>
 

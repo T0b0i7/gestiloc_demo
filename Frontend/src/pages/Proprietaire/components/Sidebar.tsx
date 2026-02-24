@@ -67,39 +67,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
       submenu: []
     },
     { 
-      id: 'properties', 
+      id: 'biens', 
       label: t('sidebar.properties', 'Biens'), 
       icon: Building,
       submenu: [
         { 
-          id: 'add-property', 
+          id: 'ajouter-bien', 
           label: t('sidebar.addProperty', 'Ajouter un bien'), 
           icon: Plus 
         },
         { 
-          id: 'my-properties', 
+          id: 'mes-biens', 
           label: t('sidebar.myProperties', 'Mes biens'), 
           icon: Building 
         },
         { 
-          id: 'properties-lots', 
+          id: 'lots', 
           label: t('sidebar.lots', 'Lots'), 
           icon: Building 
         },
         { 
-          id: 'properties-buildings', 
+          id: 'immeubles', 
           label: t('sidebar.buildings', 'Immeubles'), 
           icon: Building 
         }
       ]
     },
     { 
-      id: 'tenants', 
+      id: 'locataires', 
       label: t('sidebar.tenants', 'Locataires'), 
       icon: Users,
       submenu: [
         { 
-          id: 'add-tenant', 
+          id: 'ajouter-locataire', 
           label: t('sidebar.addTenant', 'Ajouter un locataire'), 
           icon: UserPlus 
         },
@@ -116,7 +116,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Users,
       submenu: [
         { 
-          id: 'coproprietaires', 
+          id: 'list-coowners', 
           label: t('sidebar.coOwnersList', 'Liste des co-propriétaires'), 
           icon: Users 
         },
@@ -128,17 +128,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ]
     },
     { 
-      id: 'rentals', 
+      id: 'locations', 
       label: t('sidebar.rentals', 'Locations'), 
       icon: FileText,
       submenu: [
         { 
-          id: 'new-rental', 
+          id: 'nouvelle-location', 
           label: t('sidebar.newRental', 'Nouvelle location'), 
           icon: FilePlus 
         },
         { 
-          id: 'list-rentals', 
+          id: 'liste-locations', 
           label: t('sidebar.rentalsList', 'Liste des locations'), 
           icon: FileText 
         }
@@ -151,7 +151,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       submenu: []
     },
     { 
-      id: 'inspection', 
+      id: 'etats-lieux', 
       label: t('sidebar.inspection', 'État des lieux'), 
       icon: FileCheck,
       submenu: []

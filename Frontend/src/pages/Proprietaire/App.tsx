@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
-import { Dashboard } from './components/Dashboard';
+import Dashboard from './components/Dashboard';
 import { Payments } from './components/Payments';
 import { Messages } from './components/Messages';
 import { Interventions } from './components/Interventions';
@@ -11,19 +11,19 @@ import { Profile } from './components/Profile';
 import { Bureau } from './components/Bureau';
 import { AjouterBien } from './components/AjouterBien';
 import { AjouterLocataire } from './components/AjouterLocataire';
-import { NouvelleLocation } from './components/NouvelleLocation';
+import NouvelleLocation from './components/NouvelleLocation';
 import { Settings } from './components/Settings';
 import { Lots } from './components/Lots';
 import { Immeubles } from './components/Immeubles';
 import { TenantsList } from './components/TenantsList';
 import { Onboarding } from './components/Onboarding';
-import { MesBiens } from './components/MesBiens';
+import MesBiens from './components/MesBiens';
 import { Lease } from "./components/Lease";
 import EtatsLieux from './components/EtatsLieux';
 import { InviteCoOwner } from './components/InviteCoOwner';
 import { CoOwnersList } from './components/CoOwnersList';
-import { 
-  Biens, Locataires, Locations, Inventaires, EtatDesLieux, 
+import {
+  Biens, Locataires, Locations, Inventaires, EtatDesLieux,
   Finances, Carnet, Candidats, Outils, Corbeille,
 } from './components/SectionPages';
 import { Tab, ToastMessage } from './types';
@@ -36,6 +36,11 @@ import { EmitInvoice } from './components/EmitInvoice';
 import { InvoicesList } from './components/InvoicesList';
 import CreatePaymentRequest from './components/EmettrePaiement';
 import WithdrawalMethod from './components/RetraitMethode';
+import ContratsBaux from './components/ContratsBaux';
+import EtatsDesLieux from './components/EtatsDesLieux';
+import AvisEcheance from './components/AvisEcheance';
+import QuittancesLoyersPage from './components/QuittancesPage';
+import FacturesDocs from './components/FacturesDocs';
 
 
 const ProprietaireApp: React.FC = () => {
@@ -52,7 +57,7 @@ const ProprietaireApp: React.FC = () => {
       try {
         const token = localStorage.getItem('token');
         const userStr = localStorage.getItem('user');
-        
+
         if (!token || !userStr) {
           navigate('/login');
           return;
@@ -61,7 +66,7 @@ const ProprietaireApp: React.FC = () => {
         // Vérifier que l'utilisateur a le bon rôle
         const user = JSON.parse(userStr);
         const isProprietaire = user.roles?.includes('proprietaire') || user.roles?.includes('landlord');
-        
+
         if (!isProprietaire) {
           // Rediriger vers le tableau de bord approprié en fonction du rôle
           if (user.roles?.includes('admin')) {
@@ -112,11 +117,11 @@ const ProprietaireApp: React.FC = () => {
   };
 
   const handleNavigation = (tab: Tab | string) => {
-    // Si c'est un chemin complet, on l'utilise directement
+    // Si c'est un chemin complet (absolu), on l'utilise directement
     if (typeof tab === 'string' && tab.startsWith('/')) {
       navigate(tab);
     } else {
-      // Sinon, on utilise l'ancien comportement
+      // Toujours utiliser un chemin ABSOLU pour éviter les boucles de redirection
       setActiveTab(tab as Tab);
       navigate(`/proprietaire/${tab}`);
     }
@@ -147,9 +152,9 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
-            <Dashboard onNavigate={setActiveTab} notify={notify} />
+            <Dashboard onNavigate={handleNavigation} notify={notify} />
           </Layout>
         } />
         <Route path="biens/*" element={
@@ -160,7 +165,7 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <Biens notify={notify} />
           </Layout>
@@ -173,7 +178,7 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <TenantsList notify={notify} />
           </Layout>
@@ -186,7 +191,7 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <Bureau notify={notify} />
           </Layout>
@@ -200,7 +205,7 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <CreatePaymentRequest />
           </Layout>
@@ -214,12 +219,12 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <WithdrawalMethod />
           </Layout>
         } />
-        
+
         {/* Nouvelles routes pour les actions rapides */}
         <Route path="ajouter-bien" element={
           <Layout
@@ -229,7 +234,7 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <AjouterBien />
           </Layout>
@@ -243,12 +248,12 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <LandlordIncidentsPage />
           </Layout>
         } />
-        
+
         <Route path="ajouter-locataire" element={
           <Layout
             activeTab="bureau"
@@ -257,13 +262,13 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <AjouterLocataire />
           </Layout>
         } />
 
-         <Route path="quittances" element={
+        <Route path="quittances" element={
           <Layout
             activeTab="quittances"
             onNavigate={handleNavigation}
@@ -271,13 +276,13 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
-            <QuittancesIndependants />
+            <QuittancesLoyersPage notify={notify} />
           </Layout>
         } />
 
-        
+
         <Route path="liste-locations" element={
           <Layout
             activeTab="locations"
@@ -286,26 +291,40 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <Lease notify={notify} />
           </Layout>
         } />
 
-        <Route path="preavis" element={
+        <Route path="avis-echeance" element={
           <Layout
-            activeTab="preavis"
+            activeTab="avis-echeance"
             onNavigate={handleNavigation}
             toasts={toasts}
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
+          >
+            <AvisEcheance notify={notify} />
+          </Layout>
+        } />
+
+        <Route path="preavis" element={
+          <Layout
+            activeTab="avis-echeance"
+            onNavigate={handleNavigation}
+            toasts={toasts}
+            removeToast={removeToast}
+            onLogout={handleLogout}
+            isDarkMode={false}
+            toggleTheme={() => { }}
           >
             <PreavisList notify={notify} />
           </Layout>
         } />
-        
+
         <Route path="nouvelle-location" element={
           <Layout
             activeTab="bureau"
@@ -314,7 +333,7 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <NouvelleLocation />
           </Layout>
@@ -327,7 +346,7 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <Locations notify={notify} />
           </Layout>
@@ -340,23 +359,53 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <Payments notify={notify} />
           </Layout>
         } />
 
-        <Route path="etats-des-lieux/*" element={
+        <Route path="etats-lieux/*" element={
           <Layout
-            activeTab="etats-des-lieux"
+            activeTab="etats-lieux"
             onNavigate={handleNavigation}
             toasts={toasts}
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
-            <EtatsLieux />
+            <EtatsDesLieux notify={notify} />
+          </Layout>
+        } />
+
+        {/* Route pour les baux - aligne avec le menu */}
+        <Route path="baux/*" element={
+          <Layout
+            activeTab="baux"
+            onNavigate={handleNavigation}
+            toasts={toasts}
+            removeToast={removeToast}
+            onLogout={handleLogout}
+            isDarkMode={false}
+            toggleTheme={() => { }}
+          >
+            <ContratsBaux notify={notify} />
+          </Layout>
+        } />
+
+        {/* Routes documents - plus spécifique avant générale */}
+        <Route path="documents/baux/*" element={
+          <Layout
+            activeTab="baux"
+            onNavigate={handleNavigation}
+            toasts={toasts}
+            removeToast={removeToast}
+            onLogout={handleLogout}
+            isDarkMode={false}
+            toggleTheme={() => { }}
+          >
+            <DocumentsManager notify={notify} />
           </Layout>
         } />
 
@@ -368,23 +417,9 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <Documents notify={notify} />
-          </Layout>
-        } />
-
-        <Route path="documents/baux/*" element={
-          <Layout
-            activeTab="documents/baux"
-            onNavigate={handleNavigation}
-            toasts={toasts}
-            removeToast={removeToast}
-            onLogout={handleLogout}
-            isDarkMode={false}
-            toggleTheme={() => {}}
-          >
-            <DocumentsManager notify={notify} />
           </Layout>
         } />
 
@@ -396,7 +431,7 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <EmitInvoice notify={notify} />
           </Layout>
@@ -410,9 +445,23 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
-            <InvoicesList notify={notify} />
+            <FacturesDocs notify={notify} />
+          </Layout>
+        } />
+
+        <Route path="comptabilite" element={
+          <Layout
+            activeTab="comptabilite"
+            onNavigate={handleNavigation}
+            toasts={toasts}
+            removeToast={removeToast}
+            onLogout={handleLogout}
+            isDarkMode={false}
+            toggleTheme={() => { }}
+          >
+            <Finances notify={notify} />
           </Layout>
         } />
 
@@ -424,7 +473,7 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <Settings />
           </Layout>
@@ -437,7 +486,7 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <Profile notify={notify} onLogout={handleLogout} />
           </Layout>
@@ -450,7 +499,7 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <MesBiens notify={notify} />
           </Layout>
@@ -465,7 +514,7 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <CoOwnersList notify={notify} />
           </Layout>
@@ -479,13 +528,13 @@ const ProprietaireApp: React.FC = () => {
             removeToast={removeToast}
             onLogout={handleLogout}
             isDarkMode={false}
-            toggleTheme={() => {}}
+            toggleTheme={() => { }}
           >
             <InviteCoOwner notify={notify} />
           </Layout>
         } />
 
-        <Route path="*" element={<Navigate to="dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/proprietaire/dashboard" replace />} />
       </Routes>
     </div>
   );

@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Search, Settings, Users, Trash2, MoreVertical, Mail, Phone, Clock, RefreshCw, Eye, Edit, UserCheck, UserX, Filter, ChevronDown, ExternalLink } from "lucide-react";
+import { Plus, Search, Settings, Users, Trash2, Mail, Phone, Clock, RefreshCw, Eye, Edit, UserCheck, UserX, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Card } from "./ui/Card";
-import { Button } from "./ui/Button";
 import { tenantService, TenantApi, TenantIndexResponse } from "@/services/api";
 
 interface Locataire {
@@ -33,49 +31,39 @@ export const TenantsList: React.FC<LocatairesProps> = ({ notify }) => {
   const [filterBien, setFilterBien] = useState("Tous les biens");
   const [searchTerm, setSearchTerm] = useState("");
   const [linesPerPage, setLinesPerPage] = useState("100");
-  const [selectedTenant, setSelectedTenant] = useState<string | null>(null);
 
-  // ============================
-  // Mapper TenantApi vers Locataire UI
-  // ============================
+  /* ─── Mapper API → UI ─── */
   const mapTenantApiToLocataire = (tenant: TenantApi): Locataire => {
     const nom = [tenant.first_name, tenant.last_name].filter(Boolean).join(" ") || tenant.email || "Locataire sans nom";
 
     const bien = tenant.property
       ? `${tenant.property.name ?? "Bien"} – ${tenant.property.address}${tenant.property.city ? ` (${tenant.property.city})` : ""}`
-      : "Aucun bien assigné";
+      : "Aucun bien";
 
     let etat: Locataire["etat"] = "actif";
-    if (tenant.status === "invited" || tenant.is_invited) {
-      etat = "invited";
-    } else if (tenant.status === "inactive") {
-      etat = "inactif";
-    } else if (tenant.status === "suspended") {
-      etat = "suspendu";
-    }
+    if (tenant.status === "invited") etat = "invited";
+    else if (tenant.status === "inactive") etat = "inactif";
+    else if (tenant.status === "suspended") etat = "suspendu";
 
     return {
       id: String(tenant.id),
       nom,
-      type: "Personne physique",
+      type: "Personne Physique",
       bien,
       telephone: tenant.phone || "Non renseigné",
-      email: tenant.email || "Email non fourni",
+      email: tenant.email || "—",
       solde: 0,
       etat,
       modeles: [],
-      is_invited: tenant.is_invited,
+
     };
   };
 
-  // ============================
-  // FETCH tenants API
-  // ============================
+  /* ─── Fetch ─── */
   const fetchTenants = async () => {
     try {
       setLoading(true);
       setError(null);
-
       const res: TenantIndexResponse = await tenantService.listTenants();
       const mapped = (res.tenants || []).map(mapTenantApiToLocataire);
       setLocataires(mapped);
@@ -92,433 +80,458 @@ export const TenantsList: React.FC<LocatairesProps> = ({ notify }) => {
     fetchTenants();
   }, []);
 
-  // ============================
-  // Filters
-  // ============================
-  const filteredLocataires = locataires.filter((locataire) => {
-    const matchesSearch =
-      locataire.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      locataire.email.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesBien = filterBien === "Tous les biens" || locataire.bien.includes(filterBien);
-    const matchesTab = activeTab === "actifs" ? true : false;
-
-    return matchesSearch && matchesBien && matchesTab;
+  /* ─── Filters ─── */
+  const filteredLocataires = locataires.filter((l) => {
+    const matchSearch =
+      l.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      l.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchBien = filterBien === "Tous les biens" || l.bien.includes(filterBien);
+    const matchTab = activeTab === "actifs" ? true : false;
+    return matchSearch && matchBien && matchTab;
   });
 
-  // ============================
-  // Styling helpers
-  // ============================
-  const getEtatColor = (etat: string) => {
-    switch (etat) {
-      case "actif":
-        return "bg-emerald-50 text-emerald-700 border border-emerald-100";
-      case "invited":
-        return "bg-amber-50 text-amber-700 border border-amber-100";
-      case "inactif":
-        return "bg-slate-50 text-slate-600 border border-slate-100";
-      case "suspendu":
-        return "bg-rose-50 text-rose-700 border border-rose-100";
-      default:
-        return "bg-slate-50 text-slate-600 border border-slate-100";
-    }
-  };
-
-  const getEtatIcon = (etat: string) => {
-    switch (etat) {
-      case "actif":
-        return <UserCheck size={12} className="mr-1.5" />;
-      case "invited":
-        return <Clock size={12} className="mr-1.5" />;
-      case "inactif":
-        return <UserX size={12} className="mr-1.5" />;
-      default:
-        return null;
-    }
-  };
-
-  const getSoldeColor = (solde: number) => {
-    if (solde > 0) return "text-emerald-600 font-semibold";
-    if (solde < 0) return "text-rose-600 font-semibold";
-    return "text-slate-500";
-  };
-
-  const getSoldeBg = (solde: number) => {
-    if (solde > 0) return "bg-emerald-50";
-    if (solde < 0) return "bg-rose-50";
-    return "bg-slate-50";
-  };
-
   const biensUniques = Array.from(new Set(locataires.map((l) => l.bien)));
+  const actifCount = locataires.filter((l) => l.etat === "actif" || l.etat === "invited").length;
 
-  // ============================
-  // Actions
-  // ============================
-  const handleAddLocataire = () => navigate("/proprietaire/ajouter-locataire");
+  /* ─── Actions ─── */
+  const handleAdd = () => navigate("/proprietaire/ajouter-locataire");
 
-  const handleDeleteLocataire = (id: string) => {
-    notify("Suppression à venir côté backend", "info");
-  };
 
-  const handleEditLocataire = (id: string) => {
-    notify('Fonction "Éditer" en développement', "info");
-  };
-
-  const handleInviteZoneMembre = (email: string) => {
-    notify(`Fonction invitation en dev pour ${email}`, "info");
-  };
-
-  const handleRefresh = () => {
-    fetchTenants();
-    notify("Liste actualisée", "success");
-  };
-
-  const handleViewDetails = (id: string) => {
-    setSelectedTenant(selectedTenant === id ? null : id);
-  };
-
-  // ============================
-  // RENDER
-  // ============================
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <br />
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
-            Gestion des Locataires
-          </h1>
-          <p className="text-slate-500 text-sm md:text-base">Gérez vos locataires et leurs accès en toute simplicité</p>
-        </div>
-        <div className="flex gap-3">
-          <Button 
-            variant="outline" 
-            onClick={handleRefresh} 
-            icon={<RefreshCw size={16} />}
-            className="group hover:border-blue-500 transition-all duration-300"
-          >
-            <span className="group-hover:text-blue-600 transition-colors">Actualiser</span>
-          </Button>
-          <Button 
-            variant="primary" 
-            icon={<Plus size={16} />} 
-            onClick={handleAddLocataire}
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all"
-          >
-            Nouveau locataire
-          </Button>
-        </div>
-      </div>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Manrope:wght@400;500;600;700;800&display=swap');
 
-      {/* Premium notice */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-5 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center">
-            <span className="text-white font-bold">⭐</span>
-          </div>
+        .tl-page {
+          padding: 1.5rem 2.5rem 3rem;
+          font-family: 'Manrope', sans-serif;
+          color: #1a1a1a;
+        }
+
+        /* Header */
+        .tl-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 1.5rem;
+        }
+        .tl-title {
+          font-family: 'Merriweather', serif;
+          font-size: 1.55rem;
+          font-weight: 900;
+          color: #1a1a1a;
+          margin: 0 0 6px 0;
+        }
+        .tl-subtitle {
+          font-size: 0.82rem;
+          font-weight: 500;
+          color: #6b7280;
+          margin: 0;
+        }
+        .tl-btn-add {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 10px 20px;
+          border-radius: 8px;
+          border: none;
+          background: #83C757;
+          font-family: 'Manrope', sans-serif;
+          font-size: 0.82rem;
+          font-weight: 700;
+          color: #fff;
+          cursor: pointer;
+          transition: all 0.15s;
+          white-space: nowrap;
+        }
+        .tl-btn-add:hover { background: #72b44a; }
+
+        /* Tabs */
+        .tl-tabs {
+          display: flex;
+          align-items: center;
+          gap: 1.2rem;
+          border-bottom: 1.5px solid #e5e7eb;
+          margin-bottom: 1.25rem;
+        }
+        .tl-tab {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          background: none;
+          border: none;
+          padding: 8px 0 12px;
+          font-family: 'Manrope', sans-serif;
+          font-size: 0.82rem;
+          font-weight: 600;
+          color: #9ca3af;
+          cursor: pointer;
+          border-bottom: 2px solid transparent;
+          margin-bottom: -1.5px;
+          transition: all 0.15s;
+        }
+        .tl-tab.active {
+          color: #4b8c2a;
+          border-bottom-color: #83C757;
+        }
+        .tl-tab-icon {
+          font-size: 0.82rem;
+        }
+        .tl-tab-count {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 18px;
+          height: 18px;
+          border-radius: 4px;
+          font-size: 0.62rem;
+          font-weight: 800;
+          padding: 0 4px;
+        }
+        .tl-tab.active .tl-tab-count {
+          background: #83C757;
+          color: #fff;
+        }
+        .tl-tab:not(.active) .tl-tab-count {
+          background: #e5e7eb;
+          color: #6b7280;
+        }
+
+        /* Card */
+        .tl-card {
+          background: #fff;
+          border: 1.5px solid #d6e4d6;
+          border-radius: 14px;
+          padding: 1.25rem 1.5rem;
+          margin-bottom: 1rem;
+        }
+
+        /* Filter section */
+        .tl-filter-title {
+          font-size: 0.68rem;
+          font-weight: 800;
+          color: #4b5563;
+          letter-spacing: 0.06em;
+          margin: 0 0 14px 0;
+        }
+        .tl-filter-row {
+          display: grid;
+          grid-template-columns: 2fr 3fr;
+          gap: 3rem;
+        }
+        .tl-filter-field {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .tl-filter-label {
+          font-size: 0.78rem;
+          font-weight: 700;
+          color: #374151;
+        }
+        .tl-select {
+          width: 100%;
+          padding: 0.6rem 2.2rem 0.6rem 0.85rem;
+          border: 1.5px solid #d1d5db;
+          border-radius: 10px;
+          font-size: 0.82rem;
+          font-family: 'Manrope', sans-serif;
+          font-weight: 500;
+          color: #6b7280;
+          background: #fff;
+          outline: none;
+          appearance: none;
+          background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%239CA3AF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 12px center;
+          cursor: pointer;
+          box-sizing: border-box;
+        }
+
+        /* Search row */
+        .tl-search-row {
+          display: flex;
+          gap: 12px;
+          align-items: stretch;
+        }
+        .tl-search-wrap {
+          flex: 1;
+          position: relative;
+        }
+        .tl-search-icon {
+          position: absolute;
+          left: 14px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #9ca3af;
+          pointer-events: none;
+        }
+        .tl-search-input {
+          width: 100%;
+          padding: 0.65rem 0.85rem 0.65rem 2.6rem;
+          border: 1.5px solid #83C757;
+          border-radius: 10px;
+          font-size: 0.85rem;
+          font-family: 'Manrope', sans-serif;
+          font-weight: 500;
+          color: #83C757;
+          background: #fff;
+          outline: none;
+          box-sizing: border-box;
+        }
+        .tl-search-input::placeholder { color: #83C757; font-weight: 600; }
+        .tl-search-input:focus { box-shadow: 0 0 0 3px rgba(131,199,87,0.12); color: #1a1a1a; }
+
+        .tl-btn-display {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 0 18px;
+          border-radius: 10px;
+          border: 1.5px solid #d1d5db;
+          background: #fff;
+          font-family: 'Manrope', sans-serif;
+          font-size: 0.82rem;
+          font-weight: 700;
+          color: #374151;
+          cursor: pointer;
+          transition: all 0.15s;
+        }
+        .tl-btn-display:hover { background: #f9fafb; border-color: #9ca3af; }
+
+        /* Table */
+        .tl-table-card {
+          background: #fff;
+          border: 1.5px solid #d6e4d6;
+          border-radius: 14px;
+          overflow: hidden;
+        }
+        .tl-table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        .tl-table thead th {
+          text-align: left;
+          padding: 12px 14px;
+          font-size: 0.72rem;
+          font-weight: 700;
+          color: #6b7280;
+          border-bottom: 1px solid #e5e7eb;
+        }
+        .tl-table tbody td {
+          padding: 14px;
+          font-size: 0.78rem;
+          color: #374151;
+          border-bottom: 1px solid #f3f4f6;
+          vertical-align: middle;
+        }
+        .tl-table tbody tr:last-child td { border-bottom: none; }
+        .tl-table tbody tr:hover { background: #fafefe; }
+
+        .tl-type-badge {
+          color: #83C757;
+          font-weight: 700;
+          font-size: 0.78rem;
+        }
+        .tl-solde {
+          font-weight: 600;
+          font-size: 0.78rem;
+          color: #83C757;
+        }
+        .tl-modele {
+          font-size: 0.78rem;
+          color: #83C757;
+        }
+
+        .tl-action-btn {
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 3px;
+          color: #9ca3af;
+          transition: color 0.15s;
+        }
+        .tl-action-btn:hover { color: #374151; }
+
+        /* Empty */
+        .tl-empty {
+          text-align: center;
+          padding: 3.5rem 1rem;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        }
+        .tl-empty-icon {
+          margin: 0 0 18px 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .tl-empty-title {
+          font-size: 0.88rem;
+          font-weight: 700;
+          color: #1a1a1a;
+          margin: 0 0 6px 0;
+        }
+        .tl-empty-text {
+          font-size: 0.8rem;
+          color: #6b7280;
+          margin: 0 0 14px 0;
+          font-weight: 500;
+        }
+        .tl-empty-link {
+          color: #83C757;
+          font-weight: 700;
+          text-decoration: underline;
+          cursor: pointer;
+          font-size: 0.8rem;
+          background: none;
+          border: none;
+          font-family: 'Manrope', sans-serif;
+        }
+        .tl-empty-link:hover { color: #4b8c2a; }
+
+        /* Loading */
+        .tl-loading {
+          text-align: center;
+          padding: 3rem;
+          color: #6b7280;
+          font-size: 0.85rem;
+        }
+      `}</style>
+
+      <div className="tl-page">
+        {/* Header */}
+        <div className="tl-header">
           <div>
-            <p className="font-semibold text-emerald-900">Passez à Premium</p>
-            <p className="text-sm text-emerald-700">Compte illimité dès 4,90 FCFA/mois</p>
+            <h1 className="tl-title">Liste des locataires</h1>
+            <p className="tl-subtitle">Créez un nouveau contrat entre un bien et un locataire</p>
           </div>
+          <button className="tl-btn-add" onClick={handleAdd}>
+            <Plus size={15} />
+            Ajouter un locataire
+          </button>
         </div>
-        <Button 
-          variant="outline" 
-          size="sm"
-          className="border-emerald-300 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-400 transition-all"
-        >
-          Découvrir Premium
-        </Button>
-      </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-slate-100 p-1 rounded-lg w-fit">
-        <button
-          onClick={() => setActiveTab("actifs")}
-          className={`px-6 py-2.5 font-medium rounded-md transition-all duration-300 flex items-center gap-2 ${
-            activeTab === "actifs" 
-              ? "bg-white text-blue-600 shadow-sm" 
-              : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
-          }`}
-        >
-          <UserCheck size={16} />
-          <span>Actifs</span>
-          <span className={`px-2 py-0.5 text-xs rounded-full ${
-            activeTab === "actifs" ? "bg-blue-100 text-blue-600" : "bg-slate-200 text-slate-600"
-          }`}>
-            {filteredLocataires.length}
-          </span>
-        </button>
+        {/* Tabs */}
+        <div className="tl-tabs">
+          <button
+            className={`tl-tab ${activeTab === "actifs" ? "active" : ""}`}
+            onClick={() => setActiveTab("actifs")}
+          >
+            <span className="tl-tab-icon">✓</span>
+            Actifs
+            <span className="tl-tab-count">{actifCount}</span>
+          </button>
+          <button
+            className={`tl-tab ${activeTab === "archives" ? "active" : ""}`}
+            onClick={() => setActiveTab("archives")}
+          >
+            <span className="tl-tab-icon">📁</span>
+            Archives
+            <span className="tl-tab-count">0</span>
+          </button>
+        </div>
 
-        <button
-          onClick={() => setActiveTab("archives")}
-          className={`px-6 py-2.5 font-medium rounded-md transition-all duration-300 flex items-center gap-2 ${
-            activeTab === "archives" 
-              ? "bg-white text-slate-900 shadow-sm" 
-              : "text-slate-600 hover:text-slate-900 hover:bg-white/50"
-          }`}
-        >
-          <Archive size={16} />
-          <span>Archives</span>
-          <span className="px-2 py-0.5 text-xs bg-slate-200 text-slate-600 rounded-full">0</span>
-        </button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-5 bg-white border-slate-200 hover:border-blue-300 transition-all duration-300 group hover:shadow-md">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-slate-500 mb-1">Total locataires</div>
-              <div className="text-2xl font-bold text-slate-900">{locataires.length}</div>
-            </div>
-            <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-              <Users className="text-blue-600" size={20} />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-5 bg-white border-slate-200 hover:border-emerald-300 transition-all duration-300 group hover:shadow-md">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-slate-500 mb-1">Actifs</div>
-              <div className="text-2xl font-bold text-emerald-600">{locataires.filter(l => l.etat === 'actif').length}</div>
-            </div>
-            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
-              <UserCheck className="text-emerald-600" size={20} />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-5 bg-white border-slate-200 hover:border-amber-300 transition-all duration-300 group hover:shadow-md">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-slate-500 mb-1">Invités</div>
-              <div className="text-2xl font-bold text-amber-600">{locataires.filter(l => l.etat === 'invited').length}</div>
-            </div>
-            <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
-              <Clock className="text-amber-600" size={20} />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-5 bg-white border-slate-200 hover:border-slate-300 transition-all duration-300 group hover:shadow-md">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-slate-500 mb-1">Inactifs</div>
-              <div className="text-2xl font-bold text-slate-600">{locataires.filter(l => l.etat === 'inactif').length}</div>
-            </div>
-            <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-slate-100 transition-colors">
-              <UserX className="text-slate-600" size={20} />
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Search & Filters */}
-      <Card className="p-6 bg-white border-slate-200 shadow-sm">
-        <div className="flex flex-col lg:flex-row gap-6">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
-              <input
-                type="text"
-                placeholder="Rechercher par nom, email ou téléphone..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-              />
-            </div>
-          </div>
-
-          <div className="flex gap-4">
-            <div className="relative">
-              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
+        {/* Filters card */}
+        <div className="tl-card">
+          <p className="tl-filter-title">FILTRER - UTILISEZ LES OPTIONS CI-DESSOUS</p>
+          <div className="tl-filter-row">
+            <div className="tl-filter-field">
+              <span className="tl-filter-label">Bien</span>
               <select
+                className="tl-select"
                 value={filterBien}
                 onChange={(e) => setFilterBien(e.target.value)}
-                className="pl-10 pr-8 py-3 rounded-lg border border-slate-300 bg-white text-slate-900 appearance-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               >
                 <option>Tous les biens</option>
-                {biensUniques.map((bien) => (
-                  <option key={bien}>{bien}</option>
+                {biensUniques.map((b) => (
+                  <option key={b}>{b}</option>
                 ))}
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={16} />
             </div>
-
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              icon={<Settings size={16} />}
-              className="px-4 py-3 border border-slate-300 hover:border-slate-400"
-            >
-              Affichage
-            </Button>
+            <div className="tl-filter-field">
+              <span className="tl-filter-label">Lignes par page</span>
+              <select
+                className="tl-select"
+                value={linesPerPage}
+                onChange={(e) => setLinesPerPage(e.target.value)}
+              >
+                <option value="25">25 lignes</option>
+                <option value="50">50 lignes</option>
+                <option value="100">100 lignes</option>
+              </select>
+            </div>
           </div>
         </div>
-      </Card>
 
-      {/* TENANTS TABLE */}
-      <Card className="p-0 overflow-hidden border-slate-200 shadow-sm">
-        {/* Loading */}
-        {loading && (
-          <div className="p-12 text-center">
-            <div className="inline-flex items-center justify-center">
-              <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mr-3"></div>
-              <p className="text-slate-600 font-medium">Chargement des locataires...</p>
+        {/* Search */}
+        <div className="tl-card">
+          <div className="tl-search-row">
+            <div className="tl-search-wrap">
+              <Search size={16} className="tl-search-icon" style={{ color: "#83C757" }} />
+              <input
+                type="text"
+                className="tl-search-input"
+                placeholder="Rechercher"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
+            <button className="tl-btn-display">
+              <Settings size={15} />
+              Affichage
+            </button>
           </div>
-        )}
+        </div>
 
-        {/* Error */}
-        {!loading && error && (
-          <div className="p-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-4">
-              <AlertCircle className="text-rose-500" size={24} />
-            </div>
-            <p className="text-slate-700 font-medium mb-2">Erreur de chargement</p>
-            <p className="text-slate-500 mb-6">{error}</p>
-            <Button 
-              variant="outline" 
-              onClick={fetchTenants}
-              className="border-blue-300 text-blue-600 hover:bg-blue-50"
-            >
-              Réessayer
-            </Button>
-          </div>
-        )}
+        {/* Table OR empty state */}
+        <div className="tl-table-card">
+          {loading && (
+            <div className="tl-loading">Chargement des locataires...</div>
+          )}
 
-        {/* Table */}
-        {!loading && !error && filteredLocataires.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
+          {!loading && !error && filteredLocataires.length > 0 && (
+            <table className="tl-table">
+              <thead>
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Locataire</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Type</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Bien</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Contact</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Solde</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">État</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">Actions</th>
+                  <th>Locataire</th>
+                  <th>Type</th>
+                  <th>Bien</th>
+                  <th>Téléphone</th>
+                  <th>Email</th>
+                  <th>Solde</th>
+                  <th>Etat</th>
+                  <th>Modèle</th>
+                  <th>Action</th>
                 </tr>
               </thead>
-
-              <tbody className="divide-y divide-slate-100">
-                {filteredLocataires.map((locataire, index) => (
-                  <tr 
-                    key={locataire.id} 
-                    className="hover:bg-slate-50 transition-all duration-300 group animate-fade-in"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 flex items-center justify-center group-hover:from-blue-200 group-hover:to-indigo-200 transition-all">
-                          <span className="font-semibold text-blue-600">
-                            {locataire.nom.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-slate-900 group-hover:text-blue-600 transition-colors">
-                            {locataire.nom}
-                          </p>
-                          {locataire.etat === 'invited' && (
-                            <p className="text-xs text-amber-600 mt-1 flex items-center gap-1">
-                              <Clock size={10} />
-                              En attente d'acceptation
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-slate-600">{locataire.type}</span>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <div className="max-w-xs">
-                        <span className="text-sm text-slate-600 line-clamp-2">{locataire.bien}</span>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <div className="space-y-1">
-                        <a 
-                          href={`mailto:${locataire.email}`} 
-                          className="flex items-center gap-2 text-sm text-slate-700 hover:text-blue-600 transition-colors group/link"
-                        >
-                          <Mail size={12} className="text-slate-400 group-hover/link:text-blue-500" />
-                          <span className="truncate max-w-[150px]">{locataire.email}</span>
-                        </a>
-                        <a 
-                          href={`tel:${locataire.telephone}`} 
-                          className="flex items-center gap-2 text-sm text-slate-700 hover:text-blue-600 transition-colors group/link"
-                        >
-                          <Phone size={12} className="text-slate-400 group-hover/link:text-blue-500" />
-                          {locataire.telephone}
-                        </a>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <div className={`inline-flex items-center px-3 py-1.5 rounded-full ${getSoldeBg(locataire.solde)}`}>
-                        <span className={`text-sm font-medium ${getSoldeColor(locataire.solde)}`}>
-                          {locataire.solde > 0 ? "+" : ""}
-                          {locataire.solde.toLocaleString()} FCFA
-                        </span>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${getEtatColor(locataire.etat)}`}>
-                        {getEtatIcon(locataire.etat)}
-                        {locataire.etat.charAt(0).toUpperCase() + locataire.etat.slice(1)}
-                      </span>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-1">
-                        <button 
-                          onClick={() => handleViewDetails(locataire.id)}
-                          className="p-2 rounded-lg hover:bg-slate-100 transition-colors group/btn"
-                          title="Voir détails"
-                        >
-                          <Eye size={16} className="text-slate-500 group-hover/btn:text-blue-600" />
+              <tbody>
+                {filteredLocataires.map((loc) => (
+                  <tr key={loc.id}>
+                    <td style={{ fontWeight: 600 }}>{loc.nom}</td>
+                    <td><span className="tl-type-badge">{loc.type}</span></td>
+                    <td>{loc.bien}</td>
+                    <td>{loc.telephone}</td>
+                    <td>{loc.email}</td>
+                    <td><span className="tl-solde">{loc.solde} FCFA</span></td>
+                    <td>Inconnu</td>
+                    <td><span className="tl-modele">0 Modèle</span></td>
+                    <td>
+                      <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                        <button className="tl-action-btn" title="Voir">
+                          <Eye size={14} />
                         </button>
-                        
-                        <button 
-                          onClick={() => handleEditLocataire(locataire.id)}
-                          className="p-2 rounded-lg hover:bg-blue-50 transition-colors group/btn"
-                          title="Modifier"
-                        >
-                          <Edit size={16} className="text-slate-500 group-hover/btn:text-blue-600" />
+                        <button className="tl-action-btn" title="Plus">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="5" r="1" />
+                            <circle cx="12" cy="12" r="1" />
+                            <circle cx="12" cy="19" r="1" />
+                          </svg>
                         </button>
-                        
-                        {locataire.etat === 'invited' ? (
-                          <button 
-                            className="p-2 rounded-lg hover:bg-amber-50 transition-colors group/btn"
-                            title="Relancer l'invitation"
-                          >
-                            <Mail size={16} className="text-amber-500 group-hover/btn:text-amber-600" />
-                          </button>
-                        ) : (
-                          <button 
-                            onClick={() => handleInviteZoneMembre(locataire.email)}
-                            className="p-2 rounded-lg hover:bg-emerald-50 transition-colors group/btn"
-                            title="Inviter à la zone membres"
-                          >
-                            <Mail size={16} className="text-emerald-500 group-hover/btn:text-emerald-600" />
-                          </button>
-                        )}
-                        
-                        <button 
-                          onClick={() => handleDeleteLocataire(locataire.id)}
-                          className="p-2 rounded-lg hover:bg-rose-50 transition-colors group/btn"
-                          title="Supprimer"
-                        >
-                          <Trash2 size={16} className="text-rose-500 group-hover/btn:text-rose-600" />
+                        <button className="tl-action-btn" title="Mail">
+                          <Mail size={14} />
                         </button>
                       </div>
                     </td>
@@ -526,77 +539,30 @@ export const TenantsList: React.FC<LocatairesProps> = ({ notify }) => {
                 ))}
               </tbody>
             </table>
-          </div>
-        )}
+          )}
 
-        {/* Empty State */}
-        {!loading && !error && filteredLocataires.length === 0 && (
-          <div className="p-12 text-center">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 flex items-center justify-center mx-auto mb-4">
-              <Users size={32} className="text-blue-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">
-              {searchTerm ? "Aucun locataire trouvé" : "Commencez par inviter vos locataires"}
-            </h3>
-            <p className="text-slate-500 mb-6 max-w-md mx-auto">
-              {searchTerm 
-                ? "Essayez de modifier vos critères de recherche ou vérifiez l'orthographe."
-                : "Invitez vos locataires pour leur donner accès à leur espace personnel, documents, paiements et messages."
-              }
-            </p>
-            <Button 
-              variant="primary" 
-              onClick={handleAddLocataire}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600"
-            >
-              <Plus size={16} className="mr-2" />
-              Ajouter un locataire
-            </Button>
-          </div>
-        )}
-      </Card>
-
-      {/* Zone membres */}
-      <Card className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center">
-              <Users className="text-white" size={20} />
-            </div>
-            <div>
-              <h3 className="font-semibold text-slate-900 mb-1">Zone membres pour vos locataires</h3>
-              <p className="text-sm text-slate-600">
-                Invitez vos locataires pour accéder à leur espace personnel : documents, paiements, messages et plus.
+          {!loading && filteredLocataires.length === 0 && (
+            <div className="tl-empty">
+              {/* Dark silhouette user icon matching screenshot */}
+              <div className="tl-empty-icon">
+                <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+                  <circle cx="28" cy="20" r="9" fill="#4b5563" />
+                  <path d="M10 48C10 38.059 18.059 30 28 30C37.941 30 46 38.059 46 48" fill="#4b5563" />
+                </svg>
+              </div>
+              <p className="tl-empty-title">Aucun locataire trouvé</p>
+              <p className="tl-empty-text">
+                Vous pouvez inviter vos locataires pour leur donner accès à la zone membres.
               </p>
+              <button className="tl-empty-link" onClick={handleAdd}>
+                Créer un locataire
+              </button>
             </div>
-          </div>
-          <Button 
-            variant="outline" 
-            className="border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400"
-          >
-            <ExternalLink size={16} className="mr-2" />
-            Gérer la zone membres
-          </Button>
+          )}
         </div>
-      </Card>
-    </div>
+      </div>
+    </>
   );
 };
 
-// Composant Archive icon manquant
-const Archive = (props: any) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <polyline points="21 8 21 21 3 21 3 8"></polyline>
-    <rect x="1" y="3" width="22" height="5"></rect>
-    <line x1="10" y1="12" x2="14" y2="12"></line>
-  </svg>
-);
-
-// Composant AlertCircle icon manquant
-const AlertCircle = (props: any) => (
-  <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <circle cx="12" cy="12" r="10"></circle>
-    <line x1="12" y1="8" x2="12" y2="12"></line>
-    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-  </svg>
-);
+export default TenantsList;

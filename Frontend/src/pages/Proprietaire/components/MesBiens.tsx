@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   Home,
   MapPin,
@@ -179,12 +179,12 @@ const heatingTypeLabel: Record<string, string> = {
 };
 
 const delegationLabel: Record<string, { label: string; icon: React.ReactNode }> = {
-  agency: { 
-    label: "Géré par agence", 
+  agency: {
+    label: "Géré par agence",
     icon: <Lock size={11} />
   },
-  co_owner: { 
-    label: "Partagé avec co-propriétaire", 
+  co_owner: {
+    label: "Partagé avec co-propriétaire",
     icon: <Users size={11} />
   }
 };
@@ -810,303 +810,367 @@ const btnBase = {
   gap: "6px",
 };
 
-// Composant pour afficher les détails d'un bien
-const PropertyDetailsModal: React.FC<{
-  property: Property;
+// Composant "FICHE BIEN" — modale détail/édition d'un bien (à partir des données mockées)
+function FicheBienModal({
+  bien,
+  onClose,
+}: {
+  bien: typeof biens[0];
   onClose: () => void;
-  onEdit: () => void;
-  canEdit: boolean;
-}> = ({ property, onClose, onEdit, canEdit }) => {
-  const firstPhoto = resolvePhotoUrl(property.photos?.[0] ?? null);
-  const statusKey = property.status ?? "available";
-  const typeText = typeLabel[property.type] ?? property.type;
-  const meta = property.meta || {};
-  
-  // Caractéristiques
-  const features = [
-    { key: 'terrace', label: 'Terrasse', icon: <Home size={16} />, active: meta.terrace },
-    { key: 'balcony', label: 'Balcon', icon: <Home size={16} />, active: meta.balcony },
-    { key: 'garden', label: 'Jardin', icon: <Home size={16} />, active: meta.garden },
-    { key: 'parking', label: 'Parking', icon: <Home size={16} />, active: meta.parking },
-    { key: 'elevator', label: 'Ascenseur', icon: <Layers size={16} />, active: meta.elevator },
-    { key: 'furnished', label: 'Meublé', icon: <Home size={16} />, active: meta.furnished },
-  ];
+}) {
+  // Split adresse / ville from mock data
+  const parts = bien.adresse.split(", ");
+  const adresseInit = parts[0] || "";
+  const villeInit = parts[1] || "";
+
+  const [nom, setNom] = useState(bien.titre);
+  const [statut, setStatut] = useState(bien.statut);
+  const [type, setType] = useState(bien.type);
+  const [adresse, setAdresse] = useState(adresseInit);
+  const [ville, setVille] = useState(villeInit);
+  const [codePostal, setCodePostal] = useState("00229");
+  const [quartier, setQuartier] = useState("");
+  const [surface, setSurface] = useState(bien.surface);
+  const [loyer, setLoyer] = useState(bien.loyer.replace(/\./g, ""));
+  const [photoUrl, setPhotoUrl] = useState(bien.image);
+
+  const photoInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSave = () => {
+    // Pour l'instant, on ferme simplement la modale
+    onClose();
+  };
 
   return (
-    <div className="view-modal-content">
-      <div className="view-header">
-        <button className="modal-close" onClick={onClose}>
-          <X size={20} />
-        </button>
-        <div className="view-header-content">
-          <div className="view-title-section">
-            <h2 className="view-title">{property.name || "Bien sans titre"}</h2>
-            <p className="view-subtitle">
-              {property.address}
-              {property.district ? `, ${property.district}` : ""}
-              {property.city ? `, ${property.city}` : ""}
-              {property.zip_code ? ` ${property.zip_code}` : ""}
-            </p>
-            <div className="view-badges">
-              <span className="view-badge">
-                {typeText}
-              </span>
-              <span className="view-badge">
-                {statusLabel[statusKey] ?? property.status}
-              </span>
-              {property.reference_code && (
-                <span className="view-badge">
-                  Réf. {property.reference_code}
-                </span>
-              )}
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 1000,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "rgba(0,0,0,0.38)",
+        backdropFilter: "blur(4px)",
+      }}
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#fff",
+          borderRadius: 24,
+          width: "95%",
+          maxWidth: 860,
+          maxHeight: "92vh",
+          overflowY: "auto",
+          boxShadow: "0 24px 80px rgba(0,0,0,0.18)",
+          fontFamily: "'Manrope', sans-serif",
+        }}
+      >
+        {/* ── Header ── */}
+        <div style={{ padding: "1.5rem 1.75rem 0" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#7c3aed", letterSpacing: "0.08em", textTransform: "uppercase", margin: 0 }}>
+                FICHE BIEN
+              </p>
+              <h2 style={{ fontFamily: "'Merriweather', serif", fontSize: "1.35rem", fontWeight: 800, margin: "6px 0 0 0", color: "#111" }}>
+                {nom || "Sans titre"}
+              </h2>
             </div>
+            <button
+              onClick={onClose}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#9ca3af",
+                padding: 4,
+                borderRadius: 8,
+                transition: "0.15s",
+              }}
+            >
+              <X size={22} />
+            </button>
           </div>
-        </div>
-      </div>
 
-      <div className="view-body">
-        {/* Informations générales */}
-        <div className="view-section">
-          <h3 className="view-section-title">
-            <Home size={20} />
-            Informations générales
-          </h3>
-          <div className="view-grid">
-            <div className="view-field">
-              <span className="view-label">Type</span>
-              <span className="view-value">{typeText}</span>
-            </div>
-            <div className="view-field">
-              <span className="view-label">Statut</span>
-              <span className="view-value">{statusLabel[statusKey] ?? property.status}</span>
-            </div>
-            <div className="view-field">
-              <span className="view-label">Surface</span>
-              <span className="view-value">
-                <Ruler size={16} />
-                {formatSurface(property.surface)}
-              </span>
-            </div>
-            <div className="view-field">
-              <span className="view-label">Loyer mensuel</span>
-              <span className="view-value">
-                <Euro size={16} />
-                {formatPrice(property.rent_amount)}
-              </span>
-            </div>
-            {property.room_count && (
-              <div className="view-field">
-                <span className="view-label">Nombre de pièces</span>
-                <span className="view-value">{property.room_count}</span>
-              </div>
-            )}
-            {property.bedroom_count && (
-              <div className="view-field">
-                <span className="view-label">Nombre de chambres</span>
-                <span className="view-value">
-                  <Bed size={16} />
-                  {property.bedroom_count}
-                </span>
-              </div>
-            )}
-            {property.bathroom_count && (
-              <div className="view-field">
-                <span className="view-label">Nombre de salles de bain</span>
-                <span className="view-value">
-                  <Bath size={16} />
-                  {property.bathroom_count}
-                </span>
-              </div>
-            )}
-            {property.meta?.floor && (
-              <div className="view-field">
-                <span className="view-label">Étage</span>
-                <span className="view-value">
-                  <Layers size={16} />
-                  {property.meta.floor}
-                </span>
-              </div>
-            )}
-          </div>
+          <div style={{ borderBottom: "1.5px solid #e5e7eb", margin: "1rem 0 0" }} />
         </div>
 
-        {/* Adresse complète */}
-        <div className="view-section">
-          <h3 className="view-section-title">
-            <MapPin size={20} />
-            Adresse
-          </h3>
-          <div className="view-grid">
-            <div className="view-field">
-              <span className="view-label">Adresse</span>
-              <span className="view-value">{property.address || "-"}</span>
-            </div>
-            <div className="view-field">
-              <span className="view-label">Ville</span>
-              <span className="view-value">{property.city || "-"}</span>
-            </div>
-            <div className="view-field">
-              <span className="view-label">Code postal</span>
-              <span className="view-value">{property.zip_code || "-"}</span>
-            </div>
-            <div className="view-field">
-              <span className="view-label">Quartier/Arrondissement</span>
-              <span className="view-value">{property.district || "-"}</span>
-            </div>
-          </div>
-        </div>
+        {/* ── Body ── */}
+        <div style={{ padding: "1.25rem 1.75rem 1.5rem" }}>
 
-        {/* Caractéristiques */}
-        <div className="view-section">
-          <h3 className="view-section-title">Caractéristiques</h3>
-          <div className="features-grid">
-            {features.map((feature) => (
-              <div 
-                key={feature.key} 
-                className={`feature-item ${feature.active ? 'active' : 'inactive'}`}
-              >
-                {feature.icon}
-                <span>{feature.label}</span>
-                {feature.active && <Check size={14} />}
-              </div>
-            ))}
-          </div>
-          
-          {(meta.heating_type || meta.energy_class) && (
-            <div className="view-grid" style={{ marginTop: "1.5rem" }}>
-              {meta.heating_type && (
-                <div className="view-field">
-                  <span className="view-label">Type de chauffage</span>
-                  <span className="view-value">
-                    <Thermometer size={16} />
-                    {heatingTypeLabel[meta.heating_type] || meta.heating_type}
-                  </span>
-                </div>
-              )}
-              {meta.energy_class && (
-                <div className="view-field">
-                  <span className="view-label">Classe énergétique</span>
-                  <span className="view-value">
-                    <Zap size={16} />
-                    {meta.energy_class}
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Description */}
-        {property.description && (
-          <div className="view-section">
-            <h3 className="view-section-title">Description</h3>
-            <p style={{ 
-              color: "#4b5563", 
-              lineHeight: "1.6",
-              whiteSpace: "pre-wrap",
-              backgroundColor: "#f9fafb",
-              padding: "1rem",
-              borderRadius: "8px"
-            }}>
-              {property.description}
-            </p>
-          </div>
-        )}
-
-        {/* Photos */}
-        {property.photos && property.photos.length > 0 && (
-          <div className="view-section">
-            <h3 className="view-section-title">
-              <ImageIcon size={20} />
-              Photos ({property.photos.length})
-            </h3>
-            <div className="view-photos">
-              {property.photos.map((photo, index) => {
-                const photoUrl = resolvePhotoUrl(photo);
-                return photoUrl ? (
-                  <div className="view-photo" key={index}>
-                    <img 
-                      src={photoUrl} 
-                      alt={`Photo ${index + 1}`}
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                  </div>
-                ) : null;
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Informations de délégation */}
-        {property.delegation_type && (
-          <div className="view-section">
-            <h3 className="view-section-title">Délégation</h3>
-            <div className="view-grid">
-              <div className="view-field">
-                <span className="view-label">Type de délégation</span>
-                <span className="view-value">
-                  {property.delegation_type === 'agency' ? (
-                    <>
-                      <Lock size={16} />
-                      Géré par agence
-                    </>
-                  ) : (
-                    <>
-                      <Users size={16} />
-                      Partagé avec co-propriétaire
-                    </>
-                  )}
-                </span>
-              </div>
-              {property.delegation_info?.co_owner_name && (
-                <div className="view-field">
-                  <span className="view-label">Nom</span>
-                  <span className="view-value">{property.delegation_info.co_owner_name}</span>
-                </div>
-              )}
-              {property.delegation_info?.co_owner_company && (
-                <div className="view-field">
-                  <span className="view-label">Société</span>
-                  <span className="view-value">{property.delegation_info.co_owner_company}</span>
-                </div>
-              )}
-              {property.delegation_info?.delegated_at && (
-                <div className="view-field">
-                  <span className="view-label">Délégué depuis</span>
-                  <span className="view-value">
-                    {new Date(property.delegation_info.delegated_at).toLocaleDateString('fr-FR')}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="view-actions">
-        <button
-          className="btn-secondary"
-          type="button"
-          onClick={onClose}
-        >
-          <X size={16} />
-          Fermer
-        </button>
-        {canEdit && (
-          <button
-            className="btn-success"
-            type="button"
-            onClick={onEdit}
+          {/* Photo principale */}
+          <div
+            style={{
+              position: "relative",
+              width: "100%",
+              height: 180,
+              borderRadius: 16,
+              overflow: "hidden",
+              background: "linear-gradient(135deg, #e8eaf0 0%, #d5d8e0 100%)",
+              marginBottom: "1.5rem",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
           >
-            <Edit size={16} />
-            Modifier
+            {photoUrl ? (
+              <img
+                src={photoUrl}
+                alt="Photo principale"
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                onError={() => setPhotoUrl("")}
+              />
+            ) : (
+              <ImageIcon size={48} color="#b0b5c0" />
+            )}
+
+            {/* Labels overlaid */}
+            <span
+              style={{
+                position: "absolute",
+                bottom: 12,
+                left: 14,
+                fontSize: "0.72rem",
+                fontWeight: 700,
+                color: "#fff",
+                background: "rgba(0,0,0,0.38)",
+                borderRadius: 6,
+                padding: "3px 10px",
+              }}
+            >
+              Photo principale
+            </span>
+            <button
+              onClick={() => photoInputRef.current?.click()}
+              style={{
+                position: "absolute",
+                bottom: 12,
+                right: 14,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                color: "#374151",
+                background: "#fff",
+                border: "1px solid #d1d5db",
+                borderRadius: 8,
+                padding: "5px 12px",
+                cursor: "pointer",
+              }}
+            >
+              <ImageIcon size={14} />
+              Changer la photo
+            </button>
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoChange}
+              style={{ display: "none" }}
+            />
+          </div>
+
+          {/* ── INFORMATIONS PRINCIPALES ── */}
+          <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#7c3aed", letterSpacing: "0.08em", textTransform: "uppercase", margin: "0 0 8px" }}>
+            INFORMATIONS PRINCIPALES
+          </p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 18 }}>
+            <div>
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#374151", display: "block", marginBottom: 4 }}>Nom / Titre du bien</label>
+              <input
+                type="text"
+                value={nom}
+                onChange={(e) => setNom(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "0.65rem 0.85rem",
+                  border: "1.5px solid #d1d5db",
+                  borderRadius: 10,
+                  fontSize: "0.85rem",
+                  fontFamily: "'Manrope', sans-serif",
+                  fontWeight: 500,
+                  color: "#111",
+                  outline: "none",
+                  boxSizing: "border-box" as const,
+                }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#374151", display: "block", marginBottom: 4 }}>Statut</label>
+              <select
+                value={statut}
+                onChange={(e) => setStatut(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "0.65rem 0.85rem",
+                  border: "1.5px solid #d1d5db",
+                  borderRadius: 10,
+                  fontSize: "0.85rem",
+                  fontFamily: "'Manrope', sans-serif",
+                  fontWeight: 500,
+                  color: "#111",
+                  outline: "none",
+                  background: "#fff",
+                  cursor: "pointer",
+                  boxSizing: "border-box" as const,
+                }}
+              >
+                <option value="Loué">Loué</option>
+                <option value="Disponible">Disponible</option>
+                <option value="En travaux">En travaux</option>
+                <option value="Préavis">Préavis</option>
+                <option value="Meublé">Meublé</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Type (select matching images 2 & 3) */}
+          <div style={{ marginBottom: 18 }}>
+            <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#374151", display: "block", marginBottom: 4 }}>Type</label>
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "0.65rem 0.85rem",
+                border: "1.5px solid #d1d5db",
+                borderRadius: 10,
+                fontSize: "0.85rem",
+                fontFamily: "'Manrope', sans-serif",
+                fontWeight: 500,
+                color: "#111",
+                outline: "none",
+                background: "#fff",
+                cursor: "pointer",
+                boxSizing: "border-box" as const,
+              }}
+            >
+              <option value="APPARTEMENT">Appartement</option>
+              <option value="MAISON">Maison</option>
+              <option value="BUREAU">Bureau</option>
+              <option value="LOCAL COMMERCIAL">Local commercial</option>
+              <option value="PARKING">Parking</option>
+              <option value="AUTRE">Autre</option>
+            </select>
+          </div>
+
+          {/* ── ADRESSE ── */}
+          <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#7c3aed", letterSpacing: "0.08em", textTransform: "uppercase", margin: "0 0 8px" }}>
+            ADRESSE
+          </p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+            <div>
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#374151", display: "block", marginBottom: 4 }}>Adresse</label>
+              <input type="text" value={adresse} onChange={(e) => setAdresse(e.target.value)} style={inputStyle} />
+            </div>
+            <div>
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#374151", display: "block", marginBottom: 4 }}>Ville</label>
+              <input type="text" value={ville} onChange={(e) => setVille(e.target.value)} style={inputStyle} />
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 18 }}>
+            <div>
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#374151", display: "block", marginBottom: 4 }}>Code postal</label>
+              <input type="text" value={codePostal} onChange={(e) => setCodePostal(e.target.value)} style={inputStyle} />
+            </div>
+            <div>
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#374151", display: "block", marginBottom: 4 }}>Quartier</label>
+              <input type="text" value={quartier} onChange={(e) => setQuartier(e.target.value)} style={inputStyle} />
+            </div>
+          </div>
+
+          {/* ── CARACTÉRISTIQUES ── */}
+          <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#7c3aed", letterSpacing: "0.08em", textTransform: "uppercase", margin: "0 0 8px" }}>
+            CARACTÉRISTIQUES
+          </p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 8 }}>
+            <div>
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#374151", display: "block", marginBottom: 4 }}>Surface (m²)</label>
+              <input type="text" value={surface} onChange={(e) => setSurface(e.target.value)} style={inputStyle} />
+            </div>
+            <div>
+              <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#374151", display: "block", marginBottom: 4 }}>Loyer mensuel (FCFA)</label>
+              <input type="text" value={loyer} onChange={(e) => setLoyer(e.target.value)} style={inputStyle} />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Footer ── */}
+        <div
+          style={{
+            padding: "1rem 1.75rem 1.25rem",
+            borderTop: "1.5px solid #e5e7eb",
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 10,
+          }}
+        >
+          <button
+            onClick={onClose}
+            style={{
+              padding: "10px 22px",
+              borderRadius: 10,
+              border: "1.5px solid #d1d5db",
+              background: "#fff",
+              fontFamily: "'Manrope', sans-serif",
+              fontSize: "0.82rem",
+              fontWeight: 700,
+              color: "#374151",
+              cursor: "pointer",
+            }}
+          >
+            Annuler
           </button>
-        )}
+          <button
+            onClick={handleSave}
+            style={{
+              padding: "10px 22px",
+              borderRadius: 10,
+              border: "none",
+              background: "linear-gradient(135deg, #7c3aed 0%, #6366f1 100%)",
+              fontFamily: "'Manrope', sans-serif",
+              fontSize: "0.82rem",
+              fontWeight: 700,
+              color: "#fff",
+              cursor: "pointer",
+              boxShadow: "0 4px 14px rgba(124,58,237,0.25)",
+            }}
+          >
+            Enregistrer les modifications
+          </button>
+        </div>
       </div>
     </div>
   );
+}
+
+// Shared input style for FicheBienModal
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "0.65rem 0.85rem",
+  border: "1.5px solid #d1d5db",
+  borderRadius: 10,
+  fontSize: "0.85rem",
+  fontFamily: "'Manrope', sans-serif",
+  fontWeight: 500,
+  color: "#111",
+  outline: "none",
+  boxSizing: "border-box",
+  background: "#fff",
 };
 
 // Composant pour éditer un bien
@@ -1150,14 +1214,14 @@ const EditPropertyModal: React.FC<{
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    
+
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData(prev => ({ ...prev, [name]: checked }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
-    
+
     if (errors[name]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -1173,7 +1237,7 @@ const EditPropertyModal: React.FC<{
 
     const fileArray = Array.from(files);
     const maxPhotos = 8 - photos.length - newPhotos.length;
-    
+
     if (fileArray.length > maxPhotos) {
       notify?.(`Maximum ${maxPhotos} photos supplémentaires autorisées`, "error");
       return;
@@ -1181,7 +1245,7 @@ const EditPropertyModal: React.FC<{
 
     const newFiles = fileArray.slice(0, maxPhotos);
     setNewPhotos(prev => [...prev, ...newFiles]);
-    
+
     const newPreviews = newFiles.map(file => URL.createObjectURL(file));
     setPhotoPreviews(prev => [...prev, ...newPreviews]);
   };
@@ -1263,22 +1327,22 @@ const EditPropertyModal: React.FC<{
       };
 
       await propertyService.updateProperty(property.id, payload);
-      
+
       notify?.("✅ Le bien a été mis à jour avec succès !", "success");
       onSuccess();
     } catch (error: any) {
       console.error("Erreur lors de la mise à jour:", error);
       const errorMsg = error.response?.data?.message || "Une erreur est survenue";
       notify?.(errorMsg, "error");
-      
+
       if (error.response?.status === 422 && error.response?.data?.errors) {
         const validationErrors = error.response.data.errors;
         const formattedErrors: Record<string, string> = {};
-        
+
         Object.keys(validationErrors).forEach(key => {
           formattedErrors[key] = validationErrors[key][0];
         });
-        
+
         setErrors(formattedErrors);
       }
     } finally {
@@ -1682,7 +1746,7 @@ const EditPropertyModal: React.FC<{
             <ImageIcon size={18} />
             Photos ({photos.length + newPhotos.length}/8)
           </h3>
-          
+
           {(photos.length > 0 || photoPreviews.length > 0) && (
             <div className="photos-grid">
               {photos.map((photo, index) => {
@@ -1700,7 +1764,7 @@ const EditPropertyModal: React.FC<{
                   </div>
                 ) : null;
               })}
-              
+
               {photoPreviews.map((preview, index) => (
                 <div className="photo-item" key={`new-${index}`}>
                   <img src={preview} alt={`Nouvelle photo ${index + 1}`} />
@@ -1769,26 +1833,31 @@ const EditPropertyModal: React.FC<{
   );
 };
 
-function BienCard({ bien }: { bien: typeof biens[0] }) {
+function BienCard({ bien, onClick }: { bien: typeof biens[0]; onClick: () => void }) {
   return (
-    <div style={{
-      background: "#fff",
-      border: "1px solid rgba(131,199,87,0.4)",
-      borderRadius: "16px",
-      overflow: "hidden",
-      boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
-      transition: "box-shadow 0.2s",
-      cursor: "pointer",
-    }}>
+    <div
+      onClick={onClick}
+      style={{
+        background: "#fff",
+        border: "1px solid rgba(131,199,87,0.4)",
+        borderRadius: "16px",
+        overflow: "hidden",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
+        transition: "box-shadow 0.2s, transform 0.15s",
+        cursor: "pointer",
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 8px 28px rgba(0,0,0,0.12)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.05)"; e.currentTarget.style.transform = "translateY(0)"; }}
+    >
       {/* Image */}
       <div style={{ position: "relative", height: "200px", overflow: "hidden" }}>
         <img
           src={bien.image}
           alt={bien.titre}
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          onError={(e) => { 
+          onError={(e) => {
             const img = e.currentTarget;
-            img.style.display = "none"; 
+            img.style.display = "none";
           }}
         />
         <span style={{
@@ -1852,6 +1921,7 @@ export default function MesBiens({ notify, currentUser }: MesBiensProps) {
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState("Tous");
   const [search, setSearch] = useState("");
+  const [selectedBien, setSelectedBien] = useState<typeof biens[0] | null>(null);
 
   const filtered = biens.filter((b) => {
     const matchFilter = activeFilter === "Tous" || b.statut === activeFilter;
@@ -1900,14 +1970,14 @@ export default function MesBiens({ notify, currentUser }: MesBiensProps) {
             />
           </div>
           {/* Ajouter */}
-          <button 
+          <button
             className="animate-scaleIn animate-delay-200"
             onClick={() => navigate("/proprietaire/ajouter-bien")}
-            style={{ 
-              ...btnBase, 
-              background: "rgba(131,199,87,1)", 
-              color: "#fff", 
-              borderRadius: "10px", 
+            style={{
+              ...btnBase,
+              background: "rgba(131,199,87,1)",
+              color: "#fff",
+              borderRadius: "10px",
               padding: "10px 22px",
               width: "280px"
             }}
@@ -1954,9 +2024,17 @@ export default function MesBiens({ notify, currentUser }: MesBiensProps) {
       {/* Grid */}
       <div className="animate-fadeInUp animate-delay-300" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "22px" }}>
         {filtered.map((bien) => (
-          <BienCard key={bien.id} bien={bien} />
+          <BienCard key={bien.id} bien={bien} onClick={() => setSelectedBien(bien)} />
         ))}
       </div>
+
+      {/* Modal FICHE BIEN */}
+      {selectedBien && (
+        <FicheBienModal
+          bien={selectedBien}
+          onClose={() => setSelectedBien(null)}
+        />
+      )}
     </div>
   );
 }

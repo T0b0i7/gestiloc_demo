@@ -1,10 +1,9 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { tenantService } from "@/services/api";
 import {
   ArrowLeft,
   Save,
-  UserPlus,
   Mail,
   Phone,
   Calendar,
@@ -14,482 +13,21 @@ import {
   Home,
   X,
   ArrowRight,
-  Euro,
   AlertCircle,
   CheckCircle2,
   Info,
-  BadgeCheck,
-  Sparkles,
-  ShieldCheck,
-  ChevronRight,
+  Camera,
+  FileText,
+  Loader2,
 } from "lucide-react";
 
-/**
- * ✅ EXACTEMENT ton composant (structure / largeur identiques)
- * ✅ PAS d'emojis
- * ✅ Même style & mêmes couleurs que ton exemple (667eea -> 764ba2 + accents vert)
- * ✅ Logique inchangée
- */
+/* ─── Types ─── */
 
-type TabKey = "infos" | "contact" | "pro" | "garant";
+type TabKey = "infos" | "pro" | "garant" | "documents";
 type ToastType = "success" | "error" | "info";
 
-const styles = `
-  :root{
-    --gradA: #667eea;
-    --gradB: #764ba2;
-    --indigo: #4f46e5;
-    --violet: #7c3aed;
-    --emerald: #10b981;
-
-    --ink: #0f172a;
-    --muted: #64748b;
-    --muted2:#94a3b8;
-
-    --line: rgba(15,23,42,.10);
-    --line2: rgba(15,23,42,.08);
-    --shadow: 0 22px 70px rgba(0,0,0,.18);
-  }
-
-  .form-container {
-    min-height: 100vh;
-    background: #ffffff;
-    padding: 2rem;
-    position: relative;
-  }
-
-  /* ✅ fond discret moderne (mêmes couleurs) */
-  .form-container::before{
-    content:"";
-    position: fixed;
-    inset: 0;
-    background:
-      radial-gradient(900px 520px at 12% -8%, rgba(102,126,234,.16) 0%, rgba(102,126,234,0) 62%),
-      radial-gradient(900px 520px at 92% 8%, rgba(118,75,162,.14) 0%, rgba(118,75,162,0) 64%),
-      radial-gradient(700px 420px at 40% 110%, rgba(16,185,129,.10) 0%, rgba(16,185,129,0) 60%);
-    pointer-events: none;
-    z-index: -2;
-  }
-
-  .form-card {
-    max-width: 1200px;
-    margin: 0 auto;
-    background: rgba(255,255,255,.92);
-    border-radius: 22px;
-    box-shadow: var(--shadow);
-    overflow: hidden;
-    border: 1px solid rgba(102,126,234,.18);
-    position: relative;
-    backdrop-filter: blur(10px);
-  }
-
-  /* ✅ micro texture (mêmes couleurs) */
-  .form-card::before{
-    content:"";
-    position:absolute;
-    inset:0;
-    pointer-events:none;
-    background:
-      radial-gradient(circle at 14% 18%, rgba(102,126,234,.10), rgba(102,126,234,0) 58%),
-      radial-gradient(circle at 88% 30%, rgba(118,75,162,.10), rgba(118,75,162,0) 58%),
-      radial-gradient(circle at 50% 95%, rgba(16,185,129,.08), rgba(16,185,129,0) 55%);
-    z-index: 0;
-  }
-
-  .form-header {
-    background: linear-gradient(135deg, var(--gradA) 0%, var(--gradB) 100%);
-    padding: 2.5rem;
-    color: white;
-    position: relative;
-    overflow: hidden;
-    z-index: 1;
-  }
-
-  /* ✅ SVG décoratifs header */
-  .header-art {
-    position:absolute;
-    inset:0;
-    pointer-events:none;
-    z-index:0;
-  }
-  .header-art .blob{
-    position:absolute;
-    right:-180px;
-    top:-210px;
-    width: 640px;
-    height: 640px;
-    opacity: .95;
-    filter: drop-shadow(0 18px 44px rgba(0,0,0,.18));
-  }
-  .header-art .ring{
-    position:absolute;
-    left:-140px;
-    bottom:-180px;
-    width: 520px;
-    height: 520px;
-    opacity: .55;
-  }
-
-  .form-header h1 {
-    font-size: 2rem;
-    font-weight: 900;
-    margin: 0 0 0.6rem 0;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    letter-spacing: -0.02em;
-    position: relative;
-    z-index: 1;
-  }
-
-  .header-row{
-    display:flex;
-    align-items:center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-    position: relative;
-    z-index: 1;
-  }
-
-  .form-header p {
-    margin: 0;
-    opacity: 0.94;
-    font-size: 1rem;
-    font-weight: 650;
-    position: relative;
-    z-index: 1;
-    max-width: 72ch;
-  }
-
-  .badge-row{
-    display:flex;
-    gap: .6rem;
-    align-items:center;
-    flex-wrap: wrap;
-  }
-
-  .pill{
-    display:inline-flex;
-    align-items:center;
-    gap: .5rem;
-    padding: .5rem .75rem;
-    border-radius: 999px;
-    background: rgba(255,255,255,.14);
-    border: 1px solid rgba(255,255,255,.18);
-    backdrop-filter: blur(10px);
-    font-weight: 850;
-    font-size: .82rem;
-    white-space: nowrap;
-  }
-
-  .form-body {
-    padding: 2.5rem;
-    position: relative;
-    z-index: 1;
-  }
-
-  .section {
-    margin-bottom: 2.5rem;
-    background: rgba(255,255,255,.72);
-    padding: 2rem;
-    border-radius: 16px;
-    border: 1px solid rgba(17,24,39,.08);
-    box-shadow: 0 10px 30px rgba(17,24,39,.06);
-    backdrop-filter: blur(10px);
-  }
-
-  .section-title {
-    font-size: 1.05rem;
-    font-weight: 950;
-    color: var(--ink);
-    margin: 0 0 1.25rem 0;
-    padding-bottom: 0.85rem;
-    border-bottom: 2px solid rgba(102,126,234,.28);
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    letter-spacing: -0.01em;
-  }
-
-  .section-title .step{
-    margin-left: auto;
-    display:inline-flex;
-    align-items:center;
-    gap: .45rem;
-    padding: .25rem .6rem;
-    border-radius: 999px;
-    background: rgba(79,70,229,.10);
-    border: 1px solid rgba(79,70,229,.18);
-    color: #4338ca;
-    font-weight: 950;
-    font-size: .78rem;
-  }
-
-  .form-grid { display: grid; gap: 1.25rem; }
-  .form-grid-2 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
-  .form-grid-3 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-
-  .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
-
-  .form-label {
-    font-size: 0.85rem;
-    font-weight: 900;
-    color: #334155;
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-  }
-
-  .required { color: #e11d48; }
-
-  .form-input, .form-select, .form-textarea {
-    width: 100%;
-    padding: 0.85rem 1rem;
-    border: 2px solid rgba(148,163,184,.35);
-    border-radius: 12px;
-    font-size: 1rem;
-    color: var(--ink);
-    background: rgba(255,255,255,.92);
-    transition: all 0.2s ease;
-    font-family: inherit;
-    font-weight: 700;
-    box-shadow: 0 2px 10px rgba(15,23,42,.04);
-  }
-
-  .form-input:focus, .form-select:focus, .form-textarea:focus {
-    outline: none;
-    border-color: rgba(79,70,229,.75);
-    box-shadow: 0 0 0 4px rgba(79,70,229,0.14);
-  }
-
-  .form-input::placeholder, .form-textarea::placeholder {
-    color: #94a3b8;
-    font-weight: 650;
-  }
-
-  .input-error{
-    border-color: rgba(225,29,72,.72) !important;
-    box-shadow: 0 0 0 4px rgba(225,29,72,.10) !important;
-  }
-
-  .field-error{
-    display:flex;
-    gap: 8px;
-    align-items:flex-start;
-    color: #be123c;
-    font-weight: 900;
-    font-size: .8rem;
-    line-height: 1.2;
-    margin-top: 2px;
-  }
-
-  .form-input-icon { position: relative; }
-  .form-input-icon input, .form-input-icon textarea, .form-input-icon select { padding-left: 2.85rem; }
-
-  .icon-wrapper {
-    position: absolute;
-    left: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #64748b;
-    pointer-events: none;
-  }
-
-  .form-textarea { min-height: 100px; resize: vertical; }
-
-  .helper-text {
-    font-size: 0.78rem;
-    color: #64748b;
-    margin-top: 0.25rem;
-    font-weight: 650;
-  }
-
-  .switch-item { display: flex; align-items: center; gap: 0.75rem; }
-  .switch {
-    position: relative;
-    width: 52px;
-    height: 28px;
-    background: rgba(148,163,184,.55);
-    border-radius: 999px;
-    cursor: pointer;
-    transition: background 0.25s ease;
-    border: 1px solid rgba(15,23,42,.10);
-  }
-  .switch.active { background: rgba(79,70,229,.85); }
-  .switch-thumb {
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 22px;
-    height: 22px;
-    background: white;
-    border-radius: 50%;
-    transition: transform 0.25s ease;
-    box-shadow: 0 8px 18px rgba(0,0,0,0.20);
-  }
-  .switch.active .switch-thumb { transform: translateX(24px); }
-  .switch-label { font-size: 0.9rem; color: var(--ink); font-weight: 850; }
-
-  .button{
-    padding: 0.9rem 1.35rem;
-    border-radius: 14px;
-    font-weight: 950;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-family: inherit;
-    white-space: nowrap;
-  }
-  .button:disabled{ opacity: .65; cursor:not-allowed; }
-
-  .button-primary{
-    background: linear-gradient(135deg, var(--indigo) 0%, var(--violet) 100%);
-    color: #fff;
-    box-shadow: 0 14px 30px rgba(79,70,229,.22);
-  }
-  .button-primary:hover:not(:disabled){
-    transform: translateY(-1px);
-    box-shadow: 0 18px 34px rgba(79,70,229,.28);
-  }
-
-  .button-secondary{
-    background: rgba(255,255,255,.92);
-    color: #4338ca;
-    border: 2px solid rgba(67,56,202,.20);
-  }
-  .button-secondary:hover{ background: rgba(67,56,202,.06); }
-
-  .button-danger{
-    background: rgba(255,255,255,.92);
-    color: #e11d48;
-    border: 2px solid rgba(225,29,72,.18);
-  }
-  .button-danger:hover{ background: rgba(225,29,72,.06); }
-
-  .top-actions{
-    display:flex;
-    justify-content: space-between;
-    align-items:center;
-    margin-bottom: 2rem;
-    flex-wrap:wrap;
-    gap: 1rem;
-  }
-  .top-actions-right{ display:flex; gap:.75rem; flex-wrap:wrap; }
-
-  .bottom-actions{
-    display:flex;
-    justify-content:flex-end;
-    gap: .75rem;
-    padding-top: 1.5rem;
-    border-top: 2px solid rgba(148,163,184,.35);
-    flex-wrap:wrap;
-  }
-
-  /* ✅ tabs (mêmes couleurs) */
-  .tab-nav{
-    display:flex;
-    gap: 1.2rem;
-    border-bottom: 2px solid rgba(148,163,184,.35);
-    margin-bottom: 2rem;
-    overflow-x:auto;
-    padding-bottom: .2rem;
-  }
-
-  .tab-button{
-    padding: 0.95rem 0;
-    border: none;
-    background: transparent;
-    font-size: .92rem;
-    font-weight: 950;
-    cursor: pointer;
-    border-bottom: 3px solid transparent;
-    color: #64748b;
-    white-space: nowrap;
-    transition: color .15s ease, border-color .15s ease;
-    display:flex;
-    align-items:center;
-    gap: .55rem;
-  }
-
-  .tab-button .tab-dot{
-    width: 8px;
-    height: 8px;
-    border-radius: 999px;
-    background: rgba(100,116,139,.45);
-    box-shadow: 0 0 0 4px rgba(100,116,139,.12);
-    flex: 0 0 auto;
-  }
-
-  .tab-button.active{
-    color:#4338ca;
-    border-color:#4338ca;
-  }
-  .tab-button.active .tab-dot{
-    background: rgba(67,56,202,.95);
-    box-shadow: 0 0 0 4px rgba(67,56,202,.18);
-  }
-
-  /* ✅ Toasts */
-  .toast-wrap{
-    position: fixed;
-    top: 16px;
-    right: 16px;
-    z-index: 9999;
-    display:flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .toast{
-    width: min(420px, calc(100vw - 32px));
-    color: var(--ink);
-    border-radius: 16px;
-    padding: 12px 12px;
-    border: 1px solid rgba(15,23,42,.10);
-    box-shadow: 0 18px 44px rgba(0,0,0,.18);
-    display:flex;
-    align-items:flex-start;
-    gap: 10px;
-    backdrop-filter: blur(12px);
-    background: rgba(255,255,255,.86);
-  }
-  .toast .t-title{ font-weight: 950; font-size: .9rem; margin:0; line-height: 1.2; }
-  .toast .t-msg{ margin: 4px 0 0 0; opacity: .92; font-weight: 750; font-size: .82rem; }
-  .toast .t-icon{ margin-top: 1px; flex: 0 0 auto; }
-  .toast .t-close{
-    margin-left: auto;
-    background: rgba(15,23,42,.06);
-    border: 1px solid rgba(15,23,42,.10);
-    color: var(--ink);
-    border-radius: 12px;
-    padding: 6px;
-    cursor:pointer;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-  }
-  .toast.success{ border-color: rgba(16,185,129,.30); background: rgba(236,253,245,.92); }
-  .toast.error{ border-color: rgba(244,63,94,.30); background: rgba(255,241,242,.92); }
-  .toast.info{ border-color: rgba(99,102,241,.30); background: rgba(238,242,255,.92); }
-
-  @media (max-width: 768px){
-    .form-container{ padding: 1rem; }
-    .form-header{ padding: 1.5rem; }
-    .form-header h1{ font-size: 1.5rem; }
-    .form-body{ padding: 1.25rem; }
-    .section{ padding: 1.25rem; }
-    .top-actions, .top-actions-right, .bottom-actions{ width: 100%; }
-    .button{ flex: 1; justify-content:center; }
-    .header-art .blob{ right:-240px; top:-260px; width: 740px; height: 740px; opacity:.85; }
-    .header-art .ring{ left:-220px; bottom:-240px; width: 620px; height: 620px; opacity:.40; }
-  }
-`;
-
 interface FormData {
+  tenantType: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -498,32 +36,51 @@ interface FormData {
   birthPlace: string;
   address: string;
   city: string;
-  zipCode: string;
   country: string;
-  profession: string;
-  employer: string;
-  annualIncome: string;
   maritalStatus: string;
   emergencyContactName: string;
   emergencyContactPhone: string;
+  emergencyContactEmail: string;
   notes: string;
+  profession: string;
+  employer: string;
+  contractType: string;
+  monthlyIncome: string;
+  annualIncome: string;
   hasGuarantor: boolean;
   guarantorName: string;
   guarantorPhone: string;
   guarantorEmail: string;
-  guarantorAddress: string;
   guarantorProfession: string;
-  guarantorIncome: string;
+  guarantorMonthlyIncome: string;
+  guarantorAnnualIncome: string;
+  guarantorAddress: string;
+  guarantorBirthInfo: string;
+  documentType: string;
 }
 
 type FieldKey = keyof FormData;
+
+/* ─── Tab config ─── */
+
+const tabs: { key: TabKey; label: string }[] = [
+  { key: "infos", label: "Informations personnelles" },
+  { key: "pro", label: "Situation professionnelle" },
+  { key: "garant", label: "Garant" },
+  { key: "documents", label: "Documents" },
+];
+
+/* ─── Component ─── */
 
 export const AjouterLocataire: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>("infos");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
   const [formData, setFormData] = useState<FormData>({
+    tenantType: "particulier",
     firstName: "",
     lastName: "",
     email: "",
@@ -531,28 +88,31 @@ export const AjouterLocataire: React.FC = () => {
     birthDate: "",
     birthPlace: "",
     address: "",
-    city: "",
-    zipCode: "",
-    country: "France",
-    profession: "",
-    employer: "",
-    annualIncome: "",
+    city: "Cotonou",
+    country: "Bénin",
     maritalStatus: "single",
     emergencyContactName: "",
     emergencyContactPhone: "",
+    emergencyContactEmail: "",
     notes: "",
+    profession: "",
+    employer: "",
+    contractType: "",
+    monthlyIncome: "",
+    annualIncome: "",
     hasGuarantor: false,
     guarantorName: "",
     guarantorPhone: "",
     guarantorEmail: "",
-    guarantorAddress: "",
     guarantorProfession: "",
-    guarantorIncome: "",
+    guarantorMonthlyIncome: "",
+    guarantorAnnualIncome: "",
+    guarantorAddress: "",
+    guarantorBirthInfo: "",
+    documentType: "",
   });
 
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldKey, string>>>({});
-  const [globalError, setGlobalError] = useState<string | null>(null);
-
   const [toasts, setToasts] = useState<{ id: string; type: ToastType; title: string; message?: string }[]>([]);
 
   const pushToast = (type: ToastType, title: string, message?: string) => {
@@ -563,755 +123,849 @@ export const AjouterLocataire: React.FC = () => {
     }, 3500);
   };
 
-  const clearErrors = () => {
-    setGlobalError(null);
-    setFieldErrors({});
-  };
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target as HTMLInputElement;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
-    }));
-
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
     setFieldErrors((prev) => {
       const next = { ...prev };
-      delete (next as any)[name];
+      delete next[name as FieldKey];
       return next;
     });
-    setGlobalError(null);
   };
 
   const toggleGuarantor = () => {
-    setFormData((prev) => ({
-      ...prev,
-      hasGuarantor: !prev.hasGuarantor,
-    }));
-    setFieldErrors((prev) => {
-      const next = { ...prev };
-      if (formData.hasGuarantor) {
-        delete next.guarantorName;
-        delete next.guarantorPhone;
-        delete next.guarantorEmail;
-        delete next.guarantorAddress;
-        delete next.guarantorProfession;
-        delete next.guarantorIncome;
-      }
-      return next;
-    });
+    setFormData((prev) => ({ ...prev, hasGuarantor: !prev.hasGuarantor }));
   };
 
   const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
-  const validateTab = (tab: TabKey) => {
-    const next: Partial<Record<FieldKey, string>> = {};
+  const validateTab = (tab: TabKey): boolean => {
+    const errs: Partial<Record<FieldKey, string>> = {};
     const req = (k: FieldKey, label: string) => {
-      if (!String(formData[k] ?? "").trim()) next[k] = `${label} est requis.`;
+      if (!String(formData[k] ?? "").trim()) errs[k] = `${label} est requis.`;
     };
 
     if (tab === "infos") {
-      req("firstName", "Prénom");
       req("lastName", "Nom");
+      req("firstName", "Prénoms");
       req("birthDate", "Date de naissance");
       req("birthPlace", "Lieu de naissance");
-    }
-
-    if (tab === "contact") {
-      req("email", "Email");
-      if (formData.email.trim() && !isEmail(formData.email.trim())) next.email = "Email invalide.";
       req("phone", "Téléphone");
+      req("email", "Email");
+      if (formData.email.trim() && !isEmail(formData.email.trim())) errs.email = "Email invalide.";
       req("address", "Adresse");
-      req("zipCode", "Code postal");
-      req("city", "Ville");
-      req("country", "Pays");
     }
 
     if (tab === "pro") {
       req("profession", "Profession");
     }
 
-    if (tab === "garant") {
-      if (formData.hasGuarantor) {
-        req("guarantorName", "Nom du garant");
-        req("guarantorPhone", "Téléphone du garant");
-        req("guarantorEmail", "Email du garant");
-        if (formData.guarantorEmail.trim() && !isEmail(formData.guarantorEmail.trim())) {
-          next.guarantorEmail = "Email du garant invalide.";
-        }
-        req("guarantorProfession", "Profession du garant");
-        req("guarantorIncome", "Revenu du garant");
-        req("guarantorAddress", "Adresse du garant");
-      }
+    if (tab === "garant" && formData.hasGuarantor) {
+      req("guarantorName", "Nom du garant");
+      req("guarantorPhone", "Téléphone du garant");
+      req("guarantorEmail", "Email du garant");
+      if (formData.guarantorEmail.trim() && !isEmail(formData.guarantorEmail.trim())) errs.guarantorEmail = "Email du garant invalide.";
+      req("guarantorProfession", "Profession du garant");
     }
 
-    setFieldErrors(next);
-    return Object.keys(next).length === 0;
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
-  const goTab = (tab: TabKey) => setActiveTab(tab);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const arr = Array.from(files).filter((f) => f.size <= 15 * 1024 * 1024);
+    setUploadedFiles((prev) => [...prev, ...arr]);
+  };
 
-  const handleCancel = () => {
-    if (confirm("Êtes-vous sûr de vouloir annuler ? Les modifications seront perdues.")) {
-      navigate("/proprietaire");
+  const handleSubmit = async () => {
+    const ok = validateTab("infos") && validateTab("pro") && validateTab("garant");
+    if (!ok) {
+      pushToast("error", "Champs manquants", "Merci de compléter les champs requis.");
+      return;
     }
-  };
 
-  const FieldError = ({ name }: { name: FieldKey }) =>
-    fieldErrors[name] ? (
-      <div className="field-error">
-        <AlertCircle size={16} />
-        <span>{fieldErrors[name]}</span>
-      </div>
-    ) : null;
-
-  const inputClass = (name: FieldKey, base: string) => `${base} ${fieldErrors[name] ? "input-error" : ""}`;
-
-  const handleSubmit = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    clearErrors();
     setIsLoading(true);
-
     try {
-      const ok = validateTab("infos") && validateTab("contact") && validateTab("pro") && validateTab("garant");
-
-      if (!ok) {
-        pushToast("error", "Champs manquants", "Merci de compléter les champs requis.");
-        const errKeys = Object.keys(fieldErrors);
-        if (errKeys.length) {
-          const k = errKeys[0];
-          if (["firstName", "lastName", "birthDate", "birthPlace"].includes(k)) setActiveTab("infos");
-          else if (["email", "phone", "address", "zipCode", "city", "country"].includes(k)) setActiveTab("contact");
-          else if (["profession"].includes(k)) setActiveTab("pro");
-          else setActiveTab("garant");
-        }
-        setIsLoading(false);
-        return;
-      }
-
       const invitePayload = {
         first_name: formData.firstName.trim(),
         last_name: formData.lastName.trim(),
         email: formData.email.trim(),
         phone: formData.phone.trim() || undefined,
       };
-
-      console.log('📋 FormData before sending:', formData);
-      console.log('📞 Phone in formData:', formData.phone);
-      console.log('📦 InvitePayload before sending:', invitePayload);
-      console.log('📞 Phone in invitePayload:', invitePayload.phone);
-
-      const response = await tenantService.inviteTenant(invitePayload);
-      console.log("Réponse API inviteTenant :", response);
-
-      pushToast("success", "Invitation envoyée", `Un email a été envoyé à ${formData.email.trim()} pour activer le compte.`);
+      await tenantService.inviteTenant(invitePayload);
+      pushToast("success", "Invitation envoyée", `Un email a été envoyé à ${formData.email.trim()}.`);
       navigate("/proprietaire");
     } catch (error: any) {
-      console.error("Erreur lors de l'invitation du locataire :", error);
-
-      const apiMsg =
-        error?.response?.data?.message || error?.message || "Une erreur est survenue lors de l'invitation du locataire.";
-
-      const apiErrors = error?.response?.data?.errors;
-
-      if (apiErrors && typeof apiErrors === "object") {
-        const map: Record<string, FieldKey> = {
-          first_name: "firstName",
-          last_name: "lastName",
-          email: "email",
-          phone: "phone",
-        };
-
-        const next: Partial<Record<FieldKey, string>> = {};
-        Object.keys(apiErrors).forEach((k) => {
-          const frontKey = map[k] || (k as any);
-          const msg = Array.isArray(apiErrors[k]) ? apiErrors[k][0] : String(apiErrors[k]);
-          if (frontKey && (frontKey as any in formData)) next[frontKey as FieldKey] = msg;
-        });
-
-        if (Object.keys(next).length) {
-          setFieldErrors(next);
-          pushToast("error", "Validation", "Corrige les champs en rouge.");
-          const first = Object.keys(next)[0] as FieldKey;
-          if (["firstName", "lastName", "birthDate", "birthPlace"].includes(first)) setActiveTab("infos");
-          else if (["email", "phone", "address", "zipCode", "city", "country"].includes(first)) setActiveTab("contact");
-          else if (["profession"].includes(first)) setActiveTab("pro");
-          else setActiveTab("garant");
-          return;
-        }
-      }
-
-      setGlobalError(apiMsg);
+      console.error("Erreur:", error);
+      const apiMsg = error?.response?.data?.message || "Une erreur est survenue.";
       pushToast("error", "Erreur", apiMsg);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const tabIndex = tabs.findIndex((t) => t.key === activeTab);
+
+  const goNext = () => {
+    if (!validateTab(activeTab)) {
+      pushToast("error", "Champs manquants", "Complète les champs requis.");
+      return;
+    }
+    const nextIdx = tabIndex + 1;
+    if (nextIdx < tabs.length) setActiveTab(tabs[nextIdx].key);
+  };
+
+  const goPrev = () => {
+    const prevIdx = tabIndex - 1;
+    if (prevIdx >= 0) setActiveTab(tabs[prevIdx].key);
+  };
+
+  const hasError = (name: FieldKey) => !!fieldErrors[name];
+
   const toastIcon = useMemo(
     () => ({
-      success: <CheckCircle2 className="t-icon" size={18} />,
-      error: <AlertCircle className="t-icon" size={18} />,
-      info: <Info className="t-icon" size={18} />,
+      success: <CheckCircle2 size={18} />,
+      error: <AlertCircle size={18} />,
+      info: <Info size={18} />,
     }),
     []
   );
 
+  /* ─── Render ─── */
   return (
     <>
-      <style>{styles}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Manrope:wght@400;500;600;700;800&display=swap');
 
-      <div className="toast-wrap">
+        .al-page {
+          padding: 1.5rem 2.5rem 3rem;
+          font-family: 'Manrope', sans-serif;
+          color: #1a1a1a;
+        }
+
+        /* Back button */
+        .al-btn-back {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 10px 18px;
+          border-radius: 12px;
+          border: 1.5px solid #d1d5db;
+          background: #fff;
+          font-family: 'Manrope', sans-serif;
+          font-size: 0.82rem;
+          font-weight: 600;
+          color: #374151;
+          cursor: pointer;
+          transition: all 0.18s ease;
+          margin-bottom: 1.5rem;
+        }
+        .al-btn-back:hover { background: #f9fafb; border-color: #9ca3af; }
+
+        /* Title */
+        .al-title {
+          font-family: 'Merriweather', serif;
+          font-size: 1.65rem;
+          font-weight: 900;
+          color: #1a1a1a;
+          margin: 0 0 6px 0;
+        }
+        .al-subtitle {
+          font-size: 0.85rem;
+          font-weight: 500;
+          color: #6b7280;
+          margin: 0 0 1.25rem 0;
+        }
+
+        /* Step indicators */
+        .al-steps {
+          display: flex;
+          gap: 1.5rem;
+          margin-bottom: 1.5rem;
+          flex-wrap: wrap;
+        }
+        .al-step {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 0.82rem;
+          font-weight: 700;
+          color: #9ca3af;
+          cursor: pointer;
+          transition: color 0.15s;
+          background: none;
+          border: none;
+          padding: 0;
+          font-family: 'Manrope', sans-serif;
+        }
+        .al-step.active { color: #e68a00; }
+        .al-step.completed { color: #e68a00; }
+        .al-step-dot {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background: #d1d5db;
+          flex-shrink: 0;
+        }
+        .al-step.active .al-step-dot,
+        .al-step.completed .al-step-dot { background: #e68a00; }
+
+        /* Card */
+        .al-card {
+          background: #fff;
+          border: 1.5px solid #d6e4d6;
+          border-radius: 18px;
+          padding: 1.75rem;
+        }
+
+        /* Fields */
+        .al-grid-3 {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 16px;
+          margin-bottom: 16px;
+        }
+        .al-grid-2 {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 16px;
+          margin-bottom: 16px;
+        }
+        .al-grid-4 {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 16px;
+          margin-bottom: 16px;
+        }
+        .al-field {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+        }
+        .al-label {
+          font-size: 0.78rem;
+          font-weight: 700;
+          color: #374151;
+        }
+        .al-input {
+          width: 100%;
+          padding: 0.65rem 0.85rem;
+          border: 1.5px solid #d1d5db;
+          border-radius: 10px;
+          font-size: 0.85rem;
+          font-family: 'Manrope', sans-serif;
+          font-weight: 500;
+          color: #1a1a1a;
+          background: #fff;
+          outline: none;
+          box-sizing: border-box;
+          transition: all 0.2s ease;
+        }
+        .al-input:focus { border-color: #83C757; box-shadow: 0 0 0 3px rgba(131,199,87,0.12); }
+        .al-input::placeholder { color: #9ca3af; font-weight: 400; }
+        .al-input.error { border-color: #dc2626; }
+
+        select.al-input {
+          appearance: none;
+          background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%239CA3AF' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 12px center;
+          padding-right: 2.2rem;
+          cursor: pointer;
+        }
+
+        textarea.al-input {
+          min-height: 100px;
+          resize: vertical;
+        }
+
+        .al-input-icon {
+          position: relative;
+        }
+        .al-input-icon input { padding-left: 2.5rem; }
+        .al-input-icon .al-icon {
+          position: absolute;
+          left: 0.85rem;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #6b7280;
+          pointer-events: none;
+        }
+
+        .al-input-prefix {
+          position: relative;
+        }
+        .al-input-prefix input { padding-left: 3rem; }
+        .al-input-prefix .al-prefix {
+          position: absolute;
+          left: 0.85rem;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #1a1a1a;
+          font-weight: 700;
+          font-size: 0.82rem;
+          pointer-events: none;
+        }
+
+        .al-error-msg {
+          font-size: 0.72rem;
+          font-weight: 600;
+          color: #dc2626;
+        }
+
+        /* Section label */
+        .al-section-label {
+          font-size: 0.82rem;
+          font-weight: 800;
+          color: #1a1a1a;
+          margin: 16px 0 10px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        /* Switch */
+        .al-switch-row {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 1.25rem;
+        }
+        .al-switch {
+          position: relative;
+          width: 48px;
+          height: 26px;
+          background: #d1d5db;
+          border-radius: 999px;
+          cursor: pointer;
+          transition: background 0.25s;
+        }
+        .al-switch.on { background: #7c3aed; }
+        .al-switch-thumb {
+          position: absolute;
+          top: 3px;
+          left: 3px;
+          width: 20px;
+          height: 20px;
+          background: #fff;
+          border-radius: 50%;
+          transition: transform 0.25s;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+        }
+        .al-switch.on .al-switch-thumb { transform: translateX(22px); }
+        .al-switch-label {
+          font-size: 0.88rem;
+          font-weight: 700;
+          color: #1a1a1a;
+        }
+
+        /* Buttons */
+        .al-actions {
+          display: flex;
+          justify-content: center;
+          gap: 16px;
+          margin-top: 1.5rem;
+        }
+        .al-btn-prev {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 10px 32px;
+          border-radius: 10px;
+          border: none;
+          background: #83C757;
+          font-family: 'Manrope', sans-serif;
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: #fff;
+          cursor: pointer;
+          transition: all 0.18s ease;
+          min-width: 140px;
+        }
+        .al-btn-prev:hover { background: #72b44a; }
+
+        .al-btn-next {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 10px 32px;
+          border-radius: 10px;
+          border: 1.5px solid #e68a00;
+          background: #fff;
+          font-family: 'Manrope', sans-serif;
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: #1a1a1a;
+          cursor: pointer;
+          transition: all 0.18s ease;
+          min-width: 140px;
+        }
+        .al-btn-next:hover { background: #fff8ef; }
+
+        .al-btn-submit {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 10px 32px;
+          border-radius: 10px;
+          border: none;
+          background: linear-gradient(135deg, #e68a00 0%, #f5a623 100%);
+          font-family: 'Manrope', sans-serif;
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: #fff;
+          cursor: pointer;
+          transition: all 0.18s ease;
+          min-width: 140px;
+        }
+        .al-btn-submit:hover { box-shadow: 0 4px 14px rgba(230,138,0,0.3); }
+        .al-btn-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+
+        /* Upload zone */
+        .al-upload-zone {
+          background: #e8eaed;
+          border-radius: 14px;
+          padding: 2.5rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          margin-bottom: 8px;
+          transition: background 0.15s;
+        }
+        .al-upload-zone:hover { background: #dee0e3; }
+        .al-upload-hint {
+          font-size: 0.72rem;
+          color: #6b7280;
+          font-weight: 500;
+        }
+
+        /* Toast */
+        .al-toast-wrap {
+          position: fixed;
+          top: 16px;
+          right: 16px;
+          z-index: 9999;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .al-toast {
+          width: min(380px, calc(100vw - 32px));
+          border-radius: 14px;
+          padding: 12px 14px;
+          border: 1px solid #e5e7eb;
+          box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          background: #fff;
+          font-family: 'Manrope', sans-serif;
+        }
+        .al-toast.success { border-color: #a7f3d0; background: #ecfdf5; }
+        .al-toast.error { border-color: #fca5a5; background: #fef2f2; }
+        .al-toast.info { border-color: #c7d2fe; background: #eef2ff; }
+        .al-toast-title { font-weight: 800; font-size: 0.85rem; margin: 0; }
+        .al-toast-msg { font-size: 0.78rem; color: #6b7280; margin: 2px 0 0; }
+        .al-toast-close {
+          margin-left: auto;
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: #9ca3af;
+          padding: 2px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+          .al-grid-3 { grid-template-columns: 1fr; }
+          .al-grid-2 { grid-template-columns: 1fr; }
+          .al-grid-4 { grid-template-columns: 1fr 1fr; }
+        }
+      `}</style>
+
+      {/* Toasts */}
+      <div className="al-toast-wrap">
         {toasts.map((t) => (
-          <div key={t.id} className={`toast ${t.type}`}>
+          <div key={t.id} className={`al-toast ${t.type}`}>
             {toastIcon[t.type]}
             <div>
-              <p className="t-title">{t.title}</p>
-              {t.message ? <p className="t-msg">{t.message}</p> : null}
+              <p className="al-toast-title">{t.title}</p>
+              {t.message && <p className="al-toast-msg">{t.message}</p>}
             </div>
-            <button
-              type="button"
-              className="t-close"
-              onClick={() => setToasts((prev) => prev.filter((x) => x.id !== t.id))}
-              aria-label="Fermer"
-            >
+            <button className="al-toast-close" onClick={() => setToasts((p) => p.filter((x) => x.id !== t.id))}>
               <X size={16} />
             </button>
           </div>
         ))}
       </div>
 
-      <div className="form-container">
-        <div className="form-card">
-          <div className="form-header">
-            <div className="header-art" aria-hidden="true">
-              <svg className="blob" viewBox="0 0 600 600" fill="none">
-                <defs>
-                  <linearGradient id="h1" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0" stopColor="rgba(255,255,255,.65)" />
-                    <stop offset="1" stopColor="rgba(255,255,255,.08)" />
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M420 70C500 110 560 190 560 290C560 420 460 520 320 540C190 560 70 490 50 360C30 240 110 140 240 90C310 62 360 44 420 70Z"
-                  fill="url(#h1)"
-                  opacity="0.65"
-                />
-                <path
-                  d="M455 140C505 175 530 235 520 295C505 390 410 450 320 460C230 470 150 420 130 340C110 260 155 190 235 150C315 110 395 105 455 140Z"
-                  fill="rgba(255,255,255,.10)"
-                />
-              </svg>
+      <div className="al-page">
+        {/* Back */}
+        <button className="al-btn-back" onClick={() => navigate("/proprietaire/dashboard")}>
+          <ArrowLeft size={15} />
+          ← Retour au tableau de bord
+        </button>
 
-              <svg className="ring" viewBox="0 0 500 500" fill="none">
-                <defs>
-                  <radialGradient
-                    id="h2"
-                    cx="0"
-                    cy="0"
-                    r="1"
-                    gradientUnits="userSpaceOnUse"
-                    gradientTransform="translate(220 210) rotate(45) scale(240)"
-                  >
-                    <stop stopColor="rgba(255,255,255,.34)" />
-                    <stop offset="1" stopColor="rgba(255,255,255,0)" />
-                  </radialGradient>
-                </defs>
-                <circle cx="240" cy="240" r="210" fill="url(#h2)" />
-              </svg>
+        {/* Title */}
+        <h1 className="al-title">Nouveau locataire</h1>
+        <p className="al-subtitle">Renseignez les informations du locataire pour l'ajouter à votre portefeuille</p>
+
+        {/* Step indicators */}
+        <div className="al-steps">
+          {tabs.map((tab, i) => {
+            const isActive = tab.key === activeTab;
+            const isCompleted = i < tabIndex;
+            return (
+              <button
+                key={tab.key}
+                className={`al-step ${isActive ? "active" : ""} ${isCompleted ? "completed" : ""}`}
+                onClick={() => setActiveTab(tab.key)}
+                type="button"
+              >
+                <span className="al-step-dot" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ═══════════════ STEP 1: Informations personnelles ═══════════════ */}
+        {activeTab === "infos" && (
+          <div className="al-card">
+            {/* Type de locataire */}
+            <div className="al-field" style={{ maxWidth: 240, marginBottom: 20 }}>
+              <label className="al-label">Type de locataire</label>
+              <select name="tenantType" value={formData.tenantType} onChange={handleChange} className="al-input">
+                <option value="particulier">Particulier</option>
+                <option value="entreprise">Entreprise</option>
+              </select>
             </div>
 
-            <div className="header-row">
-              <div>
-                <h1>
-                  <UserPlus size={32} />
-                  Nouveau locataire
-                </h1>
-                <p>Renseignez les informations du locataire pour l&apos;ajouter à votre portefeuille</p>
+            {/* Nom, Prénoms, Date de naissance */}
+            <div className="al-grid-3">
+              <div className="al-field">
+                <label className="al-label">Nom</label>
+                <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="DUPONT" className={`al-input ${hasError("lastName") ? "error" : ""}`} />
+                {hasError("lastName") && <span className="al-error-msg">{fieldErrors.lastName}</span>}
               </div>
+              <div className="al-field">
+                <label className="al-label">Prénoms</label>
+                <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="Jean" className={`al-input ${hasError("firstName") ? "error" : ""}`} />
+                {hasError("firstName") && <span className="al-error-msg">{fieldErrors.firstName}</span>}
+              </div>
+              <div className="al-field">
+                <label className="al-label">Date de naissance</label>
+                <div className="al-input-icon">
+                  <span className="al-icon"><Calendar size={15} /></span>
+                  <input type="date" name="birthDate" value={formData.birthDate} onChange={handleChange} className={`al-input ${hasError("birthDate") ? "error" : ""}`} />
+                </div>
+                {hasError("birthDate") && <span className="al-error-msg">{fieldErrors.birthDate}</span>}
+              </div>
+            </div>
 
-              <div className="badge-row">
-                <span className="pill">
-                  <Sparkles size={16} />
-                  Formulaire moderne
-                </span>
-                <span className="pill">
-                  <ShieldCheck size={16} />
-                  Validation & feedback
-                </span>
-                <span className="pill">
-                  <BadgeCheck size={16} />
-                  Invitation email
-                </span>
+            {/* Lieu de naissance, Situation familiale, Téléphone */}
+            <div className="al-grid-3">
+              <div className="al-field">
+                <label className="al-label">Lieu de naissance</label>
+                <input type="text" name="birthPlace" value={formData.birthPlace} onChange={handleChange} placeholder="Cotonou" className={`al-input ${hasError("birthPlace") ? "error" : ""}`} />
+                {hasError("birthPlace") && <span className="al-error-msg">{fieldErrors.birthPlace}</span>}
               </div>
+              <div className="al-field">
+                <label className="al-label">Situation familiale</label>
+                <select name="maritalStatus" value={formData.maritalStatus} onChange={handleChange} className="al-input">
+                  <option value="single">Célibataire</option>
+                  <option value="married">Marié(e)</option>
+                  <option value="divorced">Divorcé(e)</option>
+                  <option value="widowed">Veuf/Veuve</option>
+                  <option value="pacs">PACS</option>
+                </select>
+              </div>
+              <div className="al-field">
+                <label className="al-label">Téléphone</label>
+                <div className="al-input-icon">
+                  <span className="al-icon"><Phone size={15} /></span>
+                  <input type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="01 00 00 00 00" className={`al-input ${hasError("phone") ? "error" : ""}`} />
+                </div>
+                {hasError("phone") && <span className="al-error-msg">{fieldErrors.phone}</span>}
+              </div>
+            </div>
+
+            {/* Email, Adresse, Ville, Pays */}
+            <div className="al-grid-4">
+              <div className="al-field">
+                <label className="al-label">Email</label>
+                <div className="al-input-icon">
+                  <span className="al-icon"><Mail size={15} /></span>
+                  <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="jean.dupont@example.com" className={`al-input ${hasError("email") ? "error" : ""}`} />
+                </div>
+                {hasError("email") && <span className="al-error-msg">{fieldErrors.email}</span>}
+              </div>
+              <div className="al-field">
+                <label className="al-label">Adresse</label>
+                <div className="al-input-icon">
+                  <span className="al-icon"><MapPin size={15} /></span>
+                  <input type="text" name="address" value={formData.address} onChange={handleChange} placeholder="123 / 5 /890" className={`al-input ${hasError("address") ? "error" : ""}`} />
+                </div>
+                {hasError("address") && <span className="al-error-msg">{fieldErrors.address}</span>}
+              </div>
+              <div className="al-field">
+                <label className="al-label">Ville</label>
+                <select name="city" value={formData.city} onChange={handleChange} className="al-input">
+                  <option value="Cotonou">Cotonou</option>
+                  <option value="Porto-Novo">Porto-Novo</option>
+                  <option value="Parakou">Parakou</option>
+                  <option value="Abomey-Calavi">Abomey-Calavi</option>
+                  <option value="Autre">Autre</option>
+                </select>
+              </div>
+              <div className="al-field">
+                <label className="al-label">Pays</label>
+                <select name="country" value={formData.country} onChange={handleChange} className="al-input">
+                  <option value="Bénin">Bénin</option>
+                  <option value="Togo">Togo</option>
+                  <option value="France">France</option>
+                  <option value="Autre">Autre</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Contact d'urgence */}
+            <div className="al-section-label">• Contact d'urgence</div>
+            <div className="al-grid-3" style={{ marginBottom: 0 }}>
+              <div className="al-field">
+                <label className="al-label">Nom & Prénoms</label>
+                <input type="text" name="emergencyContactName" value={formData.emergencyContactName} onChange={handleChange} placeholder="Jean Dupont" className="al-input" />
+              </div>
+              <div className="al-field">
+                <label className="al-label">Téléphone</label>
+                <div className="al-input-icon">
+                  <span className="al-icon"><Phone size={15} /></span>
+                  <input type="tel" name="emergencyContactPhone" value={formData.emergencyContactPhone} onChange={handleChange} placeholder="01 00 00 00 00" className="al-input" />
+                </div>
+              </div>
+            </div>
+            <div className="al-grid-3" style={{ marginBottom: 16 }}>
+              <div className="al-field">
+                <label className="al-label">Email</label>
+                <div className="al-input-icon">
+                  <span className="al-icon"><Mail size={15} /></span>
+                  <input type="email" name="emergencyContactEmail" value={formData.emergencyContactEmail} onChange={handleChange} placeholder="jean.dupont@example.com" className="al-input" />
+                </div>
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div className="al-field" style={{ marginBottom: 0 }}>
+              <label className="al-label">Notes et commentaires</label>
+              <textarea name="notes" value={formData.notes} onChange={handleChange} placeholder="Informations complémentaires sur le locataire..." className="al-input" />
+            </div>
+
+            {/* Actions */}
+            <div className="al-actions">
+              <button type="button" className="al-btn-next" onClick={goNext}>
+                Suivant
+              </button>
             </div>
           </div>
+        )}
 
-          <div className="form-body">
-            <div className="top-actions">
-              <button className="button button-secondary" type="button" onClick={() => navigate("/proprietaire")}>
-                <ArrowLeft size={16} />
-                Retour au tableau de bord
-              </button>
-              <div className="top-actions-right">
-                <button className="button button-danger" type="button" onClick={handleCancel}>
-                  <X size={16} />
-                  Annuler
-                </button>
-                <button className="button button-primary" type="button" onClick={() => handleSubmit()} disabled={isLoading}>
-                  <Save size={16} />
-                  {isLoading ? "Enregistrement..." : "Enregistrer le locataire"}
-                </button>
+        {/* ═══════════════ STEP 2: Situation professionnelle ═══════════════ */}
+        {activeTab === "pro" && (
+          <div className="al-card">
+            <div className="al-grid-3">
+              <div className="al-field">
+                <label className="al-label">Profession</label>
+                <input type="text" name="profession" value={formData.profession} onChange={handleChange} placeholder="EX: Médecin" className={`al-input ${hasError("profession") ? "error" : ""}`} />
+                {hasError("profession") && <span className="al-error-msg">{fieldErrors.profession}</span>}
+              </div>
+              <div className="al-field">
+                <label className="al-label">Employeur</label>
+                <input type="text" name="employer" value={formData.employer} onChange={handleChange} placeholder="Nom de l'employeur" className="al-input" />
+              </div>
+              <div className="al-field">
+                <label className="al-label">Type de contrat</label>
+                <select name="contractType" value={formData.contractType} onChange={handleChange} className="al-input">
+                  <option value="">Sélectionnez un contrat</option>
+                  <option value="cdi">CDI</option>
+                  <option value="cdd">CDD</option>
+                  <option value="interim">Intérim</option>
+                  <option value="independant">Indépendant</option>
+                  <option value="etudiant">Étudiant</option>
+                  <option value="retraite">Retraité</option>
+                  <option value="autre">Autre</option>
+                </select>
               </div>
             </div>
 
-            {globalError && (
-              <div
-                style={{
-                  marginBottom: "1rem",
-                  background: "rgba(255,241,242,.92)",
-                  border: "1px solid rgba(244,63,94,.30)",
-                  borderRadius: 14,
-                  padding: "12px 14px",
-                  color: "#9f1239",
-                  fontWeight: 950,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                }}
-              >
-                <AlertCircle size={18} />
-                <span>{globalError}</span>
+            <div className="al-grid-2">
+              <div className="al-field">
+                <label className="al-label">Revenu mensuel (FCFA)</label>
+                <div className="al-input-prefix">
+                  <span className="al-prefix">XOF</span>
+                  <input type="text" name="monthlyIncome" value={formData.monthlyIncome} onChange={handleChange} className="al-input" />
+                </div>
+              </div>
+              <div className="al-field">
+                <label className="al-label">Revenu annuel (FCFA)</label>
+                <div className="al-input-prefix">
+                  <span className="al-prefix">XOF</span>
+                  <input type="text" name="annualIncome" value={formData.annualIncome} onChange={handleChange} className="al-input" />
+                </div>
+              </div>
+            </div>
+
+            <div className="al-actions">
+              <button type="button" className="al-btn-prev" onClick={goPrev}>Précédent</button>
+              <button type="button" className="al-btn-next" onClick={goNext}>Suivant</button>
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════════ STEP 3: Garant ═══════════════ */}
+        {activeTab === "garant" && (
+          <div className="al-card">
+            <div className="al-switch-row">
+              <div className={`al-switch ${formData.hasGuarantor ? "on" : ""}`} onClick={toggleGuarantor}>
+                <div className="al-switch-thumb" />
+              </div>
+              <span className="al-switch-label">Le locataire a-t-il un garant ?</span>
+            </div>
+
+            {formData.hasGuarantor && (
+              <>
+                <div className="al-grid-3">
+                  <div className="al-field">
+                    <label className="al-label">Nom et prénom</label>
+                    <input type="text" name="guarantorName" value={formData.guarantorName} onChange={handleChange} placeholder="Nom et prénom du garant" className={`al-input ${hasError("guarantorName") ? "error" : ""}`} />
+                    {hasError("guarantorName") && <span className="al-error-msg">{fieldErrors.guarantorName}</span>}
+                  </div>
+                  <div className="al-field">
+                    <label className="al-label">Téléphone</label>
+                    <div className="al-input-icon">
+                      <span className="al-icon"><Phone size={15} /></span>
+                      <input type="tel" name="guarantorPhone" value={formData.guarantorPhone} onChange={handleChange} placeholder="01 00 00 00 00" className={`al-input ${hasError("guarantorPhone") ? "error" : ""}`} />
+                    </div>
+                    {hasError("guarantorPhone") && <span className="al-error-msg">{fieldErrors.guarantorPhone}</span>}
+                  </div>
+                  <div className="al-field">
+                    <label className="al-label">Email</label>
+                    <div className="al-input-icon">
+                      <span className="al-icon"><Mail size={15} /></span>
+                      <input type="email" name="guarantorEmail" value={formData.guarantorEmail} onChange={handleChange} placeholder="garant@example.com" className={`al-input ${hasError("guarantorEmail") ? "error" : ""}`} />
+                    </div>
+                    {hasError("guarantorEmail") && <span className="al-error-msg">{fieldErrors.guarantorEmail}</span>}
+                  </div>
+                </div>
+
+                <div className="al-grid-3">
+                  <div className="al-field">
+                    <label className="al-label">Profession du garant</label>
+                    <input type="text" name="guarantorProfession" value={formData.guarantorProfession} onChange={handleChange} placeholder="EX: Médecin" className={`al-input ${hasError("guarantorProfession") ? "error" : ""}`} />
+                    {hasError("guarantorProfession") && <span className="al-error-msg">{fieldErrors.guarantorProfession}</span>}
+                  </div>
+                  <div className="al-field">
+                    <label className="al-label">Revenu mensuel (FCFA)</label>
+                    <div className="al-input-prefix">
+                      <span className="al-prefix">XOF</span>
+                      <input type="text" name="guarantorMonthlyIncome" value={formData.guarantorMonthlyIncome} onChange={handleChange} placeholder="200.000" className="al-input" />
+                    </div>
+                  </div>
+                  <div className="al-field">
+                    <label className="al-label">Revenu annuel (FCFA)</label>
+                    <div className="al-input-prefix">
+                      <span className="al-prefix">XOF</span>
+                      <input type="text" name="guarantorAnnualIncome" value={formData.guarantorAnnualIncome} onChange={handleChange} placeholder="200.000" className="al-input" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="al-grid-2">
+                  <div className="al-field">
+                    <label className="al-label">Adresse</label>
+                    <input type="text" name="guarantorAddress" value={formData.guarantorAddress} onChange={handleChange} placeholder="Adresse complète du garant" className="al-input" />
+                  </div>
+                  <div className="al-field">
+                    <label className="al-label">Date et Lieu de naissance</label>
+                    <input type="text" name="guarantorBirthInfo" value={formData.guarantorBirthInfo} onChange={handleChange} placeholder="Date et lieu de naissance du garant" className="al-input" />
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="al-actions">
+              <button type="button" className="al-btn-prev" onClick={goPrev}>Précédent</button>
+              <button type="button" className="al-btn-next" onClick={goNext}>Suivant</button>
+            </div>
+          </div>
+        )}
+
+        {/* ═══════════════ STEP 4: Documents ═══════════════ */}
+        {activeTab === "documents" && (
+          <div className="al-card">
+            <div className="al-section-label" style={{ marginTop: 0 }}>Documents</div>
+
+            <div className="al-field" style={{ maxWidth: 320, marginBottom: 20 }}>
+              <select name="documentType" value={formData.documentType} onChange={handleChange} className="al-input">
+                <option value="">Sélectionnez le type de documents</option>
+                <option value="cni">Carte nationale d'identité</option>
+                <option value="passeport">Passeport</option>
+                <option value="permis">Permis de conduire</option>
+                <option value="justificatif_domicile">Justificatif de domicile</option>
+                <option value="bulletin_salaire">Bulletin de salaire</option>
+                <option value="contrat_travail">Contrat de travail</option>
+                <option value="autre">Autre</option>
+              </select>
+            </div>
+
+            <div className="al-section-label">Ajouter le fichier</div>
+            <div className="al-upload-zone" onClick={() => fileInputRef.current?.click()}>
+              <Camera size={28} color="#9ca3af" />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".doc,.docx,.xls,.xlsx,.pdf,.gif,.jpg,.jpeg,.png"
+                onChange={handleFileChange}
+                style={{ display: "none" }}
+                multiple
+              />
+            </div>
+            <p className="al-upload-hint">
+              Formats acceptés: Word, Excel, PDF, Images (GIF, JPG, PNG). Taille maximale: 15 Mo
+            </p>
+
+            {uploadedFiles.length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                {uploadedFiles.map((f, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.82rem", color: "#374151", marginBottom: 4 }}>
+                    <FileText size={14} />
+                    <span>{f.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setUploadedFiles((prev) => prev.filter((_, j) => j !== i))}
+                      style={{ background: "none", border: "none", cursor: "pointer", color: "#dc2626", padding: 2 }}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
 
-            <div className="tab-nav">
-              <button type="button" className={`tab-button ${activeTab === "infos" ? "active" : ""}`} onClick={() => goTab("infos")}>
-                <span className="tab-dot" />
-                Informations personnelles
-              </button>
-              <button type="button" className={`tab-button ${activeTab === "contact" ? "active" : ""}`} onClick={() => goTab("contact")}>
-                <span className="tab-dot" />
-                Coordonnées
-              </button>
-              <button type="button" className={`tab-button ${activeTab === "pro" ? "active" : ""}`} onClick={() => goTab("pro")}>
-                <span className="tab-dot" />
-                Situation professionnelle
-              </button>
-              <button type="button" className={`tab-button ${activeTab === "garant" ? "active" : ""}`} onClick={() => goTab("garant")}>
-                <span className="tab-dot" />
-                Garant
+            <div className="al-actions">
+              <button type="button" className="al-btn-prev" onClick={goPrev}>Précédent</button>
+              <button type="button" className="al-btn-submit" onClick={handleSubmit} disabled={isLoading}>
+                {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                {isLoading ? "Enregistrement..." : "Enregistrer"}
               </button>
             </div>
-
-            <form onSubmit={handleSubmit}>
-              {activeTab === "infos" && (
-                <div className="section">
-                  <h2 className="section-title">
-                    <User size={20} />
-                    Informations personnelles
-                    <span className="step">
-                      Étape 1
-                      <ChevronRight size={14} />
-                      4
-                    </span>
-                  </h2>
-
-                  <div className="form-grid form-grid-2">
-                    <div className="form-group">
-                      <label className="form-label">
-                        Prénom <span className="required">*</span>
-                      </label>
-                      <input className={inputClass("firstName", "form-input")} type="text" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="Jean" />
-                      <FieldError name="firstName" />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">
-                        Nom <span className="required">*</span>
-                      </label>
-                      <input className={inputClass("lastName", "form-input")} type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Dupont" />
-                      <FieldError name="lastName" />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">
-                        Date de naissance <span className="required">*</span>
-                      </label>
-                      <div className="form-input-icon">
-                        <div className="icon-wrapper">
-                          <Calendar size={16} />
-                        </div>
-                        <input className={inputClass("birthDate", "form-input")} type="date" name="birthDate" value={formData.birthDate} onChange={handleChange} />
-                      </div>
-                      <FieldError name="birthDate" />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">
-                        Lieu de naissance <span className="required">*</span>
-                      </label>
-                      <input className={inputClass("birthPlace", "form-input")} type="text" name="birthPlace" value={formData.birthPlace} onChange={handleChange} placeholder="Ville, Pays" />
-                      <FieldError name="birthPlace" />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Situation familiale</label>
-                      <select className="form-select" name="maritalStatus" value={formData.maritalStatus} onChange={handleChange}>
-                        <option value="single">Célibataire</option>
-                        <option value="married">Marié(e)</option>
-                        <option value="divorced">Divorcé(e)</option>
-                        <option value="widowed">Veuf/Veuve</option>
-                        <option value="pacs">PACS</option>
-                        <option value="concubinage">Concubinage</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: "1.5rem" }}>
-                    <h3 className="form-label" style={{ marginBottom: "0.75rem" }}>
-                      Contact d&apos;urgence
-                    </h3>
-                    <div className="form-grid form-grid-2">
-                      <div className="form-group">
-                        <label className="form-label">Nom et prénom</label>
-                        <input className="form-input" type="text" name="emergencyContactName" value={formData.emergencyContactName} onChange={handleChange} placeholder="Nom et prénom" />
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label">Téléphone</label>
-                        <div className="form-input-icon">
-                          <div className="icon-wrapper">
-                            <Phone size={16} />
-                          </div>
-                          <input className="form-input" type="tel" name="emergencyContactPhone" value={formData.emergencyContactPhone} onChange={handleChange} placeholder="06 12 34 56 78" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: "1.5rem" }}>
-                    <label className="form-label">Notes et commentaires</label>
-                    <textarea className="form-textarea" name="notes" value={formData.notes} onChange={handleChange} placeholder="Informations complémentaires sur le locataire..." rows={3} />
-                  </div>
-
-                  <div className="bottom-actions" style={{ borderTop: "none", paddingTop: "1.5rem" }}>
-                    <button
-                      type="button"
-                      className="button button-primary"
-                      onClick={() => {
-                        if (!validateTab("infos")) {
-                          pushToast("error", "Champs manquants", "Complète les champs requis.");
-                          return;
-                        }
-                        setActiveTab("contact");
-                      }}
-                    >
-                      Suivant : Coordonnées
-                      <ArrowRight size={16} />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "contact" && (
-                <div className="section">
-                  <h2 className="section-title">
-                    <Mail size={20} />
-                    Coordonnées
-                    <span className="step">
-                      Étape 2
-                      <ChevronRight size={14} />
-                      4
-                    </span>
-                  </h2>
-
-                  <div className="form-grid form-grid-2">
-                    <div className="form-group">
-                      <label className="form-label">
-                        Email <span className="required">*</span>
-                      </label>
-                      <div className="form-input-icon">
-                        <div className="icon-wrapper">
-                          <Mail size={16} />
-                        </div>
-                        <input className={inputClass("email", "form-input")} type="email" name="email" value={formData.email} onChange={handleChange} placeholder="jean.dupont@exemple.com" />
-                      </div>
-                      <FieldError name="email" />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">
-                        Téléphone <span className="required">*</span>
-                      </label>
-                      <div className="form-input-icon">
-                        <div className="icon-wrapper">
-                          <Phone size={16} />
-                        </div>
-                        <input className={inputClass("phone", "form-input")} type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="06 12 34 56 78" />
-                      </div>
-                      <FieldError name="phone" />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">
-                        Adresse <span className="required">*</span>
-                      </label>
-                      <div className="form-input-icon">
-                        <div className="icon-wrapper">
-                          <MapPin size={16} />
-                        </div>
-                        <input className={inputClass("address", "form-input")} type="text" name="address" value={formData.address} onChange={handleChange} placeholder="123 Rue de la Paix" />
-                      </div>
-                      <FieldError name="address" />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">
-                        Code postal <span className="required">*</span>
-                      </label>
-                      <input className={inputClass("zipCode", "form-input")} type="text" name="zipCode" value={formData.zipCode} onChange={handleChange} placeholder="75000" />
-                      <FieldError name="zipCode" />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">
-                        Ville <span className="required">*</span>
-                      </label>
-                      <input className={inputClass("city", "form-input")} type="text" name="city" value={formData.city} onChange={handleChange} placeholder="Paris" />
-                      <FieldError name="city" />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">
-                        Pays <span className="required">*</span>
-                      </label>
-                      <input className={inputClass("country", "form-input")} type="text" name="country" value={formData.country} onChange={handleChange} placeholder="France" />
-                      <FieldError name="country" />
-                    </div>
-                  </div>
-
-                  <div className="bottom-actions" style={{ borderTop: "none", paddingTop: "1.5rem" }}>
-                    <button type="button" className="button button-secondary" onClick={() => setActiveTab("infos")}>
-                      <ArrowLeft size={16} />
-                      Précédent
-                    </button>
-                    <button
-                      type="button"
-                      className="button button-primary"
-                      onClick={() => {
-                        if (!validateTab("contact")) {
-                          pushToast("error", "Champs manquants", "Complète les champs requis.");
-                          return;
-                        }
-                        setActiveTab("pro");
-                      }}
-                    >
-                      Suivant : Situation professionnelle
-                      <ArrowRight size={16} />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "pro" && (
-                <div className="section">
-                  <h2 className="section-title">
-                    <Briefcase size={20} />
-                    Situation professionnelle
-                    <span className="step">
-                      Étape 3
-                      <ChevronRight size={14} />
-                      4
-                    </span>
-                  </h2>
-
-                  <div className="form-grid form-grid-2">
-                    <div className="form-group">
-                      <label className="form-label">
-                        Profession <span className="required">*</span>
-                      </label>
-                      <input className={inputClass("profession", "form-input")} type="text" name="profession" value={formData.profession} onChange={handleChange} placeholder="Ex: Développeur web" />
-                      <FieldError name="profession" />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Employeur</label>
-                      <input className="form-input" type="text" name="employer" value={formData.employer} onChange={handleChange} placeholder="Nom de l'entreprise" />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Revenu annuel (FCFA)</label>
-                      <div className="form-input-icon">
-                        <div className="icon-wrapper">
-                          <Euro size={16} />
-                        </div>
-                        <input className="form-input" type="number" name="annualIncome" value={formData.annualIncome} onChange={handleChange} placeholder="45000" min="0" step="0.01" />
-                      </div>
-                      <p className="helper-text">Optionnel</p>
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Type de contrat</label>
-                      <select className="form-select" name="contractType" onChange={() => {}}>
-                        <option value="">Sélectionner un type de contrat</option>
-                        <option value="cdi">CDI</option>
-                        <option value="cdd">CDD</option>
-                        <option value="interim">Intérim</option>
-                        <option value="independant">Indépendant</option>
-                        <option value="etudiant">Étudiant</option>
-                        <option value="retraite">Retraité</option>
-                        <option value="autre">Autre</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="bottom-actions" style={{ borderTop: "none", paddingTop: "1.5rem" }}>
-                    <button type="button" className="button button-secondary" onClick={() => setActiveTab("contact")}>
-                      <ArrowLeft size={16} />
-                      Précédent
-                    </button>
-                    <button
-                      type="button"
-                      className="button button-primary"
-                      onClick={() => {
-                        if (!validateTab("pro")) {
-                          pushToast("error", "Champs manquants", "Complète les champs requis.");
-                          return;
-                        }
-                        setActiveTab("garant");
-                      }}
-                    >
-                      Suivant : Garant
-                      <ArrowRight size={16} />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "garant" && (
-                <div className="section">
-                  <h2 className="section-title">
-                    <User size={20} />
-                    Garant
-                    <span className="step">
-                      Étape 4
-                      <ChevronRight size={14} />
-                      4
-                    </span>
-                  </h2>
-
-                  <div className="switch-item" style={{ marginBottom: "1.5rem" }}>
-                    <div className={`switch ${formData.hasGuarantor ? "active" : ""}`} onClick={toggleGuarantor}>
-                      <div className="switch-thumb" />
-                    </div>
-                    <span className="switch-label">Le locataire a-t-il un garant ?</span>
-                  </div>
-
-                  {formData.hasGuarantor && (
-                    <div
-                      style={{
-                        background: "rgba(99,102,241,.08)",
-                        padding: "1.5rem",
-                        borderRadius: "14px",
-                        border: "1px solid rgba(99,102,241,.18)",
-                        marginBottom: "1.5rem",
-                        boxShadow: "0 10px 30px rgba(99,102,241,.08)",
-                      }}
-                    >
-                      <h3 className="form-label" style={{ marginBottom: "1rem" }}>
-                        Informations du garant
-                      </h3>
-
-                      <div className="form-grid form-grid-2">
-                        <div className="form-group">
-                          <label className="form-label">
-                            Nom et prénom <span className="required">*</span>
-                          </label>
-                          <input className={inputClass("guarantorName", "form-input")} type="text" name="guarantorName" value={formData.guarantorName} onChange={handleChange} placeholder="Nom et prénom du garant" />
-                          <FieldError name="guarantorName" />
-                        </div>
-
-                        <div className="form-group">
-                          <label className="form-label">
-                            Téléphone <span className="required">*</span>
-                          </label>
-                          <div className="form-input-icon">
-                            <div className="icon-wrapper">
-                              <Phone size={16} />
-                            </div>
-                            <input className={inputClass("guarantorPhone", "form-input")} type="tel" name="guarantorPhone" value={formData.guarantorPhone} onChange={handleChange} placeholder="06 12 34 56 78" />
-                          </div>
-                          <FieldError name="guarantorPhone" />
-                        </div>
-
-                        <div className="form-group">
-                          <label className="form-label">
-                            Email <span className="required">*</span>
-                          </label>
-                          <div className="form-input-icon">
-                            <div className="icon-wrapper">
-                              <Mail size={16} />
-                            </div>
-                            <input className={inputClass("guarantorEmail", "form-input")} type="email" name="guarantorEmail" value={formData.guarantorEmail} onChange={handleChange} placeholder="garant@exemple.com" />
-                          </div>
-                          <FieldError name="guarantorEmail" />
-                        </div>
-
-                        <div className="form-group">
-                          <label className="form-label">
-                            Profession <span className="required">*</span>
-                          </label>
-                          <input className={inputClass("guarantorProfession", "form-input")} type="text" name="guarantorProfession" value={formData.guarantorProfession} onChange={handleChange} placeholder="Profession du garant" />
-                          <FieldError name="guarantorProfession" />
-                        </div>
-
-                        <div className="form-group">
-                          <label className="form-label">
-                            Revenu annuel (FCFA) <span className="required">*</span>
-                          </label>
-                          <div className="form-input-icon">
-                            <div className="icon-wrapper">
-                              <Euro size={16} />
-                            </div>
-                            <input className={inputClass("guarantorIncome", "form-input")} type="number" name="guarantorIncome" value={formData.guarantorIncome} onChange={handleChange} placeholder="60000" min="0" step="0.01" />
-                          </div>
-                          <FieldError name="guarantorIncome" />
-                        </div>
-
-                        <div className="form-group" style={{ gridColumn: "1 / -1" }}>
-                          <label className="form-label">
-                            Adresse <span className="required">*</span>
-                          </label>
-                          <input className={inputClass("guarantorAddress", "form-input")} type="text" name="guarantorAddress" value={formData.guarantorAddress} onChange={handleChange} placeholder="Adresse complète du garant" />
-                          <FieldError name="guarantorAddress" />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="bottom-actions" style={{ borderTop: "none", paddingTop: "1.5rem" }}>
-                    <button type="button" className="button button-secondary" onClick={() => setActiveTab("pro")}>
-                      <ArrowLeft size={16} />
-                      Précédent
-                    </button>
-
-                    <button type="button" className="button button-secondary" onClick={() => setActiveTab("infos")}>
-                      <Home size={16} />
-                      Retour au début
-                    </button>
-
-                    <button type="submit" className="button button-primary" disabled={isLoading}>
-                      <Save size={16} />
-                      {isLoading ? "Enregistrement..." : "Enregistrer le locataire"}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </form>
           </div>
-        </div>
+        )}
       </div>
     </>
   );
