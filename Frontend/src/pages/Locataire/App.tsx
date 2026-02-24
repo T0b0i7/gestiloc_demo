@@ -172,28 +172,29 @@ const AppContent = () => {
       user={user}
       notify={notify}
     >
-      <Routes>
-        <Route index element={<Dashboard key={refreshKey} activeTab="home" notify={notify} onNavigate={handleNavigation} />} />
-        <Route path="home" element={<Dashboard key={refreshKey} activeTab="home" notify={notify} onNavigate={handleNavigation} />} />
-        <Route path="payments" element={<Payments notify={notify} />} />
-        <Route path="messages" element={<Messages notify={notify} />} />
-        <Route path="interventions" element={<Interventions notify={notify} />} />
-        <Route path="documents" element={<Documents notify={notify} />} />
-        <Route path="receipts" element={<Dashboard activeTab="receipts" notify={notify} />} />
-        <Route path="landlord" element={<Landlord notify={notify} />} />
-        <Route path="property" element={<Property notify={notify} />} />
-        <Route path="notice" element={<TenantPreavisPage notify={notify} />} />
-        <Route path="profile" element={<Profile notify={notify} onLogout={handleLogout} />} />
-        <Route path="factures" element={<TenantInvoicesPage />} />
-        <Route path="payer/:invoiceId" element={<PaymentPage />} />
-        <Route path="paiement/retour" element={<PaymentReturnPage />} />
-        <Route path="paiement/confirmation/:invoiceId/:transactionId" element={<PaymentConfirmationPage />} />
-        <Route path="help" element={<Dashboard activeTab="help" notify={notify} />} />
-        <Route path="location" element={<Location notify={notify} />} />
-        <Route path="tasks" element={<Tasks notify={notify} />} />
-        <Route path="notes" element={<Notes notify={notify} />} />
-        <Route path="settings" element={<Settings notify={notify} />} />
-      </Routes>
+ <Routes>
+  <Route index element={<Dashboard key={refreshKey} activeTab="home" notify={notify} onNavigate={handleNavigation} />} />
+  <Route path="home" element={<Dashboard key={refreshKey} activeTab="home" notify={notify} onNavigate={handleNavigation} />} />
+  <Route path="payments" element={<Payments notify={notify} />} />
+  <Route path="messages" element={<Messages notify={notify} />} />
+  <Route path="interventions" element={<Interventions notify={notify} />} />
+  <Route path="documents" element={<Documents notify={notify} />} />
+  {/* CORRECTION ICI - Utiliser RentReceiptsPage au lieu de Dashboard */}
+  <Route path="receipts" element={<RentReceiptsPage notify={notify} />} />
+  <Route path="landlord" element={<Landlord notify={notify} />} />
+  <Route path="property" element={<Property notify={notify} />} />
+  <Route path="notice" element={<TenantPreavisPage notify={notify} />} />
+  <Route path="profile" element={<Profile notify={notify} onLogout={handleLogout} />} />
+  <Route path="factures" element={<TenantInvoicesPage />} />
+  <Route path="payer/:invoiceId" element={<PaymentPage />} />
+  <Route path="paiement/retour" element={<PaymentReturnPage />} />
+  <Route path="paiement/confirmation/:invoiceId/:transactionId" element={<PaymentConfirmationPage />} />
+  <Route path="help" element={<Dashboard activeTab="help" notify={notify} />} />
+  <Route path="location" element={<Location notify={notify} />} />
+  <Route path="tasks" element={<Tasks notify={notify} />} />
+  <Route path="notes" element={<Notes notify={notify} />} />
+  <Route path="settings" element={<Settings notify={notify} />} />
+</Routes>
 
       {/* Si tu utilises shadcn toaster, garde-le ici */}
       <Toaster />

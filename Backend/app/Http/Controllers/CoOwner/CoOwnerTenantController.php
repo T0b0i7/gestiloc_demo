@@ -600,6 +600,116 @@ HTML;
         }
     }
 
+        /**
+     * Renvoyer l'invitation à un locataire
+     */
+    public function resendInvitation(Request $request, $tenantId)
+    {
+        $user = $this->getAuthenticatedUser($request);
+
+        if (!$user || !$user->hasRole('co_owner')) {
+            return back()->with('error', 'Non autorisé');
+        }
+
+        $coOwner = $user->coOwner;
+        if (!$coOwner) {
+            return back()->with('error', 'Profil co-propriétaire non trouvé');
+        }
+
+        // Récupérer les IDs des biens délégués
+        $delegatedPropertyIds = PropertyDelegation::where('co_owner_id', $coOwner->id)
+            ->where('status', 'active')
+            ->pluck('property_id')
+            ->toArray();
+
+        // Vérifier que le locataire appartient au co-propriétaire ou est dans un bien délégué
+        $tenant = Tenant::where('id', $tenantId)
+            ->where(function($q) use ($coOwner, $delegatedPropertyIds) {
+                $q->where('meta->co_owner_id', $coOwner->id)
+                  ->orWhereHas('leases', function($subQuery) use ($delegatedPropertyIds) {
+                      $subQuery->whereIn('property_id', $delegatedPropertyIds);
+                  });
+            })
+            ->firstOrFail();
+
+        try {
+            Log::info('=== RENVOI INVITATION LOCATAIRE (COPRIO) ===', [
+                'tenant_id' => $tenantId,
+                'tenant_email' => $tenant->email ?? $tenant->meta['email'] ?? null,
+                'co_owner_id' => $coOwner->id,
+                'user_id' => $user->id
+            ]);
+
+            // Vérifier s'il existe une invitation en attente
+            $invitation = TenantInvitation::where('email', $tenant->email ?? $tenant->meta['email'] ?? null)
+                ->where('expires_at', '>', now())
+                ->latest()
+                ->first();
+
+            if (!$invitation) {
+                // Créer une nouvelle invitation
+                $invitation = TenantInvitation::create([
+                    'landlord_id'    => $coOwner->landlord_id,
+                    'tenant_user_id' => $tenant->user_id,
+                    'email'          => $tenant->email ?? $tenant->meta['email'] ?? null,
+                    'name'           => trim(($tenant->first_name ?? '') . ' ' . ($tenant->last_name ?? '')),
+                    'token'          => TenantInvitation::makeToken(),
+                    'expires_at'     => now()->addDays(7),
+                    'meta'           => [
+                        'first_name' => $tenant->first_name,
+                        'last_name'  => $tenant->last_name,
+                        'phone'      => $tenant->phone ?? $tenant->meta['phone'] ?? null,
+                        'invited_by' => 'co_owner',
+                        'co_owner_id' => $coOwner->id,
+                    ],
+                ]);
+
+                Log::info('Nouvelle invitation créée', [
+                    'invitation_id' => $invitation->id
+                ]);
+            } else {
+                // Mettre à jour l'invitation existante
+                $invitation->update([
+                    'token' => TenantInvitation::makeToken(),
+                    'expires_at' => now()->addDays(7),
+                ]);
+
+                Log::info('Invitation existante mise à jour', [
+                    'invitation_id' => $invitation->id
+                ]);
+            }
+
+            // Générer le lien d'invitation
+            $signedUrl = URL::temporarySignedRoute(
+                'api.auth.accept-invitation',
+                now()->addDays(7),
+                ['invitationId' => $invitation->id]
+            );
+
+            // Envoyer l'email d'invitation
+            $tenantEmail = $tenant->email ?? $tenant->meta['email'] ?? null;
+
+            if (empty($tenantEmail)) {
+                return back()->with('error', 'Adresse email du locataire introuvable.');
+            }
+
+            $this->sendInvitationEmail($tenant, $invitation, $signedUrl, $user, $tenantEmail);
+
+            return redirect()
+                ->route('co-owner.tenants.show', $tenantId)
+                ->with('success', 'Invitation renvoyée avec succès !');
+
+        } catch (\Exception $e) {
+            Log::error('Erreur renvoi invitation locataire', [
+                'error' => $e->getMessage(),
+                'tenant_id' => $tenantId,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return back()->with('error', 'Erreur lors du renvoi de l\'invitation: ' . $e->getMessage());
+        }
+    }
+
     /**
      * Méthode utilitaire pour récupérer l'utilisateur authentifié
      */

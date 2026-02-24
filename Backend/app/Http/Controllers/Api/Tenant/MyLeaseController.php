@@ -916,19 +916,73 @@ public function index()
     }
 
     /**
-     * Helper pour obtenir la méthode de paiement
+     * Helper pour obtenir la méthode de paiement - VERSION CORRIGÉE
      */
     private function getPaymentMethod($payment)
     {
         if (!$payment->provider_payload) {
-            return 'manual';
+            return 'Carte bancaire';
         }
 
         try {
-            $payload = json_decode($payment->provider_payload, true);
-            return $payload['payment_method'] ?? 'manual';
+            // Vérifier si c'est déjà un tableau (cas d'erreur)
+            if (is_array($payment->provider_payload)) {
+                $payload = $payment->provider_payload;
+            }
+            // Sinon, essayer de décoder la chaîne JSON
+            elseif (is_string($payment->provider_payload)) {
+                $payload = json_decode($payment->provider_payload, true);
+
+                // Si json_decode échoue, retourner la valeur par défaut
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    Log::warning('Erreur json_decode dans getPaymentMethod', [
+                        'payment_id' => $payment->id,
+                        'error' => json_last_error_msg()
+                    ]);
+                    return 'Carte bancaire';
+                }
+            }
+            else {
+                // Type inattendu
+                return 'Carte bancaire';
+            }
+
+            // Si le payload est null ou pas un tableau après décodage
+            if (!is_array($payload)) {
+                return 'Carte bancaire';
+            }
+
+            // Extraire la méthode de paiement des différentes structures possibles
+            $method = $payload['payment_method'] ??
+                     $payload['data']['payment_method'] ??
+                     $payload['transaction']['payment_method'] ??
+                     $payload['method'] ??
+                     null;
+
+            // Mapper les valeurs possibles
+            if ($method) {
+                $method = strtolower($method);
+
+                if (in_array($method, ['mobile_money', 'mtn', 'moov', 'orange'])) {
+                    return 'Mobile Money';
+                } elseif (in_array($method, ['card', 'visa', 'mastercard'])) {
+                    return 'Carte bancaire';
+                } elseif (in_array($method, ['bank_transfer', 'virement'])) {
+                    return 'Virement bancaire';
+                } elseif (in_array($method, ['cash', 'especes'])) {
+                    return 'Espèces';
+                } elseif (in_array($method, ['check', 'cheque'])) {
+                    return 'Chèque';
+                }
+            }
+
+            return 'Carte bancaire';
+
         } catch (\Exception $e) {
-            return 'manual';
+            Log::error('Exception dans getPaymentMethod: ' . $e->getMessage(), [
+                'payment_id' => $payment->id
+            ]);
+            return 'Carte bancaire';
         }
     }
 }

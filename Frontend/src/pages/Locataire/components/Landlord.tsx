@@ -124,9 +124,7 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [propertyInfo, setPropertyInfo] = useState<any>(null);
-  const [activeFilter, setActiveFilter] = useState<string>('tous');
   const [currentPage, setCurrentPage] = useState(1);
-  const [showFilters, setShowFilters] = useState(false);
   const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
 
   useEffect(() => {
@@ -177,17 +175,12 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
 
   const getFilteredPeople = () => {
     let filtered = allPeople;
-    if (activeFilter !== 'tous') {
-      if (activeFilter === 'createur') filtered = filtered.filter(p => p.filterType === 'creator');
-      else if (activeFilter === 'proprietaire') filtered = filtered.filter(p => p.filterType === 'landlord');
-      else if (activeFilter === 'coproprietaire') filtered = filtered.filter(p => p.filterType === 'coowner');
-    }
     if (searchTerm) {
       filtered = filtered.filter(p =>
         `${p.prenom} ${p.nom}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (p.email && p.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (p.telephone && p.telephone.includes(searchTerm)) ||
-        (p.role && p.role.toLowerCase().includes(searchTerm.toLowerCase()))
+        (p.company_name && p.company_name.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
     return filtered;
@@ -508,13 +501,13 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
         </div>
       )}
 
-      {/* Header avec stats */}
+      {/* Header simplifié */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-6 animate-slideDown">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
               <Users2 className="w-6 h-6 text-[#529D21]" />
-              Gestion des intervenants
+              Intervenants
             </h2>
             <p className="text-sm text-gray-500 mt-1">
               {filteredPeople.length} personne{filteredPeople.length > 1 ? 's' : ''} trouvée{filteredPeople.length > 1 ? 's' : ''}
@@ -529,64 +522,7 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="group bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-xl p-4 border border-purple-200 hover:shadow-md transition-all duration-300 hover:scale-105">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
-                <PenTool size={24} />
-              </div>
-              <div>
-                <p className="text-xs text-purple-600 font-medium">Créateur</p>
-                <p className="text-2xl font-bold text-gray-900">{creator ? '1' : '0'}</p>
-                <p className="text-xs text-gray-500">Personne ayant créé le bien</p>
-              </div>
-            </div>
-          </div>
-          <div className="group bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-4 border border-blue-200 hover:shadow-md transition-all duration-300 hover:scale-105">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
-                <Building size={24} />
-              </div>
-              <div>
-                <p className="text-xs text-blue-600 font-medium">Propriétaire foncier</p>
-                <p className="text-2xl font-bold text-gray-900">{landlord ? '1' : '0'}</p>
-                <p className="text-xs text-gray-500">Propriétaire du terrain</p>
-              </div>
-            </div>
-          </div>
-          <div className="group bg-gradient-to-br from-green-50 to-green-100/50 rounded-xl p-4 border border-green-200 hover:shadow-md transition-all duration-300 hover:scale-105">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
-                <Users size={24} />
-              </div>
-              <div>
-                <p className="text-xs text-green-600 font-medium">Copropriétaires</p>
-                <p className="text-2xl font-bold text-gray-900">{coOwners.length}</p>
-                <p className="text-xs text-gray-500">Avec délégations actives</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div className="space-y-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            <button onClick={() => { setActiveFilter('tous'); setCurrentPage(1); }} className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${activeFilter === 'tous' ? 'bg-gray-900 text-white shadow-md scale-105' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-              Tous ({allPeople.length})
-            </button>
-            <button onClick={() => { setActiveFilter('createur'); setCurrentPage(1); }} className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1 ${activeFilter === 'createur' ? 'bg-purple-600 text-white shadow-md scale-105' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'}`}>
-              <PenTool size={14} />
-              Créateur ({(allPeople.filter(p => p.filterType === 'creator')).length})
-            </button>
-            <button onClick={() => { setActiveFilter('proprietaire'); setCurrentPage(1); }} className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1 ${activeFilter === 'proprietaire' ? 'bg-blue-600 text-white shadow-md scale-105' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}>
-              <Building size={14} />
-              Propriétaire ({(allPeople.filter(p => p.filterType === 'landlord')).length})
-            </button>
-            <button onClick={() => { setActiveFilter('coproprietaire'); setCurrentPage(1); }} className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1 ${activeFilter === 'coproprietaire' ? 'bg-green-600 text-white shadow-md scale-105' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}>
-              <Users size={14} />
-              Copropriétaire ({(allPeople.filter(p => p.filterType === 'coowner')).length})
-            </button>
-          </div>
-
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -594,7 +530,7 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
               </div>
               <input
                 type="text"
-                placeholder="Rechercher par nom, email, téléphone ou rôle..."
+                placeholder="Rechercher par nom, email, téléphone ou entreprise..."
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                 className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#529D21]/20 focus:border-[#529D21] transition-all"
@@ -605,54 +541,32 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
                 </button>
               )}
             </div>
-            <div className="flex gap-2">
-              <div className="relative">
-                <button onClick={() => setShowDropdown(!showDropdown)} className="w-full sm:w-44 flex items-center justify-between gap-2 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:border-[#529D21] hover:bg-gray-50 transition-all">
-                  <span>{itemsPerPage} lignes</span>
-                  <ChevronDown size={16} className={`text-gray-500 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
-                </button>
-                {showDropdown && (
-                  <div className="absolute top-full right-0 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg z-10 animate-fadeIn">
-                    {['5', '10', '25', '50', '100'].map((n) => (
-                      <button key={n} onClick={() => { setItemsPerPage(n); setShowDropdown(false); setCurrentPage(1); }} className={`w-full px-4 py-2.5 text-left hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg transition-colors ${itemsPerPage === n ? 'bg-[#529D21]/10 text-[#529D21] font-medium' : ''}`}>
-                        {n} lignes
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <button onClick={() => setShowFilters(!showFilters)} className={`px-4 py-3 border rounded-xl transition-all flex items-center gap-2 ${showFilters ? 'bg-[#529D21] text-white border-[#529D21]' : 'border-gray-200 text-gray-700 hover:border-[#529D21] hover:bg-gray-50'}`}>
-                <Filter size={18} />
-                <span className="hidden sm:inline">Filtres</span>
+            <div className="relative">
+              <button onClick={() => setShowDropdown(!showDropdown)} className="w-full sm:w-44 flex items-center justify-between gap-2 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:border-[#529D21] hover:bg-gray-50 transition-all">
+                <span>{itemsPerPage} lignes</span>
+                <ChevronDown size={16} className={`text-gray-500 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
               </button>
+              {showDropdown && (
+                <div className="absolute top-full right-0 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg z-10 animate-fadeIn">
+                  {['5', '10', '25', '50', '100'].map((n) => (
+                    <button key={n} onClick={() => { setItemsPerPage(n); setShowDropdown(false); setCurrentPage(1); }} className={`w-full px-4 py-2.5 text-left hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg transition-colors ${itemsPerPage === n ? 'bg-[#529D21]/10 text-[#529D21] font-medium' : ''}`}>
+                      {n} lignes
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-
-          {showFilters && (
-            <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 animate-slideDown">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-medium text-gray-900">Filtres avancés</h3>
-                <button onClick={() => setShowFilters(false)} className="p-1 hover:bg-gray-200 rounded-lg transition-colors"><X size={16} /></button>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <button className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:border-[#529D21] transition-colors">Avec permissions</button>
-                <button className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:border-[#529D21] transition-colors">Professionnels</button>
-                <button className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:border-[#529D21] transition-colors">Délégations actives</button>
-                <button className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm hover:border-[#529D21] transition-colors">À contacter</button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Tableau */}
+      {/* Tableau simplifié - sans colonne Rôle */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden animate-slideUp">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                 <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Personne</th>
-                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Rôle</th>
                 <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Téléphone</th>
                 <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Email</th>
                 <th className="text-center px-6 py-4 text-sm font-semibold text-gray-700">Actions</th>
@@ -681,21 +595,16 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
                             {person.company_name && (
                               <p className="text-xs text-gray-500 flex items-center gap-1 mt-1"><Briefcase size={12} />{person.company_name}</p>
                             )}
+                            {person.permissions && person.permissions.length > 0 && (
+                              <div className="flex gap-1 mt-2">
+                                {person.permissions.slice(0, 2).map((perm, idx) => (
+                                  <span key={idx} className={`px-2 py-0.5 rounded text-[10px] font-medium ${getPermissionColor(perm)}`}>{perm}</span>
+                                ))}
+                                {person.permissions.length > 2 && <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px]">+{person.permissions.length - 2}</span>}
+                              </div>
+                            )}
                           </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-3 py-1.5 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 border ${getRoleColor(person.role)}`}>
-                          {getRoleIcon(person.role)}{person.role}
-                        </span>
-                        {person.permissions && person.permissions.length > 0 && (
-                          <div className="flex gap-1 mt-2">
-                            {person.permissions.slice(0, 2).map((perm, idx) => (
-                              <span key={idx} className={`px-2 py-0.5 rounded text-[10px] font-medium ${getPermissionColor(perm)}`}>{perm}</span>
-                            ))}
-                            {person.permissions.length > 2 && <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px]">+{person.permissions.length - 2}</span>}
-                          </div>
-                        )}
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-[#529D21] font-medium flex items-center gap-1"><Phone size={14} className="text-gray-400" />{person.telephone}</span>
@@ -723,13 +632,13 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
                 })
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center">
+                  <td colSpan={4} className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center">
                       <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4"><Users size={32} className="text-gray-400" /></div>
                       <p className="text-gray-500 font-medium">Aucune personne trouvée</p>
-                      <p className="text-sm text-gray-400 mt-1">Essayez de modifier vos filtres de recherche</p>
-                      <button onClick={() => { setSearchTerm(''); setActiveFilter('tous'); }} className="mt-4 px-4 py-2 bg-[#529D21] text-white rounded-lg hover:bg-[#529D21]/90 transition-colors">
-                        Réinitialiser les filtres
+                      <p className="text-sm text-gray-400 mt-1">Essayez de modifier votre recherche</p>
+                      <button onClick={() => { setSearchTerm(''); }} className="mt-4 px-4 py-2 bg-[#529D21] text-white rounded-lg hover:bg-[#529D21]/90 transition-colors">
+                        Réinitialiser la recherche
                       </button>
                     </div>
                   </td>

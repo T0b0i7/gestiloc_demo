@@ -882,8 +882,8 @@
 
     .form-input:focus, .form-select:focus, .form-textarea:focus {
         outline: none;
-        border-color: rgba(79,70,229,.75);
-        box-shadow: 0 0 0 4px rgba(79,70,229,0.14);
+        border-color: rgba(112, 174, 72, .75);
+        box-shadow: 0 0 0 4px rgba(112, 174, 72, 0.14);
     }
 
     .button {
@@ -905,22 +905,22 @@
     .button-primary {
         background: #70AE48;
         color: #fff;
-        box-shadow: 0 14px 30px rgba(79,70,229,.22);
+        box-shadow: 0 14px 30px rgba(112, 174, 72, .22);
     }
 
     .button-primary:hover:not(:disabled) {
         transform: translateY(-1px);
-        box-shadow: 0 18px 34px rgba(79,70,229,.28);
+        box-shadow: 0 18px 34px rgba(112, 174, 72, .28);
     }
 
     .button-secondary {
         background: rgba(255,255,255,.92);
-        color: #ca6638;
-        border: 2px solid rgba(67,56,202,.20);
+        color: #70AE48;
+        border: 2px solid rgba(112, 174, 72, .20);
     }
 
     .button-secondary:hover {
-        background: rgba(67,56,202,.06);
+        background: rgba(112, 174, 72, .06);
     }
 
     .button-danger {
@@ -983,8 +983,8 @@
     }
 
     .tab-button.active {
-        color: #d86132;
-        border-color: #d86132;
+        color: #70AE48;
+        border-color: #70AE48;
     }
 
     .field-error {
@@ -1021,7 +1021,7 @@
     }
 
     .switch.active {
-        background: rgba(79,70,229,.85);
+        background: #70AE48;
     }
 
     .switch-thumb {
@@ -1103,12 +1103,12 @@
     }
 
     .file-upload-label:hover {
-        border-color: rgba(79,70,229,.5);
-        background: rgba(79,70,229,.05);
+        border-color: #70AE48;
+        background: rgba(112, 174, 72, .05);
     }
 
     .file-upload-label i {
-        color: var(--indigo);
+        color: #70AE48;
     }
 
     .file-upload-label span {

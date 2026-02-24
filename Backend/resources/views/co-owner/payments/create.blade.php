@@ -3,12 +3,8 @@
 @section('title', 'Enregistrer un paiement manuel')
 
 @section('content')
-
     <div class="content-card">
-
         <div class="content-body">
-
-
             @if ($errors->any())
                 <div class="alert-box alert-error">
                     <i data-lucide="alert-circle" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
@@ -30,7 +26,6 @@
                 <div class="form-grid">
                     <!-- Colonne gauche -->
                     <div class="form-column">
-
                         <!-- Bouton à droite -->
                         <div class="top-actions">
                             <a href="{{ route('co-owner.payments.index') }}" class="button button-secondary"
@@ -107,20 +102,20 @@
                             <select name="payment_method" id="payment_method" class="form-control form-select" required>
                                 <option value="">Sélectionnez une méthode</option>
                                 <option value="virement" {{ old('payment_method') == 'virement' ? 'selected' : '' }}>
-                                    <i data-lucide="banknote" style="width: 16px; height: 16px;"></i> Virement bancaire
+                                    Virement bancaire
                                 </option>
                                 <option value="especes" {{ old('payment_method') == 'especes' ? 'selected' : '' }}>
-                                    <i data-lucide="coins" style="width: 16px; height: 16px;"></i> Espèces
+                                    Espèces
                                 </option>
                                 <option value="cheque" {{ old('payment_method') == 'cheque' ? 'selected' : '' }}>
-                                    <i data-lucide="file-text" style="width: 16px; height: 16px;"></i> Chèque
+                                    Chèque
                                 </option>
                                 <option value="mobile_money"
                                     {{ old('payment_method') == 'mobile_money' ? 'selected' : '' }}>
-                                    <i data-lucide="smartphone" style="width: 16px; height: 16px;"></i> Mobile Money
+                                    Mobile Money
                                 </option>
                                 <option value="card" {{ old('payment_method') == 'card' ? 'selected' : '' }}>
-                                    <i data-lucide="credit-card" style="width: 16px; height: 16px;"></i> Carte bancaire
+                                    Carte bancaire
                                 </option>
                             </select>
                         </div>
@@ -193,7 +188,7 @@
 
                 <!-- Boutons d'action -->
                 <div class="form-actions">
-                    <button type="submit" class="button button-primary">
+                    <button type="button" class="button button-primary" id="showConfirmModal">
                         <i data-lucide="check" style="width: 16px; height: 16px;"></i> Enregistrer le paiement
                     </button>
                     <a href="{{ route('co-owner.payments.index') }}" class="button button-secondary">
@@ -204,6 +199,61 @@
         </div>
     </div>
 
+    <!-- MODALE DE CONFIRMATION ÉLÉGANTE -->
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <div class="modal-icon">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                </div>
+                <h2>Confirmer le paiement</h2>
+                <button class="modal-close" id="closeModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="payment-summary">
+                    <div class="summary-row">
+                        <span class="summary-label">Bien</span>
+                        <span class="summary-value" id="modalProperty">-</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Locataire</span>
+                        <span class="summary-value" id="modalTenant">-</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Montant total</span>
+                        <span class="summary-value highlight" id="modalTotal">0 XOF</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Frais (5%)</span>
+                        <span class="summary-value" id="modalFee">0 XOF</span>
+                    </div>
+                    <div class="summary-row divider"></div>
+                    <div class="summary-row total">
+                        <span class="summary-label">Montant net</span>
+                        <span class="summary-value" id="modalNet">0 XOF</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Date</span>
+                        <span class="summary-value" id="modalDate">-</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Méthode</span>
+                        <span class="summary-value" id="modalMethod">-</span>
+                    </div>
+                </div>
+
+        
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelModalBtn">Annuler</button>
+                <button class="btn btn-primary" id="confirmSubmitBtn">Confirmer le paiement</button>
+            </div>
+        </div>
+    </div>
 
     <style>
         /* Variables et styles de base */
@@ -223,7 +273,6 @@
             --shadow: 0 22px 70px rgba(0, 0, 0, .18);
         }
 
-
         .content-card {
             max-width: 1500px;
             margin: 0 auto;
@@ -237,7 +286,6 @@
         }
 
         .content-header {
-
             padding: 1.5rem;
             color: rgb(0, 0, 0);
             position: relative;
@@ -565,40 +613,219 @@
             border-top: 1px solid rgba(148, 163, 184, .15);
         }
 
-        /* Icônes dans les options */
-        option {
-            padding: 0.5rem;
-        }
-
         /* Animation pour le montant net */
         @keyframes highlight {
-            0% {
-                transform: scale(1);
-            }
-
-            50% {
-                transform: scale(1.02);
-            }
-
-            100% {
-                transform: scale(1);
-            }
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
         }
 
         .summary-total .summary-value.highlight {
             animation: highlight 0.5s ease;
         }
 
+        /* MODALE DE CONFIRMATION */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-container {
+            background: white;
+            border-radius: 28px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            transform: scale(0.9);
+            animation: scaleIn 0.3s ease forwards;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #70AE48, #8BC34A);
+            padding: 1.5rem;
+            position: relative;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .modal-icon {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .modal-icon svg {
+            width: 32px;
+            height: 32px;
+            color: white;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+            flex: 1;
+        }
+
+        .modal-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .payment-summary {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+            border: 1px solid rgba(112, 174, 72, 0.2);
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.6rem 0;
+            font-size: 0.95rem;
+        }
+
+        .summary-row .summary-label {
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .summary-row .summary-value {
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .summary-row .summary-value.highlight {
+            color: #70AE48;
+            font-size: 1.1rem;
+        }
+
+        .summary-row.divider {
+            border-top: 1px dashed rgba(112, 174, 72, 0.3);
+            padding: 0;
+            margin: 0.5rem 0;
+        }
+
+        .summary-row.total {
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+        }
+
+        .summary-row.total .summary-label {
+            color: #70AE48;
+            font-weight: 700;
+        }
+
+        .summary-row.total .summary-value {
+            color: #70AE48;
+            font-size: 1.1rem;
+            font-weight: 800;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #856404;
+        }
+
+        .warning-box svg {
+            flex-shrink: 0;
+        }
+
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #70AE48, #8BC34A);
+            color: white;
+            box-shadow: 0 4px 15px rgba(112, 174, 72, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(112, 174, 72, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
-            .content-container {
-                padding: 1rem;
-            }
-
-            .content-header {
-                padding: 1.5rem;
-            }
-
             .content-body {
                 padding: 1.5rem;
             }
@@ -615,6 +842,28 @@
                 width: 100%;
                 justify-content: center;
             }
+
+            .modal-container {
+                width: 95%;
+            }
+
+            .modal-header {
+                padding: 1rem;
+            }
+
+            .modal-icon {
+                width: 48px;
+                height: 48px;
+            }
+
+            .modal-icon svg {
+                width: 24px;
+                height: 24px;
+            }
+
+            .modal-header h2 {
+                font-size: 1.2rem;
+            }
         }
     </style>
 
@@ -630,6 +879,7 @@
             const feeDisplay = document.getElementById('fee_amount');
             const netDisplay = document.getElementById('amount_net');
             const paymentMethod = document.getElementById('payment_method');
+            const paymentDate = document.querySelector('input[name="payment_date"]');
 
             // Éléments d'information
             const selectedProperty = document.getElementById('selected-property');
@@ -641,6 +891,20 @@
             const previewTotal = document.getElementById('preview-total');
             const previewFee = document.getElementById('preview-fee');
             const previewNet = document.getElementById('preview-net');
+
+            // Éléments de la modale
+            const modal = document.getElementById('confirmModal');
+            const showModalBtn = document.getElementById('showConfirmModal');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const cancelModalBtn = document.getElementById('cancelModalBtn');
+            const confirmSubmitBtn = document.getElementById('confirmSubmitBtn');
+            const modalProperty = document.getElementById('modalProperty');
+            const modalTenant = document.getElementById('modalTenant');
+            const modalTotal = document.getElementById('modalTotal');
+            const modalFee = document.getElementById('modalFee');
+            const modalNet = document.getElementById('modalNet');
+            const modalDate = document.getElementById('modalDate');
+            const modalMethod = document.getElementById('modalMethod');
 
             // Taux de frais (5%)
             const feeRate = 0.05;
@@ -656,6 +920,18 @@
             // Fonction pour formater la monnaie
             function formatCurrency(amount) {
                 return formatNumber(amount) + ' XOF';
+            }
+
+            // Fonction pour obtenir le libellé de la méthode de paiement
+            function getPaymentMethodLabel(value) {
+                const methods = {
+                    'virement': 'Virement bancaire',
+                    'especes': 'Espèces',
+                    'cheque': 'Chèque',
+                    'mobile_money': 'Mobile Money',
+                    'card': 'Carte bancaire'
+                };
+                return methods[value] || value;
             }
 
             // Fonction pour calculer et mettre à jour les montants
@@ -703,7 +979,6 @@
                     }
 
                     // Pour l'exemple, on affiche "À calculer" pour le solde
-                    // En réalité, vous pourriez faire une requête AJAX pour récupérer le solde réel
                     selectedBalance.textContent = 'À calculer';
                 } else {
                     selectedProperty.textContent = '-';
@@ -711,6 +986,78 @@
                     selectedRent.textContent = '-';
                     selectedBalance.textContent = '-';
                 }
+            }
+
+            // Fonction pour mettre à jour la modale
+            function updateModal() {
+                const selectedOption = leaseSelect.options[leaseSelect.selectedIndex];
+                const amount = parseFloat(amountInput.value) || 0;
+                const fee = amount * feeRate;
+                const net = amount - fee;
+
+                modalProperty.textContent = selectedOption.value ?
+                    (selectedOption.getAttribute('data-property') || 'Non spécifié') : '-';
+                modalTenant.textContent = selectedOption.value ?
+                    (selectedOption.getAttribute('data-tenant') || 'Non spécifié') : '-';
+                modalTotal.textContent = formatCurrency(amount);
+                modalFee.textContent = formatCurrency(fee);
+                modalNet.textContent = formatCurrency(net);
+
+                if (paymentDate.value) {
+                    const date = new Date(paymentDate.value);
+                    modalDate.textContent = date.toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+                } else {
+                    modalDate.textContent = '-';
+                }
+
+                modalMethod.textContent = paymentMethod.value ?
+                    getPaymentMethodLabel(paymentMethod.value) : '-';
+            }
+
+            // Fonction de validation du formulaire
+            function validateForm() {
+                if (!leaseSelect.value) {
+                    showError('Veuillez sélectionner un bail.');
+                    leaseSelect.focus();
+                    return false;
+                }
+                if (!amountInput.value || parseFloat(amountInput.value) <= 0) {
+                    showError('Veuillez saisir un montant valide.');
+                    amountInput.focus();
+                    return false;
+                }
+                if (!paymentMethod.value) {
+                    showError('Veuillez sélectionner une méthode de paiement.');
+                    paymentMethod.focus();
+                    return false;
+                }
+                return true;
+            }
+
+            // Fonction pour afficher une erreur
+            function showError(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert-box alert-error';
+                errorDiv.innerHTML = `
+                    <i data-lucide="alert-circle" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
+                    <div>
+                        <strong>Erreur de validation</strong>
+                        <p style="margin-top: 8px; font-weight: 650; font-size: 0.9rem;">${message}</p>
+                    </div>
+                `;
+
+                const formCard = document.querySelector('.form-card');
+                formCard.insertBefore(errorDiv, formCard.firstChild);
+
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+
+                setTimeout(() => errorDiv.remove(), 5000);
             }
 
             // Écouter les changements
@@ -721,57 +1068,32 @@
             updateAmounts();
             updateLeaseInfo();
 
-            // Validation du formulaire
-            document.getElementById('paymentForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-
-                let isValid = true;
-                let errorMessage = '';
-
-                if (!leaseSelect.value) {
-                    isValid = false;
-                    errorMessage = 'Veuillez sélectionner un bail.';
-                    leaseSelect.focus();
-                } else if (!amountInput.value || parseFloat(amountInput.value) <= 0) {
-                    isValid = false;
-                    errorMessage = 'Veuillez saisir un montant valide.';
-                    amountInput.focus();
-                } else if (!paymentMethod.value) {
-                    isValid = false;
-                    errorMessage = 'Veuillez sélectionner une méthode de paiement.';
-                    paymentMethod.focus();
+            // Gestionnaire pour ouvrir la modale
+            showModalBtn.addEventListener('click', function() {
+                if (validateForm()) {
+                    updateModal();
+                    modal.style.display = 'flex';
                 }
+            });
 
-                if (!isValid) {
-                    // Afficher une notification d'erreur
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'alert-box alert-error';
-                    errorDiv.innerHTML = `
-                <i data-lucide="alert-circle" style="width: 20px; height: 20px; flex-shrink: 0;"></i>
-                <div>
-                    <strong>Erreur de validation</strong>
-                    <p style="margin-top: 8px; font-weight: 650; font-size: 0.9rem;">${errorMessage}</p>
-                </div>
-            `;
+            // Gestionnaires pour fermer la modale
+            closeModalBtn.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
 
-                    const formCard = document.querySelector('.form-card');
-                    formCard.insertBefore(errorDiv, formCard.firstChild);
+            cancelModalBtn.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
 
-                    // Re-initialiser les icônes
-                    if (typeof lucide !== 'undefined') {
-                        lucide.createIcons();
-                    }
-
-                    // Supprimer l'erreur après 5 secondes
-                    setTimeout(() => errorDiv.remove(), 5000);
-                    return;
+            window.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
                 }
+            });
 
-                // Confirmation avant soumission
-                const confirmation = confirm('Confirmez-vous l\'enregistrement de ce paiement ?');
-                if (confirmation) {
-                    this.submit();
-                }
+            // Gestionnaire pour confirmer et soumettre
+            confirmSubmitBtn.addEventListener('click', function() {
+                document.getElementById('paymentForm').submit();
             });
 
             // Ajouter des événements pour améliorer l'UX

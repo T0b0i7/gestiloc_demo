@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Validation\ValidationException;
 
 class DocumentController extends Controller
@@ -40,7 +41,10 @@ class DocumentController extends Controller
             $tenant = $this->getTenant();
 
             if (!$tenant) {
-                return response()->json(['message' => 'Accès réservé aux locataires'], 403);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
             }
 
             $query = Document::where('tenant_id', $tenant->id)
@@ -53,6 +57,8 @@ class DocumentController extends Controller
                 } elseif ($request->status === 'archives') {
                     $query->where('status', 'archive');
                 }
+            } else {
+                $query->where('status', '!=', 'archive');
             }
 
             if ($request->has('category') && $request->category === 'templates') {
@@ -61,11 +67,11 @@ class DocumentController extends Controller
                 $query->whereNull('category')->orWhere('category', '!=', 'template');
             }
 
-            if ($request->has('type')) {
+            if ($request->has('type') && !empty($request->type)) {
                 $query->where('type', $request->type);
             }
 
-            if ($request->has('property_id')) {
+            if ($request->has('property_id') && !empty($request->property_id)) {
                 $query->where('property_id', $request->property_id);
             }
 
@@ -74,7 +80,7 @@ class DocumentController extends Controller
             }
 
             // Recherche
-            if ($request->has('search')) {
+            if ($request->has('search') && !empty($request->search)) {
                 $search = $request->search;
                 $query->where(function($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
@@ -84,8 +90,7 @@ class DocumentController extends Controller
             }
 
             // Période
-            if ($request->has('periode') && $request->periode) {
-                // Format attendu: "Janvier 2024"
+            if ($request->has('periode') && !empty($request->periode) && $request->periode !== 'Toutes') {
                 $months = [
                     'janvier' => '01', 'février' => '02', 'mars' => '03',
                     'avril' => '04', 'mai' => '05', 'juin' => '06',
@@ -126,7 +131,7 @@ class DocumentController extends Controller
                 'total' => $documents->total(),
                 'actifs_count' => Document::where('tenant_id', $tenant->id)->where('status', 'actif')->count(),
                 'archives_count' => Document::where('tenant_id', $tenant->id)->where('status', 'archive')->count(),
-                'templates_count' => Document::where('tenant_id', $tenant->id)->where('category', 'template')->count(),
+                'templates_count' => Document::where('category', 'template')->count(),
             ]);
 
         } catch (\Exception $e) {
@@ -147,7 +152,10 @@ class DocumentController extends Controller
             $tenant = $this->getTenant();
 
             if (!$tenant) {
-                return response()->json(['message' => 'Accès réservé aux locataires'], 403);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
             }
 
             $templates = Document::where('category', 'template')
@@ -187,7 +195,10 @@ class DocumentController extends Controller
             $tenant = $this->getTenant();
 
             if (!$tenant) {
-                return response()->json(['message' => 'Accès réservé aux locataires'], 403);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
             }
 
             $propertyId = $request->property_id;
@@ -223,17 +234,17 @@ class DocumentController extends Controller
                     $creatorRole = '';
 
                     if ($creatorUser->isLandlord() && $creatorUser->landlord) {
-                        $creatorName = $creatorUser->landlord->first_name . ' ' . $creatorUser->landlord->last_name;
+                        $creatorName = ($creatorUser->landlord->first_name ?? '') . ' ' . ($creatorUser->landlord->last_name ?? '');
                         $creatorRole = 'Propriétaire (créateur)';
                     } elseif ($creatorUser->isCoOwner() && $creatorUser->coOwner) {
-                        $creatorName = $creatorUser->coOwner->first_name . ' ' . $creatorUser->coOwner->last_name;
+                        $creatorName = ($creatorUser->coOwner->first_name ?? '') . ' ' . ($creatorUser->coOwner->last_name ?? '');
                         $creatorRole = $creatorUser->coOwner->co_owner_type === 'agency' ? 'Agence (créateur)' : 'Copropriétaire (créateur)';
                     }
 
-                    if (!empty($creatorName)) {
+                    if (!empty($creatorName) && trim($creatorName) !== ' ') {
                         $contacts[] = [
                             'id' => $creatorUser->id,
-                            'name' => $creatorName,
+                            'name' => trim($creatorName),
                             'email' => $creatorUser->email,
                             'role' => $creatorRole,
                             'type' => 'creator',
@@ -257,12 +268,13 @@ class DocumentController extends Controller
                         continue;
                     }
 
-                    if ($coOwnerUser->id != $property->landlord_id) {
-                        $role = $delegation->co_owner_type === 'agency' ? 'Agence' : 'Copropriétaire';
+                    $role = $delegation->co_owner_type === 'agency' ? 'Agence' : 'Copropriétaire';
+                    $name = ($delegation->coOwner->first_name ?? '') . ' ' . ($delegation->coOwner->last_name ?? '');
 
+                    if (!empty(trim($name))) {
                         $contacts[] = [
                             'id' => $coOwnerUser->id,
-                            'name' => $delegation->coOwner->first_name . ' ' . $delegation->coOwner->last_name,
+                            'name' => trim($name),
                             'email' => $coOwnerUser->email,
                             'role' => $role,
                             'type' => 'co_owner',
@@ -290,7 +302,10 @@ class DocumentController extends Controller
             $tenant = $this->getTenant();
 
             if (!$tenant) {
-                return response()->json(['message' => 'Accès réservé aux locataires'], 403);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
             }
 
             $document = Document::where('tenant_id', $tenant->id)
@@ -302,11 +317,15 @@ class DocumentController extends Controller
             $document->shared_with_users = $document->shared_with_users;
             $document->icon = $document->getFileIcon();
 
-            return response()->json($document);
+            return response()->json([
+                'success' => true,
+                'data' => $document
+            ]);
 
         } catch (\Exception $e) {
             Log::error('Erreur show document: ' . $e->getMessage());
             return response()->json([
+                'success' => false,
                 'message' => 'Document non trouvé'
             ], 404);
         }
@@ -321,17 +340,20 @@ class DocumentController extends Controller
             $tenant = $this->getTenant();
 
             if (!$tenant) {
-                return response()->json(['message' => 'Accès réservé aux locataires'], 403);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
             }
 
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
+                'name' => 'nullable|string|max:255',
                 'type' => 'required|string|in:acte_vente,bail,quittance,dpe,diagnostic,autre',
                 'bien' => 'nullable|string|max:255',
                 'description' => 'nullable|string',
                 'property_id' => 'nullable|exists:properties,id',
                 'lease_id' => 'nullable|exists:leases,id',
-                'is_shared' => 'boolean',
+                'is_shared' => 'nullable|in:true,false,1,0',
                 'shared_with' => 'nullable|array',
                 'shared_with.*' => 'exists:users,id',
                 'shared_with_emails' => 'nullable|array',
@@ -344,7 +366,7 @@ class DocumentController extends Controller
             $file = $request->file('file');
             $path = $file->store('documents/' . $tenant->id, 'public');
             $fileSize = $file->getSize();
-            $fileType = $file->getClientMimeType();
+            $fileType = $file->getMimeType();
 
             $document = Document::create([
                 'uuid' => Str::uuid(),
@@ -352,14 +374,14 @@ class DocumentController extends Controller
                 'property_id' => $validated['property_id'] ?? null,
                 'lease_id' => $validated['lease_id'] ?? null,
                 'created_by' => auth()->id(),
-                'name' => $validated['name'],
+                'name' => $validated['name'] ?? $file->getClientOriginalName(),
                 'type' => $validated['type'],
                 'bien' => $validated['bien'] ?? null,
                 'description' => $validated['description'] ?? null,
                 'file_path' => $path,
                 'file_size' => $fileSize,
                 'file_type' => $fileType,
-                'is_shared' => $request->boolean('is_shared', false),
+                'is_shared' => filter_var($validated['is_shared'] ?? false, FILTER_VALIDATE_BOOLEAN),
                 'shared_with' => $validated['shared_with'] ?? [],
                 'shared_with_emails' => $validated['shared_with_emails'] ?? [],
                 'status' => 'actif',
@@ -367,7 +389,7 @@ class DocumentController extends Controller
             ]);
 
             // Envoyer les emails si le document est partagé
-            if ($document->is_shared) {
+            if ($document->is_shared && (!empty($document->shared_with) || !empty($document->shared_with_emails))) {
                 $this->sendShareEmails($document);
             }
 
@@ -410,7 +432,10 @@ class DocumentController extends Controller
             $tenant = $this->getTenant();
 
             if (!$tenant) {
-                return response()->json(['message' => 'Accès réservé aux locataires'], 403);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
             }
 
             $document = Document::where('tenant_id', $tenant->id)->findOrFail($id);
@@ -473,7 +498,10 @@ class DocumentController extends Controller
             $tenant = $this->getTenant();
 
             if (!$tenant) {
-                return response()->json(['message' => 'Accès réservé aux locataires'], 403);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
             }
 
             $document = Document::where('tenant_id', $tenant->id)->findOrFail($id);
@@ -511,7 +539,10 @@ class DocumentController extends Controller
             $tenant = $this->getTenant();
 
             if (!$tenant) {
-                return response()->json(['message' => 'Accès réservé aux locataires'], 403);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
             }
 
             $document = Document::where('tenant_id', $tenant->id)->findOrFail($id);
@@ -540,7 +571,10 @@ class DocumentController extends Controller
             $tenant = $this->getTenant();
 
             if (!$tenant) {
-                return response()->json(['message' => 'Accès réservé aux locataires'], 403);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
             }
 
             $document = Document::where('tenant_id', $tenant->id)->findOrFail($id);
@@ -569,24 +603,93 @@ class DocumentController extends Controller
             $tenant = $this->getTenant();
 
             if (!$tenant) {
-                return response()->json(['message' => 'Accès réservé aux locataires'], 403);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
             }
 
             $document = Document::where('tenant_id', $tenant->id)->findOrFail($id);
 
             if (!Storage::disk('public')->exists($document->file_path)) {
-                return response()->json(['message' => 'Fichier non trouvé'], 404);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Fichier non trouvé'
+                ], 404);
             }
 
-            return Storage::disk('public')->download($document->file_path, $document->name);
+            $file = Storage::disk('public')->get($document->file_path);
+            $mimeType = Storage::disk('public')->mimeType($document->file_path);
+            $size = Storage::disk('public')->size($document->file_path);
+
+            return response($file, 200)
+                ->header('Content-Type', $mimeType)
+                ->header('Content-Disposition', 'attachment; filename="' . $document->name . '"')
+                ->header('Content-Length', $size)
+                ->header('Cache-Control', 'private, no-transform, must-revalidate')
+                ->header('Access-Control-Expose-Headers', 'Content-Disposition');
 
         } catch (\Exception $e) {
             Log::error('Erreur téléchargement document: ' . $e->getMessage());
             return response()->json([
+                'success' => false,
                 'message' => 'Erreur lors du téléchargement'
             ], 500);
         }
     }
+
+    /**
+ * GET /api/tenant/documents/{id}/pdf - Télécharger le document en PDF avec ses informations
+ */
+public function downloadPdf($id)
+{
+    try {
+        $tenant = $this->getTenant();
+
+        if (!$tenant) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Accès réservé aux locataires'
+            ], 403);
+        }
+
+        $document = Document::where('tenant_id', $tenant->id)
+            ->with(['property', 'lease'])
+            ->findOrFail($id);
+
+        if (!Storage::disk('public')->exists($document->file_path)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Fichier non trouvé'
+            ], 404);
+        }
+
+        // Charger la vue PDF
+        $pdf = Pdf::loadView('pdf.document', [
+            'document' => $document,
+            'tenant' => $tenant,
+            'date' => now()->format('d/m/Y H:i')
+        ]);
+
+        $pdf->setPaper('A4', 'portrait');
+        $pdf->setOptions([
+            'defaultFont' => 'sans-serif',
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => true
+        ]);
+
+        $filename = 'document_' . $document->id . '_' . date('Ymd') . '.pdf';
+
+        return $pdf->download($filename);
+
+    } catch (\Exception $e) {
+        Log::error('Erreur téléchargement PDF document: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur lors du téléchargement'
+        ], 500);
+    }
+}
 
     /**
      * Envoyer les emails de partage
@@ -596,15 +699,24 @@ class DocumentController extends Controller
         try {
             $users = User::whereIn('id', $document->shared_with ?? [])->get();
             $tenant = auth()->user()->tenant;
+            $frontendUrl = config('app.frontend_url', 'http://localhost:8080');
 
-            // Envoyer aux utilisateurs internes
             foreach ($users as $user) {
-                Mail::to($user->email)->queue(new DocumentSharedMail($document, $tenant, $user));
+                try {
+                    Mail::to($user->email)->queue(new DocumentSharedMail($document, $tenant, $user, null, $frontendUrl));
+                    Log::info('Email envoyé à', ['email' => $user->email]);
+                } catch (\Exception $e) {
+                    Log::error('Erreur envoi email à ' . $user->email . ': ' . $e->getMessage());
+                }
             }
 
-            // Envoyer aux emails externes
             foreach ($document->shared_with_emails ?? [] as $email) {
-                Mail::to($email)->queue(new DocumentSharedMail($document, $tenant, null, $email));
+                try {
+                    Mail::to($email)->queue(new DocumentSharedMail($document, $tenant, null, $email, $frontendUrl));
+                    Log::info('Email externe envoyé à', ['email' => $email]);
+                } catch (\Exception $e) {
+                    Log::error('Erreur envoi email externe à ' . $email . ': ' . $e->getMessage());
+                }
             }
 
             Log::info('Emails de partage envoyés', [
@@ -627,7 +739,10 @@ class DocumentController extends Controller
             $tenant = $this->getTenant();
 
             if (!$tenant) {
-                return response()->json(['message' => 'Accès réservé aux locataires'], 403);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
             }
 
             // Récupérer les biens du locataire
@@ -637,11 +752,12 @@ class DocumentController extends Controller
 
             // Récupérer les types de documents distincts
             $types = Document::where('tenant_id', $tenant->id)
+                ->whereNotNull('type')
                 ->distinct()
                 ->pluck('type');
 
             // Générer les options de période (6 derniers mois)
-            $periodes = [];
+            $periodes = ['Toutes'];
             for ($i = 5; $i >= 0; $i--) {
                 $date = now()->subMonths($i);
                 $periodes[] = $date->translatedFormat('F Y');

@@ -22,6 +22,11 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
+// Route publique pour voir le dossier partagé
+Route::get('/dossier-partage/{shareUrl}', function ($shareUrl) {
+    return view('dossier-public', ['shareUrl' => $shareUrl]);
+})->name('dossier.public');
+
 // Routes de test Laravel
 Route::get('/test-laravel', function () {
     return "Page Laravel de test - Ça fonctionne !";

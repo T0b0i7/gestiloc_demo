@@ -9,12 +9,7 @@
             <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>
             Retour à la liste
         </a>
-        <div class="top-actions-right">
-            <a href="{{ route('co-owner.tenants.assign.show', $tenant) }}" class="button button-primary" onclick="navigateTo('/coproprietaire/tenants/{{ $tenant->id }}/assign'); return false;">
-                <i data-lucide="home" style="width: 16px; height: 16px;"></i>
-                Assigner un bien
-            </a>
-        </div>
+
     </div>
 
     @if (session('success'))
@@ -155,7 +150,7 @@
                                 </p>
                             </div>
                             <div class="property-rent">
-                                {{ number_format($lease->rent_amount, 2) }} €/mois
+                                {{ number_format($lease->rent_amount, 2) }} FCFA/mois
                             </div>
                         </div>
 
@@ -203,10 +198,7 @@
                 <i data-lucide="home" class="empty-icon"></i>
                 <h3 style="color: var(--muted); margin-bottom: 0.5rem;">Aucun bien assigné</h3>
                 <p style="color: var(--muted2); margin-bottom: 1.5rem;">Ce locataire n'a pas encore de bien assigné.</p>
-                <a href="{{ route('co-owner.tenants.assign.show', $tenant) }}" class="button button-primary" onclick="navigateTo('/coproprietaire/tenants/{{ $tenant->id }}/assign'); return false;">
-                    <i data-lucide="home" style="width: 16px; height: 16px;"></i>
-                    Assigner un bien
-                </a>
+
             </div>
         @endif
     </div>
@@ -270,12 +262,12 @@
             </div>
             <div class="info-item">
                 <span class="info-label">
-                    <i data-lucide="euro" style="width: 14px; height: 14px;"></i>
+                    <i data-lucide="fcfa" style="width: 14px; height: 14px;"></i>
                     Revenu annuel
                 </span>
                 <span class="info-value">
                     @if($tenant->annual_income)
-                        {{ number_format($tenant->annual_income, 2) }} €
+                        {{ number_format($tenant->annual_income, 2) }} FCFA
                     @else
                         Non défini
                     @endif

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Dossier;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Models\Property;
 use App\Models\PropertyDelegation;
 use App\Mail\DossierSharedMail;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class DossierController extends Controller
 {
@@ -37,7 +39,10 @@ class DossierController extends Controller
             $tenant = $this->getTenant();
 
             if (!$tenant) {
-                return response()->json(['message' => 'Accès réservé aux locataires'], 403);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
             }
 
             $dossier = Dossier::where('tenant_id', $tenant->id)->first();
@@ -58,6 +63,7 @@ class DossierController extends Controller
             }
 
             $dossier->shared_with_users = $dossier->shared_with_users;
+            $dossier->shareable_url = $dossier->shareable_url;
 
             return response()->json([
                 'success' => true,
@@ -65,7 +71,9 @@ class DossierController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Erreur show dossier: ' . $e->getMessage());
+            Log::error('Erreur show dossier: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors du chargement du dossier'
@@ -82,7 +90,10 @@ class DossierController extends Controller
             $tenant = $this->getTenant();
 
             if (!$tenant) {
-                return response()->json(['message' => 'Accès réservé aux locataires'], 403);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
             }
 
             $dossier = Dossier::where('tenant_id', $tenant->id)->first();
@@ -133,11 +144,13 @@ class DossierController extends Controller
 
             // Envoyer les emails si le partage a changé
             if ($dossier->is_shared &&
-                (!empty($dossier->shared_with) && $dossier->shared_with != $oldSharedWith)) {
+                (!empty($dossier->shared_with) || !empty($dossier->shared_with_emails)) &&
+                ($dossier->shared_with != $oldSharedWith)) {
                 $this->sendShareEmails($dossier);
             }
 
             $dossier->shared_with_users = $dossier->shared_with_users;
+            $dossier->shareable_url = $dossier->shareable_url;
 
             return response()->json([
                 'success' => true,
@@ -152,7 +165,9 @@ class DossierController extends Controller
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            Log::error('Erreur mise à jour dossier: ' . $e->getMessage());
+            Log::error('Erreur mise à jour dossier: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors de la mise à jour du dossier'
@@ -169,7 +184,10 @@ class DossierController extends Controller
             $tenant = $this->getTenant();
 
             if (!$tenant) {
-                return response()->json(['message' => 'Accès réservé aux locataires'], 403);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
             }
 
             // Récupérer tous les biens du locataire
@@ -188,17 +206,17 @@ class DossierController extends Controller
                         $creatorRole = '';
 
                         if ($creatorUser->isLandlord() && $creatorUser->landlord) {
-                            $creatorName = $creatorUser->landlord->first_name . ' ' . $creatorUser->landlord->last_name;
+                            $creatorName = ($creatorUser->landlord->first_name ?? '') . ' ' . ($creatorUser->landlord->last_name ?? '');
                             $creatorRole = 'Propriétaire';
                         } elseif ($creatorUser->isCoOwner() && $creatorUser->coOwner) {
-                            $creatorName = $creatorUser->coOwner->first_name . ' ' . $creatorUser->coOwner->last_name;
+                            $creatorName = ($creatorUser->coOwner->first_name ?? '') . ' ' . ($creatorUser->coOwner->last_name ?? '');
                             $creatorRole = $creatorUser->coOwner->co_owner_type === 'agency' ? 'Agence' : 'Copropriétaire';
                         }
 
-                        if (!empty($creatorName)) {
+                        if (!empty(trim($creatorName))) {
                             $contacts[] = [
                                 'id' => $creatorUser->id,
-                                'name' => $creatorName,
+                                'name' => trim($creatorName),
                                 'email' => $creatorUser->email,
                                 'role' => $creatorRole,
                                 'type' => 'creator',
@@ -224,17 +242,20 @@ class DossierController extends Controller
                         }
 
                         $role = $delegation->co_owner_type === 'agency' ? 'Agence' : 'Copropriétaire';
+                        $name = ($delegation->coOwner->first_name ?? '') . ' ' . ($delegation->coOwner->last_name ?? '');
 
-                        $contacts[] = [
-                            'id' => $coOwnerUser->id,
-                            'name' => $delegation->coOwner->first_name . ' ' . $delegation->coOwner->last_name,
-                            'email' => $coOwnerUser->email,
-                            'role' => $role,
-                            'type' => 'co_owner',
-                            'property' => $property->name,
-                        ];
+                        if (!empty(trim($name))) {
+                            $contacts[] = [
+                                'id' => $coOwnerUser->id,
+                                'name' => trim($name),
+                                'email' => $coOwnerUser->email,
+                                'role' => $role,
+                                'type' => 'co_owner',
+                                'property' => $property->name,
+                            ];
 
-                        $processedIds[] = $coOwnerUser->id;
+                            $processedIds[] = $coOwnerUser->id;
+                        }
                     }
                 }
             }
@@ -256,7 +277,10 @@ class DossierController extends Controller
             $tenant = $this->getTenant();
 
             if (!$tenant) {
-                return response()->json(['message' => 'Accès réservé aux locataires'], 403);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
             }
 
             $dossier = Dossier::where('tenant_id', $tenant->id)->first();
@@ -292,6 +316,130 @@ class DossierController extends Controller
     }
 
     /**
+     * GET /api/tenant/dossier/download - Télécharger le dossier en PDF
+     */
+    public function download()
+    {
+        try {
+            $tenant = $this->getTenant();
+
+            if (!$tenant) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
+            }
+
+            $dossier = Dossier::where('tenant_id', $tenant->id)->first();
+
+            if (!$dossier) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Aucun dossier trouvé'
+                ], 404);
+            }
+
+            // Charger les documents associés
+            $documents = collect([]);
+            if (!empty($dossier->documents)) {
+                $documents = \App\Models\Document::whereIn('id', $dossier->documents)->get();
+            }
+
+            // Vérifier que la vue existe
+            if (!view()->exists('pdf.dossier')) {
+                Log::error('La vue pdf.dossier n\'existe pas');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erreur de configuration: vue PDF manquante'
+                ], 500);
+            }
+
+            $pdf = Pdf::loadView('pdf.dossier', [
+                'dossier' => $dossier,
+                'tenant' => $tenant,
+                'documents' => $documents,
+                'date' => now()->format('d/m/Y')
+            ]);
+
+            // Configuration du PDF
+            $pdf->setPaper('A4', 'portrait');
+            $pdf->setOptions([
+                'defaultFont' => 'sans-serif',
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true
+            ]);
+
+            $filename = 'dossier_' . $tenant->last_name . '_' . $tenant->first_name . '_' . date('Ymd') . '.pdf';
+
+            return $pdf->download($filename);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur téléchargement dossier: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du téléchargement: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * GET /api/public/dossier/{shareUrl} - Page publique du dossier
+     */
+    public function publicShow($shareUrl)
+    {
+        try {
+            $dossier = Dossier::where('share_url', $shareUrl)
+                ->where('is_shared', true)
+                ->where('status', 'publie')
+                ->first();
+
+            if (!$dossier) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dossier non trouvé ou non partagé'
+                ], 404);
+            }
+
+            $tenant = Tenant::find($dossier->tenant_id);
+
+            // Charger les documents associés
+            $documents = [];
+            if (!empty($dossier->documents)) {
+                $documents = \App\Models\Document::whereIn('id', $dossier->documents)
+                    ->get()
+                    ->map(function ($doc) {
+                        return [
+                            'id' => $doc->id,
+                            'name' => $doc->name,
+                            'type' => $doc->type,
+                            'file_url' => $doc->file_url,
+                        ];
+                    });
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'dossier' => $dossier,
+                    'tenant' => $tenant,
+                    'documents' => $documents,
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur publicShow dossier: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du chargement du dossier'
+            ], 500);
+        }
+    }
+
+    /**
      * Envoyer les emails de partage
      */
     private function sendShareEmails(Dossier $dossier)
@@ -299,13 +447,24 @@ class DossierController extends Controller
         try {
             $users = User::whereIn('id', $dossier->shared_with ?? [])->get();
             $tenant = auth()->user()->tenant;
+            $frontendUrl = config('app.frontend_url', 'http://localhost:8080');
 
             foreach ($users as $user) {
-                Mail::to($user->email)->queue(new DossierSharedMail($dossier, $tenant, $user));
+                try {
+                    Mail::to($user->email)->queue(new DossierSharedMail($dossier, $tenant, $user, null, $frontendUrl));
+                    Log::info('Email dossier envoyé à', ['email' => $user->email]);
+                } catch (\Exception $e) {
+                    Log::error('Erreur envoi email dossier à ' . $user->email . ': ' . $e->getMessage());
+                }
             }
 
             foreach ($dossier->shared_with_emails ?? [] as $email) {
-                Mail::to($email)->queue(new DossierSharedMail($dossier, $tenant, null, $email));
+                try {
+                    Mail::to($email)->queue(new DossierSharedMail($dossier, $tenant, null, $email, $frontendUrl));
+                    Log::info('Email dossier externe envoyé à', ['email' => $email]);
+                } catch (\Exception $e) {
+                    Log::error('Erreur envoi email dossier externe à ' . $email . ': ' . $e->getMessage());
+                }
             }
 
             Log::info('Emails de partage dossier envoyés', [
@@ -328,7 +487,10 @@ class DossierController extends Controller
             $tenant = $this->getTenant();
 
             if (!$tenant) {
-                return response()->json(['message' => 'Accès réservé aux locataires'], 403);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
             }
 
             $dossier = Dossier::where('tenant_id', $tenant->id)->first();
@@ -355,6 +517,8 @@ class DossierController extends Controller
                         ];
                     });
             }
+
+            $dossier->shareable_url = $dossier->shareable_url;
 
             return response()->json([
                 'success' => true,

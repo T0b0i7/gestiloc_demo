@@ -20,14 +20,14 @@ class Lease extends Model
         'start_date', 'end_date', 'tacit_renewal',
         'rent_amount', 'charges_amount', 'guarantee_amount', 'prepaid_rent_months',
         'billing_day', 'payment_frequency', 'penalty_rate',
-        'status', 'contract_file_path', 'terms', 'meta', 'termination_reason' // Ajouté 'meta' ici
+        'status', 'contract_file_path', 'terms', 'meta', 'termination_reason' 
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
         'terms' => 'array',
-        'meta' => 'array', // AJOUTÉ ICI - Très important !
+        'meta' => 'array',
         'tacit_renewal' => 'boolean',
         'rent_amount' => 'decimal:2',
         'charges_amount' => 'decimal:2',

@@ -20,19 +20,23 @@ class DossierSharedMail extends Mailable
     public Tenant $tenant;
     public ?User $user;
     public ?string $externalEmail;
+    public string $frontendUrl;
 
-    public function __construct(Dossier $dossier, Tenant $tenant, ?User $user = null, ?string $externalEmail = null)
+    public function __construct(Dossier $dossier, Tenant $tenant, ?User $user = null, ?string $externalEmail = null, string $frontendUrl = 'http://localhost:8080')
     {
         $this->dossier = $dossier;
         $this->tenant = $tenant;
         $this->user = $user;
         $this->externalEmail = $externalEmail;
+        $this->frontendUrl = $frontendUrl;
     }
 
     public function envelope(): Envelope
     {
+        $subject = '📋 Dossier de candidature partagé : ' . $this->tenant->first_name . ' ' . $this->tenant->last_name . ' - ' . config('app.name');
+
         return new Envelope(
-            subject: 'Un dossier de candidature vous a été partagé - ' . config('app.name'),
+            subject: $subject,
         );
     }
 

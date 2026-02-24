@@ -41,24 +41,56 @@ export default function RentReceiptsPage() {
     fetchAll();
   }, []);
 
-  const filtered = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    if (!needle) return items;
-    return items.filter((r) => {
-      const blob = [
-        r.reference,
-        r.paid_month,
-        r.property?.address,
-        r.property?.city,
-        r.type,
-        r.status,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      return blob.includes(needle);
+  // Générer dynamiquement les options de période à partir des données
+  const periodeOptions = useMemo(() => {
+    const options = new Set<string>();
+    options.add('Tous');
+    
+    items.forEach(item => {
+      if (item.issued_date) {
+        const date = new Date(item.issued_date);
+        const monthYear = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+        options.add(monthYear);
+      }
     });
-  }, [items, q]);
+    
+    return Array.from(options);
+  }, [items]);
+
+  const filtered = useMemo(() => {
+    let filtered = items;
+    
+    // Filtre par recherche textuelle
+    const needle = q.trim().toLowerCase();
+    if (needle) {
+      filtered = filtered.filter((r) => {
+        const blob = [
+          r.reference,
+          r.paid_month,
+          r.property?.address,
+          r.property?.city,
+          r.type,
+          r.status,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return blob.includes(needle);
+      });
+    }
+    
+    // Filtre par période
+    if (periode && periode !== 'Tous') {
+      filtered = filtered.filter((r) => {
+        if (!r.issued_date) return false;
+        const date = new Date(r.issued_date);
+        const monthYear = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+        return monthYear === periode;
+      });
+    }
+    
+    return filtered;
+  }, [items, q, periode]);
 
   const handleDownload = async (r: RentReceipt) => {
     setBusyId(r.id);
@@ -74,11 +106,19 @@ export default function RentReceiptsPage() {
     }
   };
 
+  // Fonction pour formater le montant en FCFA
+  const formatFCFA = (amount: number) => {
+    return new Intl.NumberFormat('fr-FR', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount) + ' FCFA';
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
       {/* Header with Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Filtrer les paiements</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Filtrer les quittances</h2>
         
         <div className="flex flex-col gap-4">
           {/* First row - Dropdowns */}
@@ -107,7 +147,7 @@ export default function RentReceiptsPage() {
               )}
             </div>
 
-            {/* Period */}
+            {/* Period - Dynamique */}
             <div className="relative sm:w-48">
               <button
                 onClick={() => setShowPeriodeDropdown(!showPeriodeDropdown)}
@@ -117,8 +157,8 @@ export default function RentReceiptsPage() {
                 <ChevronDown size={18} className="text-gray-500" />
               </button>
               {showPeriodeDropdown && (
-                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                  {['Tous', 'Janvier 2024', 'Février 2024', 'Mars 2024', 'Avril 2024', 'Mai 2024'].map((p) => (
+                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                  {periodeOptions.map((p) => (
                     <button
                       key={p}
                       onClick={() => { setPeriode(p === 'Tous' ? '' : p); setShowPeriodeDropdown(false); }}
@@ -150,7 +190,7 @@ export default function RentReceiptsPage() {
 
             {/* Total */}
             <div className="flex items-center text-sm text-gray-600 whitespace-nowrap">
-              Total: {filtered.length} Paiement{filtered.length > 1 ? 's' : ''}
+              Total: {filtered.length} quittance{filtered.length > 1 ? 's' : ''}
             </div>
           </div>
         </div>
@@ -161,7 +201,7 @@ export default function RentReceiptsPage() {
         {loading ? (
           <div className="p-8 text-center">
             <Loader2 className="animate-spin mx-auto mb-4 text-[#529D21]" size={32} />
-            <p className="text-gray-600">Chargement…</p>
+            <p className="text-gray-600">Chargement des quittances...</p>
           </div>
         ) : error ? (
           <div className="p-8 text-center text-red-600 bg-red-50">
@@ -219,7 +259,7 @@ export default function RentReceiptsPage() {
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">Bien</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">Montant</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">Description</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">Etat</th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">Statut</th>
                   <th className="text-center px-6 py-4 text-sm font-semibold text-gray-900">Action</th>
                 </tr>
               </thead>
@@ -227,27 +267,29 @@ export default function RentReceiptsPage() {
                 {filtered.map((r) => {
                   const propLine = [r.property?.address, r.property?.city].filter(Boolean).join(", ");
                   
+                  // FORCER le statut à "Active" pour TOUTES les lignes
+                  const statusInfo = { 
+                    label: 'Active', 
+                    className: 'bg-green-100 text-green-800' 
+                  };
+                  
                   return (
                     <tr key={r.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/50">
                       <td className="px-6 py-4 text-sm text-gray-900">
-                        {r.issued_date ? String(r.issued_date).slice(0, 10) : '—'}
+                        {r.issued_date ? new Date(r.issued_date).toLocaleDateString('fr-FR') : '—'}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
                         {propLine || <span className="text-gray-400">Non renseigné</span>}
                       </td>
                       <td className="px-6 py-4 text-sm font-medium text-[#529D21]">
-                        {r.amount_paid != null ? `${r.amount_paid} €` : '—'}
+                        {r.amount_paid != null ? formatFCFA(r.amount_paid) : '—'}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
                         {r.reference || `Quittance #${r.id}`}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                          r.status === 'paid' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {r.status === 'paid' ? 'Payé' : 'En attente'}
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${statusInfo.className}`}>
+                          {statusInfo.label}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-center">
@@ -255,6 +297,7 @@ export default function RentReceiptsPage() {
                           onClick={() => handleDownload(r)}
                           disabled={busyId === r.id}
                           className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                          title="Télécharger la quittance"
                         >
                           {busyId === r.id ? (
                             <Loader2 size={18} className="animate-spin text-[#529D21]" />

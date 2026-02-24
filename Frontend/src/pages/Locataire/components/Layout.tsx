@@ -195,6 +195,7 @@ export const Layout: React.FC<LayoutProps> = ({
   const [unreadCount, setUnreadCount] = useState(0);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false); // Nouvel état pour la confirmation
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -213,6 +214,7 @@ export const Layout: React.FC<LayoutProps> = ({
   const handleLogout = async () => {
     if (isLoggingOut) return;
     setIsLoggingOut(true);
+    setShowLogoutConfirm(false); // Fermer la modale
     try {
       await api.post('/logout');
       localStorage.removeItem('user');
@@ -407,22 +409,13 @@ export const Layout: React.FC<LayoutProps> = ({
           </div>
         </div>
 
+        {/* Bouton de déconnexion modifié pour ouvrir la modale */}
         <button
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors ${isLoggingOut ? 'opacity-50 cursor-not-allowed' : ''}`}
+          onClick={() => setShowLogoutConfirm(true)}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
         >
-          {isLoggingOut ? (
-            <>
-              <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-              <span>Déconnexion en cours...</span>
-            </>
-          ) : (
-            <>
-              <LogOut size={16} className="shrink-0" />
-              <span>Déconnexion</span>
-            </>
-          )}
+          <LogOut size={16} className="shrink-0" />
+          <span>Déconnexion</span>
         </button>
       </div>
     </>
@@ -550,6 +543,58 @@ export const Layout: React.FC<LayoutProps> = ({
           </div>
         </main>
       </div>
+
+      {/* ── MODALE DE CONFIRMATION DE DÉCONNEXION ── */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all animate-slideUp">
+            <div className="p-6">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center">
+                  <LogOut size={28} className="text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Déconnexion</h3>
+                  <p className="text-sm text-gray-500">Êtes-vous sûr de vouloir vous déconnecter ?</p>
+                </div>
+              </div>
+              
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                <p className="text-sm text-amber-800 flex items-start gap-3">
+                  <AlertTriangle size={20} className="shrink-0 mt-0.5" />
+                  <span>Vous devrez vous reconnecter pour accéder à votre espace locataire. Toutes les modifications non enregistrées seront perdues.</span>
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isLoggingOut ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Déconnexion...</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogOut size={18} />
+                      <span>Se déconnecter</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── NOTIFICATIONS DROPDOWN ── */}
       {showNotifications && (
@@ -686,6 +731,30 @@ export const Layout: React.FC<LayoutProps> = ({
           </div>
         </div>
       )}
+
+      {/* Styles pour les animations */}
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
+        }
+        .animate-slideUp {
+          animation: slideUp 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 };

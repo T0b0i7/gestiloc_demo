@@ -20,19 +20,23 @@ class DocumentSharedMail extends Mailable
     public Tenant $tenant;
     public ?User $user;
     public ?string $externalEmail;
+    public string $frontendUrl;
 
-    public function __construct(Document $document, Tenant $tenant, ?User $user = null, ?string $externalEmail = null)
+    public function __construct(Document $document, Tenant $tenant, ?User $user = null, ?string $externalEmail = null, string $frontendUrl = 'http://localhost:8080')
     {
         $this->document = $document;
         $this->tenant = $tenant;
         $this->user = $user;
         $this->externalEmail = $externalEmail;
+        $this->frontendUrl = $frontendUrl;
     }
 
     public function envelope(): Envelope
     {
+        $subject = '📄 Document partagé : ' . $this->document->name . ' - ' . config('app.name');
+
         return new Envelope(
-            subject: 'Un document vous a été partagé - ' . config('app.name'),
+            subject: $subject,
         );
     }
 
