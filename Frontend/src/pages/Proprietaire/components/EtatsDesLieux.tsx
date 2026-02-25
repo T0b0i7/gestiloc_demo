@@ -109,7 +109,8 @@ const EtatsDesLieux: React.FC<EtatsDesLieuxProps> = ({ notify }) => {
 
         @media (max-width: 1400px) { .edl-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 1024px) { .edl-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 640px) { .edl-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 640px) { .edl-grid { grid-template-columns: 1fr; } .edl-header { flex-direction: column; gap: 12px; } }
+        @media (max-width: 480px) { .edl-page { padding: 1rem 0.5rem 2rem; } .edl-title { font-size: 1.3rem; } .edl-filters { gap: 6px; } .edl-filter-btn { padding: 6px 14px; font-size: 0.75rem; } }
       `}</style>
 
             <div className="edl-page">

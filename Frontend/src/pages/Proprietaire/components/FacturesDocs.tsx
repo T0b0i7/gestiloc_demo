@@ -189,7 +189,22 @@ const FacturesDocs: React.FC<FacturesDocsProps> = ({ notify }) => {
         .fd-icon-btn.orange { color: #f59e0b; }
         @media (max-width: 1400px) { .fd-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 1024px) { .fd-grid { grid-template-columns: repeat(2, 1fr); } .fd-stats { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 640px) { .fd-grid { grid-template-columns: 1fr; } .fd-stats { grid-template-columns: 1fr; } .fd-filter-row { grid-template-columns: 1fr; } }
+        @media (max-width: 640px) {
+          .fd-grid { grid-template-columns: 1fr; }
+          .fd-stats { grid-template-columns: repeat(2, 1fr); }
+          .fd-filter-row { grid-template-columns: 1fr; }
+          .fd-header { flex-direction: column; gap: 12px; }
+          .fd-add-btn { width: 100%; justify-content: center; }
+          .fd-card { padding: 1rem; }
+          .fd-filters { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+          .fd-filter-btn { flex-shrink: 0; }
+        }
+        @media (max-width: 480px) {
+          .fd-page { padding: 1rem 0.5rem 2rem; }
+          .fd-title { font-size: 1.2rem; }
+          .fd-stats { grid-template-columns: 1fr; }
+          .fd-filter-btn { padding: 6px 14px; font-size: 0.75rem; }
+        }
       `}</style>
 
             <div className="fd-page">

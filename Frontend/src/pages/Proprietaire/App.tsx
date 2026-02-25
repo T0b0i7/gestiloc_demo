@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
+import './responsive.css';
 import { Layout } from './components/Layout';
 import Dashboard from './components/Dashboard';
 import { Payments } from './components/Payments';
@@ -10,7 +11,7 @@ import { Property } from './components/Property';
 import { Profile } from './components/Profile';
 import { Bureau } from './components/Bureau';
 import { AjouterBien } from './components/AjouterBien';
-import { AjouterLocataire } from './components/AjouterLocataire';
+import AjouterLocataire from './components/AjouterLocataire';
 import NouvelleLocation from './components/NouvelleLocation';
 import { Settings } from './components/Settings';
 import { Lots } from './components/Lots';
@@ -255,7 +256,7 @@ const ProprietaireApp: React.FC = () => {
             isDarkMode={false}
             toggleTheme={() => { }}
           >
-            <LandlordIncidentsPage />
+            <ReparationsTravaux notify={notify} />
           </Layout>
         } />
 
@@ -470,19 +471,6 @@ const ProprietaireApp: React.FC = () => {
           </Layout>
         } />
 
-        <Route path="incidents" element={
-          <Layout
-            activeTab="incidents"
-            onNavigate={handleNavigation}
-            toasts={toasts}
-            removeToast={removeToast}
-            onLogout={handleLogout}
-            isDarkMode={false}
-            toggleTheme={() => { }}
-          >
-            <ReparationsTravaux notify={notify} />
-          </Layout>
-        } />
 
         <Route path="comptabilite" element={
           <Layout

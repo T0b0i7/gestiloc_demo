@@ -1,0 +1,1055 @@
+/* ═══════════════════════════════════════════════════════════════
+   GESTILOC – Proprietaire Dashboard – Global Responsive Styles
+   Applied across ALL pages and components
+   Breakpoints: 480px (small mobile), 768px (tablet), 1024px (desktop)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Global Overflow Prevention ── */
+html, body, #root {
+  overflow-x: hidden !important;
+  max-width: 100vw;
+}
+
+img, video, svg, canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ── Smooth Touch Scrolling ── */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Fix font-size override on mobile ── */
+@media (max-width: 768px) {
+  span:not(.font-bold),
+  div:not(.font-bold),
+  td:not(.font-bold),
+  li:not(.font-bold) {
+    font-size: inherit !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   TABLES – Universal Responsive Table Handling
+   Turn tables into card-style layout on mobile
+   ═══════════════════════════════════════════════════ */
+
+/* Scrollable table wrapper */
+.tl-table-card,
+.pm-table-card {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+  /* TenantsList Table */
+  .tl-table thead {
+    display: none;
+  }
+  .tl-table,
+  .tl-table tbody,
+  .tl-table tr,
+  .tl-table td {
+    display: block;
+    width: 100%;
+  }
+  .tl-table tr {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1.5px solid #e5e7eb;
+    position: relative;
+  }
+  .tl-table td {
+    padding: 0.35rem 0;
+    border-bottom: none;
+    font-size: 0.85rem !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .tl-table td::before {
+    font-weight: 700;
+    font-size: 0.72rem;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-right: 1rem;
+    flex-shrink: 0;
+  }
+  .tl-table td:nth-child(1)::before { content: "Locataire"; }
+  .tl-table td:nth-child(2)::before { content: "Type"; }
+  .tl-table td:nth-child(3)::before { content: "Bien"; }
+  .tl-table td:nth-child(4)::before { content: "Téléphone"; }
+  .tl-table td:nth-child(5)::before { content: "Email"; }
+  .tl-table td:nth-child(6)::before { content: "Solde"; }
+  .tl-table td:nth-child(7)::before { content: "Etat"; }
+  .tl-table td:nth-child(8)::before { content: "Modèle"; }
+  .tl-table td:nth-child(9)::before { content: "Action"; }
+
+  /* Payments Table */
+  .pm-table {
+    min-width: unset !important;
+  }
+  .pm-table thead {
+    display: none;
+  }
+  .pm-table,
+  .pm-table tbody,
+  .pm-table tr,
+  .pm-table td {
+    display: block;
+    width: 100%;
+  }
+  .pm-table tr {
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1.5px solid #f3f4f6;
+    position: relative;
+  }
+  .pm-table td {
+    padding: 0.35rem 0;
+    border-bottom: none;
+    font-size: 0.85rem !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .pm-table td::before {
+    font-weight: 700;
+    font-size: 0.72rem;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-right: 1rem;
+    flex-shrink: 0;
+  }
+  .pm-table td:nth-child(1)::before { content: "Locataire"; }
+  .pm-table td:nth-child(2)::before { content: "Bien"; }
+  .pm-table td:nth-child(3)::before { content: "Montant"; }
+  .pm-table td:nth-child(4)::before { content: "Échéance"; }
+  .pm-table td:nth-child(5)::before { content: "Statut"; }
+  .pm-table td:nth-child(6)::before { content: "Date paie."; }
+  .pm-table td:nth-child(7)::before { content: "Mode"; }
+  .pm-table td:nth-child(8)::before { content: "Action"; }
+
+  .pm-table td[style] {
+    max-width: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   TENANTS LIST – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .tl-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .tl-header {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    align-items: stretch !important;
+  }
+  .tl-btn-add {
+    width: 100%;
+    justify-content: center;
+  }
+  .tl-title {
+    font-size: 1.3rem !important;
+  }
+  .tl-tabs {
+    gap: 0.5rem !important;
+  }
+  .tl-tab {
+    flex: 1;
+    justify-content: center;
+    font-size: 0.78rem !important;
+  }
+  .tl-filter-row {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  .tl-search-row {
+    flex-direction: column;
+  }
+  .tl-btn-display {
+    width: 100%;
+    height: 44px;
+    justify-content: center;
+  }
+  .tl-card {
+    padding: 1rem !important;
+  }
+}
+@media (max-width: 480px) {
+  .tl-page {
+    padding: 0.75rem 0.5rem 1.5rem !important;
+  }
+  .tl-title {
+    font-size: 1.15rem !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   PAYMENTS – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .pm-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .pm-header {
+    text-align: center;
+  }
+  .pm-title {
+    font-size: 1.3rem !important;
+  }
+  .pm-tabs {
+    gap: 0.5rem !important;
+    justify-content: space-around;
+  }
+  .pm-tab {
+    flex: 1;
+    justify-content: center;
+    font-size: 0.78rem !important;
+  }
+  .pm-filter-row {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  .pm-search-row {
+    flex-direction: column !important;
+  }
+  .pm-btn-display {
+    width: 100% !important;
+    height: 44px;
+    justify-content: center;
+  }
+  .pm-card {
+    padding: 1rem !important;
+  }
+}
+@media (max-width: 1024px) {
+  .pm-stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+@media (max-width: 480px) {
+  .pm-page {
+    padding: 0.75rem 0.5rem 1.5rem !important;
+  }
+  .pm-stats {
+    grid-template-columns: 1fr !important;
+  }
+  .pm-action-btn {
+    width: 100% !important;
+    flex: none !important;
+  }
+  .pm-title {
+    font-size: 1.15rem !important;
+  }
+  .pm-stat {
+    padding: 1rem 1.2rem !important;
+    border-radius: 18px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   RÉPARATIONS & TRAVAUX – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .rt-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .rt-header {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+  .rt-btn-create {
+    width: 100%;
+    justify-content: center;
+  }
+  .rt-title {
+    font-size: 1.3rem !important;
+  }
+  .rt-stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .rt-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .rt-filter-row {
+    grid-template-columns: 1fr !important;
+  }
+  .rt-filters {
+    gap: 6px !important;
+  }
+  .rt-filter-btn {
+    padding: 8px 16px !important;
+    font-size: 0.78rem !important;
+  }
+}
+@media (max-width: 480px) {
+  .rt-page {
+    padding: 0.75rem 0.5rem 1.5rem !important;
+  }
+  .rt-stats {
+    grid-template-columns: 1fr !important;
+  }
+  .rt-title {
+    font-size: 1.15rem !important;
+  }
+  .rt-filters {
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.25rem;
+  }
+  .rt-filter-btn {
+    flex-shrink: 0;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   CONTRATS BAUX – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .cb-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .cb-header {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    align-items: stretch !important;
+  }
+  .cb-btn-create {
+    width: 100%;
+    justify-content: center;
+  }
+  .cb-title {
+    font-size: 1.3rem !important;
+  }
+  .cb-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .cb-filter-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   ETATS DES LIEUX – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .edl-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .edl-header {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    align-items: stretch !important;
+  }
+  .edl-title {
+    font-size: 1.3rem !important;
+  }
+  .edl-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .edl-stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .edl-filter-row {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  .edl-filters {
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .edl-filter-btn {
+    flex-shrink: 0;
+    padding: 8px 16px !important;
+    font-size: 0.78rem !important;
+  }
+  .edl-btn-create {
+    width: 100%;
+    justify-content: center;
+  }
+}
+@media (max-width: 480px) {
+  .edl-page {
+    padding: 0.75rem 0.5rem 1.5rem !important;
+  }
+  .edl-stats {
+    grid-template-columns: 1fr !important;
+  }
+  .edl-title {
+    font-size: 1.15rem !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   AVIS D'ÉCHEANCE – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .ae-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .ae-header {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    align-items: stretch !important;
+  }
+  .ae-btn-create {
+    width: 100%;
+    justify-content: center;
+  }
+  .ae-title {
+    font-size: 1.3rem !important;
+  }
+  .ae-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .ae-filter-row {
+    grid-template-columns: 1fr !important;
+  }
+  .ae-search-row {
+    flex-direction: column;
+  }
+  .ae-btn-display {
+    width: 100%;
+    height: 44px;
+    justify-content: center;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   QUITTANCES DE LOYERS – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .ql-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .ql-header {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    align-items: stretch !important;
+  }
+  .ql-btn-create {
+    width: 100%;
+    justify-content: center;
+  }
+  .ql-title {
+    font-size: 1.3rem !important;
+  }
+  .ql-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .ql-stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .ql-filter-row {
+    grid-template-columns: 1fr !important;
+  }
+  .ql-filters {
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .ql-filter-btn {
+    flex-shrink: 0;
+    padding: 8px 16px !important;
+    font-size: 0.78rem !important;
+  }
+}
+@media (max-width: 480px) {
+  .ql-page {
+    padding: 0.75rem 0.5rem 1.5rem !important;
+  }
+  .ql-stats {
+    grid-template-columns: 1fr !important;
+  }
+  .ql-title {
+    font-size: 1.15rem !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   FACTURES & DOCUMENTS – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .fd-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .fd-header {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    align-items: stretch !important;
+  }
+  .fd-btn-create {
+    width: 100%;
+    justify-content: center;
+  }
+  .fd-title {
+    font-size: 1.3rem !important;
+  }
+  .fd-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .fd-filter-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   COMPTABILITÉ – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .compta-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .compta-header {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    align-items: stretch !important;
+  }
+  .compta-title {
+    font-size: 1.3rem !important;
+  }
+  .compta-stats {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .compta-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .compta-filters {
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+@media (max-width: 480px) {
+  .compta-page {
+    padding: 0.75rem 0.5rem 1.5rem !important;
+  }
+  .compta-stats {
+    grid-template-columns: 1fr !important;
+  }
+  .compta-title {
+    font-size: 1.15rem !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   PARAMETRES – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .param-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .param-header {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    align-items: stretch !important;
+  }
+  .param-title {
+    font-size: 1.3rem !important;
+  }
+  .param-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .param-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+    gap: 6px !important;
+    padding-bottom: 0.25rem;
+  }
+  .param-tab {
+    flex-shrink: 0;
+    padding: 8px 14px !important;
+    font-size: 0.78rem !important;
+    white-space: nowrap;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   MES BIENS – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .properties-page {
+    padding: 1rem 0.75rem !important;
+  }
+  .properties-header {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    align-items: stretch !important;
+  }
+  .properties-actions {
+    width: 100% !important;
+  }
+  .properties-title {
+    font-size: 1.3rem !important;
+  }
+  .modal-overlay .modal-content,
+  .modal-overlay .view-modal-content,
+  .modal-overlay .edit-form {
+    width: 96% !important;
+    max-width: 100% !important;
+    max-height: 92vh !important;
+    border-radius: 16px !important;
+  }
+  .view-header,
+  .edit-header {
+    padding: 1.25rem !important;
+  }
+  .view-title,
+  .edit-title {
+    font-size: 1.25rem !important;
+  }
+  .view-body,
+  .edit-body {
+    padding: 1.25rem !important;
+  }
+  .form-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .view-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .features-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .view-photos {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .photos-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .form-actions,
+  .view-actions {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+  .form-actions .btn-secondary,
+  .form-actions .btn-success,
+  .view-actions .btn-secondary,
+  .view-actions .btn-success {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  .edit-header-content,
+  .view-header-content {
+    flex-direction: column !important;
+  }
+}
+@media (max-width: 480px) {
+  .features-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .view-photos {
+    grid-template-columns: 1fr !important;
+  }
+  .photos-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   INCIDENTS PAGE (LandlordIncidents) – Mobile
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .incidents-page {
+    padding: 1rem 0.5rem 2rem !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   ARCHIVAGE DOCUMENTS – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .arch-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .arch-header {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    align-items: stretch !important;
+  }
+  .arch-title {
+    font-size: 1.3rem !important;
+  }
+  .arch-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   NOUVELLE LOCATION – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .nl-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .nl-header {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    align-items: stretch !important;
+  }
+  .nl-title {
+    font-size: 1.3rem !important;
+  }
+  .nl-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .nl-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   MON COMPTE / PROFIL – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .profile-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .profile-header {
+    flex-direction: column !important;
+    gap: 1rem !important;
+    align-items: center !important;
+    text-align: center;
+  }
+  .profile-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .profile-avatar {
+    width: 80px !important;
+    height: 80px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   AJOUTER BIEN / CREATEIMMEUBLES / CREATELOT
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .ajb-page,
+  .create-immeuble-page,
+  .create-lot-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .ajb-form-grid,
+  .create-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .ajb-header,
+  .create-header {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    align-items: stretch !important;
+  }
+  /* Stepper horizontal → vertical on mobile */
+  .ajb-stepper,
+  .stepper-horizontal {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    align-items: stretch !important;
+  }
+  .stepper-step {
+    width: 100% !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   AJOUTER LOCATAIRE / CREATE TENANT
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .create-tenant-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .create-tenant-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   CO-OWNERS LIST – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .coowners-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .coowners-header {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    align-items: stretch !important;
+  }
+  .coowners-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   DELEGATE PROPERTY MODAL – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .delegate-modal {
+    width: 96% !important;
+    max-height: 92vh !important;
+    border-radius: 16px !important;
+  }
+  .delegate-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   INVITE CO-OWNER – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .invite-coowner-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .invite-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   PREAVIS LIST – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .preavis-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .preavis-header {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    align-items: stretch !important;
+  }
+  .preavis-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .preavis-filter-row {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   EMETTRE PAIEMENT – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .emettre-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .emettre-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   RETRAIT METHODE – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .retrait-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .retrait-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .retrait-card {
+    padding: 1rem !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   SETTINGS – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .settings-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .settings-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .settings-sidebar {
+    display: none;
+  }
+  .settings-tabs-mobile {
+    display: flex !important;
+    overflow-x: auto;
+    gap: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.25rem;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   UI COMPONENTS – Buttons, Inputs, Selects, etc.
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Make all buttons full-width on mobile when in flex container */
+  .btn-full-mobile {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* Form inputs - ensure full-width */
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="date"],
+  input[type="datetime-local"],
+  textarea,
+  select {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Select dropdowns */
+  select {
+    min-height: 44px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   UNIVERSAL CARD RESPONSIVE
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  /* Any card-like container */
+  [class*="-card"],
+  [class*="-stat"],
+  [class*="card-body"] {
+    border-radius: 12px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   CHART CONTAINERS – Responsive Heights
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  canvas {
+    max-height: 250px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   DOCUMENT MANAGERS AND VIEWERS
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .doc-manager-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .doc-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .doc-preview {
+    max-width: 100% !important;
+    max-height: 60vh !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   MESSAGES – Mobile Responsive
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .messages-page {
+    padding: 1rem 0.75rem 2rem !important;
+  }
+  .messages-layout {
+    flex-direction: column !important;
+  }
+  .messages-sidebar {
+    width: 100% !important;
+    max-height: 200px !important;
+    overflow-y: auto !important;
+  }
+  .messages-content {
+    width: 100% !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   DIALOG / MODAL – Universal Mobile Override
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  [role="dialog"],
+  .modal-overlay > div:not(.modal-overlay) {
+    width: 96vw !important;
+    max-width: 96vw !important;
+    max-height: 92vh !important;
+    margin: auto !important;
+    border-radius: 16px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   TOUCH TARGETS – Minimum 44px on mobile
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  button,
+  a,
+  [role="button"],
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Exception for inline icons */
+  button svg,
+  a svg {
+    min-height: unset;
+    min-width: unset;
+  }
+
+  /* Icon-only buttons can be smaller */
+  .tl-action-btn,
+  .pm-action-icon,
+  .rt-action-dot {
+    min-width: 36px;
+    min-height: 36px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   ACCESSIBILITY – Contrast and Focus
+   ═══════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Ensure good focus visibility */
+  :focus-visible {
+    outline: 3px solid #4CAF50 !important;
+    outline-offset: 2px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   SAFE AREA INSETS (for notched devices)
+   ═══════════════════════════════════════════════════ */
+@supports (padding: max(0px)) {
+  .safe-area-padding {
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   PRINT MEDIA – Hide navigation on print
+   ═══════════════════════════════════════════════════ */
+@media print {
+  aside,
+  header,
+  .sidebar,
+  .navbar {
+    display: none !important;
+  }
+  main {
+    margin-left: 0 !important;
+  }
+}

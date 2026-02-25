@@ -170,27 +170,26 @@ const DashboardComponent: React.FC<DashboardProps> = ({ onNavigate, notify }) =>
   }
 
   return (
-    <div className="w-full" style={{ padding: '1.5rem 1rem 3rem', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="w-full space-y-6 sm:space-y-8 animate-in fade-in duration-700">
       <style>{`
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(18px); }
-          to { opacity: 1; transform: translateY(0); }
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Manrope:wght@400;500;600;700;800&display=swap');
+        .font-merriweather { font-family: 'Merriweather', serif; }
+        .font-manrope { font-family: 'Manrope', sans-serif; }
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
         }
-        .animate-fadeUp-1 { animation: fadeUp 0.5s ease both; }
-        .animate-fadeUp-2 { animation: fadeUp 0.5s 0.1s ease both; }
-        .animate-fadeUp-3 { animation: fadeUp 0.5s 0.2s ease both; }
-        .animate-fadeUp-4 { animation: fadeUp 0.5s 0.3s ease both; }
-        .animate-fadeUp-5 { animation: fadeUp 0.5s 0.4s ease both; }
+        .animate-float { animation: float 3s ease-in-out infinite; }
       `}</style>
 
       {/* Welcome Banner */}
-      <div className="animate-fadeUp-1 relative overflow-hidden rounded-3xl p-10 mb-6 flex items-center justify-between"
-        style={{ minHeight: '180px', background: 'linear-gradient(94.5deg, #8CCC63 5.47%, rgba(82, 157, 33, 0.87) 91.93%)' }}>
-        <div style={{ zIndex: 1, maxWidth: '500px' }}>
-          <h1 style={{ color: '#fff', fontSize: '2rem', fontWeight: 900, marginBottom: '0.8rem', fontFamily: 'Merriweather, serif' }}>
+      <div className="relative overflow-hidden rounded-[2rem] p-6 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-8 md:min-h-[200px] transition-all duration-500 hover:shadow-2xl hover:shadow-green-500/10"
+        style={{ background: 'linear-gradient(135deg, #8CCC63 0%, #529D21 100%)' }}>
+        <div className="z-10 text-center md:text-left max-w-xl">
+          <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-black mb-4 font-merriweather leading-tight">
             Bienvenue sur Gestiloc !
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.92rem', lineHeight: '1.6' }}>
+          <p className="text-white/95 text-sm sm:text-base leading-relaxed font-manrope font-medium">
             Merci de vous être inscrit ! Nous sommes heureux de vous avoir à bord !
             Dites-nous un peu plus sur vous afin de compléter votre profil et de profiter pleinement de toutes nos fonctionnalités.
           </p>
@@ -198,296 +197,181 @@ const DashboardComponent: React.FC<DashboardProps> = ({ onNavigate, notify }) =>
         <img
           src="/Ressource_gestiloc/hand.png"
           alt="Welcome"
-          style={{
-            fontSize: '5rem',
-            zIndex: 1,
-            flexShrink: 0,
-            filter: 'drop-shadow(0 4px 12px rgba(0,0,0,.15))',
-            width: '120px',
-            height: '120px',
-            objectFit: 'contain'
-          }}
+          className="w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36 object-contain z-10 filter drop-shadow-2xl animate-float"
         />
+        {/* Subtle decorative elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl opacity-50" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full -ml-24 -mb-24 blur-3xl opacity-30" />
       </div>
 
       {/* Subscription Card */}
-      <div className="animate-fadeUp-2 mb-8 rounded-2xl p-4 flex items-center justify-between"
+      <div className="rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 border border-orange-100/30 shadow-sm transition-all hover:shadow-md"
         style={{ background: 'linear-gradient(90.54deg, #FFE9D9 0.09%, #FFE2CF 46.16%, #F2C6AB 99.91%)' }}>
-        <div className="flex items-center gap-3">
-          <img src="/Ressource_gestiloc/crown.png" alt="crown" style={{ width: 32, height: 32, objectFit: 'contain' }} />
-          <div>
-            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Abonnement actuel
-            </div>
-            <div style={{ fontSize: '1rem', fontWeight: 700, color: '#e65100', marginTop: '2px' }}>Premium</div>
+        <div className="flex items-center gap-4 w-full sm:w-auto justify-center sm:justify-start">
+          <div className="bg-white/40 p-2.5 rounded-xl backdrop-blur-sm shadow-sm">
+            <img src="/Ressource_gestiloc/crown.png" alt="crown" className="w-8 h-8 object-contain" />
+          </div>
+          <div className="text-left">
+            <div className="text-[0.65rem] font-bold text-orange-800/50 uppercase tracking-[0.1em] font-manrope">Abonnement actuel</div>
+            <div className="text-lg font-black text-[#e65100] font-merriweather leading-none mt-1">Premium</div>
           </div>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Renouvellement
-          </div>
-          <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#1a1a1a', marginTop: '2px' }}>15 Mars 2026</div>
+        <div className="w-full sm:w-auto flex sm:flex-col items-center sm:items-end justify-between sm:justify-center pt-3 sm:pt-0 border-t sm:border-t-0 border-orange-200/40">
+          <div className="text-[0.65rem] font-bold text-orange-800/50 uppercase tracking-[0.1em] font-manrope">Renouvellement</div>
+          <div className="text-base font-bold text-gray-900 font-manrope sm:mt-1">15 Mars 2026</div>
         </div>
       </div>
 
       {/* Getting Started */}
-      <div className="animate-fadeUp-3 mb-8 bg-white rounded-3xl border border-[#e5e7eb] p-6">
-        <p style={{ fontSize: '1.05rem', fontWeight: 700, color: '#1a1a1a', marginBottom: '1.5rem' }}>
-          Pour démarrer, c'est simple comme 1, 2, 3…
-        </p>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="bg-white rounded-[2rem] border border-gray-100 p-6 sm:p-8 shadow-sm overflow-hidden">
+        <h2 className="text-xl sm:text-2xl font-black text-gray-900 mb-8 font-merriweather">
+          Pour démarrer, c'est simple…
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-center">
           {/* Steps Column */}
-          <div className="space-y-3">
-            <div
-              onClick={() => handleStepClick(1)}
-              className="cursor-pointer rounded-2xl border border-[#e5e7eb] bg-gradient-to-r from-white to-[#f9fafb] p-4 flex items-center gap-4 transition-all hover:shadow-lg hover:shadow-green-500/20 hover:-translate-y-1"
-            >
-              <div style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-                background: '#4CAF50',
-                color: '#fff',
-                fontFamily: 'Merriweather, serif',
-                fontWeight: 900,
-                fontSize: '1.1rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}>
-                1
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#1a1a1a', lineHeight: 1.3 }}>
-                  Créer un bien
+          <div className="lg:col-span-3 space-y-4">
+            {[
+              { id: 1, title: 'Créer un bien', desc: 'Créez la fiche de votre premier bien immobilier' },
+              { id: 2, title: 'Créer un locataire', desc: 'Ajoutez les informations de vos locataires' },
+              { id: 3, title: 'Créer une Location', desc: 'Liez votre bien à un locataire en quelques clics' }
+            ].map((step) => (
+              <div
+                key={step.id}
+                onClick={() => handleStepClick(step.id)}
+                className="group cursor-pointer rounded-2xl border border-gray-50 bg-gray-50/30 p-4 sm:p-5 flex items-center gap-4 sm:gap-6 transition-all hover:bg-white hover:border-green-100 hover:shadow-xl hover:shadow-green-500/5 active:scale-[0.98]"
+              >
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 text-white font-black text-lg sm:text-xl font-merriweather shadow-lg shadow-green-500/20 group-hover:scale-110 transition-transform">
+                  {step.id}
                 </div>
-                <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '4px', lineHeight: 1.4 }}>
-                  Créer la fiche de votre bien
+                <div className="flex-1 min-w-0">
+                  <div className="text-base sm:text-lg font-bold text-gray-900 font-manrope group-hover:text-green-600 transition-colors truncate">
+                    {step.title}
+                  </div>
+                  <div className="text-[0.8rem] sm:text-sm text-gray-500 font-medium mt-0.5 sm:mt-1 truncate">
+                    {step.desc}
+                  </div>
+                </div>
+                <div className="p-2 rounded-full bg-white shadow-sm ring-1 ring-gray-100 group-hover:ring-green-100 transition-all">
+                  <ChevronRight className="text-gray-300 group-hover:text-green-500 group-hover:translate-x-0.5 transition-all" size={20} />
                 </div>
               </div>
-            </div>
-
-            <div
-              onClick={() => handleStepClick(2)}
-              className="cursor-pointer rounded-2xl border border-[#e5e7eb] bg-gradient-to-r from-white to-[#f9fafb] p-4 flex items-center gap-4 transition-all hover:shadow-lg hover:shadow-green-500/20 hover:-translate-y-1"
-            >
-              <div style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-                background: '#4CAF50',
-                color: '#fff',
-                fontFamily: 'Merriweather, serif',
-                fontWeight: 900,
-                fontSize: '1.1rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}>
-                2
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#1a1a1a', lineHeight: 1.3 }}>
-                  Créer un locataire
-                </div>
-                <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '4px', lineHeight: 1.4 }}>
-                  Créer la fiche de votre locataire
-                </div>
-              </div>
-            </div>
-
-            <div
-              onClick={() => handleStepClick(3)}
-              className="cursor-pointer rounded-2xl border border-[#e5e7eb] bg-gradient-to-r from-white to-[#f9fafb] p-4 flex items-center gap-4 transition-all hover:shadow-lg hover:shadow-green-500/20 hover:-translate-y-1"
-            >
-              <div style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-                background: '#4CAF50',
-                color: '#fff',
-                fontFamily: 'Merriweather, serif',
-                fontWeight: 900,
-                fontSize: '1.1rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}>
-                3
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#1a1a1a', lineHeight: 1.3 }}>
-                  Créer une Location
-                </div>
-                <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '4px', lineHeight: 1.4 }}>
-                  Lier le bien et le locataire
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
 
           {/* Illustration Column */}
-          <div className="flex items-center justify-center">
+          <div className="lg:col-span-2 hidden sm:flex items-center justify-center p-4">
             <img
               src="/Ressource_gestiloc/svg_propiro1.png"
-              alt="Steps illustration"
-              style={{
-                width: '100%',
-                maxWidth: '280px',
-                height: 'auto',
-                objectFit: 'contain'
-              }}
+              alt="Steps"
+              className="w-full max-w-[260px] h-auto object-contain transition-transform hover:scale-105 duration-700"
             />
           </div>
         </div>
       </div>
 
-      {/* Charts Row */}
-      <div className="animate-fadeUp-4 grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      {/* Charts Box */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
         {/* Bar Chart - Loyers */}
-        <div className="lg:col-span-2" style={{
-          background: '#fff',
-          border: '1.5px solid #e2e8e2',
-          borderRadius: 14,
-          padding: '1.3rem 1.5rem 1.1rem',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-              <div style={{
-                width: 38, height: 38,
-                background: '#fff',
-                border: '1.5px solid #dde5dd',
-                borderRadius: 8,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1.2rem',
-              }}>📋</div>
-              <span style={{
-                fontFamily: "'Merriweather', serif",
-                fontSize: '1.1rem',
-                fontWeight: 700,
-                color: '#1a1a1a',
-              }}>Loyers</span>
+        <div className="xl:col-span-2 bg-white border border-gray-100 rounded-[2rem] p-6 sm:p-8 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center shadow-inner ring-1 ring-green-100">
+                <img src="/Ressource_gestiloc/Accounting.png" className="w-7 h-7 object-contain" alt="" />
+              </div>
+              <h3 className="font-merriweather text-lg sm:text-xl font-black text-gray-900">Suivi des Loyers</h3>
             </div>
-            <button style={{
-              fontFamily: "'Manrope', sans-serif",
-              fontSize: '0.82rem',
-              fontWeight: 600,
-              border: '1.5px solid #ccc',
-              borderRadius: 8,
-              padding: '0.38rem 1rem',
-              background: '#fff',
-              cursor: 'pointer',
-              color: '#222',
-              letterSpacing: '0.01em',
-            }}>Cette année &nbsp;∨</button>
+            <div className="relative w-full sm:w-auto">
+              <select className="appearance-none w-full sm:w-auto bg-gray-50 border border-gray-100 rounded-xl px-5 py-2.5 pr-10 text-xs font-bold font-manrope text-gray-600 hover:border-gray-200 focus:outline-none transition-all cursor-pointer shadow-sm">
+                <option>Cette année</option>
+                <option>Année précédente</option>
+              </select>
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                <ChevronRight size={14} className="rotate-90" />
+              </div>
+            </div>
           </div>
 
-          <div style={{ position: 'relative', height: 230 }}>
+          <div className="relative h-[280px] sm:h-[320px] w-full px-2">
             <canvas ref={barChartRef}></canvas>
           </div>
 
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            gap: '1.8rem', marginTop: '0.85rem', paddingTop: '0.6rem',
-            borderTop: '1px solid #f0f0f0',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', color: '#444', fontWeight: 500 }}>
-              <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#4CAF50' }}></div>
-              Loyers reçus
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 mt-8 pt-6 border-t border-gray-50">
+            <div className="flex items-center gap-3">
+              <div className="w-3.5 h-3.5 rounded-full bg-green-500 shadow-lg shadow-green-500/20" />
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-widest font-manrope">Reçus</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', color: '#444', fontWeight: 500 }}>
-              <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#FF9800' }}></div>
-              Loyers attendus
+            <div className="flex items-center gap-3">
+              <div className="w-3.5 h-3.5 rounded-full bg-orange-500 shadow-lg shadow-orange-500/20" />
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-widest font-manrope">Attendus</span>
             </div>
           </div>
         </div>
 
         {/* Donut Chart - Taux d'occupation */}
-        <div style={{
-          background: '#fff',
-          border: '1.5px solid #e2e8e2',
-          borderRadius: 14,
-          padding: '1.3rem 1.2rem 1.4rem',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}>
-          <div style={{
-            fontFamily: "'Merriweather', serif",
-            fontSize: '0.98rem',
-            fontWeight: 700,
-            color: '#1a1a1a',
-            textAlign: 'center',
-            marginBottom: '1.1rem',
-          }}>Taux d'occupation</div>
+        <div className="bg-white border border-gray-100 rounded-[2rem] p-8 shadow-sm flex flex-col items-center justify-between">
+          <h3 className="font-merriweather text-lg font-black text-gray-900 mb-8">Taux d'occupation</h3>
 
-          <div style={{ position: 'relative', width: 150, height: 150, marginBottom: '1.4rem' }}>
+          <div className="relative w-48 h-48 sm:w-56 sm:h-56 mb-8 group transition-transform hover:scale-105 duration-500">
             <canvas ref={donutChartRef}></canvas>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-3xl sm:text-4xl font-black text-green-600 font-merriweather drop-shadow-sm">80%</span>
+              <span className="text-[0.65rem] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">Global</span>
+            </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'center' }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{
-                fontFamily: "'Merriweather', serif",
-                fontSize: '2rem',
-                fontWeight: 900,
-                lineHeight: 1,
-                color: 'rgba(129, 194, 88, 1)',
-              }}>12</div>
-              <div style={{
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                marginTop: 4,
-                color: 'rgba(129, 194, 88, 1)',
-              }}>Occupés</div>
+          <div className="grid grid-cols-2 gap-4 w-full border-t border-gray-50 pt-8">
+            <div className="text-center px-2">
+              <div className="text-2xl sm:text-3xl font-black text-green-500 font-merriweather">12</div>
+              <div className="text-[0.7rem] font-bold text-green-700/40 uppercase tracking-widest mt-2 font-manrope">Occupés</div>
             </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{
-                fontFamily: "'Merriweather', serif",
-                fontSize: '2rem',
-                fontWeight: 900,
-                lineHeight: 1,
-                color: 'rgba(253, 234, 91, 1)',
-              }}>3</div>
-              <div style={{
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                marginTop: 4,
-                color: 'rgba(253, 234, 91, 1)',
-              }}>Vacants</div>
+            <div className="text-center border-l border-gray-100 px-2">
+              <div className="text-2xl sm:text-3xl font-black text-yellow-500 font-merriweather">3</div>
+              <div className="text-[0.7rem] font-bold text-yellow-700/40 uppercase tracking-widest mt-2 font-manrope">Vacants</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Documents */}
-      <div className="animate-fadeUp-5" style={{ background: 'rgba(235, 235, 235, 1)', borderRadius: 20, padding: '1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <img src="/Ressource_gestiloc/document.png" alt="docs" style={{ width: 22, height: 22, objectFit: 'contain' }} />
-            Nouveaux documents
-          </h2>
+      {/* Documents Section */}
+      <div className="bg-gray-100/40 rounded-[2.5rem] p-6 sm:p-10 transition-all border border-gray-100/50">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-white rounded-2xl shadow-md ring-1 ring-black/5">
+              <img src="/Ressource_gestiloc/document.png" alt="docs" className="w-6 h-6 object-contain" />
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black text-gray-900 font-merriweather tracking-tight">
+              Nouveaux documents
+            </h2>
+          </div>
           <button
-            onClick={() => onNavigate && onNavigate('my-documents')}
-            className="text-[0.82rem] font-semibold text-[#4CAF50] hover:underline cursor-pointer bg-none border-none p-0"
+            onClick={() => onNavigate && onNavigate('factures')}
+            className="group flex items-center gap-2 px-6 py-2.5 bg-white rounded-full text-sm font-bold text-green-600 shadow-sm border border-green-50 hover:bg-green-50 transition-all font-manrope"
           >
-            Voir plus
+            Tout voir
+            <ChevronRight className="transition-transform group-hover:translate-x-1" size={16} strokeWidth={3} />
           </button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {documents.map((doc, idx) => (
             <div
               key={idx}
-              className="cursor-pointer rounded-2xl bg-white p-3 flex items-center gap-3 transition-shadow hover:shadow-lg"
-              style={{ border: 'none' }}
+              className="group cursor-pointer rounded-2xl bg-white p-4 flex items-center gap-4 transition-all hover:shadow-2xl hover:shadow-green-900/5 hover:-translate-y-1.5 active:scale-[0.98] border border-gray-100/50 hover:border-green-200/50"
             >
-              <img src={doc.icon} alt="" style={{ width: 28, height: 28, objectFit: 'contain' }} />
-              <div>
-                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#1a1a1a' }}>{doc.name}</div>
-                <div style={{ fontSize: '0.75rem', color: '#4CAF50', fontWeight: 600, marginTop: '2px' }}>{doc.date}</div>
+              <div className="w-12 h-12 rounded-[1.2rem] bg-gray-50 flex items-center justify-center p-2.5 group-hover:bg-green-50 transition-colors shadow-inner">
+                <img src={doc.icon} alt={doc.name} className="w-full h-full object-contain filter group-hover:brightness-110" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[0.95rem] font-extrabold text-gray-900 font-manrope truncate group-hover:text-green-600 transition-colors">
+                  {doc.name}
+                </div>
+                <div className="text-[0.7rem] font-bold text-green-600 mt-1 flex items-center gap-1.5 opacity-70">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  {doc.date}
+                </div>
+              </div>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all bg-green-50 text-green-500">
+                <ChevronRight size={18} strokeWidth={3} />
               </div>
             </div>
           ))}

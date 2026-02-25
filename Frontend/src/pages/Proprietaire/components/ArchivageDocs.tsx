@@ -82,7 +82,8 @@ const ArchivageDocs: React.FC<ArchiveDocsProps> = ({ notify }) => {
         .ar-icon-btn { background: none; border: none; cursor: pointer; padding: 4px; font-size: 0.85rem; }
         @media (max-width: 1400px) { .ar-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 1024px) { .ar-grid { grid-template-columns: repeat(2, 1fr); } .ar-stats { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 640px) { .ar-grid { grid-template-columns: 1fr; } .ar-stats { grid-template-columns: 1fr; } .ar-filter-row { grid-template-columns: 1fr; } }
+        @media (max-width: 640px) { .ar-grid { grid-template-columns: 1fr; } .ar-stats { grid-template-columns: 1fr; } .ar-filter-row { grid-template-columns: 1fr; } .ar-header { flex-direction: column; gap: 12px; } }
+        @media (max-width: 480px) { .ar-page { padding: 1rem 0.5rem 2rem; } .ar-title { font-size: 1.3rem; } .ar-filters { gap: 6px; } .ar-filter-btn { padding: 6px 14px; font-size: 0.75rem; } }
       `}</style>
             <div className="ar-page">
                 <div className="ar-header">

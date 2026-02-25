@@ -189,57 +189,62 @@ export const Layout: React.FC<LayoutProps> = ({
     </svg>
   );
 
+  // ── Helper for sidebar PNG icons ──
+  const SideIcon = ({ src }: { src: string }) => (
+    <img src={`/Ressource_gestiloc/${src}`} alt="" style={{ width: 20, height: 20, objectFit: 'contain' }} />
+  );
+
   // ── Menu sections ──
   const menuSections = [
     {
       label: 'Menu Principal',
       items: [
-        { id: 'dashboard', label: 'Tableau de bord', icon: <SvgDashboard /> },
+        { id: 'dashboard', label: 'Tableau de bord', icon: <SideIcon src="tb_locataire.png" /> },
       ],
     },
     {
       label: 'Gestion des biens',
       items: [
-        { id: 'ajouter-bien', label: 'Ajouter un bien', icon: <SvgPlus /> },
-        { id: 'mes-biens', label: 'Mes biens', icon: <SvgHouse /> },
+        { id: 'ajouter-bien', label: 'Ajouter un bien', icon: <SideIcon src="Plus Math.png" /> },
+        { id: 'mes-biens', label: 'Mes biens', icon: <SideIcon src="Home.png" /> },
       ],
     },
     {
       label: 'Gestion Locative',
       items: [
-        { id: 'nouvelle-location', label: 'Nouvelle location', icon: <SvgPeople /> },
-        { id: 'ajouter-locataire', label: 'Ajouter un locataire', icon: <SvgPersonHouse /> },
-        { id: 'locataires', label: 'Liste des locataires', icon: <SvgList /> },
-        { id: 'paiements', label: 'Gestion des paiements', icon: <SvgLock /> },
+        { id: 'nouvelle-location', label: 'Nouvelle location', icon: <SideIcon src="Neighborhood.png" /> },
+        { id: 'ajouter-locataire', label: 'Ajouter un locataire', icon: <SideIcon src="Person at Home.png" /> },
+        { id: 'locataires', label: 'Liste des locataires', icon: <SideIcon src="Edit Property.png" /> },
+        { id: 'paiements', label: 'Gestion des paiements', icon: <SideIcon src="Dollar Bag.png" /> },
       ],
     },
     {
       label: 'Documents',
       items: [
-        { id: 'baux', label: 'Contrats de bails', icon: <SvgFileDoc /> },
-        { id: 'etats-lieux', label: 'Etats de lieux', icon: <SvgClipboard /> },
-        { id: 'avis-echeance', label: "Avis d'échéance", icon: <SvgWarning /> },
-        { id: 'quittances', label: 'Quittances de loyers', icon: <SvgBellMenu /> },
-        { id: 'factures', label: 'Factures et documents divers', icon: <SvgReceipt /> },
-        { id: 'archives', label: 'Archivage de documents', icon: <SvgFolder /> },
+        { id: 'baux', label: 'Contrats de bails', icon: <SideIcon src="Profile.png" /> },
+        { id: 'etats-lieux', label: 'Etats de lieux', icon: <SideIcon src="US Capitol.png" /> },
+        { id: 'avis-echeance', label: "Avis d'échéance", icon: <SideIcon src="Error.png" /> },
+        { id: 'quittances', label: 'Quittances de loyers', icon: <SideIcon src="Bell.png" /> },
+        { id: 'factures', label: 'Factures et documents divers', icon: <SideIcon src="Signing A Document.png" /> },
+        { id: 'archives', label: 'Archivage de documents', icon: <SideIcon src="document.png" /> },
       ],
     },
     {
       label: 'Réparations et Travaux',
       items: [
-        { id: 'incidents', label: 'Répartitions et travaux', icon: <SvgWrench /> },
+        { id: 'incidents', label: 'Répartitions et travaux', icon: <SideIcon src="Tools.png" /> },
       ],
     },
     {
       label: 'Comptabilité et Statistiques',
       items: [
-        { id: 'comptabilite', label: 'Comptabilité', icon: <SvgGrid /> },
+        { id: 'comptabilite', label: 'Comptabilité et travaux', icon: <SideIcon src="Accounting.png" /> },
       ],
     },
     {
       label: 'Configuration',
       items: [
-        { id: 'parametres', label: 'Paramètres', icon: <SvgGear /> },
+        { id: 'parametres', label: 'Paramètres', icon: <SideIcon src="parametre_loc.png" /> },
         { id: 'logout', label: 'Déconnexion', icon: <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#e53935" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg> },
       ],
     },
@@ -484,99 +489,87 @@ export const Layout: React.FC<LayoutProps> = ({
         </main>
       </div>
 
-      {/* Notifications Dropdown - IDENTIQUE au locataire */}
+      {/* Notifications Dropdown - Adaptive position and size */}
       {showNotifications && (
-        <div className="fixed top-20 right-6 w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
-              <button
-                onClick={() => setShowNotifications(false)}
-                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X size={20} className="text-gray-500" />
-              </button>
-            </div>
+        <div className="fixed inset-0 sm:inset-auto sm:top-20 sm:right-6 sm:w-96 bg-white sm:rounded-xl shadow-2xl border-t sm:border border-gray-200 z-[110] flex flex-col h-full sm:h-auto animate-in slide-in-from-bottom sm:slide-in-from-top duration-300">
+          <div className="p-4 border-b border-gray-200 flex flex-shrink-0 items-center justify-between">
+            <h3 className="text-lg font-bold text-gray-900 font-merriweather">Notifications</h3>
+            <button
+              onClick={() => setShowNotifications(false)}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Fermer"
+            >
+              <X size={24} className="text-gray-500" />
+            </button>
           </div>
 
-          <div className="max-h-96 overflow-y-auto">
-            {/* Notification items */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden">
             {notifications.map((notif) => (
-              <div key={notif.id} className="p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100">
-                <div className="flex items-start gap-3">
-                  <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${notif.type === 'critical' ? 'bg-red-500' : 'bg-orange-500'
-                    }`}></div>
+              <div key={notif.id} className="p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100 last:border-0 active:bg-gray-100">
+                <div className="flex items-start gap-4">
+                  <div className={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 ${notif.type === 'critical' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]'}`} />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">{notif.message}</p>
-                    {notif.subtext && <p className="text-sm text-gray-600 mt-1">{notif.subtext}</p>}
-                    <p className="text-xs text-gray-400 mt-2">Il y a {notif.type === 'critical' ? '2 heures' : '1 jour'}</p>
+                    <p className="text-[0.9rem] font-bold text-gray-900 leading-tight">{notif.message}</p>
+                    {notif.subtext && <p className="text-[0.85rem] text-gray-600 mt-1 leading-relaxed">{notif.subtext}</p>}
+                    <p className="text-[0.75rem] text-gray-400 mt-2 font-medium uppercase tracking-wider">Il y a {notif.type === 'critical' ? '2 heures' : '1 jour'}</p>
                   </div>
                 </div>
               </div>
             ))}
+            {notifications.length === 0 && (
+              <div className="p-12 text-center">
+                <p className="text-gray-400 font-medium">Aucune notification</p>
+              </div>
+            )}
           </div>
 
-          <div className="p-4 border-t border-gray-200">
-            <button className="w-full text-center text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors">
+          <div className="p-4 border-t border-gray-200 flex-shrink-0 bg-gray-50">
+            <button className="w-full py-3 bg-white border border-gray-200 rounded-xl text-sm text-green-600 hover:text-green-700 font-bold shadow-sm transition-all active:scale-[0.98]">
               Voir toutes les notifications
             </button>
           </div>
         </div>
       )}
 
-      {/* Help Dropdown - IDENTIQUE au locataire */}
+      {/* Help Dropdown - Adaptive position and size */}
       {showHelp && (
-        <div className="fixed top-20 right-6 w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Aide</h3>
-              <button
-                onClick={() => setShowHelp(false)}
-                className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X size={20} className="text-gray-500" />
-              </button>
-            </div>
-          </div>
-
-          <div className="max-h-96 overflow-y-auto">
-            <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100">
-              <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">Guide de démarrage</p>
-                  <p className="text-sm text-gray-600 mt-1">Apprenez les bases de GestiLoc</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100">
-              <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">Centre d'aide complet</p>
-                  <p className="text-sm text-gray-600 mt-1">Accédez à tous nos guides</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 hover:bg-gray-50 transition-colors cursor-pointer">
-              <div className="flex items-start gap-3">
-                <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">Contactez le support</p>
-                  <p className="text-sm text-gray-600 mt-1">Notre équipe est là pour vous aider</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 border-t border-gray-200">
+        <div className="fixed inset-0 sm:inset-auto sm:top-20 sm:right-6 sm:w-96 bg-white sm:rounded-xl shadow-2xl border-t sm:border border-gray-200 z-[110] flex flex-col h-full sm:h-auto animate-in slide-in-from-bottom sm:slide-in-from-top duration-300">
+          <div className="p-4 border-b border-gray-200 flex flex-shrink-0 items-center justify-between">
+            <h3 className="text-lg font-bold text-gray-900 font-merriweather">Aide & Support</h3>
             <button
               onClick={() => setShowHelp(false)}
-              className="w-full text-center text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Fermer"
             >
-              Voir toute l'aide
+              <X size={24} className="text-gray-500" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-2">
+            {[
+              { title: 'Guide de démarrage', desc: 'Apprenez les bases de GestiLoc', color: 'bg-green-500' },
+              { title: "Centre d'aide complet", desc: 'Accédez à tous nos guides', color: 'bg-blue-500' },
+              { title: 'Contactez le support', desc: 'Notre équipe est là pour vous aider', color: 'bg-purple-500' },
+            ].map((help, idx) => (
+              <div key={idx} className="p-4 m-1 hover:bg-gray-50 rounded-xl transition-all cursor-pointer border border-transparent hover:border-gray-100 active:bg-gray-100">
+                <div className="flex items-start gap-4">
+                  <div className={`w-3 h-3 ${help.color} rounded-full mt-2 flex-shrink-0 shadow-lg`} />
+                  <div className="flex-1">
+                    <p className="text-[0.95rem] font-bold text-gray-900">{help.title}</p>
+                    <p className="text-[0.85rem] text-gray-600 mt-1">{help.desc}</p>
+                  </div>
+                  <ChevronRight size={18} className="text-gray-300 mt-1" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="p-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+            <button
+              onClick={() => setShowHelp(false)}
+              className="w-full py-3 bg-white border border-gray-200 rounded-xl text-sm text-green-600 hover:text-green-700 font-bold shadow-sm transition-all active:scale-[0.98]"
+            >
+              Consulter toute l'aide
             </button>
           </div>
         </div>

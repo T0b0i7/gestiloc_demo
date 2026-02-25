@@ -128,7 +128,8 @@ const QuittancesLoyersPage: React.FC<QuittancesLoyersPageProps> = ({ notify }) =
         .ql-icon-btn.orange { color: #f59e0b; }
         @media (max-width: 1400px) { .ql-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 1024px) { .ql-grid { grid-template-columns: repeat(2, 1fr); } .ql-stats { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 640px) { .ql-grid { grid-template-columns: 1fr; } .ql-stats { grid-template-columns: 1fr; } }
+        @media (max-width: 640px) { .ql-grid { grid-template-columns: 1fr; } .ql-stats { grid-template-columns: 1fr; } .ql-header { flex-direction: column; gap: 12px; } }
+        @media (max-width: 480px) { .ql-page { padding: 1rem 0.5rem 2rem; } .ql-title { font-size: 1.3rem; } .ql-filters { gap: 6px; } .ql-filter-btn { padding: 6px 14px; font-size: 0.75rem; } }
       `}</style>
 
             <div className="ql-page">

@@ -228,7 +228,7 @@ export default function EtatsDesLieux() {
           </Select>
         </div>
 
-        <div className="mt-3 flex items-center gap-2 ">
+        <div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 ">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground " />
             <Input
@@ -239,7 +239,7 @@ export default function EtatsDesLieux() {
             />
           </div>
 
-          <Button className="bg-slate-100 text-black font-normal shrink-0 border-2 border-primary-light">
+          <Button className="bg-slate-100 text-black font-normal shrink-0 border-2 border-primary-light w-full sm:w-auto">
             <img src={setting} alt="Settings" className="h-6 w-6 mr-2" />
             Affichage
           </Button>
@@ -251,20 +251,18 @@ export default function EtatsDesLieux() {
         {filtered.map((e) => (
           <Card
             key={`${e.id}-${e.type}`}
-            className={`overflow-hidden bg-[#f8fafc] rounded-xl hover:shadow-md transition-shadow shadow-lg border-l-4 ${
-              e.type === "entrée" ? "border-l-green-500" : "border-l-rose-700"
-            }`}
+            className={`overflow-hidden bg-[#f8fafc] rounded-xl hover:shadow-md transition-shadow shadow-lg border-l-4 ${e.type === "entrée" ? "border-l-green-500" : "border-l-rose-700"
+              }`}
           >
             <CardContent className="p-5 space-y-4">
               {/* En-tête */}
               <div className="space-y-1">
                 <Badge
                   variant="outline"
-                  className={`text-xs px-2.5 py-0.5 ${
-                    e.type === "entrée"
+                  className={`text-xs px-2.5 py-0.5 ${e.type === "entrée"
                       ? "bg-emerald-50 text-emerald-700 border-emerald-200 font-bold"
                       : "bg-rose-50 text-rose-700 border-rose-200 font-bold"
-                  }`}
+                    }`}
                 >
                   <img
                     src={monIcone}

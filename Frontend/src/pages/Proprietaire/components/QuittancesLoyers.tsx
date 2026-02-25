@@ -203,12 +203,11 @@ export default function QuittancesLoyers() {
       <div className="space-y-6 p-4 md:p-6">
         {/* Header */}
         <div
-          className={`flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between ${
-            loading ? "opacity-50" : "opacity-100"
-          } transition-opacity duration-500`}
+          className={`flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between ${loading ? "opacity-50" : "opacity-100"
+            } transition-opacity duration-500`}
         >
           <div>
-            <h1 className="font-merriweather text-4xl md:text-5xl font-bold tracking-tight leading-tight md:leading-tight">
+            <h1 className="font-merriweather text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-tight md:leading-tight">
               Quittances de loyers
             </h1>
             <p className="p-leading pt-5">
@@ -226,9 +225,8 @@ export default function QuittancesLoyers() {
 
         {/* Stats cards */}
         <div
-          className={`grid gap-2 sm:grid-cols-2 lg:grid-cols-4 bg-secondary rounded-lg ${
-            loading ? "opacity-50" : "opacity-100"
-          } transition-opacity duration-500`}
+          className={`grid gap-2 sm:grid-cols-2 lg:grid-cols-4 bg-secondary rounded-lg ${loading ? "opacity-50" : "opacity-100"
+            } transition-opacity duration-500`}
         >
           {loading ? (
             [1, 2, 3, 4].map((i) => (
@@ -339,7 +337,7 @@ export default function QuittancesLoyers() {
               </Select>
             </div>
 
-            <div className="mt-3 flex items-center gap-2 ">
+            <div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 ">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground " />
                 <Input
@@ -350,7 +348,7 @@ export default function QuittancesLoyers() {
                 />
               </div>
 
-              <Button className="bg-slate-100 text-black font-normal shrink-0 border-2 border-primary-light">
+              <Button className="bg-slate-100 text-black font-normal shrink-0 border-2 border-primary-light w-full sm:w-auto">
                 <img src={setting} alt="Settings" className="h-6 w-6 mr-2" />
                 Affichage
               </Button>
@@ -362,154 +360,154 @@ export default function QuittancesLoyers() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 bg-gray-100">
           {loading
             ? [1, 2, 3, 4, 5, 6].map((i) => (
+              <Card
+                key={i}
+                className="overflow-hidden shadow-sm animate-pulse-gentle"
+              >
+                <CardHeader className="pb-2 pt-4 px-4">
+                  <Skeleton className="h-6 w-32" />
+                </CardHeader>
+                <CardContent className="px-4 pb-4 pt-0 space-y-3">
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-4 w-40" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                  </div>
+                  <Skeleton className="h-6 w-24" />
+                </CardContent>
+              </Card>
+            ))
+            : filtered.map((q, index) => {
+              const isEnvoye = q.statut === "envoyé";
+              const bgColor = isEnvoye ? "bg-green-100" : "bg-orange-100";
+              const borderColor = isEnvoye
+                ? "border-green-100"
+                : "border-orange-100";
+              const iconColor = isEnvoye
+                ? "text-green-600"
+                : "text-orange-600";
+              const variantBadge = isEnvoye ? "success" : "warning";
+              const statusText = isEnvoye
+                ? `ENVOYÉE LE ${q.date_envoi?.toUpperCase() || ""}`
+                : "EN ATTENTE D'ENVOI";
+
+              return (
                 <Card
-                  key={i}
-                  className="overflow-hidden shadow-sm animate-pulse-gentle"
+                  key={q.id}
+                  className="overflow-hidden shadow-sm "
+                  style={cardAnimationStyle(index)}
                 >
                   <CardHeader className="pb-2 pt-4 px-4">
-                    <Skeleton className="h-6 w-32" />
-                  </CardHeader>
-                  <CardContent className="px-4 pb-4 pt-0 space-y-3">
-                    <Skeleton className="h-4 w-48" />
-                    <Skeleton className="h-4 w-40" />
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-full" />
+                    <div
+                      className={`flex items-center font-bold border ${borderColor} ${bgColor} rounded-sm w-fit`}
+                    >
+                      {isEnvoye ? (
+                        <Check className={`h-4 w-4 ${iconColor}`} />
+                      ) : (
+                        <img
+                          src={sablier}
+                          alt="Sablier"
+                          className="h-4 w-4 text-orange-500"
+                        />
+                      )}
+                      <Badge variant={variantBadge}>{statusText}</Badge>
                     </div>
-                    <Skeleton className="h-6 w-24" />
+                  </CardHeader>
+
+                  <CardContent className="px-4 pb-4 pt-0 space-y-3">
+                    <div>
+                      <h3 className="text-base font-semibold">
+                        Quittance {q.mois}
+                      </h3>
+                      <p className="text-xs text-gray-500 flex items-center gap-1">
+                        <img
+                          src={sucette}
+                          alt="Succette"
+                          className="h-4 w-4"
+                        />
+                        {q.locataire} - {q.ville}
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 text-xs gap-x-4 gap-y-1">
+                      <div className="text-xs uppercase font-bold text-gray-500 ">
+                        Période
+                      </div>
+                      <div className="text-xs uppercase font-bold text-gray-500 ">
+                        Paiement reçu
+                      </div>
+                      <div className="font-bold">
+                        {q.mois.split(" ")[0]} {q.mois.split(" ")[1]}
+                      </div>
+                      <div className="font-bold">{q.date_paiement}</div>
+                    </div>
+
+                    <div className="grid grid-cols-2 text-xs gap-x-4 gap-y-1">
+                      <div className="text-xs uppercase font-bold text-gray-500 ">
+                        Loyer
+                      </div>
+                      <div className="text-xs uppercase font-bold text-gray-500 ">
+                        Charges
+                      </div>
+                      <div className="font-bold">
+                        {q.loyer.toLocaleString("fr-FR")} €
+                      </div>
+                      <div className="font-bold">
+                        {q.charges.toLocaleString("fr-FR")} €
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-xs uppercase text-gray-500 font-bold ">
+                        Total payé
+                      </div>
+                      <div className="text-base font-bold text-green-600">
+                        {q.total.toLocaleString("fr-FR")} €
+                      </div>
+                    </div>
+                    <hr className="my-3 border-gray-200" />
+
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <p className="pt-4 text-xs font-bold text-gray-500">
+                        Créé le {q.date_envoi}
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5 "
+                        >
+                          <img src={Eye} alt="Voir" className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5 "
+                        >
+                          <img
+                            src={monIcone}
+                            alt="Télécharger"
+                            className="h-4 w-4 text-emerald-500"
+                          />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5 "
+                        >
+                          <img
+                            src={Mail}
+                            alt="Envoyer par mail"
+                            className="h-4 w-4 text-emerald-500"
+                          />
+                        </Button>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
-              ))
-            : filtered.map((q, index) => {
-                const isEnvoye = q.statut === "envoyé";
-                const bgColor = isEnvoye ? "bg-green-100" : "bg-orange-100";
-                const borderColor = isEnvoye
-                  ? "border-green-100"
-                  : "border-orange-100";
-                const iconColor = isEnvoye
-                  ? "text-green-600"
-                  : "text-orange-600";
-                const variantBadge = isEnvoye ? "success" : "warning";
-                const statusText = isEnvoye
-                  ? `ENVOYÉE LE ${q.date_envoi?.toUpperCase() || ""}`
-                  : "EN ATTENTE D'ENVOI";
-
-                return (
-                  <Card
-                    key={q.id}
-                    className="overflow-hidden shadow-sm "
-                    style={cardAnimationStyle(index)}
-                  >
-                    <CardHeader className="pb-2 pt-4 px-4">
-                      <div
-                        className={`flex items-center font-bold border ${borderColor} ${bgColor} rounded-sm w-fit`}
-                      >
-                        {isEnvoye ? (
-                          <Check className={`h-4 w-4 ${iconColor}`} />
-                        ) : (
-                          <img
-                            src={sablier}
-                            alt="Sablier"
-                            className="h-4 w-4 text-orange-500"
-                          />
-                        )}
-                        <Badge variant={variantBadge}>{statusText}</Badge>
-                      </div>
-                    </CardHeader>
-
-                    <CardContent className="px-4 pb-4 pt-0 space-y-3">
-                      <div>
-                        <h3 className="text-base font-semibold">
-                          Quittance {q.mois}
-                        </h3>
-                        <p className="text-xs text-gray-500 flex items-center gap-1">
-                          <img
-                            src={sucette}
-                            alt="Succette"
-                            className="h-4 w-4"
-                          />
-                          {q.locataire} - {q.ville}
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-2 text-xs gap-x-4 gap-y-1">
-                        <div className="text-xs uppercase font-bold text-gray-500 ">
-                          Période
-                        </div>
-                        <div className="text-xs uppercase font-bold text-gray-500 ">
-                          Paiement reçu
-                        </div>
-                        <div className="font-bold">
-                          {q.mois.split(" ")[0]} {q.mois.split(" ")[1]}
-                        </div>
-                        <div className="font-bold">{q.date_paiement}</div>
-                      </div>
-
-                      <div className="grid grid-cols-2 text-xs gap-x-4 gap-y-1">
-                        <div className="text-xs uppercase font-bold text-gray-500 ">
-                          Loyer
-                        </div>
-                        <div className="text-xs uppercase font-bold text-gray-500 ">
-                          Charges
-                        </div>
-                        <div className="font-bold">
-                          {q.loyer.toLocaleString("fr-FR")} €
-                        </div>
-                        <div className="font-bold">
-                          {q.charges.toLocaleString("fr-FR")} €
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="text-xs uppercase text-gray-500 font-bold ">
-                          Total payé
-                        </div>
-                        <div className="text-base font-bold text-green-600">
-                          {q.total.toLocaleString("fr-FR")} €
-                        </div>
-                      </div>
-                      <hr className="my-3 border-gray-200" />
-
-                      <div className="flex justify-between text-xs text-muted-foreground">
-                        <p className="pt-4 text-xs font-bold text-gray-500">
-                          Créé le {q.date_envoi}
-                        </p>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-5 w-5 "
-                          >
-                            <img src={Eye} alt="Voir" className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-5 w-5 "
-                          >
-                            <img
-                              src={monIcone}
-                              alt="Télécharger"
-                              className="h-4 w-4 text-emerald-500"
-                            />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-5 w-5 "
-                          >
-                            <img
-                              src={Mail}
-                              alt="Envoyer par mail"
-                              className="h-4 w-4 text-emerald-500"
-                            />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+              );
+            })}
         </div>
       </div>
     </>

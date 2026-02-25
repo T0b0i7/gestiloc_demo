@@ -89,7 +89,15 @@ const ContratsBaux: React.FC<ContratsBauxProps> = ({ notify }) => {
         .cb-icon-btn.orange { color: #f59e0b; }
         @media (max-width: 1400px) { .cb-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 1024px) { .cb-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 640px) { .cb-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 640px) {
+          .cb-grid { grid-template-columns: 1fr; }
+          .cb-header { flex-direction: column; gap: 12px; }
+          .cb-add-btn { width: 100%; justify-content: center; }
+          .cb-search-row { flex-direction: column; }
+          .cb-btn-display { width: 100%; height: 44px; justify-content: center; }
+          .cb-card { padding: 1rem; }
+        }
+        @media (max-width: 480px) { .cb-page { padding: 1rem 0.5rem 2rem; } .cb-title { font-size: 1.2rem; } }
       `}</style>
 
             <div className="cb-page">

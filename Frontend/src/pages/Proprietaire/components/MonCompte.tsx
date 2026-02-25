@@ -37,6 +37,18 @@ const MonCompte: React.FC<MonCompteProps> = ({ notify }) => {
         .mc-btn-cancel { background: #fff; border: 1.5px solid #d1d5db; border-radius: 10px; padding: 10px 28px; font-family: 'Manrope', sans-serif; font-size: 0.85rem; font-weight: 700; color: #374151; cursor: pointer; }
         .mc-btn-save { background: #83C757; border: none; border-radius: 10px; padding: 10px 28px; font-family: 'Manrope', sans-serif; font-size: 0.85rem; font-weight: 700; color: #fff; cursor: pointer; }
         .mc-btn-save:hover { background: #72b44a; }
+        @media (max-width: 640px) {
+          .mc-photo-row { flex-direction: column; text-align: center; }
+          .mc-photo-btns { justify-content: center; }
+          .mc-field { flex-direction: column; align-items: flex-start; gap: 8px; }
+          .mc-input { min-width: 100%; width: 100%; }
+          .mc-actions { flex-direction: column; }
+          .mc-btn-cancel, .mc-btn-save { width: 100%; text-align: center; }
+          .mc-card { padding: 1rem; }
+        }
+        @media (max-width: 480px) {
+          .mc-page { padding: 1rem 0.5rem 2rem; }
+        }
       `}</style>
             <div className="mc-page">
                 <div className="mc-card">

@@ -121,7 +121,23 @@ const AvisEcheance: React.FC<AvisEcheanceProps> = ({ notify }) => {
         .ae-icon-btn.orange { color: #f59e0b; }
         @media (max-width: 1400px) { .ae-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 1024px) { .ae-grid { grid-template-columns: repeat(2, 1fr); } .ae-stats { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 640px) { .ae-grid { grid-template-columns: 1fr; } .ae-stats { grid-template-columns: 1fr; } }
+        @media (max-width: 640px) {
+          .ae-grid { grid-template-columns: 1fr; }
+          .ae-stats { grid-template-columns: repeat(2, 1fr); }
+          .ae-header { flex-direction: column; gap: 12px; }
+          .ae-add-btn { width: 100%; justify-content: center; }
+          .ae-search-row { flex-direction: column; }
+          .ae-btn-display { width: 100%; height: 44px; justify-content: center; }
+          .ae-card { padding: 1rem; }
+          .ae-filters { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+          .ae-filter-btn { flex-shrink: 0; }
+        }
+        @media (max-width: 480px) {
+          .ae-page { padding: 1rem 0.5rem 2rem; }
+          .ae-title { font-size: 1.2rem; }
+          .ae-stats { grid-template-columns: 1fr; }
+          .ae-filter-btn { padding: 6px 14px; font-size: 0.75rem; }
+        }
       `}</style>
 
             <div className="ae-page">

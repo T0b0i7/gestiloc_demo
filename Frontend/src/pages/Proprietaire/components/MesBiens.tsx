@@ -1837,78 +1837,76 @@ function BienCard({ bien, onClick }: { bien: typeof biens[0]; onClick: () => voi
   return (
     <div
       onClick={onClick}
-      style={{
-        background: "#fff",
-        border: "1px solid rgba(131,199,87,0.4)",
-        borderRadius: "16px",
-        overflow: "hidden",
-        boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
-        transition: "box-shadow 0.2s, transform 0.15s",
-        cursor: "pointer",
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 8px 28px rgba(0,0,0,0.12)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-      onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.05)"; e.currentTarget.style.transform = "translateY(0)"; }}
+      className="bg-white border border-green-500/40 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300 cursor-pointer transform hover:-translate-y-1 active:scale-95 group"
     >
-      {/* Image */}
-      <div style={{ position: "relative", height: "200px", overflow: "hidden" }}>
+      {/* Image - Mobile First */}
+      <div className="relative h-48 sm:h-52 lg:h-56 overflow-hidden">
         <img
           src={bien.image}
           alt={bien.titre}
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           onError={(e) => {
             const img = e.currentTarget;
             img.style.display = "none";
           }}
         />
-        <span style={{
-          position: "absolute",
-          top: "14px",
-          left: "14px",
-          background: statutColor[bien.statut] || "#6b7280",
-          color: "#fff",
-          fontSize: "12px",
-          fontWeight: 700,
-          fontFamily: "Manrope, sans-serif",
-          padding: "4px 12px",
-          borderRadius: "6px",
-        }}>
+        {/* Fallback placeholder */}
+        <div className="absolute inset-0 bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center">
+          <Building2 size={48} className="text-green-500/30" />
+        </div>
+        
+        {/* Status badge */}
+        <span 
+          className={`absolute top-3 left-3 px-3 py-1.5 rounded-lg text-xs font-bold font-sans text-white shadow-lg ${
+            bien.statut === 'Disponible' ? 'bg-green-500' :
+            bien.statut === 'Loué' ? 'bg-blue-500' :
+            bien.statut === 'En travaux' ? 'bg-orange-500' :
+            bien.statut === 'Préavis' ? 'bg-red-500' : 'bg-gray-500'
+          }`}
+        >
           {bien.statut}
         </span>
       </div>
 
-      {/* Content */}
-      <div style={{ padding: "18px 20px" }}>
-        <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", letterSpacing: "1.2px", marginBottom: "4px", fontFamily: "Manrope, sans-serif" }}>
+      {/* Content - Mobile First */}
+      <div className="p-4 sm:p-5">
+        {/* Type */}
+        <p className="text-xs font-bold text-gray-400 tracking-wider mb-2 font-sans uppercase">
           {bien.type}
         </p>
-        <h2 style={{ fontFamily: "Merriweather, serif", fontSize: "16px", fontWeight: 700, color: "#111", marginBottom: "8px", letterSpacing: "0.2px" }}>
+        
+        {/* Title */}
+        <h2 className="font-serif text-lg sm:text-xl font-bold text-gray-900 mb-3 leading-tight line-clamp-2">
           {bien.titre}
         </h2>
-        <p style={{ fontSize: "13px", color: "#6b7280", marginBottom: "16px", display: "flex", alignItems: "center", gap: "5px" }}>
-          <span style={{ color: "#ef4444" }}>📍</span> {bien.adresse}
+        
+        {/* Address */}
+        <p className="text-sm text-gray-600 mb-4 flex items-start gap-2 leading-relaxed">
+          <MapPin size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
+          <span className="line-clamp-2">{bien.adresse}</span>
         </p>
 
-        {/* Loyer + Surface */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-          <div>
-            <span style={{ fontFamily: "Merriweather, serif", fontSize: "22px", fontWeight: 700, color: "rgba(131,199,87,1)" }}>
+        {/* Price + Surface */}
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex flex-col">
+            <span className="font-serif text-xl sm:text-2xl font-bold text-green-500 leading-tight">
               {bien.loyer}
             </span>
-            <span style={{ fontSize: "11px", color: "#9ca3af", fontFamily: "Manrope, sans-serif", marginLeft: "4px" }}>
-              FCFA/mois
-            </span>
+            <span className="text-xs text-gray-400 font-sans mt-1">FCFA/mois</span>
           </div>
-          <span style={{ fontSize: "13px", color: "#6b7280", fontFamily: "Manrope, sans-serif" }}>
-            {bien.surface} m²
-          </span>
+          <div className="flex items-center gap-1 text-sm text-gray-600 font-sans">
+            <Ruler size={14} className="flex-shrink-0" />
+            <span>{bien.surface} m²</span>
+          </div>
         </div>
 
         {/* Divider */}
-        <div style={{ borderTop: "1px solid #f3f4f6", paddingTop: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: "12px", color: "#9ca3af", display: "flex", alignItems: "center", gap: "5px" }}>
-            📷 {bien.photos} Photo{bien.photos > 1 ? "s" : ""}
+        <div className="border-t border-gray-100 pt-3 flex justify-between items-center">
+          <span className="text-xs text-gray-400 flex items-center gap-1 font-sans">
+            <ImageIcon size={12} className="flex-shrink-0" />
+            {bien.photos} Photo{bien.photos > 1 ? "s" : ""}
           </span>
-          <span style={{ fontSize: "12px", color: "#9ca3af", fontFamily: "Manrope, sans-serif" }}>
+          <span className="text-xs text-gray-400 font-sans font-mono">
             Réf. {bien.ref}
           </span>
         </div>
@@ -1932,97 +1930,78 @@ export default function MesBiens({ notify, currentUser }: MesBiensProps) {
   });
 
   return (
-    <div style={{ background: "#f7f8fa", minHeight: "100vh", padding: "28px 32px", fontFamily: "Manrope, sans-serif" }}>
+    <div className="bg-gray-50 min-h-screen p-4 sm:p-6 lg:p-8 font-sans">
       <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet" />
       <style>{styles}</style>
 
-      {/* Top bar */}
-      <div className="animate-slideInLeft" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "28px", gap: "16px" }}>
-        <div style={{ background: 'rgba(255, 255, 255, 1)', border: '1px solid rgba(131, 199, 87, 1)', borderRadius: '15px', padding: '16px', marginBottom: '24px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+      {/* Top bar - Mobile First */}
+      <div className="animate-slideInLeft flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
+        {/* Back button - Mobile First */}
+        <div className="bg-white border border-green-500 rounded-2xl p-4 inline-flex items-center justify-center w-full sm:w-auto">
           <button
             onClick={() => navigate("/proprietaire/dashboard")}
-            style={{ display: "flex", alignItems: "center", gap: "8px", color: "#374151", background: "none", border: "none", cursor: "pointer" }}
+            className="flex items-center gap-2 text-gray-700 bg-transparent border-none cursor-pointer hover:text-green-600 transition-colors"
           >
-            <ArrowLeft size={20} />
-            <span style={{ fontWeight: 500 }}>Retour au tableau de bord</span>
+            <ArrowLeft size={20} className="flex-shrink-0" />
+            <span className="font-medium text-sm sm:text-base">Retour au tableau de bord</span>
           </button>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "flex-end", flex: 1 }}>
-          {/* Search */}
-          <div style={{ position: "relative", width: "280px" }}>
-            <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#83C757", fontSize: "15px" }}>🔍</span>
+        
+        {/* Search and Add button - Mobile First */}
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          {/* Search - Full width on mobile */}
+          <div className="relative w-full sm:w-80">
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-500 text-sm">🔍</span>
             <input
               type="text"
               placeholder="Rechercher par nom, adresse..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "10px 14px 10px 36px",
-                borderRadius: "10px",
-                border: "1.5px solid rgba(131,199,87,0.5)",
-                background: "rgba(255,255,255,0.9)",
-                fontSize: "13px",
-                fontFamily: "Manrope, sans-serif",
-                outline: "none",
-                color: "#374151",
-              }}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-green-500/50 bg-white/90 text-sm sm:text-base font-sans outline-none text-gray-700 placeholder-gray-400 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all"
             />
           </div>
-          {/* Ajouter */}
+          
+          {/* Add button - Full width on mobile */}
           <button
-            className="animate-scaleIn animate-delay-200"
+            className="animate-scaleIn animate-delay-200 bg-green-500 text-white rounded-xl px-4 py-2.5 font-semibold hover:bg-green-600 transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-green-500/20 w-full sm:w-auto flex items-center justify-center gap-2"
             onClick={() => navigate("/proprietaire/ajouter-bien")}
-            style={{
-              ...btnBase,
-              background: "rgba(131,199,87,1)",
-              color: "#fff",
-              borderRadius: "10px",
-              padding: "10px 22px",
-              width: "280px"
-            }}
           >
-            + Ajouter un bien
+            <Plus size={18} className="flex-shrink-0" />
+            <span className="text-sm sm:text-base">Ajouter un bien</span>
           </button>
         </div>
       </div>
 
-      {/* Page title */}
-      <div className="animate-fadeInUp animate-delay-100" style={{ marginBottom: "20px" }}>
-        <h1 style={{ fontFamily: "Merriweather, serif", fontSize: "26px", fontWeight: 700, color: "#111", marginBottom: "6px", display: "flex", alignItems: "center", gap: "10px" }}>
-          🏘️ Mes biens
+      {/* Page title - Mobile First */}
+      <div className="animate-fadeInUp animate-delay-100 mb-6 sm:mb-8">
+        <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+          <span className="text-2xl sm:text-3xl">🏘️</span>
+          <span className="break-words">Mes biens</span>
         </h1>
-        <p style={{ fontSize: "16px", color: "#6b7280" }}>
+        <p className="text-sm sm:text-base text-gray-600 leading-relaxed max-w-3xl">
           Gérez l'ensemble de vos biens : appartements, maisons, locaux professionnels...
         </p>
       </div>
 
-      {/* Filters */}
-      <div className="animate-fadeInUp animate-delay-200" style={{ display: "flex", gap: "12px", marginBottom: "24px" }}>
+      {/* Filters - Mobile First */}
+      <div className="animate-fadeInUp animate-delay-200 flex flex-wrap gap-2 sm:gap-3 mb-6 sm:mb-8">
         {["Tous", "Disponible", "Loué", "En travaux", "Préavis"].map((f) => (
           <button
             key={f}
             onClick={() => setActiveFilter(f)}
-            style={{
-              padding: "9px 20px",
-              borderRadius: "10px",
-              fontSize: "13px",
-              fontWeight: 600,
-              fontFamily: "Manrope, sans-serif",
-              cursor: "pointer",
-              border: activeFilter === f ? "none" : "1.5px solid #e5e7eb",
-              background: activeFilter === f ? "rgba(131,199,87,1)" : "#fff",
-              color: activeFilter === f ? "#fff" : "#374151",
-              transition: "all 0.15s",
-            }}
+            className={`px-3 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold font-sans cursor-pointer transition-all transform active:scale-95 ${
+              activeFilter === f 
+                ? "bg-green-500 text-white shadow-lg shadow-green-500/20" 
+                : "bg-white border border-gray-200 text-gray-700 hover:border-green-300 hover:bg-green-50"
+            }`}
           >
             {f}
           </button>
         ))}
       </div>
 
-      {/* Grid */}
-      <div className="animate-fadeInUp animate-delay-300" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "22px" }}>
+      {/* Grid - Mobile First */}
+      <div className="animate-fadeInUp animate-delay-300 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
         {filtered.map((bien) => (
           <BienCard key={bien.id} bien={bien} onClick={() => setSelectedBien(bien)} />
         ))}
