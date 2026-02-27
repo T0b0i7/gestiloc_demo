@@ -47,6 +47,7 @@ import ReparationsTravaux from './components/ReparationsTravaux';
 import ComptabilitePage from './components/ComptabilitePage';
 import ParametresPage from './components/ParametresPage';
 import MonCompte from './components/MonCompte';
+import { LogoutModal } from '@/components/LogoutModal';
 
 
 const ProprietaireApp: React.FC = () => {
@@ -56,6 +57,7 @@ const ProprietaireApp: React.FC = () => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [toastIdCounter, setToastIdCounter] = useState(0);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Vérifier l'authentification au chargement
   useEffect(() => {
@@ -110,7 +112,12 @@ const ProprietaireApp: React.FC = () => {
     setToasts(prev => prev.filter(t => t.id !== id));
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
+    // Afficher la modal de confirmation
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
     try {
       await authService.logout();
       localStorage.removeItem('token');
@@ -119,7 +126,13 @@ const ProprietaireApp: React.FC = () => {
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
       notify('Erreur lors de la déconnexion', 'error');
+    } finally {
+      setShowLogoutModal(false);
     }
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   const handleNavigation = (tab: Tab | string) => {
@@ -557,6 +570,13 @@ const ProprietaireApp: React.FC = () => {
 
         <Route path="*" element={<Navigate to="/proprietaire/dashboard" replace />} />
       </Routes>
+
+      {/* Modal de déconnexion */}
+      <LogoutModal
+        isOpen={showLogoutModal}
+        onConfirm={confirmLogout}
+        onCancel={cancelLogout}
+      />
     </div>
   );
 };

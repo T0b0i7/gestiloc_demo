@@ -8,18 +8,20 @@ import { Settings } from './components/Settings';
 import { ViewType, AppNotification } from './types';
 import { Menu, Bell, Search, Moon, Sun, Languages, Check, Trash2, Info, AlertCircle } from 'lucide-react';
 import { AppProvider, useAppContext } from './context/AppContext';
+import { LogoutModal } from '@/components/LogoutModal';
 
 const AppContent: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const { theme, toggleTheme, language, setLanguage, t } = useAppContext();
   
   // Mock Notifications
   const [notifications, setNotifications] = useState<AppNotification[]>([
     { id: '1', title: 'New Ticket Created', message: 'Alice created a ticket regarding Heating.', time: '5 min ago', read: false, type: 'info' },
-    { id: '2', title: 'Payment Failed', message: 'Tenant Marc Leroy payment was declined.', time: '1 hr ago', read: false, type: 'alert' },
+    { id: '2', title: 'Payment Failed', message: 'Tenant Marc Leroy payment was declined.', time: '1 hr ago', read: false, type: 'error' },
     { id: '3', title: 'System Update', message: 'Maintenance scheduled for tonight.', time: '5 hrs ago', read: true, type: 'warning' },
   ]);
 
@@ -61,6 +63,19 @@ const AppContent: React.FC = () => {
 
   const deleteNotif = (id: string) => {
     setNotifications(notifications.filter(n => n.id !== id));
+  };
+
+  const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutModal(false);
+    // En mode réel, on pourrait ajouter une redirection vers /login
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   if (isLoading) {
@@ -206,6 +221,13 @@ const AppContent: React.FC = () => {
            </div>
         </main>
       </div>
+
+      {/* Modal de déconnexion */}
+      <LogoutModal
+        isOpen={showLogoutModal}
+        onConfirm={confirmLogout}
+        onCancel={cancelLogout}
+      />
     </div>
   );
 };

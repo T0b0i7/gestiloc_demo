@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-
 import { Layout } from './components/Layout';
 import { Tab, ToastMessage } from './types';
 import { authService } from '@/services/api';
+import { LogoutModal } from '@/components/LogoutModal';
 
 // Components spécifiques aux co-propriétaires
 import { CoOwnerDashboard } from './components/CoOwnerDashboard';
@@ -26,6 +27,7 @@ const CoproprietaireApp: React.FC = () => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [toastIdCounter, setToastIdCounter] = useState(0);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Liste des routes Laravel qui ne doivent pas être gérées par React
   const laravelRoutes = [
@@ -94,7 +96,11 @@ const CoproprietaireApp: React.FC = () => {
     setToasts(prev => prev.filter(t => t.id !== id));
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
     try {
       await authService.logout();
       localStorage.removeItem('token');
@@ -103,7 +109,13 @@ const CoproprietaireApp: React.FC = () => {
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
       notify('Erreur lors de la déconnexion', 'error');
+    } finally {
+      setShowLogoutModal(false);
     }
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   const handleNavigation = (tab: Tab | string) => {
@@ -370,6 +382,13 @@ const CoproprietaireApp: React.FC = () => {
         {/* Redirection pour toute autre route */}
         <Route path="*" element={<Navigate to="/coproprietaire/dashboard" replace />} />
       </Routes>
+
+      {/* Modal de déconnexion */}
+      <LogoutModal
+        isOpen={showLogoutModal}
+        onConfirm={confirmLogout}
+        onCancel={cancelLogout}
+      />
     </div>
   );
 };

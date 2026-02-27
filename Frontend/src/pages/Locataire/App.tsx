@@ -24,6 +24,7 @@ import { Notes } from './components/Notes';
 import { Settings } from './components/Settings';
 import { Landlord } from './components/Landlord';
 import { mockUserData } from '@/services';
+import { LogoutModal } from '@/components/LogoutModal';
 
 // Wrapper pour gérer la navigation et les états partagés
 interface UserData {
@@ -42,6 +43,7 @@ const AppContent = () => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [user, setUser] = useState<UserData | null>(null);
   const [toastIdCounter, setToastIdCounter] = useState(0);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Récupère l'onglet actif à partir de l'URL
   const getActiveTab = useCallback((): Tab => {
@@ -150,14 +152,29 @@ const AppContent = () => {
   };
 
   const handleLogout = () => {
-    notify('Déconnexion en cours...', 'info');
-    // En mode standalone, on ne fait que réinitialiser l'état
-    setUser(null);
-    
-    setTimeout(() => {
-      notify('Vous êtes maintenant déconnecté', 'info');
-      // En mode standalone, on reste sur la page actuelle
-    }, 1000);
+    // Afficher la modal de confirmation
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
+    try {
+      // Nettoyage immédiat des tokens
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // Notification et redirection immédiate
+      notify('Déconnexion réussie', 'success');
+      navigate('/login');
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+      notify('Erreur lors de la déconnexion', 'error');
+    } finally {
+      setShowLogoutModal(false);
+    }
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutModal(false);
   };
 
   return (
@@ -195,6 +212,13 @@ const AppContent = () => {
   <Route path="notes" element={<Notes notify={notify} />} />
   <Route path="settings" element={<Settings notify={notify} />} />
 </Routes>
+
+      {/* Modal de déconnexion */}
+      <LogoutModal
+        isOpen={showLogoutModal}
+        onConfirm={confirmLogout}
+        onCancel={cancelLogout}
+      />
 
       {/* Si tu utilises shadcn toaster, garde-le ici */}
       <Toaster />

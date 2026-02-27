@@ -4,6 +4,17 @@
  * ============================
  */
 
+export type ViewType = 'dashboard' | 'users' | 'tickets' | 'activity' | 'settings';
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  time: string;
+  read: boolean;
+  type: 'info' | 'warning' | 'error' | 'success';
+}
+
 export type AdminUserType =
   | 'admin'
   | 'tenant'

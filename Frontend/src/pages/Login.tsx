@@ -1,23 +1,18 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { AtSign,ArrowLeft, Lock, Eye, EyeOff, AlertCircle, User, Building2, Users, Shield } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { toast } from "sonner";
+import { Eye, EyeOff, Mail, Lock, Building, User, Shield, Home } from "lucide-react";
+import { authService } from "@/services/api";
+import { WelcomeModal } from "@/components/WelcomeModal";
+import { AtSign,ArrowLeft, AlertCircle, Building2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { toast } from "sonner";
-import { authService } from "@/services/api";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 // Schéma de validation du formulaire de connexion
@@ -34,6 +29,8 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [welcomeUserInfo, setWelcomeUserInfo] = useState({ userName: "", userRole: "" });
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -53,7 +50,7 @@ export default function Login() {
 
       if (response?.data?.user) {
         const { user } = response.data;
-        toast.success("Connexion réussie !");
+        toast.success("Bienvenue !");
 
         localStorage.setItem("token", response.data.access_token);
         localStorage.setItem("user", JSON.stringify(user));
@@ -75,6 +72,14 @@ export default function Login() {
 
         const updatedUser = { ...user, role: userRole };
         localStorage.setItem("user", JSON.stringify(updatedUser));
+        
+        // Afficher la modal de bienvenue
+        setWelcomeUserInfo({
+          userName: user.first_name || user.email || "Utilisateur",
+          userRole: userRole
+        });
+        setShowWelcomeModal(true);
+        
         navigate(redirectPath, { replace: true });
       } else {
         throw new Error("Réponse du serveur invalide");
@@ -145,7 +150,14 @@ export default function Login() {
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user));
 
-    toast.success(`Connexion démo ${role} réussie !`);
+    toast.success(`Bienvenue ${role} !`);
+
+    // Afficher la modal de bienvenue
+    setWelcomeUserInfo({
+      userName: user.first_name || user.email || "Utilisateur",
+      userRole: role
+    });
+    setShowWelcomeModal(true);
 
     const redirects: Record<string, string> = {
       locataire: "/locataire",
@@ -345,6 +357,14 @@ export default function Login() {
           </CardFooter>
         </form>
       </Card>
+
+      {/* Modal de bienvenue */}
+      <WelcomeModal
+        isOpen={showWelcomeModal}
+        onClose={() => setShowWelcomeModal(false)}
+        userName={welcomeUserInfo.userName}
+        userRole={welcomeUserInfo.userRole}
+      />
     </div>
   );
 }

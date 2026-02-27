@@ -1975,7 +1975,7 @@ export default function MesBiens({ notify, currentUser }: MesBiensProps) {
       {/* Page title - Mobile First */}
       <div className="animate-fadeInUp animate-delay-100 mb-6 font-serif">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-          <span className="text-2xl">�</span>
+          <img src="/Ressource_gestiloc/Home.png" alt="Mes biens" className="w-8 h-8" />
           <span className="break-words font-serif tracking-tight">Mes biens</span>
         </h1>
         <p className="text-sm sm:text-sm text-gray-500 leading-relaxed max-w-3xl font-sans mt-2">

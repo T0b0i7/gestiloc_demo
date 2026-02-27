@@ -79,7 +79,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { 
           id: 'mes-biens', 
           label: t('sidebar.myProperties', 'Mes biens'), 
-          icon: Building 
+          icon: () => <img src="/Ressource_gestiloc/Home.png" alt="Mes biens" className="w-5 h-5" />
         },
         { 
           id: 'lots', 

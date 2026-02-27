@@ -395,24 +395,25 @@ export const authService = {
 },
 
   logout: async () => {
-    try {
-      await api.post(
-        '/auth/logout',
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-            Accept: 'application/json',
-          },
-        }
-      );
-    } catch (error) {
+    // Déconnexion immédiate côté client
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    // Appel API en arrière-plan (non bloquant)
+    api.post(
+      '/auth/logout',
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Accept: 'application/json',
+        },
+      }
+    ).catch(error => {
       console.error('Erreur lors de la déconnexion côté serveur:', error);
-    } finally {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
+    });
+    
+    return Promise.resolve();
   },
 
   getCurrentUser: async (): Promise<User | null> => {
