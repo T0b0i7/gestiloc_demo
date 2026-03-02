@@ -20,6 +20,23 @@ export interface CoOwner {
   joined_at?: string;
   created_at?: string;
   updated_at?: string;
+  dashboard_data?: {
+    subscription: { plan: string; renewal_date: string };
+    rent_data: Array<{ month: string; received: number; expected: number }>;
+    graph_max: number;
+    occupancy_data: { occupied: number; vacant: number; total: number; occupancy_rate: number };
+    recent_documents: Array<{ icon: string; name: string; date: string }>;
+    quick_actions: Array<{ id: number; title: string; description: string; route?: string }>;
+    kpis: {
+      expected_rent: number;
+      received_rent: number;
+      occupancy_rate: number;
+      occupied_properties: number;
+      total_properties: number;
+      active_delegations: number;
+      active_alerts: number;
+    };
+  };
   user?: {
     id: number;
     email: string;

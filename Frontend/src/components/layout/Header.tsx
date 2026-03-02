@@ -18,7 +18,7 @@ export function Header() {
 
   const menuItems = [
     { label: "Accueil", href: "/" },
-    { label: "Fonctionnalités", href: "/#features" },
+    { label: "Fonctionnalités", href: "/features" },
     { label: "Tarifs", href: "/pricing" },
     { label: "Aide", href: "/help" },
   ];

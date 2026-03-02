@@ -245,7 +245,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({ notify }) => {
           Annuler
         </Button>
         <Button 
-          variant="primary"
+          variant="default"
           onClick={handleSave}
           icon={<Check size={16} />}
           className="flex-1"

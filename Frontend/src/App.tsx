@@ -28,6 +28,7 @@ import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import Tour from "./pages/Tour";
+import Features from "./pages/Features";
 import Pricing from "./pages/Pricing";
 import Help from "./pages/Help";
 import HelpCategory from "./pages/HelpCategory";
@@ -275,6 +276,14 @@ const AppContent = () => {
         element={
           <AppShell>
             <Tour />
+          </AppShell>
+        }
+      />
+      <Route
+        path="/features"
+        element={
+          <AppShell>
+            <Features />
           </AppShell>
         }
       />
