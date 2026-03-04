@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, ChevronDown, Plus, Minus, Home, Mail, Phone, MapPin, Globe, Facebook, Linkedin, Twitter, Instagram } from 'lucide-react';
+import { CheckCircle2, ChevronDown } from 'lucide-react';
 
 const Pricing = () => {
     const [isAnnual, setIsAnnual] = useState(false);
@@ -10,12 +10,12 @@ const Pricing = () => {
             id: 1,
             name: "Gratuit",
             price: "0",
-            subtitle: "Parfait pour vos débuts",
+            subtitle: "Parfait pour vos début",
             features: [
                 "Jusqu'à 10 baux",
                 "Gestion des baux et locataires",
                 "Quittances automatisées",
-                "Etas des lieux numériques",
+                "État des lieux numériques",
                 "Support par email"
             ],
             color: "border-[#87C44E]",
@@ -29,7 +29,7 @@ const Pricing = () => {
             id: 2,
             name: "Pro",
             price: "9.900",
-            subtitle: "Pour vos tailles réels",
+            subtitle: "Pour vos tailles réelles",
             features: [
                 "Illimité baux",
                 "Toutes les fonctionnalités de Basique",
@@ -72,12 +72,12 @@ const Pricing = () => {
             id: 1,
             name: "Basique",
             price: "60.000",
-            subtitle: "Parfait pour vos débuts",
+            subtitle: "Parfait pour vos début",
             features: [
                 "Jusqu'à 10 baux",
                 "Gestion des baux et locataires",
                 "Quittances automatisées",
-                "Etas des lieux numériques",
+                "État des lieux numériques",
                 "Support par email"
             ],
             color: "border-[#87C44E]",
@@ -91,7 +91,7 @@ const Pricing = () => {
             id: 2,
             name: "Pro",
             price: "144.000",
-            subtitle: "Pour vos tailles réels",
+            subtitle: "Pour vos tailles réelles",
             features: [
                 "Illimité baux",
                 "Toutes les fonctionnalités de Basique",
@@ -140,7 +140,7 @@ const Pricing = () => {
         },
         {
             question: "Proposez-vous une période d'essai ?",
-            answer: "Oui, nous offrons 30 jours d'essai gratuit sur le forfait Pro afin que vous puissiez tester toutes les fonctionnalités sans risque."
+            answer: "Oui, nous offerons 30 jours d'essai gratuit sur le forfait Pro afin que vous puissiez tester toutes les fonctionnalités sans risque."
         },
         {
             question: "Quels moyens de paiement sont acceptés ?",
@@ -161,30 +161,50 @@ const Pricing = () => {
 
                 {/* Header Content */}
                 <div className="max-w-4xl mx-auto pt-16 px-6 text-center">
-                    <h1 className="text-2xl md:text-4xl font-extrabold text-[#1F3A19] mb-4">
+                    <motion.h1 
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6 }}
+                        className="text-2xl md:text-4xl font-extrabold text-[#1F3A19] mb-4"
+                    >
                         Tarifs simples et transparents
-                    </h1>
-                    <p className="text-[#2D4A22] text-lg font-medium max-w-2xl mx-auto mb-10">
+                    </motion.h1>
+                    <motion.p 
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.1 }}
+                        className="text-[#2D4A22] text-lg font-medium max-w-2xl mx-auto mb-10"
+                    >
                         Choisissez le plan qui vous correspond le mieux. Sans engagement, changez quand vous voulez !
-                    </p>
+                    </motion.p>
 
                     {/* Toggle Button */}
-                    <div className="flex items-center justify-center mb-16">
-                        <div className="bg-white p-1 rounded-full shadow-md flex items-center">
-                            <button
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                        className="flex items-center justify-center mb-16"
+                    >
+                        <motion.div 
+                            whileHover={{ scale: 1.02 }}
+                            className="bg-white p-1 rounded-full shadow-md flex items-center"
+                        >
+                            <motion.button
                                 onClick={() => setIsAnnual(false)}
+                                whileTap={{ scale: 0.95 }}
                                 className={`py-3 px-8 rounded-full font-bold transition-all duration-300 ${!isAnnual ? 'bg-[#FFEB3B] text-[#1F3A19]' : 'text-gray-500'}`}
                             >
                                 Mensuel
-                            </button>
-                            <button
+                            </motion.button>
+                            <motion.button
                                 onClick={() => setIsAnnual(true)}
+                                whileTap={{ scale: 0.95 }}
                                 className={`py-3 px-8 rounded-full font-bold transition-all duration-300 ${isAnnual ? 'bg-[#FFEB3B] text-[#1F3A19]' : 'text-gray-500'}`}
                             >
                                 Annuel
-                            </button>
-                        </div>
-                    </div>
+                            </motion.button>
+                        </motion.div>
+                    </motion.div>
                 </div>
 
                 {/* Pricing Cards Grid */}
@@ -192,15 +212,28 @@ const Pricing = () => {
                     {currentPrices.map((tier, index) => (
                         <motion.div
                             key={tier.id}
-                            initial={{ opacity: 0, y: 30 }}
+                            initial={{ opacity: 0, y: 50 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            className={`bg-white rounded-[32px] border-[1px] ${tier.color} p-8 relative flex flex-col items-center text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full`}
+                            transition={{ delay: index * 0.15, duration: 0.5, type: "spring", stiffness: 100 }}
+                            whileHover={{ 
+                                scale: 1.05, 
+                                boxShadow: "0 25px 50px -12px rgba(151, 71, 255, 0.35)",
+                            }}
+                            className={`bg-white rounded-[32px] border-[1px] ${tier.color} p-8 relative flex flex-col items-center text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 h-full ${tier.popular ? 'ring-4 ring-[#9747FF]/20' : ''}`}
                         >
                             {tier.popular && (
-                                <div className="absolute top-0 right-1/2 translate-x-1/2 -translate-y-1/2 bg-[#9747FF] text-white py-1 px-4 rounded-full text-sm font-bold shadow-md whitespace-nowrap">
-                                    L'offre la plus prisée
-                                </div>
+                                <motion.div 
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ delay: 0.3, type: "spring" }}
+                                    className="absolute top-0 right-1/2 translate-x-1/2 -translate-y-1/2 bg-[rgba(151,71,255,0.69)] text-white py-2 px-4 rounded-full text-sm font-bold shadow-md whitespace-nowrap flex items-center gap-2"
+                                >
+                                    <img src="/Ressource_gestiloc/starpng.png" alt="star" className="w-5 h-5 animate-spin-slow" />
+                                    <span style={{ fontFamily: 'Lora', fontWeight: 600, fontStyle: 'italic', fontSize: '20px', letterSpacing: '-0.17px', textAlign: 'center' }}>
+                                        L'offre la plus prisée
+                                    </span>
+                                    <img src="/Ressource_gestiloc/starpng.png" alt="star" className="w-5 h-5 animate-spin-slow" />
+                                </motion.div>
                             )}
 
                             <h2 className={`text-2xl md:text-3xl font-bold mb-2 ${tier.color.replace('border-', 'text-')}`}>
@@ -216,12 +249,18 @@ const Pricing = () => {
 
                             <div className="w-full space-y-4 mb-10 flex-grow text-left">
                                 {tier.features.map((feature, i) => (
-                                    <div key={i} className="flex items-center gap-3">
+                                    <motion.div 
+                                        key={i}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: 0.3 + i * 0.1 }}
+                                        className="flex items-center gap-3"
+                                    >
                                         <CheckCircle2 className={`w-6 h-6 flex-shrink-0 ${tier.color.replace('border-', 'text-')}`} />
                                         <span className="text-gray-700 text-sm md:text-base font-medium">
                                             {feature}
                                         </span>
-                                    </div>
+                                    </motion.div>
                                 ))}
                             </div>
 
@@ -237,7 +276,13 @@ const Pricing = () => {
                 </div>
 
                 {/* Mini CTA */}
-                <div className="max-w-4xl mx-auto mt-20 text-center px-6">
+                <motion.div 
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                    className="max-w-4xl mx-auto mt-20 text-center px-6"
+                >
                     <h3 className="text-2xl font-black text-[#1F3A19] mb-4">Commencez maintenant, gratuitement !</h3>
                     <p className="text-gray-600 mb-8 max-w-xl mx-auto">
                         Pas de carte bancaire requise. Votre compte est prêt à être paramétré en moins de 5 minutes.
@@ -249,30 +294,48 @@ const Pricing = () => {
                     >
                         Ouvrez un compte gratuit
                     </motion.button>
-                </div>
+                </motion.div>
 
                 {/* Payment Methods */}
-                <div className="max-w-4xl mx-auto mt-20 text-center px-6">
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                    className="max-w-4xl mx-auto mt-20 text-center px-6"
+                >
                     <h4 className="text-[#529D21] font-bold text-lg mb-8 uppercase tracking-widest">
                         Paiement Mobile Money & Carte bancaire (100% sécurisé)
                     </h4>
                     <div className="flex justify-center">
                         <img src="/Ressource_gestiloc/payment_banner_mastercard.png" alt="Paiement sécurisé Mobile Money & Carte Bancaire" className="h-20 object-contain" />
                     </div>
-                </div>
+                </motion.div>
 
                 {/* FAQ Section */}
-                <div className="max-w-3xl mx-auto mt-32 px-6">
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8 }}
+                    className="max-w-3xl mx-auto mt-32 px-6"
+                >
                     <h2 className="text-3xl md:text-5xl font-black text-[#1F3A19] text-center mb-16">Questions Fréquentes ?</h2>
                     <div className="space-y-4">
                         {faqs.map((faq, idx) => (
                             <FAQItem key={idx} question={faq.question} answer={faq.answer} />
                         ))}
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Offre sur mesure */}
-                <div className="max-w-6xl mx-auto mt-32 relative">
+                <motion.div 
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.6 }}
+                    className="max-w-6xl mx-auto mt-32 relative"
+                >
                     {/* Background Image Container */}
                     <div className="relative rounded-[40px] overflow-hidden bg-gradient-to-br from-[#f8fafc] to-[#e2e8f0]">
                         {/* Content */}
@@ -301,7 +364,7 @@ const Pricing = () => {
                             </div>
                         </div>
                     </div>
-                </div>
+                </motion.div>
             </div>
         </div>
     );

@@ -107,12 +107,21 @@ export default {
             transform: "translateY(0)",
           },
         },
+        "spin-slow": {
+          from: {
+            transform: "rotate(0deg)",
+          },
+          to: {
+            transform: "rotate(360deg)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.3s ease-out",
         "accordion-up": "accordion-up 0.3s ease-out",
         "fade-in": "fade-in 0.5s ease-out",
         "slide-up": "slide-up 0.6s ease-out",
+        "spin-slow": "spin-slow 3s linear infinite",
       },
       fontFamily: {
         sans: ["Manrope", "system-ui", "sans-serif"],
