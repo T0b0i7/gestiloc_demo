@@ -296,7 +296,7 @@ function MobileStatsCarousel({ cards }: { cards: WhyCard[] }) {
   const [direction, setDirection] = useState<1 | -1>(1);
   
   // Regrouper les cartes en binômes (2 par slide)
-  const binomes = [];
+  const binomes: WhyCard[][] = [];
   for (let i = 0; i < cards.length; i += 2) {
     binomes.push(cards.slice(i, i + 2));
   }

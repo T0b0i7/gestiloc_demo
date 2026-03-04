@@ -33,7 +33,7 @@ const Pricing = () => {
             features: [
                 "Illimité baux",
                 "Toutes les fonctionnalités de Basique",
-                "Révision de loyer automatique",
+                "Loyer et quittances automatique",
                 "Régularisation des charges",
                 "Comptabilité complète",
                 "Soutien prioritaire"
@@ -95,7 +95,7 @@ const Pricing = () => {
             features: [
                 "Illimité baux",
                 "Toutes les fonctionnalités de Basique",
-                "Révision de loyer automatique",
+                "Loyer et quittances automatique",
                 "Régularisation des charges",
                 "Comptabilité complète",
                 "Soutien prioritaire"
@@ -156,12 +156,12 @@ const Pricing = () => {
 
     return (
         <div className="font-sans text-[#1a1a1a]">
-            {/* Container Background */}
-            <div className="bg-[#E9F5E1] min-h-screen pb-20">
+            {/* Container Background with gradient */}
+            <div className="bg-gradient-to-b from-[#83C757] via-[#C1E9A2] to-white min-h-screen pb-20">
 
                 {/* Header Content */}
                 <div className="max-w-4xl mx-auto pt-16 px-6 text-center">
-                    <h1 className="text-3xl md:text-5xl font-extrabold text-[#1F3A19] mb-4">
+                    <h1 className="text-2xl md:text-4xl font-extrabold text-[#1F3A19] mb-4">
                         Tarifs simples et transparents
                     </h1>
                     <p className="text-[#2D4A22] text-lg font-medium max-w-2xl mx-auto mb-10">
@@ -256,12 +256,8 @@ const Pricing = () => {
                     <h4 className="text-[#529D21] font-bold text-lg mb-8 uppercase tracking-widest">
                         Paiement Mobile Money & Carte bancaire (100% sécurisé)
                     </h4>
-                    <div className="flex flex-wrap justify-center items-center gap-8">
-                        <img src="/Ressource_gestiloc/MTN 1.png" alt="MTN" className="h-12 object-contain" />
-                        <img src="/Ressource_gestiloc/Moov 1.png" alt="Moov Africa" className="h-12 object-contain" />
-                        <img src="/Ressource_gestiloc/celtis.png" alt="celtiis" className="h-12 object-contain" />
-                        <img src="/Ressource_gestiloc/wave 1.png" alt="Wave" className="h-12 object-contain" />
-                        <img src="/Ressource_gestiloc/master_card.png" alt="mastercard" className="h-12 object-contain" />
+                    <div className="flex justify-center">
+                        <img src="/Ressource_gestiloc/payment_banner_mastercard.png" alt="Paiement sécurisé Mobile Money & Carte Bancaire" className="h-20 object-contain" />
                     </div>
                 </div>
 
@@ -276,19 +272,34 @@ const Pricing = () => {
                 </div>
 
                 {/* Offre sur mesure */}
-                <div className="max-w-4xl mx-auto mt-32 bg-[#D1FF96] rounded-[40px] p-12 text-center shadow-xl border-4 border-white relative overflow-hidden">
-                    <div className="relative z-10">
-                        <h2 className="text-3xl md:text-5xl font-black text-[#1F3A19] mb-4">Besoin d'une offre sur mesure ?</h2>
-                        <p className="text-[#2D4A22] text-xl font-semibold mb-10 max-w-2xl mx-auto">
-                            Pour les agences immobilières et grands portefeuilles, nous proposons des solutions personnalisées.
-                        </p>
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="bg-white hover:bg-gray-50 text-[#1F3A19] font-black py-4 px-10 rounded-full shadow-lg transition-all"
-                        >
-                            Nous contacter
-                        </motion.button>
+                <div className="max-w-6xl mx-auto mt-32 relative">
+                    {/* Background Image Container */}
+                    <div className="relative rounded-[40px] overflow-hidden bg-gradient-to-br from-[#f8fafc] to-[#e2e8f0]">
+                        {/* Content */}
+                        <div className="relative z-10 py-20 px-12">
+                            <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
+                                <div className="text-center lg:text-left max-w-2xl">
+                                    <h2 className="font-[Lora] font-bold italic text-2xl text-center vertical-align-middle mb-6" style={{ fontFamily: 'Lora', fontWeight: 700, fontStyle: 'italic', fontSize: '24px', lineHeight: '120%', letterSpacing: '-0.17px' }}>
+                                        Besoin d'une offre sur mesure ?
+                                    </h2>
+                                    <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-gray-200">
+                                        <p className="text-black text-lg font-semibold mb-4">
+                                            Pour les agences immobilières et grands portefeuilles, nous proposons des solutions personnalisées.
+                                        </p>
+                                        <p className="text-gray-700 font-medium mb-6">
+                                            Profitez d'un accompagnement dédié, d'API sur mesure et d'une gestion optimisée pour votre parc.
+                                        </p>
+                                    </div>
+                                </div>
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className="bg-[#529D21] hover:bg-[#4a8a1d] text-white font-bold py-6 px-16 rounded-2xl shadow-xl transition-all whitespace-nowrap text-lg"
+                                >
+                                    Nous contacter
+                                </motion.button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

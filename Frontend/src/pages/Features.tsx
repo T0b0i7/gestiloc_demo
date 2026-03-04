@@ -10,124 +10,138 @@ const Features = () => {
       color: "border-[#529D21]",
       textColor: "text-[#529D21]",
       image: "/Ressource_gestiloc/f10.jpg",
-      description: "Centralisez tous vos biens immobiliers avec leurs caractéristiques détaillées : adresse, type, surface, équipements, charges...",
+      description: "Centralisez tous vos biens immobiliers avec une interface claire et organisée.",
       benefits: [
-        "Fiches biens complètes avec photos",
-        "Historique des lieux et travaux",
+        "Filtres biens (par type, statut)",
+        "Historique des loyers et charges",
         "Documents associés (diagnostics, assurances)",
-        "Suivi des équipements et maintenances"
+        "Suivi des règlements et maintenance"
+      ]
+    },
+    {
+      id: 2,
+      title: "Dossier des locataires",
+      color: "border-[#9747FF]",
+      textColor: "text-[#9747FF]",
+      image: "/Ressource_gestiloc/f7.jpg",
+      description: "Gérez vos locataires et leurs dossiers en toute conformité avec la réglementation.",
+      benefits: [
+        "Coordonnées et pièces d'identité",
+        "Informations sur les garants",
+        "Historique des paiements",
+        "Documents et attestations"
       ]
     },
     {
       id: 3,
-      title: "Révision de loyer",
-      color: "border-[#529D21]",
-      textColor: "text-[#529D21]",
-      image: "/Ressource_gestiloc/f8.jpg",
-      description: "Des outils de révision automatisés pour que vos loyers soient toujours à jour sans effort.",
-      benefits: [
-        "Calcul automatique selon les indices",
-        "Suivi des dates anniversaires",
-        "Génération des courriers de révision",
-        "Historique des indexations"
-      ]
-    },
-    {
-      id: 4,
-      title: "Dossier locataire",
-      color: "border-[#9747FF]",
-      textColor: "text-[#9747FF]",
-      image: "/Ressource_gestiloc/f7.jpg",
-      description: "Accédez à toutes les informations et pièces justificatives de vos locataires en un clic.",
-      benefits: [
-        "Base de données sécurisée",
-        "Suivi des pièces justificatives",
-        "Historique complet du locataire",
-        "Gestion simplifiée des garants"
-      ]
-    },
-    {
-      id: 5,
       title: "Baux et annexes",
       color: "border-[#9747FF]",
       textColor: "text-[#9747FF]",
       image: "/Ressource_gestiloc/f6.jpg",
-      description: "Générez des contrats de location et leurs annexes conformes à la législation locale.",
+      description: "Créez et suivez facilement vos baux et documents contractuels.",
       benefits: [
-        "Modèles de baux pré-remplis",
-        "Génération automatique d'annexes",
-        "Signature électronique intégrée",
-        "Conformité juridique garantie"
+        "Modèles pour résidence principale, meublé, parking, commercial",
+        "Génération automatique depuis les données",
+        "Envoi des baux par email intégré",
+        "Signature électronique disponible"
+      ]
+    },
+    {
+      id: 4,
+      title: "Loyers et quittances",
+      color: "border-[#9747FF]",
+      textColor: "text-[#9747FF]",
+      image: "/Ressource_gestiloc/f5.jpg",
+      description: "Automatisez l'émission et le suivi des quittances de loyer.",
+      benefits: [
+        "Génération automatique mensuelle",
+        "Envoi par email au locataire",
+        "Suivi des paiements et impayés",
+        "Relances automatiques"
+      ]
+    },
+    {
+      id: 5,
+      title: "Révision de loyers",
+      color: "border-[#529D21]",
+      textColor: "text-[#529D21]",
+      image: "/Ressource_gestiloc/f8.jpg",
+      description: "Automatisez la révision annuelle de vos loyers.",
+      benefits: [
+        "Calcul automatique selon l'indice",
+        "Rappels avant la date de révision",
+        "Historique des révisions",
+        "Génération des courriers de notification"
       ]
     },
     {
       id: 6,
-      title: "Loyer et quittances",
-      color: "border-[#9747FF]",
-      textColor: "text-[#9747FF]",
-      image: "/Ressource_gestiloc/f5.jpg",
-      description: "Gérez vos encaissements et générez des quittances automatiques pour vos locataires.",
-      benefits: [
-        "Génération automatique des quittances",
-        "Suivi des paiements en temps réel",
-        "Relances automatiques pour impayés",
-        "Envoi électronique sécurisé"
-      ]
-    },
-    {
-      id: 7,
       title: "Comptabilité et fiscalité",
       color: "border-[#9747FF]",
       textColor: "text-[#9747FF]",
       image: "/Ressource_gestiloc/f4.png",
-      description: "Simplifiez vos déclarations et suivez la rentabilité de vos investissements.",
+      description: "Suivez vos revenus et charges avec une comptabilité simplifiée.",
       benefits: [
-        "Calcul automatique de l'IBLD",
-        "Rapports de revenus et dépenses",
-        "Préparation aux déclarations fiscales",
-        "Export comptable facile"
+        "Tableau de bord avec KPIs",
+        "Rapports personnalisables",
+        "Exportation compatible (CSV, Excel, PDF)",
+        "Préparation déclaration fiscale"
+      ]
+    },
+    {
+      id: 7,
+      title: "États des lieux",
+      color: "border-[#9747FF]",
+      textColor: "text-[#9747FF]",
+      image: "/Ressource_gestiloc/f3.jpg",
+      description: "Réalisez des états des lieux directement depuis votre smartphone.",
+      benefits: [
+        "Modèles structurés par pièce",
+        "Photos et vidéos illimitées",
+        "Signature électronique",
+        "Comparaison entrée/sortie facile"
       ]
     },
     {
       id: 8,
-      title: "Etats des lieux",
+      title: "Interventions et travaux",
       color: "border-[#9747FF]",
       textColor: "text-[#9747FF]",
-      image: "/Ressource_gestiloc/f3.jpg",
-      description: "Réalisez vos états des lieux digitaux avec photos pour éviter tout litige.",
+      image: "/Ressource_gestiloc/f2.png",
+      description: "Gérez vos demandes d'intervention et suivez les travaux.",
       benefits: [
-        "Modèles d'états des lieux complets",
-        "Prise de photos intégrée",
-        "Comparaison entrée/sortie facile",
-        "Signature sur tablette ou mobile"
+        "Tickets d'intervention locataire",
+        "Attribution aux prestataires",
+        "Suivi en temps réel",
+        "Historique et coûts"
       ]
     },
     {
       id: 9,
-      title: "Intervention et travaux",
+      title: "Messagerie intégrée",
       color: "border-[#9747FF]",
       textColor: "text-[#9747FF]",
-      image: "/Ressource_gestiloc/f2.png",
-      description: "Planifiez et suivez les interventions de maintenance pour maintenir vos biens en état.",
+      image: "/Ressource_gestiloc/f9.jpg",
+      description: "Communiquez facilement avec vos locataires et prestataires.",
       benefits: [
-        "Suivi des demandes d'intervention",
-        "Gestion des devis et factures",
-        "Historique des travaux par bien",
-        "Carnet d'entretien numérique"
+        "Conversations par bien ou locataire",
+        "Notifications par email ou push",
+        "Pièces jointes",
+        "Historique complet"
       ]
     },
     {
       id: 10,
-      title: "Location saisonnière",
+      title: "Locations saisonnières",
       color: "border-[#9747FF]",
       textColor: "text-[#9747FF]",
       image: "/Ressource_gestiloc/f1.jpg",
-      description: "Gérez vos locations courte durée avec la même simplicité qu'une location classique.",
+      description: "Module dédié pour gérer vos emplacements de courte durée.",
       benefits: [
-        "Calendrier de réservations",
-        "Suivi des check-in / check-out",
-        "Gestion des services de ménage",
-        "Statistiques de taux d'occupation"
+        "Calendrier de disponibilité",
+        "Synchronisation (Airbnb, Booking...)",
+        "Tarifs variables selon la saison",
+        "Gestion des réservations"
       ]
     },
   ];
@@ -151,7 +165,7 @@ const Features = () => {
         </div>
 
         {/* Features Cards Grid */}
-        <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-12">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
           {features.map((feature, index) => (
             <motion.div
               key={feature.id}

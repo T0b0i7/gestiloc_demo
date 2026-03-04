@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileText, MessageCircle } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { motion } from "framer-motion";
 
 const categoryArticles: Record<string, { title: string; description: string; articles: Array<{ title: string; slug: string; content: string }> }> = {
   "comptes-profils": {
@@ -62,7 +62,7 @@ const categoryArticles: Record<string, { title: string; description: string; art
     ]
   },
   "baux-locataires": {
-    title: "Baux & Locataires",
+    title: "Baux et Locataires",
     description: "Gérez vos contrats et locataires",
     articles: [
       {
@@ -93,7 +93,7 @@ const categoryArticles: Record<string, { title: string; description: string; art
     ]
   },
   "paiements-loyers": {
-    title: "Paiements & Loyers",
+    title: "Paiements et Loyers",
     description: "Suivez les paiements et gérez les quittances",
     articles: [
       {
@@ -124,8 +124,8 @@ const categoryArticles: Record<string, { title: string; description: string; art
     ]
   },
   "documents-coffre": {
-    title: "Documents & Coffre-fort",
-    description: "Organisez vos documents importants",
+    title: "Documents et coffre-fort",
+    description: "Tout sur le stockage et partage",
     articles: [
       {
         title: "Télécharger un document dans le coffre-fort",
@@ -150,8 +150,8 @@ const categoryArticles: Record<string, { title: string; description: string; art
     ]
   },
   "interventions-travaux": {
-    title: "Interventions & Travaux",
-    description: "Gérez les demandes d'intervention",
+    title: "Interventions et Travaux",
+    description: "Gérer les pannes et travaux",
     articles: [
       {
         title: "Créer une demande d'intervention",
@@ -176,8 +176,8 @@ const categoryArticles: Record<string, { title: string; description: string; art
     ]
   },
   "comptabilite-fiscalite": {
-    title: "Comptabilité & Fiscalité",
-    description: "Gérez votre comptabilité et vos obligations fiscales",
+    title: "Comptabilité et Fiscalité",
+    description: "Revenus, charges et rentabilité",
     articles: [
       {
         title: "Exporter mes données comptables",
@@ -214,7 +214,7 @@ export default function HelpCategory() {
 
   if (!categoryData) {
     return (
-      <div className="container py-16 text-center">
+      <div className="flex flex-col items-center justify-center p-4 py-20 bg-white min-h-screen">
         <h1 className="text-2xl font-bold mb-4">Catégorie non trouvée</h1>
         <Button asChild>
           <Link to="/help">Retour à l'aide</Link>
@@ -224,66 +224,79 @@ export default function HelpCategory() {
   }
 
   return (
-    <div className="pb-16">
-      <section className="bg-background py-12">
-        <div className="container">
-          <Button asChild variant="ghost" className="mb-6">
-            <Link to="/help">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Retour au centre d'aide
-            </Link>
-          </Button>
+    <div className="min-h-screen" style={{ background: "rgba(255, 255, 255, 1)" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,900;1,900&family=Manrope:wght@400;500;600;700&display=swap');
+        
+        .article-title {
+          color: #529D21;
+          font-family: 'Manrope', sans-serif;
+          font-weight: 700;
+          font-size: 26px;
+          margin-bottom: 24px;
+          transition: all 0.3s ease;
+        }
 
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2 text-primary">{categoryData.title}</h1>
-            <p className="text-lg text-foreground">{categoryData.description}</p>
-            <p className="text-sm text-muted-foreground mt-2">
-              {categoryData.articles.length} {categoryData.articles.length > 1 ? 'articles' : 'article'}
-            </p>
-          </div>
+        .article-card:hover .article-title {
+           transform: translateX(10px);
+        }
+      `}</style>
+
+      <div className="max-w-4xl mx-auto px-4 pt-16 pb-24">
+
+        {/* Back Button */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Link to="/help" className="inline-flex items-center text-gray-400 hover:text-[#529D21] transition-colors mb-12 group">
+            <ArrowLeft size={20} className="mr-2 group-hover:-translate-x-1 transition-transform" />
+            <span className="font-semibold uppercase tracking-wider text-xs">Centre d'aide</span>
+          </Link>
+        </motion.div>
+
+        {/* Header - Merriweather like in images */}
+        <div className="text-center mb-24">
+          <motion.h1
+            className="text-4xl md:text-5xl lg:text-7xl font-black mb-6"
+            style={{ fontFamily: "'Merriweather', serif", fontWeight: 900, color: "#1a1a1a", letterSpacing: "-0.04em" }}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            {categoryData.title}
+          </motion.h1>
+          <motion.div
+            className="w-24 h-1.5 bg-[#A5F364] mx-auto rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: 96 }}
+            transition={{ delay: 0.4, duration: 0.8 }}
+          />
         </div>
-      </section>
 
-      <section className="container py-8">
-        <div className="grid gap-6">
-          {categoryData.articles.map((article, index) => (
-            <Card key={index} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 shrink-0">
-                    <FileText className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <CardTitle className="text-xl mb-2">{article.title}</CardTitle>
-                    <CardDescription className="text-base leading-relaxed">{article.content}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
+        {/* Articles List */}
+        <div className="space-y-32">
+          {categoryData.articles.map((article, idx) => (
+            <motion.div
+              key={article.slug}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ delay: 0.1, duration: 0.7 }}
+              className="article-card"
+            >
+              <h2 className="article-title">{article.title}</h2>
+              <motion.div
+                className="text-[17px] md:text-[19px] text-gray-700 leading-relaxed max-w-3xl font-normal"
+                style={{ fontFamily: "'Manrope', sans-serif" }}
+              >
+                {article.content}
+              </motion.div>
+            </motion.div>
           ))}
         </div>
-      </section>
 
-      <section className="container py-8">
-        <Card className="bg-muted/50">
-          <CardContent className="p-6">
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 shrink-0">
-                <MessageCircle className="h-6 w-6 text-primary" />
-              </div>
-              <div className="flex-1 text-center sm:text-left">
-                <h3 className="font-semibold text-lg mb-1">Besoin d'aide supplémentaire ?</h3>
-                <p className="text-sm text-muted-foreground">
-                  Notre équipe support d'Innovtech est disponible via le chat en bas à droite
-                </p>
-              </div>
-              <Button asChild>
-                <Link to="/contact">Nous contacter</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
+      </div>
     </div>
   );
 }
