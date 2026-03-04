@@ -108,7 +108,7 @@ export default function TestimonialsStats() {
             <div className="ts-author">– Pierre, Cotonou, Bénin</div>
           </div>
           <div className="ts-stat-card" style={{
-            top: 240, left: 240,
+            top: 280, left: 240,
             background: "#529D21"
           }}>
             <div className="ts-percent">67%</div>
