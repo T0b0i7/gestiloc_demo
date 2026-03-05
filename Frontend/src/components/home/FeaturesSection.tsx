@@ -6,7 +6,7 @@ export default function FeaturesSection() {
   const carouselRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
-  const totalCards = 11;
+  const totalCards = 12;
 
   // Autoplay carousel - continuous scroll left to right then right to left
   useEffect(() => {
@@ -248,152 +248,8 @@ export default function FeaturesSection() {
             </motion.div>
           </motion.div>
 
-          {/* Payment Section - Directement sur le gradient */}
-          <motion.h3
-            className="text-center mb-8 pt-16"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            style={{
-              fontFamily: "Merriweather, serif",
-              fontWeight: 700,
-              fontStyle: "italic",
-              fontSize: "32px",
-              letterSpacing: "-0.17px",
-              lineHeight: "100%",
-              verticalAlign: "middle"
-            }}
-          >
-            <span className="text-gray-800">Paiement sécurisé </span>
-            <span style={{ color: "#9B7FE8" }}>Mobile Money & Carte Bancaire</span>
-          </motion.h3>
 
-          <motion.div
-            className="flex flex-wrap justify-center items-center gap-20 md:gap-32 lg:gap-40 pb-16"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={{
-              hidden: { opacity: 0 },
-              visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
-            }}
-          >
-            {/* MTN */}
-            <motion.div
-              className="flex items-center hover:scale-110 transition-transform duration-300"
-              variants={{ hidden: { opacity: 0, scale: 0.8 }, visible: { opacity: 1, scale: 1 } }}
-            >
-              <img
-                src="/Ressource_gestiloc/MTN 1.png"
-                alt="MTN"
-                style={{
-                  width: "100px",
-                  height: "63px",
-                  borderRadius: "10px"
-                }}
-              />
-            </motion.div>
 
-            {/* Moov */}
-            <motion.div
-              className="flex items-center hover:scale-110 transition-transform duration-300"
-              variants={{ hidden: { opacity: 0, scale: 0.8 }, visible: { opacity: 1, scale: 1 } }}
-            >
-              <img
-                src="/Ressource_gestiloc/Moov 1.png"
-                alt="Moov"
-                style={{
-                  width: "100px",
-                  height: "63px",
-                  borderRadius: "10px"
-                }}
-              />
-            </motion.div>
-
-            {/* Celtis */}
-            <motion.div
-              className="flex items-center hover:scale-110 transition-transform duration-300"
-              variants={{ hidden: { opacity: 0, scale: 0.8 }, visible: { opacity: 1, scale: 1 } }}
-            >
-              <img
-                src="/Ressource_gestiloc/celtis.png"
-                alt="Celtis"
-                style={{
-                  width: "100px",
-                  height: "63px",
-                  borderRadius: "10px"
-                }}
-              />
-            </motion.div>
-
-            {/* Wave */}
-            <motion.div
-              className="flex items-center hover:scale-110 transition-transform duration-300"
-              variants={{ hidden: { opacity: 0, scale: 0.8 }, visible: { opacity: 1, scale: 1 } }}
-            >
-              <img
-                src="/Ressource_gestiloc/wave 1.png"
-                alt="Wave"
-                style={{
-                  width: "100px",
-                  height: "63px",
-                  borderRadius: "10px"
-                }}
-              />
-            </motion.div>
-
-            {/* Master Card */}
-            <motion.div
-              className="flex items-center hover:scale-110 transition-transform duration-300"
-              variants={{ hidden: { opacity: 0, scale: 0.8 }, visible: { opacity: 1, scale: 1 } }}
-            >
-              <img
-                src="/Ressource_gestiloc/master_card.png"
-                alt="Master Card"
-                style={{
-                  width: "100px",
-                  height: "63px",
-                  borderRadius: "10px",
-                  border: "1px solid rgba(0, 0, 0, 1)"
-                }}
-              />
-            </motion.div>
-          </motion.div>
-
-          {/* Rating Section - 4.8 Stars */}
-          <motion.div
-            className="flex flex-col items-center justify-center py-20 md:py-28"
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2
-              className="text-7xl md:text-8xl lg:text-9xl font-bold mb-6"
-              style={{ color: '#9B7FE8' }}
-            >
-              4.8
-            </h2>
-            <div className="flex gap-2 mb-6">
-              {[...Array(5)].map((_, i) => (
-                <motion.svg
-                  key={i}
-                  className="w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12"
-                  style={{ color: '#FCD34D' }}
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                  initial={{ opacity: 0, scale: 0 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.3, delay: i * 0.1 }}
-                >
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </motion.svg>
-              ))}
-            </div>
-            <p className="text-lg md:text-xl lg:text-2xl text-gray-700 font-medium">1000+ utilisateurs</p>
-          </motion.div>
         </div>
       </div>
 
@@ -424,1011 +280,156 @@ export default function FeaturesSection() {
               </p>
             </motion.div>
 
-            {/* Features Grid - Mobile carousel, Desktop 3x4 layout */}
-            <div className="relative overflow-hidden">
-              {/* Mobile Carousel */}
-              <div className="md:hidden">
-                <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide" ref={carouselRef} style={{ scrollSnapType: 'x mandatory' }}>
-                  {/* Card 1 - Compte sécurisé */}
-                  <div className="flex-shrink-0 w-[85vw] max-w-[400px] px-2 snap-center">
-                    <motion.div
-                      className="flex flex-col items-center p-6 transition-all duration-300"
-                      style={{
-                        width: "380px",
-                        height: "380px",
-                        borderRadius: "25px",
-                        border: "1px solid rgba(82, 157, 33, 1)",
-                        backgroundColor: "rgba(255, 255, 255, 0.1)"
-                      }}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      <h4 className="font-semibold text-center mb-6" style={{
-                        fontFamily: "Manrope",
-                        fontWeight: "600",
-                        fontSize: "22px",
-                        lineHeight: "1.2",
-                        letterSpacing: "-0.17px",
-                        verticalAlign: "middle",
-                        color: "rgba(0, 0, 0, 1)",
-                        whiteSpace: "nowrap"
-                      }}>Compte sécurisé 24h/24 et 7j/7</h4>
-                      <img
-                        src="/Ressource_gestiloc/sécurié.jpg"
-                        alt="Compte sécurisé"
-                        className="object-contain"
-                        style={{
-                          width: "320px",
-                          height: "220px",
-                          borderRadius: "15px"
-                        }}
-                      />
-                    </motion.div>
-                  </div>
+            {/* Features Data */}
+            {(() => {
+              const features = [
+                {
+                  title: "Compte sécurisé 24h/24 et 7j/7",
+                  image: "/Ressource_gestiloc/sécurié.jpg",
+                  description: "Votre plateforme bénéficie d'une protection totale pour une gestion sereine de vos biens.",
+                },
+                {
+                  title: "Baux pré-remplis",
+                  image: "/Ressource_gestiloc/baux_pré_remplie.png",
+                  description: "Modèles de baux (nus, meublés, commerciaux) conformes à la législation béninoise.",
+                },
+                {
+                  title: "Quittances automatiques",
+                  image: "/Ressource_gestiloc/Quittance_automautomatisée.png",
+                  description: "Génération et envoi automatique de vos quittances chaque mois sans effort.",
+                },
+                {
+                  title: "Régularisation des charges",
+                  image: "/Ressource_gestiloc/regularisation.png",
+                  description: "Calculez et régularisez les charges locatives de manière simple et précise.",
+                },
+                {
+                  title: "Statistiques & indicateurs",
+                  image: "/Ressource_gestiloc/statistiques.png",
+                  description: "Visualisez la performance de vos investissements grâce à des indicateurs clés.",
+                },
+                {
+                  title: "Révision de loyers",
+                  image: "/Ressource_gestiloc/Revision loyer.png",
+                  description: "Gérez les révisions annuelles de loyer avec des rappels automatiques programmés.",
+                },
+                {
+                  title: "Travaux et interventions",
+                  image: "/Ressource_gestiloc/Taux_Interventions.png",
+                  description: "Suivez les interventions techniques et gérez les travaux dans tous vos logements.",
+                },
+                {
+                  title: "Comptabilité & Exportations",
+                  image: "/Ressource_gestiloc/comptabilitées.png",
+                  description: "Exportez vos données (CSV, PDF, Excel) pour simplifier votre comptabilité foncière.",
+                },
+                {
+                  title: "États des lieux & inventaires",
+                  image: "/Ressource_gestiloc/etat_lieux_1.png",
+                  description: "Réalisez vos états des lieux et inventaires de manière professionnelle et structurée.",
+                },
+                {
+                  title: "Messagerie et notifications",
+                  image: "/Ressource_gestiloc/Circled Envelope.png",
+                  description: "Échangez avec vos locataires et recevez des alertes pour ne rien oublier.",
+                },
+                {
+                  title: "Coffre-fort documents",
+                  image: "/Ressource_gestiloc/secure-folder.png",
+                  description: "Stockez vos documents importants dans un espace hautement sécurisé et accessible.",
+                },
+                {
+                  title: "Locations Saisonnières",
+                  image: "/Ressource_gestiloc/location_saisonnièere.png",
+                  description: "Suivez vos locations de courte durée avec la même efficacité que vos baux longue durée.",
+                }
+              ];
 
-                  {/* Card 2 - Baux pré-remplis */}
-                  <div className="flex-shrink-0 w-[85vw] max-w-[400px] px-2 snap-center">
-                    <motion.div
-                      className="flex flex-col items-center p-6 transition-all duration-300"
-                      style={{
-                        width: "380px",
-                        height: "380px",
-                        borderRadius: "25px",
-                        border: "1px solid rgba(82, 157, 33, 1)",
-                        backgroundColor: "rgba(255, 255, 255, 0.1)"
-                      }}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: 0.1 }}
-                    >
-                      <img
-                        src="/Ressource_gestiloc/baux_pré_remplie.png"
-                        alt="Baux pré-remplis"
-                        className="mb-4 object-contain"
-                        style={{
-                          width: "100px",
-                          height: "100px"
-                        }}
-                      />
-                      <h4 className="font-semibold text-center mb-6" style={{
-                        fontFamily: "Manrope",
-                        fontWeight: "600",
-                        fontSize: "22px",
-                        lineHeight: "1.2",
-                        letterSpacing: "-0.17px",
-                        verticalAlign: "middle",
-                        color: "rgba(0, 0, 0, 1)"
-                      }}>Modèles de baux pré-remplis</h4>
-                      <p className="text-center mt-2"><span style={{
-                        fontFamily: "Manrope",
-                        fontWeight: "500",
-                        fontSize: "16px",
-                        lineHeight: "1.5",
-                        letterSpacing: "-0.17px",
-                        verticalAlign: "middle",
-                        color: "rgba(82, 157, 33, 1)",
-                        padding: "4px 8px",
-                        borderRadius: "4px"
-                      }}>Baux nus, meublés, commerciaux...</span><br /><span style={{
-                        fontFamily: "Manrope",
-                        fontWeight: "500",
-                        fontSize: "16px",
-                        lineHeight: "1.5",
-                        letterSpacing: "-0.17px",
-                        verticalAlign: "middle",
-                        color: "rgba(82, 157, 33, 1)",
-                        padding: "4px 8px",
-                        borderRadius: "4px"
-                      }}>Générez des contrats conformes à la législation béninoise.</span></p>
-                    </motion.div>
-                  </div>
-
-                  {/* Card 3 - Quittances */}
-                  <div className="flex-shrink-0 w-[85vw] max-w-[400px] px-2 snap-center">
-                    <motion.div
-                      className="flex flex-col justify-start overflow-hidden relative transition-all duration-300"
-                      style={{
-                        width: "380px",
-                        height: "380px",
-                        borderRadius: "20px",
-                        border: "1px solid rgba(82, 157, 33, 1)",
-                        backgroundImage: 'url(/Ressource_gestiloc/Quittance_automautomatisée.png)',
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center'
-                      }}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: 0.2 }}
-                    >
-                      <div className="absolute inset-0 bg-black/40 rounded-lg" />
-                      <div className="relative z-10 text-center p-4 pt-6">
-                        <h4 className="font-bold text-white text-lg mb-1" style={{
-                          fontFamily: "Manrope",
-                          fontWeight: "600",
-                          fontStyle: "SemiBold",
-                          fontSize: "20px",
-                          lineHeight: "100%",
-                          letterSpacing: "-0.17px",
-                          verticalAlign: "middle"
-                        }}>Quittances automatiques</h4>
-                      </div>
-                    </motion.div>
-                  </div>
-
-                  {/* Card 4 - Régularisation */}
-                  <div className="flex-shrink-0 w-[85vw] max-w-[400px] px-2 snap-center">
-                    <motion.div
-                      className="flex flex-col items-center p-6 transition-all duration-300"
-                      style={{
-                        width: "380px",
-                        height: "380px",
-                        borderRadius: "25px",
-                        border: "1px solid rgba(82, 157, 33, 1)",
-                        backgroundColor: "rgba(255, 255, 255, 0.1)"
-                      }}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: 0.3 }}
-                    >
-                      <img
-                        src="/Ressource_gestiloc/regularisation.png"
-                        alt="Régularisation"
-                        className="mb-4 object-contain"
-                        style={{
-                          width: "280px",
-                          height: "180px"
-                        }}
-                      />
-                      <h4 className="font-semibold text-center mb-4" style={{
-                        fontFamily: "Manrope",
-                        fontWeight: "600",
-                        fontStyle: "SemiBold",
-                        fontSize: "20px",
-                        lineHeight: "100%",
-                        letterSpacing: "-0.17px",
-                        verticalAlign: "middle",
-                        color: "rgba(0, 0, 0, 1)"
-                      }}>Régularisation des charges</h4>
-                    </motion.div>
-                  </div>
-
-                  {/* Card 5 - Statistiques */}
-                  <div className="flex-shrink-0 w-[85vw] max-w-[400px] px-2 snap-center">
-                    <motion.div
-                      className="flex flex-col items-center p-6 transition-all duration-300"
-                      style={{
-                        width: "380px",
-                        height: "380px",
-                        borderRadius: "25px",
-                        border: "1px solid rgba(82, 157, 33, 1)",
-                        backgroundColor: "rgba(255, 255, 255, 0.1)"
-                      }}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: 0.4 }}
-                    >
-                      <h4 className="font-semibold text-center mb-4" style={{
-                        fontFamily: "Manrope",
-                        fontWeight: "600",
-                        fontStyle: "SemiBold",
-                        fontSize: "20px",
-                        lineHeight: "100%",
-                        letterSpacing: "-0.17px",
-                        verticalAlign: "middle",
-                        color: "rgba(0, 0, 0, 1)"
-                      }}>Statistiques & indicateurs</h4>
-                      <img
-                        src="/Ressource_gestiloc/statistiques.png"
-                        alt="Statistiques"
-                        className="h-32 object-contain"
-                      />
-                    </motion.div>
-                  </div>
-
-                  {/* Card 6 - Révision */}
-                  <div className="flex-shrink-0 w-[85vw] max-w-[400px] px-2 snap-center">
-                    <motion.div
-                      className="flex flex-col items-center p-6 transition-all duration-300"
-                      style={{
-                        width: "380px",
-                        height: "380px",
-                        borderRadius: "25px",
-                        border: "1px solid rgba(82, 157, 33, 1)",
-                        backgroundColor: "rgba(255, 255, 255, 0.1)"
-                      }}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: 0.5 }}
-                    >
-                      <img
-                        src="/Ressource_gestiloc/Revision loyer.png"
-                        alt="Révision de loyers"
-                        className="mb-4 object-contain"
-                        style={{
-                          width: "53px",
-                          height: "45px"
-                        }}
-                      />
-                      <h4 className="font-semibold text-center mb-4" style={{
-                        fontFamily: "Manrope",
-                        fontWeight: "600",
-                        fontStyle: "SemiBold",
-                        fontSize: "20px",
-                        lineHeight: "100%",
-                        letterSpacing: "-0.17px",
-                        verticalAlign: "middle",
-                        color: "rgba(0, 0, 0, 1)"
-                      }}>Révision de loyers</h4>
-                      <p className="text-center" style={{
-                        fontFamily: "Manrope",
-                        fontWeight: "500",
-                        fontStyle: "Medium",
-                        fontSize: "16px",
-                        lineHeight: "100%",
-                        letterSpacing: "-0.17px",
-                        verticalAlign: "middle",
-                        padding: "21px 4px"
-                      }}>Gérez les révisions annuelles de loyer<br /><span style={{
-                        color: "rgba(82, 157, 33, 1)"
-                      }}>avec rappels automatiques.</span></p>
-                    </motion.div>
-                  </div>
-
-                  {/* Card 7 - Travaux */}
-                  <div className="flex-shrink-0 w-[85vw] max-w-[320px] px-2 snap-center">
-                    <motion.div
-                      className="flex flex-col items-center p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                      style={{
-                        width: "344px",
-                        height: "295px",
-                        borderRadius: "25px",
-                        border: "1px solid rgba(82, 157, 33, 1)",
-                        backgroundColor: "rgba(255, 255, 255, 0.1)",
-                        overflow: "hidden"
-                      }}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: 0.6 }}
-                    >
-                      <h4 className="font-semibold text-center mb-4" style={{
-                        fontFamily: "Manrope",
-                        fontWeight: "600",
-                        fontStyle: "SemiBold",
-                        fontSize: "20px",
-                        lineHeight: "100%",
-                        letterSpacing: "-0.17px",
-                        verticalAlign: "middle",
-                        background: "rgba(0, 0, 0, 1)",
-                        color: "rgba(0, 0, 0, 1)",
-                        padding: "8px 16px",
-                        width: "252px",
-                        height: "169px",
-                        top: "817px",
-                        left: "90px",
-                        borderRadius: "17px",
-                        opacity: "1"
-                      }}>Travaux et interventions</h4>
-                      <img
-                        src="/Ressource_gestiloc/travaux.png"
-                        alt="Travaux"
-                        className="object-contain"
-                        style={{
-                          width: "252px",
-                          height: "169px",
-                          top: "817px",
-                          left: "90px",
-                          borderRadius: "17px",
-                          opacity: "1"
-                        }}
-                      />
-                    </motion.div>
-                  </div>
-
-                  {/* Card 8 - Comptabilité */}
-                  <div className="flex-shrink-0 w-[85vw] max-w-[320px] px-2 snap-center">
-                    <motion.div
-                      className="flex flex-row items-center justify-between p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                      style={{
-                        width: "344px",
-                        height: "295px",
-                        borderRadius: "25px",
-                        border: "1px solid rgba(82, 157, 33, 1)",
-                        backgroundColor: "rgba(255, 255, 255, 0.1)"
-                      }}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: 0.7 }}
-                    >
-                      <div className="flex flex-col justify-start flex-1 pr-2">
-                        <h4 className="font-semibold text-left" style={{
-                          fontFamily: "Manrope",
-                          fontWeight: "600",
-                          fontStyle: "SemiBold",
-                          fontSize: "17px",
-                          lineHeight: "120%",
-                          letterSpacing: "-0.17px",
-                          verticalAlign: "middle",
-                          color: "rgba(151, 71, 255, 1)"
-                        }}>Comptabilité et exportations(CSV, PDF, Excel)</h4>
-                      </div>
-                      <img
-                        src="/Ressource_gestiloc/comptabilitées.png"
-                        alt="Comptabilité"
-                        className="object-contain flex-shrink-0"
-                        style={{
-                          width: "110px",
-                          height: "110px",
-                          borderRadius: "8px"
-                        }}
-                      />
-                    </motion.div>
-                  </div>
-
-                  {/* Card 9 - État des lieux */}
-                  <div className="flex-shrink-0 w-[85vw] max-w-[320px] px-2 snap-center">
-                    <motion.div
-                      className="flex flex-col items-center justify-between p-6 transition-all duration-300"
-                      style={{
-                        width: "344px",
-                        height: "295px",
-                        borderRadius: "25px",
-                        border: "1px solid rgba(82, 157, 33, 1)",
-                        backgroundColor: "rgba(255, 255, 255, 0.1)"
-                      }}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: 0.8 }}
-                    >
-                      <div className="flex justify-center gap-2 w-full mb-0">
-                        <img
-                          src="/Ressource_gestiloc/etat_lieux_1.png"
-                          alt="État des lieux"
-                          className="object-contain"
-                          style={{
-                            width: "80px",
-                            height: "80px",
-                            borderRadius: "12px"
-                          }}
-                        />
-                        <img
-                          src="/Ressource_gestiloc/etat_lieux_2.png"
-                          alt="État des lieux 2"
-                          className="object-contain"
-                          style={{
-                            width: "80px",
-                            height: "80px",
-                            borderRadius: "12px"
-                          }}
-                        />
-                      </div>
-                      <div className="text-center flex-1 flex flex-col justify-end">
-                        <h4 className="font-semibold text-gray-900 text-center mb-1" style={{
-                          fontFamily: "Manrope",
-                          fontWeight: "600",
-                          fontStyle: "SemiBold",
-                          fontSize: "20px",
-                          lineHeight: "100%",
-                          letterSpacing: "-0.17px",
-                          verticalAlign: "middle"
-                        }}>États des lieux & inventaires</h4>
-                        <p className="text-gray-600 text-center" style={{
-                          fontFamily: "Manrope",
-                          fontWeight: "500",
-                          fontStyle: "Medium",
-                          fontSize: "16px",
-                          lineHeight: "100%",
-                          letterSpacing: "-0.17px",
-                          verticalAlign: "middle"
-                        }}>Gérez les révisions annuelles de loyer<br />avec rappels automatiques.</p>
-                      </div>
-                    </motion.div>
-                  </div>
-
-                  {/* Card 10 - Messagerie */}
-                  <div className="flex-shrink-0 w-[85vw] max-w-[320px] px-2 snap-center">
-                    <motion.div
-                      className="flex flex-col items-center justify-center p-6 transition-all duration-300"
-                      style={{
-                        width: "344px",
-                        height: "295px",
-                        borderRadius: "25px",
-                        border: "1px solid rgba(82, 157, 33, 1)",
-                        background: "linear-gradient(180deg, #FFFFFF 0%, rgba(151, 71, 255, 0.69) 100%)"
-                      }}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: 0.9 }}
-                    >
-                      <img
-                        src="/Ressource_gestiloc/Circled Envelope.png"
-                        alt="Messagerie"
-                        className="w-16 h-16 mb-4 object-contain"
-                      />
-                      <h4 className="text-center mb-2" style={{
-                        fontFamily: "Manrope",
-                        fontWeight: "600",
-                        fontStyle: "SemiBold",
-                        fontSize: "20px",
-                        lineHeight: "100%",
-                        letterSpacing: "-0.17px",
-                        verticalAlign: "middle",
-                        color: "#1F2937"
-                      }}>Messagerie et notifications</h4>
-                      <p className="text-center" style={{
-                        fontFamily: "Manrope",
-                        fontWeight: "500",
-                        fontStyle: "Medium",
-                        fontSize: "16px",
-                        lineHeight: "100%",
-                        letterSpacing: "-0.17px",
-                        verticalAlign: "middle",
-                        color: "#374151"
-                      }}>Échangez avec vos locataires et recevez des notifications pour ne rien oublier.</p>
-                    </motion.div>
-                  </div>
-
-                  {/* Card 11 - Locations saisonnières */}
-                  <div className="flex-shrink-0 w-[85vw] max-w-[320px] px-2 snap-center">
-                    <motion.div
-                      className="flex flex-col items-center justify-end overflow-hidden relative"
-                      style={{
-                        width: "344px",
-                        height: "295px",
-                        borderRadius: "25px",
-                        border: "1px solid rgba(82, 157, 33, 1)",
-                        backgroundImage: 'url(/Ressource_gestiloc/location_saisonnièere.png)',
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center'
-                      }}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.5, delay: 1.0 }}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent rounded-[25px]" />
-                      <div className="relative z-10 w-full flex justify-center gap-8 pb-6 px-4">
-                        <div className="text-center">
-                          <p className="text-white font-bold" style={{
-                            fontFamily: "Manrope",
-                            fontWeight: "700",
-                            fontSize: "20px",
-                            lineHeight: "100%",
-                            letterSpacing: "-0.17px"
-                          }}>Locations</p>
+              return (
+                <div className="relative overflow-hidden">
+                  {/* Mobile Carousel */}
+                  <div className="md:hidden">
+                    <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-3" ref={carouselRef} style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
+                      {features.map((feature, index) => (
+                        <div key={index} className="flex-shrink-0 w-[75vw] max-w-[280px] px-2 snap-center">
+                          <motion.div
+                            className="flex flex-col items-center p-4 h-[320px] bg-white border border-[#529D21] rounded-[20px] transition-all duration-300"
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.5, delay: index * 0.05 }}
+                          >
+                            <h4 className="font-bold text-center mb-4 text-black" style={{ fontFamily: "Merriweather, serif", fontSize: "16px" }}>
+                              {feature.title}
+                            </h4>
+                            <div className="flex-1 flex items-center justify-center mb-4 w-full overflow-hidden">
+                              <img src={feature.image} alt={feature.title} className={`${feature.title.includes("Messagerie") ? "max-h-[180px] scale-125" : "max-h-[140px]"} w-auto object-contain rounded-lg`} />
+                            </div>
+                            <p className="text-center text-xs text-black" style={{ fontFamily: "Manrope, sans-serif", lineHeight: "1.4" }}>
+                              {feature.description}
+                            </p>
+                          </motion.div>
                         </div>
-                        <div className="text-center">
-                          <p className="text-white font-bold" style={{
-                            fontFamily: "Manrope",
-                            fontWeight: "700",
-                            fontSize: "20px",
-                            lineHeight: "100%",
-                            letterSpacing: "-0.17px"
-                          }}>Saisonnières</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  </div>
-                </div>
-
-                {/* Carousel Indicators */}
-                <div className="flex justify-center mt-4 gap-2">
-                  {Array.from({ length: totalCards }).map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        if (carouselRef.current) {
-                          carouselRef.current.scrollTo({
-                            left: index * carouselRef.current.offsetWidth,
-                            behavior: 'smooth'
-                          });
-                          setCurrentIndex(index);
-                        }
-                      }}
-                      className={`w-2 h-2 rounded-full transition-all duration-300 ${currentIndex === index
-                        ? 'bg-[#529D21] w-6'
-                        : 'bg-gray-300 hover:bg-gray-400'
-                        }`}
-                      aria-label={`Go to slide ${index + 1}`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Desktop Grid */}
-              <motion.div
-                className="hidden md:grid grid-cols-3 gap-6"
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, amount: 0.1 }}
-                variants={{
-                  hidden: { opacity: 0 },
-                  visible: {
-                    opacity: 1,
-                    transition: { staggerChildren: 0.08 }
-                  }
-                }}
-              >
-                {/* Card 1 - Compte sécurisé */}
-                <motion.div
-                  className="flex flex-col items-center p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                  style={{
-                    width: "344px",
-                    height: "295px",
-                    borderRadius: "25px",
-                    border: "1px solid rgba(82, 157, 33, 1)",
-                    backgroundColor: "rgba(255, 255, 255, 0.1)"
-                  }}
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 },
-                  }}
-                >
-                  <h4 className="font-semibold text-center mb-4" style={{
-                    fontFamily: "Manrope",
-                    fontWeight: "600",
-                    fontStyle: "SemiBold",
-                    fontSize: "20px",
-                    lineHeight: "100%",
-                    letterSpacing: "-0.17px",
-                    verticalAlign: "middle",
-                    color: "rgba(0, 0, 0, 1)",
-                    whiteSpace: "nowrap"
-                  }}>Compte sécurisé 24h/24 et 7j/7</h4>
-                  <img
-                    src="/Ressource_gestiloc/sécurié.jpg"
-                    alt="Compte sécurisé"
-                    className="object-contain"
-                    style={{
-                      width: "314px",
-                      height: "209px",
-                      borderRadius: "15px"
-                    }}
-                  />
-                </motion.div>
-
-                {/* Card 2 - Baux pré-remplis */}
-                <motion.div
-                  className="flex flex-col items-center p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                  style={{
-                    width: "344px",
-                    height: "295px",
-                    borderRadius: "25px",
-                    border: "1px solid rgba(82, 157, 33, 1)",
-                    backgroundColor: "rgba(255, 255, 255, 0.1)"
-                  }}
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 },
-                  }}
-                >
-                  <img
-                    src="/Ressource_gestiloc/baux_pré_remplie.png"
-                    alt="Baux pré-remplis"
-                    className="mb-4 object-contain"
-                    style={{
-                      width: "82px",
-                      height: "82px"
-                    }}
-                  />
-                  <h4 className="font-semibold text-center mb-4" style={{
-                    fontFamily: "Manrope",
-                    fontWeight: "600",
-                    fontStyle: "SemiBold",
-                    fontSize: "20px",
-                    lineHeight: "100%",
-                    letterSpacing: "-0.17px",
-                    verticalAlign: "middle",
-                    color: "rgba(0, 0, 0, 1)"
-                  }}>Modèles de baux pré-remplis</h4>
-                  <p className="text-center"><span style={{
-                    fontFamily: "Manrope",
-                    fontWeight: "500",
-                    fontStyle: "Medium",
-                    fontSize: "16px",
-                    lineHeight: "100%",
-                    letterSpacing: "-0.17px",
-                    verticalAlign: "middle",
-                    color: "rgba(82, 157, 33, 1)",
-                    padding: "1px 4px",
-                    borderRadius: "4px"
-                  }}>Baux nus, meublés, commerciaux...</span><br /><span style={{
-                    fontFamily: "Manrope",
-                    fontWeight: "500",
-                    fontStyle: "Medium",
-                    fontSize: "16px",
-                    lineHeight: "100%",
-                    letterSpacing: "-0.17px",
-                    verticalAlign: "middle",
-                    color: "rgba(82, 157, 33, 1)",
-                    padding: "1px 4px",
-                    borderRadius: "4px"
-                  }}>Générez des contrats conformes à la législation béninoise.</span></p>
-                </motion.div>
-
-                {/* Card 3 - Quittances automatisées */}
-                <motion.div
-                  className="flex flex-col justify-start overflow-hidden relative hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                  style={{
-                    width: "344px",
-                    height: "295px",
-                    borderRadius: "15px",
-                    border: "1px solid rgba(82, 157, 33, 1)",
-                    backgroundImage: 'url(/Ressource_gestiloc/Quittance_automautomatisée.png)',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  }}
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 },
-                  }}
-                >
-                  <div className="absolute inset-0 bg-black/40 rounded-lg" />
-                  <div className="relative z-10 text-center p-4 pt-6">
-                    <h4 className="font-bold text-white text-lg mb-1" style={{
-                      fontFamily: "Manrope",
-                      fontWeight: "600",
-                      fontStyle: "SemiBold",
-                      fontSize: "20px",
-                      lineHeight: "100%",
-                      letterSpacing: "-0.17px",
-                      verticalAlign: "middle"
-                    }}>Quittances automatiques</h4>
-                  </div>
-                </motion.div>
-
-                {/* Card 4 - Régularisation des charges */}
-                <motion.div
-                  className="flex flex-col items-center p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                  style={{
-                    width: "344px",
-                    height: "295px",
-                    borderRadius: "25px",
-                    border: "1px solid rgba(82, 157, 33, 1)",
-                    backgroundColor: "rgba(255, 255, 255, 0.1)"
-                  }}
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 },
-                  }}
-                >
-                  <img
-                    src="/Ressource_gestiloc/regularisation.png"
-                    alt="Régularisation"
-                    className="mb-4 object-contain"
-                    style={{
-                      width: "280px",
-                      height: "180px"
-                    }}
-                  />
-                  <h4 className="font-semibold text-center mb-4" style={{
-                    fontFamily: "Manrope",
-                    fontWeight: "600",
-                    fontStyle: "SemiBold",
-                    fontSize: "20px",
-                    lineHeight: "100%",
-                    letterSpacing: "-0.17px",
-                    verticalAlign: "middle",
-                    color: "rgba(0, 0, 0, 1)"
-                  }}>Régularisation des charges</h4>
-                </motion.div>
-
-                {/* Card 5 - Statistiques */}
-                <motion.div
-                  className="flex flex-col items-center p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                  style={{
-                    width: "344px",
-                    height: "295px",
-                    borderRadius: "25px",
-                    border: "1px solid rgba(82, 157, 33, 1)",
-                    backgroundColor: "rgba(255, 255, 255, 0.1)"
-                  }}
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 },
-                  }}
-                >
-                  <h4 className="font-semibold text-center mb-4" style={{
-                    fontFamily: "Manrope",
-                    fontWeight: "600",
-                    fontStyle: "SemiBold",
-                    fontSize: "20px",
-                    lineHeight: "100%",
-                    letterSpacing: "-0.17px",
-                    verticalAlign: "middle",
-                    color: "rgba(0, 0, 0, 1)"
-                  }}>Statistiques & indicateurs</h4>
-                  <img
-                    src="/Ressource_gestiloc/statistiques.png"
-                    alt="Statistiques"
-                    className="h-32 object-contain"
-                  />
-                </motion.div>
-
-                {/* Card 6 - Révision de loyers */}
-                <motion.div
-                  className="flex flex-col items-center p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                  style={{
-                    width: "344px",
-                    height: "295px",
-                    borderRadius: "25px",
-                    border: "1px solid rgba(82, 157, 33, 1)",
-                    backgroundColor: "rgba(255, 255, 255, 0.1)"
-                  }}
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 },
-                  }}
-                >
-                  <img
-                    src="/Ressource_gestiloc/Revision loyer.png"
-                    alt="Révision de loyers"
-                    className="mb-4 object-contain"
-                    style={{
-                      width: "53px",
-                      height: "45px"
-                    }}
-                  />
-                  <h4 className="font-semibold text-center mb-4" style={{
-                    fontFamily: "Manrope",
-                    fontWeight: "600",
-                    fontStyle: "SemiBold",
-                    fontSize: "20px",
-                    lineHeight: "100%",
-                    letterSpacing: "-0.17px",
-                    verticalAlign: "middle",
-                    color: "rgba(0, 0, 0, 1)"
-                  }}>Révision de loyers</h4>
-                  <p className="text-center" style={{
-                    fontFamily: "Manrope",
-                    fontWeight: "500",
-                    fontStyle: "Medium",
-                    fontSize: "16px",
-                    lineHeight: "100%",
-                    letterSpacing: "-0.17px",
-                    verticalAlign: "middle",
-                    padding: "21px 4px"
-                  }}>Gérez les révisions annuelles de loyer<br /><span style={{
-                    color: "rgba(82, 157, 33, 1)"
-                  }}>avec rappels automatiques.</span></p>
-                </motion.div>
-
-                {/* Card 7 - Travaux et interventions */}
-                <motion.div
-                  className="flex flex-col items-center p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                  style={{
-                    width: "344px",
-                    height: "295px",
-                    borderRadius: "25px",
-                    border: "1px solid rgba(82, 157, 33, 1)",
-                    backgroundColor: "rgba(255, 255, 255, 0.1)"
-                  }}
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 },
-                  }}
-                >
-                  <h4 className="font-semibold text-center mb-4" style={{
-                    fontFamily: "Manrope",
-                    fontWeight: "600",
-                    fontStyle: "SemiBold",
-                    fontSize: "20px",
-                    lineHeight: "100%",
-                    letterSpacing: "-0.17px",
-                    verticalAlign: "middle",
-                    color: "rgba(0, 0, 0, 1)"
-                  }}>Travaux et interventions</h4>
-                  <img
-                    src="/Ressource_gestiloc/Taux_Interventions.png"
-                    alt="Taux interventions"
-                    className="pt-4"
-                    style={{
-                      width: "240px",
-                      height: "160px",
-                      borderRadius: "25px",
-                      opacity: "1",
-                      objectFit: "contain"
-                    }}
-                  />
-
-                </motion.div>
-
-                {/* Card 8 - Comptabilité */}
-                <motion.div
-                  className="flex flex-row items-center justify-between p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                  style={{
-                    width: "344px",
-                    height: "295px",
-                    borderRadius: "25px",
-                    border: "1px solid rgba(82, 157, 33, 1)",
-                    backgroundColor: "rgba(255, 255, 255, 0.1)"
-                  }}
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 },
-                  }}
-                >
-                  <div className="flex flex-col justify-start flex-1 pr-2">
-                    <h4 className="font-semibold text-left" style={{
-                      fontFamily: "Manrope",
-                      fontWeight: "600",
-                      fontStyle: "SemiBold",
-                      fontSize: "17px",
-                      lineHeight: "120%",
-                      letterSpacing: "-0.17px",
-                      verticalAlign: "middle",
-                      color: "rgba(151, 71, 255, 1)"
-                    }}>Comptabilité et exportations(CSV, PDF, Excel)</h4>
-                  </div>
-                  <img
-                    src="/Ressource_gestiloc/comptabilitées.png"
-                    alt="Comptabilité"
-                    className="object-contain flex-shrink-0"
-                    style={{
-                      width: "110px",
-                      height: "110px",
-                      borderRadius: "8px"
-                    }}
-                  />
-                </motion.div>
-
-                {/* Card 9 - État des lieux */}
-                <motion.div
-                  className="flex flex-col items-center justify-between p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                  style={{
-                    width: "344px",
-                    height: "295px",
-                    borderRadius: "25px",
-                    border: "1px solid rgba(82, 157, 33, 1)",
-                    backgroundColor: "rgba(255, 255, 255, 0.1)"
-                  }}
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 },
-                  }}
-                >
-                  <div className="flex justify-center gap-2 w-full mb-0">
-                    <img
-                      src="/Ressource_gestiloc/etat_lieux_1.png"
-                      alt="État des lieux"
-                      className="object-contain"
-                      style={{
-                        width: "80px",
-                        height: "80px",
-                        borderRadius: "12px"
-                      }}
-                    />
-                    <img
-                      src="/Ressource_gestiloc/etat_lieux_2.png"
-                      alt="État des lieux 2"
-                      className="object-contain"
-                      style={{
-                        width: "80px",
-                        height: "80px",
-                        borderRadius: "12px"
-                      }}
-                    />
-                  </div>
-                  <div className="text-center flex-1 flex flex-col justify-end">
-                    <h4 className="font-semibold text-gray-900 text-center mb-1" style={{
-                      fontFamily: "Manrope",
-                      fontWeight: "600",
-                      fontStyle: "SemiBold",
-                      fontSize: "20px",
-                      lineHeight: "100%",
-                      letterSpacing: "-0.17px",
-                      verticalAlign: "middle"
-                    }}>États des lieux & inventaires</h4>
-                    <p className="text-gray-600 text-center" style={{
-                      fontFamily: "Manrope",
-                      fontWeight: "500",
-                      fontStyle: "Medium",
-                      fontSize: "16px",
-                      lineHeight: "100%",
-                      letterSpacing: "-0.17px",
-                      verticalAlign: "middle"
-                    }}>Gérez les révisions annuelles de loyer<br />avec rappels automatiques.</p>
-                  </div>
-                </motion.div>
-
-                {/* Card 10 - Messagerie */}
-                <motion.div
-                  className="flex flex-col items-center justify-center p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                  style={{
-                    width: "344px",
-                    height: "295px",
-                    borderRadius: "25px",
-                    border: "1px solid rgba(82, 157, 33, 1)",
-                    background: "linear-gradient(180deg, #FFFFFF 0%, rgba(151, 71, 255, 0.69) 100%)"
-                  }}
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 },
-                  }}
-                >
-                  <img
-                    src="/Ressource_gestiloc/Circled Envelope.png"
-                    alt="Messagerie"
-                    className="w-16 h-16 mb-4 object-contain"
-                  />
-                  <h4 className="font-semibold text-center mb-4" style={{
-                    fontFamily: "Manrope",
-                    fontWeight: "600",
-                    fontStyle: "SemiBold",
-                    fontSize: "20px",
-                    lineHeight: "100%",
-                    letterSpacing: "-0.17px",
-                    verticalAlign: "middle",
-                    color: "rgba(0, 0, 0, 1)"
-                  }}>Messagerie et notifications</h4>
-                  <p className="text-center" style={{
-                    fontFamily: "Manrope",
-                    fontWeight: "500",
-                    fontStyle: "Medium",
-                    fontSize: "16px",
-                    lineHeight: "100%",
-                    letterSpacing: "-0.17px",
-                    verticalAlign: "middle",
-                    color: "#374151"
-                  }}>Échangez avec vos locataires et recevez des notifications pour ne rien oublier.</p>
-                </motion.div>
-
-                {/* Card 11 - Locations & Saisonnières */}
-                <motion.div
-                  className="flex flex-col items-center justify-end overflow-hidden relative hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                  style={{
-                    width: "344px",
-                    height: "295px",
-                    borderRadius: "25px",
-                    border: "1px solid rgba(82, 157, 33, 1)",
-                    backgroundImage: 'url(/Ressource_gestiloc/location_saisonnièere.png)',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  }}
-                  variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    visible: { opacity: 1, y: 0 },
-                  }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent rounded-[25px]" />
-                  <div className="relative z-10 w-full flex justify-center gap-8 pb-6 px-4">
-                    <div className="text-center">
-                      <p className="text-white font-bold" style={{
-                        fontFamily: "Manrope",
-                        fontWeight: "700",
-                        fontSize: "20px",
-                        lineHeight: "100%",
-                        letterSpacing: "-0.17px"
-                      }}>Locations</p>
+                      ))}
                     </div>
-                    <div className="text-center">
-                      <p className="text-white font-bold" style={{
-                        fontFamily: "Manrope",
-                        fontWeight: "700",
-                        fontSize: "20px",
-                        lineHeight: "100%",
-                        letterSpacing: "-0.17px"
-                      }}>Saisonnières</p>
+
+                    {/* Carousel Indicators */}
+                    <div className="flex justify-center mt-3 mb-1 gap-2">
+                      {features.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            if (carouselRef.current) {
+                              carouselRef.current.scrollTo({
+                                left: index * carouselRef.current.offsetWidth,
+                                behavior: 'smooth'
+                              });
+                              setCurrentIndex(index);
+                            }
+                          }}
+                          className={`rounded-full transition-all duration-300 ${currentIndex === index ? 'bg-[#529D21] w-6 h-2' : 'bg-gray-300 w-2 h-2'}`}
+                          aria-label={`Go to slide ${index + 1}`}
+                        />
+                      ))}
                     </div>
                   </div>
-                </motion.div>
-              </motion.div>
-            </div>
+
+                  {/* Desktop Grid */}
+                  <div className="hidden md:grid grid-cols-3 gap-8">
+                    {features.map((feature, index) => (
+                      <motion.div
+                        key={index}
+                        className="flex flex-col items-center p-8 bg-white border border-[#529D21] rounded-[25px] hover:shadow-xl transition-all duration-300 hover:-translate-y-2 w-full"
+                        style={{ minHeight: "380px" }}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.5, delay: index * 0.05 }}
+                      >
+                        <h4 className="font-bold text-center mb-6 text-black" style={{ fontFamily: "Merriweather, serif", fontSize: "24px", lineHeight: "1.2" }}>
+                          {feature.title}
+                        </h4>
+                        <div className="flex-1 flex items-center justify-center mb-6 w-full overflow-hidden">
+                          <img
+                            src={feature.image}
+                            alt={feature.title}
+                            className={`${feature.title.includes("Messagerie") ? "max-h-[220px] scale-125" : "max-h-[180px]"} w-auto object-contain rounded-xl shadow-sm hover:scale-105 transition-transform duration-300`}
+                          />
+                        </div>
+                        <p className="text-center text-gray-800" style={{ fontFamily: "Manrope, sans-serif", fontSize: "16px", lineHeight: "1.6" }}>
+                          {feature.description}
+                        </p>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </motion.div>
         </div>
 
-        {/* Testimonials Section */}
-        <div className="w-full py-16 md:py-24 bg-gradient-to-br from-gray-50 to-white">
+        {/* Testimonials Section - Floating & Animated Cards Layout */}
+        <div className="w-full py-20 md:py-32 bg-[#E5E5E5]/40 overflow-hidden relative">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Header */}
             <motion.div
@@ -1455,176 +456,131 @@ export default function FeaturesSection() {
               </p>
             </motion.div>
 
-            {/* Testimonials Grid */}
-            <div className="relative mx-auto w-full max-w-7xl" style={{ width: "1200px", height: "900px" }}>
-              {/* GAUCHE */}
-              <motion.div
-                className="absolute bg-white border border-gray-300 rounded-xl p-8 flex flex-col justify-between"
-                style={{
-                  top: "0px",
-                  left: "0px",
-                  width: "320px",
-                  height: "200px",
-                  borderWidth: "1.5px",
-                  fontSize: "16px",
-                  lineHeight: "1.6",
-                  color: "#555",
-                  zIndex: 1
-                }}
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.48, delay: 0.05 }}
-              >
-                <div className="flex-1" style={{ fontSize: "16px", lineHeight: "1.6", color: "#555" }}>
-                  "Ce site est un vrai bonheur pour les particuliers bailleurs et m'aide énormément ! À recommander !!"
-                </div>
-                <div style={{ fontSize: "16px", fontWeight: "500", color: "#333", marginTop: "12px" }}>
-                  – Pierre, Cotonou, Bénin
-                </div>
-              </motion.div>
+            <div className="relative min-h-[850px] md:min-h-[950px] lg:min-h-[1000px]">
 
+              {/* Card 1: 97% (Lime Green) - Tilted Right */}
               <motion.div
-                className="absolute text-white flex flex-col justify-center"
-                style={{
-                  top: "183.74px",
-                  left: "190px",
-                  width: "297px",
-                  height: "192px",
-                  borderRadius: "7px",
-                  background: "rgba(82, 157, 33, 1)",
-                  border: "1px solid rgba(82, 157, 33, 1)",
-                  transform: "rotate(0.5deg)",
-                  opacity: 1,
-                  zIndex: 2,
-                  padding: "30px 30px 25px"
-                }}
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                className="md:absolute top-[5%] left-[2%] bg-[#D7F28B] p-10 rounded-[35px] shadow-lg w-full md:w-[420px] mb-8 md:mb-0"
+                initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
+                whileInView={{ opacity: 1, scale: 1, rotate: 6 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.48, delay: 0.26 }}
-              >
-                <div style={{ fontSize: "60px", fontWeight: "800", lineHeight: "1", marginBottom: "10px", letterSpacing: "-1px" }}>
-                  67%
-                </div>
-                <div style={{ fontSize: "16px", fontWeight: "400", lineHeight: "1.45" }}>
-                  de nos clients recommandent GestiLoc à leur entourage.
-                </div>
-              </motion.div>
-
-              {/* DROITE */}
-              <motion.div
-                className="absolute bg-white border border-gray-300 rounded-xl p-8 flex flex-col justify-between"
-                style={{
-                  top: "0px",
-                  right: "50px",
-                  width: "320px",
-                  height: "200px",
-                  borderWidth: "1.5px",
-                  fontSize: "16px",
-                  lineHeight: "1.6",
-                  color: "#555",
-                  zIndex: 1
+                animate={{
+                  y: [0, -15, 0],
+                  rotate: [6, 4, 6]
                 }}
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.48, delay: 0.12 }}
-              >
-                <div className="flex-1" style={{ fontSize: "16px", lineHeight: "1.6", color: "#555" }}>
-                  "Je tiens à vous dire un grand merci pour votre site. J'y ai énormément appris de choses. Bravo !"
-                </div>
-                <div style={{ fontSize: "16px", fontWeight: "500", color: "#333", marginTop: "12px" }}>
-                  – Francine, Porto-Novo, Bénin
-                </div>
-              </motion.div>
-
-              <motion.div
-                className="absolute flex flex-col justify-center"
-                style={{
-                  top: "183.74px",
-                  left: "1000px",
-                  width: "297px",
-                  height: "192px",
-                  borderRadius: "7px",
-                  background: "rgba(131, 199, 87, 1)",
-                  border: "1px solid rgba(131, 199, 87, 1)",
-                  transform: "rotate(0.5deg)",
-                  opacity: 1,
-                  zIndex: 2,
-                  padding: "30px 30px 25px"
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                  ease: "easeInOut"
                 }}
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.48, delay: 0.34 }}
               >
-                <div style={{ fontSize: "60px", fontWeight: "800", lineHeight: "1", marginBottom: "10px", letterSpacing: "-1px", color: "white" }}>
-                  97%
-                </div>
-                <div style={{
-                  fontFamily: "Manrope",
-                  fontWeight: "500",
-                  fontStyle: "Medium",
-                  fontSize: "16px",
-                  lineHeight: "100%",
-                  letterSpacing: "-0.17px",
-                  verticalAlign: "middle",
-                  color: "black"
-                }}>
+                <h4 className="text-6xl font-black text-gray-900 mb-4" style={{ fontFamily: "Manrope" }}>97%</h4>
+                <p className="text-xl font-semibold text-gray-800 leading-tight">
                   de nos clients affirment gagner en efficacité et en productivité.
-                </div>
+                </p>
               </motion.div>
 
-              {/* CENTRE BAS */}
+              {/* Card 2: Pierre Quote (Mint White) - Tilted Left */}
               <motion.div
-                className="absolute bg-white border border-gray-300 rounded-xl p-8 flex flex-col justify-between"
-                style={{
-                  top: "480px",
-                  left: "420px",
-                  width: "320px",
-                  height: "200px",
-                  borderWidth: "1.5px",
-                  fontSize: "16px",
-                  lineHeight: "1.6",
-                  color: "#555",
-                  zIndex: 1
-                }}
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                className="md:absolute top-[8%] right-[2%] bg-[#F0FDF9] p-10 rounded-[40px] shadow-md border border-gray-100 w-full md:w-[480px] mb-8 md:mb-0"
+                initial={{ opacity: 0, x: 50, rotate: 0 }}
+                whileInView={{ opacity: 1, x: 0, rotate: -2 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.48, delay: 0.48 }}
+                animate={{
+                  y: [0, 20, 0],
+                  rotate: [-2, -4, -2]
+                }}
+                transition={{
+                  duration: 5,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                  ease: "easeInOut",
+                  delay: 0.5
+                }}
               >
-                <div className="flex-1" style={{ fontSize: "16px", lineHeight: "1.6", color: "#555" }}>
+                <p className="text-gray-800 text-xl mb-8 leading-relaxed font-medium">
                   "Ce site est un vrai bonheur pour les particuliers bailleurs et m'aide énormément ! À recommander !!"
-                </div>
-                <div style={{ fontSize: "16px", fontWeight: "500", color: "#333", marginTop: "12px" }}>
-                  – Pierre, Cotonou, Bénin
+                </p>
+                <div className="text-gray-600 font-black text-lg">
+                  – Pierre, <span className="font-semibold text-gray-500 text-base">Cotonou, Bénin</span>
                 </div>
               </motion.div>
 
+              {/* Card 3: Francine Quote (Mint White) - Very Tilted Left */}
               <motion.div
-                className="absolute bg-purple-500 text-white rounded-xl flex flex-col justify-center"
-                style={{
-                  top: "680px",
-                  left: "520px",
-                  width: "300px",
-                  height: "180px",
-                  padding: "30px 30px 25px",
-                  zIndex: 2
-                }}
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                className="md:absolute top-[38%] left-[5%] bg-[#F0FDF9] p-10 rounded-[40px] shadow-md border border-gray-100 w-full md:w-[480px] mb-8 md:mb-0"
+                initial={{ opacity: 0, x: -50, rotate: 0 }}
+                whileInView={{ opacity: 1, x: 0, rotate: -3 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.48, delay: 0.60 }}
+                animate={{
+                  y: [0, -25, 0],
+                  scale: [1, 1.02, 1]
+                }}
+                transition={{
+                  duration: 6,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                  ease: "easeInOut",
+                  delay: 1
+                }}
               >
-                <div style={{ fontSize: "60px", fontWeight: "800", lineHeight: "1", marginBottom: "10px", letterSpacing: "-1px" }}>
-                  83%
-                </div>
-                <div style={{ fontSize: "16px", fontWeight: "400", lineHeight: "1.45" }}>
-                  déclarent que le logiciel les aide à mieux suivre les loyers, charges et quittances.
+                <p className="text-gray-800 text-xl mb-8 leading-relaxed font-medium">
+                  "Je tiens à vous dire un grand merci pour votre site. J'y ai énormément appris de choses. Bravo !"
+                </p>
+                <div className="text-gray-600 font-black text-lg">
+                  – Francine, <span className="font-semibold text-gray-500 text-base">Porto-Novo, Bénin</span>
                 </div>
               </motion.div>
+
+              {/* Card 4: 83% (Purple) - Straight Floating */}
+              <motion.div
+                className="md:absolute top-[45%] right-[8%] bg-[#A855F7] p-10 rounded-[35px] shadow-2xl w-full md:w-[420px] text-white overflow-hidden mb-8 md:mb-0"
+                initial={{ opacity: 0, y: 50 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                animate={{
+                  y: [-10, 15, -10],
+                  rotate: [0, 2, 0]
+                }}
+                transition={{
+                  duration: 4.5,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                  ease: "easeInOut",
+                  delay: 1.5
+                }}
+              >
+                <h4 className="text-6xl font-black mb-4" style={{ fontFamily: "Manrope" }}>83%</h4>
+                <p className="text-xl font-bold leading-tight">
+                  de nos clients affirment que GestiLoc les aide à mieux suivre loyers, charges et quittances.
+                </p>
+              </motion.div>
+
+              {/* Card 5: 67% (Dark Forest Green) - Large Bottom Center */}
+              <motion.div
+                className="md:absolute bottom-[5%] left-[50%] md:translate-x-[-50%] bg-[#065F46] p-10 rounded-[40px] shadow-2xl w-full md:w-[460px] text-white mb-8 md:mb-0"
+                initial={{ opacity: 0, y: 100 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                animate={{
+                  y: [0, -20, 0],
+                  scale: [1, 0.98, 1]
+                }}
+                transition={{
+                  duration: 5.5,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                  ease: "easeInOut",
+                  delay: 2
+                }}
+              >
+                <h4 className="text-6xl font-black mb-4" style={{ fontFamily: "Manrope" }}>67%</h4>
+                <p className="text-xl font-bold leading-tight text-white/95">
+                  de nos clients recommandent GestiLoc à leur entourage.
+                </p>
+              </motion.div>
+
             </div>
           </div>
         </div>
