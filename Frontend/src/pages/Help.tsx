@@ -68,7 +68,7 @@ export default function Help() {
           font-family: 'Lora', serif;
           font-weight: 700;
           font-style: italic;
-          font-size: 20px;
+          font-size: 42px;
           line-height: 100%;
           letter-spacing: -0.17px;
           text-align: center;
@@ -107,7 +107,7 @@ export default function Help() {
         </motion.div>
 
         <motion.p
-          className="text-gray-600 text-[16px] mb-10 max-w-xs mx-auto font-medium"
+          className="text-gray-600 text-[20px] mb-10 max-w-md mx-auto font-medium"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
@@ -116,7 +116,7 @@ export default function Help() {
         </motion.p>
 
         <motion.div
-          className="max-w-xl mx-auto relative mb-16 px-4"
+          className="max-w-2xl mx-auto relative mb-16 px-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
@@ -125,10 +125,10 @@ export default function Help() {
             <Input
               type="text"
               placeholder="Rechercher une aide"
-              className="w-full h-14 pl-6 pr-12 rounded-2xl border border-gray-100 shadow-sm text-lg placeholder:text-gray-400 bg-white transition-all group-hover:shadow-md"
+              className="w-full h-16 pl-8 pr-14 rounded-2xl border border-gray-100 shadow-sm text-lg placeholder:text-gray-400 bg-white transition-all group-hover:shadow-md"
             />
-            <div className="absolute right-5 top-1/2 -translate-y-1/2 flex items-center justify-center w-10 h-10 rounded-full bg-transparent">
-              <Search className="h-5 w-5 text-gray-400" />
+            <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center justify-center w-12 h-12 rounded-full bg-transparent">
+              <Search className="h-6 w-6 text-gray-400" />
             </div>
           </div>
         </motion.div>
@@ -140,7 +140,7 @@ export default function Help() {
         {/* MOBILE VIEW (Stacked Pills with Staggered Entrance) */}
         <div className="flex flex-col space-y-4 lg:hidden max-w-sm mx-auto">
           {categories.map((cat, idx) => {
-            const Icon = cat.icon;
+            const imageUrl = `/Ressource_gestiloc/A${idx + 1}.png`;
             return (
               <motion.div
                 key={cat.slug}
@@ -151,8 +151,24 @@ export default function Help() {
               >
                 <Link to={`/help/${cat.slug}`} className="block">
                   <div className="category-pill rounded-full p-4 flex items-center">
-                    <div className="mr-5 text-gray-700 ml-2">
-                      <Icon size={24} strokeWidth={1.5} />
+                    <div className="mr-5 text-gray-700 ml-2 w-8 h-8 flex items-center justify-center">
+                      <img 
+                        src={imageUrl} 
+                        alt={cat.title}
+                        className="w-8 h-8 object-contain"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          const Icon = cat.icon;
+                          target.style.display = 'none';
+                          const iconContainer = target.parentElement;
+                          if (iconContainer) {
+                            iconContainer.innerHTML = '';
+                            const iconElement = document.createElement('div');
+                            iconContainer.appendChild(iconElement);
+                            // Fallback to icon if image fails
+                          }
+                        }}
+                      />
                     </div>
                     <span className="text-[17px] font-semibold text-gray-800">{cat.title}</span>
                   </div>
@@ -165,7 +181,7 @@ export default function Help() {
         {/* DESKTOP VIEW (Refined Grid with Staggered Fade-in) */}
         <div className="hidden lg:grid lg:grid-cols-3 gap-8">
           {categories.map((cat, idx) => {
-            const Icon = cat.icon;
+            const imageUrl = `/Ressource_gestiloc/A${idx + 1}.png`;
             return (
               <motion.div
                 key={cat.slug}
@@ -180,7 +196,23 @@ export default function Help() {
                       className="w-16 h-16 bg-[#F8F9FA] rounded-2xl flex items-center justify-center text-gray-800 mb-6 group-hover:bg-[#A5F364]/20 group-hover:text-[#529D21] transition-colors"
                       whileHover={{ rotate: 10 }}
                     >
-                      <Icon size={32} strokeWidth={1.5} />
+                      <img 
+                        src={imageUrl} 
+                        alt={cat.title}
+                        className="w-10 h-10 object-contain"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          const Icon = cat.icon;
+                          target.style.display = 'none';
+                          const iconContainer = target.parentElement;
+                          if (iconContainer) {
+                            iconContainer.innerHTML = '';
+                            const iconElement = document.createElement('div');
+                            iconContainer.appendChild(iconElement);
+                            // Fallback to icon if image fails
+                          }
+                        }}
+                      />
                     </motion.div>
                     <h3 className="text-xl font-bold text-gray-900 mb-4">{cat.title}</h3>
                     <p className="text-gray-500 text-sm leading-relaxed">{cat.description}</p>
@@ -195,21 +227,41 @@ export default function Help() {
       {/* Support Section */}
       <motion.div
         className="text-center mb-24 px-4"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
       >
-        <h2 className="text-[22px] font-bold mb-5 italic" style={{ fontFamily: "'Lora', serif" }}>
+        <motion.h2 
+          className="text-[36px] font-bold mb-5 italic" 
+          style={{ fontFamily: "'Lora', serif" }}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2, duration: 0.6 }}
+        >
           Vous ne trouvez pas ce que vous cherchez ?
-        </h2>
-        <p className="text-gray-500 mb-10 max-w-xs mx-auto font-medium">
+        </motion.h2>
+        <motion.p 
+          className="text-gray-500 mb-10 max-w-xs mx-auto font-medium text-lg"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.4, duration: 0.6 }}
+        >
           Notre équipe support est là pour vous aider.
-        </p>
-        <div className="flex flex-col sm:flex-row justify-center gap-4 max-w-xs sm:max-w-md mx-auto">
+        </motion.p>
+        <motion.div 
+          className="flex flex-col sm:flex-row justify-center gap-4 max-w-xs sm:max-w-md mx-auto"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.6, duration: 0.6 }}
+        >
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Button
               asChild
-              className="rounded-full h-12 px-10 bg-[#A5F364] hover:bg-[#92E252] text-gray-900 font-bold border-none shadow-md"
+              className="rounded-full h-16 px-14 bg-[#A5F364] hover:bg-[#92E252] text-gray-900 font-bold border-none shadow-md text-lg"
             >
               <Link to="/contact">Nous contacter</Link>
             </Button>
@@ -218,12 +270,12 @@ export default function Help() {
             <Button
               asChild
               variant="outline"
-              className="rounded-full h-12 px-10 border-gray-200 text-gray-800 font-bold bg-white shadow-sm hover:border-[#A5F364]"
+              className="rounded-full h-16 px-14 border-gray-200 text-gray-800 font-bold bg-white shadow-sm hover:border-[#A5F364] text-lg"
             >
               <Link to="/help/faq">Voir la FAQ</Link>
             </Button>
           </motion.div>
-        </div>
+        </motion.div>
       </motion.div>
     </div>
   );
