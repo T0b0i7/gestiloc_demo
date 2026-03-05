@@ -1,0 +1,16 @@
+{
+  "name": "GestiLoc - Gestion Locative Simplifiée",
+  "short_name": "GestiLoc",
+  "description": "Centralisez baux, loyers, quittances, comptabilité et échanges locataires dans une interface claire.",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#2563EB",
+  "background_color": "#FFFFFF",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

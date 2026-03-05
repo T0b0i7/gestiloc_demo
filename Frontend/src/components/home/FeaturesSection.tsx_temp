@@ -1,0 +1,248 @@
+import { useEffect, useState, useRef } from 'react';
+import { motion } from 'framer-motion';
+
+// Features data
+const featuresData = [
+  {
+    id: "secure-account",
+    title: "Compte sécurisé 24h/24 et 7j/7",
+    image: "/Ressource_gestiloc/sécurié.jpg",
+    type: "image-top"
+  },
+  {
+    id: "baux",
+    title: "Modèles de baux pré-remplis",
+    image: "/Ressource_gestiloc/baux_pré_remplie.png",
+    subtitle: "Baux nus, meublés, commerciaux...",
+    description: "Générez des contrats conformes à la législation béninoise.",
+    type: "icon-top"
+  },
+  {
+    id: "quittances",
+    title: "Quittances automatiques",
+    image: "/Ressource_gestiloc/Quittance_automautomatisée.png",
+    type: "bg-image"
+  },
+  {
+    id: "regularisation",
+    title: "Régularisation des charges",
+    image: "/Ressource_gestiloc/regularisation.png",
+    type: "image-top"
+  },
+  {
+    id: "stats",
+    title: "Statistiques & indicateurs",
+    image: "/Ressource_gestiloc/statistiques.png",
+    type: "image-bottom"
+  },
+  {
+    id: "revision",
+    title: "Révision de loyers",
+    image: "/Ressource_gestiloc/Revision loyer.png",
+    description: "Gerez les révisions annuelles avec rappels automatiques.",
+    type: "icon-top"
+  },
+  {
+    id: "travaux",
+    title: "Travaux et interventions",
+    image: "/Ressource_gestiloc/Taux_Interventions.png",
+    type: "image-bottom"
+  },
+  {
+    id: "compta",
+    title: "Comptabilité et exportations (CSV, PDF, Excel)",
+    image: "/Ressource_gestiloc/comptabilitées.png",
+    type: "split-horizontal",
+    color: "#9747FF"
+  },
+  {
+    id: "etat-des-lieux",
+    title: "États des lieux & inventaires",
+    images: ["/Ressource_gestiloc/etat_lieux_1.png", "/Ressource_gestiloc/etat_lieux_2.png"],
+    description: "Gérez les révisions annuelles avec rappels automatiques.",
+    type: "double-image-top"
+  },
+  {
+    id: "messaging",
+    title: "Messagerie et notifications",
+    image: "/Ressource_gestiloc/Circled Envelope.png",
+    description: "Échangez avec vos locataires et recevez des notifications.",
+    type: "gradient-bg"
+  },
+  {
+    id: "safe",
+    title: "Coffre-fort documents",
+    image: "/Ressource_gestiloc/secure-folder.png",
+    description: "Stockez vos documents importants en toute sécurité.",
+    type: "split-horizontal",
+    color: "#529D21"
+  },
+  {
+    id: "seasonal",
+    title: "Locations Saisonnières",
+    image: "/Ressource_gestiloc/location_saisonnièere.png",
+    type: "bg-image-bottom-title"
+  }
+];
+
+function FeatureCard({ feature, index }: { feature: any, index: number }) {
+  const cardStyle = "relative overflow-hidden rounded-[25px] border border-[#529D21] bg-white/10 p-6 flex flex-col items-center justify-between h-[300px] w-full transition-all duration-300 hover:shadow-xl hover:-translate-y-2";
+  
+  const titleStyle = "font-manrope font-semibold text-lg text-gray-900 text-center mb-4 leading-tight";
+
+  if (feature.type === "bg-image") {
+    return (
+      <motion.div 
+        className="relative overflow-hidden rounded-[25px] border border-[#529D21] h-[300px] w-full group"
+        variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+      >
+        <img src={feature.image} alt={feature.title} className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors" />
+        <div className="relative z-10 h-full flex flex-col items-center pt-8 px-4">
+          <h4 className="text-white font-manrope font-bold text-xl text-center leading-tight">{feature.title}</h4>
+        </div>
+      </motion.div>
+    );
+  }
+
+  if (feature.type === "bg-image-bottom-title") {
+    return (
+      <motion.div 
+        className="relative overflow-hidden rounded-[25px] border border-[#529D21] h-[300px] w-full"
+        variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+      >
+        <img src={feature.image} alt={feature.title} className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        <div className="absolute bottom-6 left-0 right-0 text-center">
+          <h4 className="text-white font-manrope font-bold text-xl">{feature.title}</h4>
+        </div>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div 
+      className={cardStyle}
+      variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+    >
+      {feature.type === "image-top" && (
+        <>
+          <h4 className={titleStyle}>{feature.title}</h4>
+          <img src={feature.image} alt={feature.title} className="w-full h-[180px] object-contain rounded-xl" />
+        </>
+      )}
+
+      {feature.type === "icon-top" && (
+        <>
+          <img src={feature.image} alt={feature.title} className="w-20 h-20 object-contain mb-4" />
+          <div className="text-center flex-1 flex flex-col justify-center">
+            <h4 className={titleStyle}>{feature.title}</h4>
+            {feature.subtitle && <p className="text-[#529D21] font-medium text-sm mb-1">{feature.subtitle}</p>}
+            {feature.description && <p className="text-gray-600 text-sm">{feature.description}</p>}
+          </div>
+        </>
+      )}
+
+      {feature.type === "image-bottom" && (
+        <>
+          <h4 className={titleStyle}>{feature.title}</h4>
+          <div className="flex-1 flex items-center justify-center w-full">
+            <img src={feature.image} alt={feature.title} className="max-w-full max-h-[160px] object-contain rounded-xl" />
+          </div>
+        </>
+      )}
+
+      {feature.type === "split-horizontal" && (
+        <div className="flex flex-row items-center justify-between w-full h-full gap-4">
+          <h4 className="font-manrope font-semibold text-lg flex-1 text-left leading-tight" style={{ color: feature.color || '#000' }}>
+            {feature.title}
+          </h4>
+          <img src={feature.image} alt={feature.title} className="w-24 h-24 object-contain rounded-lg flex-shrink-0" />
+        </div>
+      )}
+
+      {feature.type === "double-image-top" && (
+        <>
+          <div className="flex justify-center gap-3 w-full mb-4">
+            {feature.images.map((img: string, i: number) => (
+              <img key={i} src={img} alt={`${feature.title} ${i}`} className="w-20 h-20 object-contain rounded-xl" />
+            ))}
+          </div>
+          <div className="text-center flex-1">
+            <h4 className={titleStyle}>{feature.title}</h4>
+            {feature.description && <p className="text-gray-600 text-sm whitespace-pre-line">{feature.description}</p>}
+          </div>
+        </>
+      )}
+
+      {feature.type === "gradient-bg" && (
+        <div 
+          className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center"
+          style={{ background: 'linear-gradient(180deg, #FFFFFF 0%, rgba(151, 71, 255, 0.69) 100%)' }}
+        >
+          <img src={feature.image} alt={feature.title} className="w-16 h-16 object-contain mb-4" />
+          <h4 className={titleStyle}>{feature.title}</h4>
+          {feature.description && <p className="text-gray-700 text-sm">{feature.description}</p>}
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+function FeaturesList() {
+  return (
+    <div className="relative w-full overflow-hidden px-4 md:px-0">
+      <motion.div 
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.1 }}
+        variants={{
+          hidden: { opacity: 0 },
+          visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.05 }
+          }
+        }}
+      >
+        {featuresData.map((feature, index) => (
+          <FeatureCard key={feature.id} feature={feature} index={index} />
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+
+export default function FeaturesSection() {
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState<1 | -1>(1);
+  const totalCards = 12;
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (carouselRef.current) {
+        let nextIndex = currentIndex + direction;
+        if (nextIndex >= totalCards - 1) {
+          nextIndex = totalCards - 1;
+          setDirection(-1);
+        } else if (nextIndex <= 0) {
+          nextIndex = 0;
+          setDirection(1);
+        }
+        const scrollAmount = carouselRef.current.offsetWidth;
+        carouselRef.current.scrollTo({
+          left: nextIndex * scrollAmount,
+          behavior: 'smooth'
+        });
+        setCurrentIndex(nextIndex);
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [currentIndex, direction, totalCards]);
+
+  return (
+    <section id="features" className="bg-white">
+      {/* existing top content ... wait I need to be careful not to delete sections I want to keep */}
+      {/* Since I am using write_to_file with Overwrite: true, I MUST provide the ENTIRE file content. */}
+      {/* But the file is huge. I'll use replace_file_content to fix the broken parts instead. */}

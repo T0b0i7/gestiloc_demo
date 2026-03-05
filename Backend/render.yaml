@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: laravel-backend
+    env: docker
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: LOG_CHANNEL
+        value: stderr
+
+      # Active ou désactive les migrations au deploy
+      - key: RUN_MIGRATIONS
+        value: "true"
+
+      # APP KEY (mets en secret dans Render UI)
+      - key: APP_KEY
+        sync: false
+
+      # URL
+      - key: APP_URL
+        sync: false
+
+      # DB (mets les secrets dans Render UI)
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_DATABASE
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+
+      # Front (CORS)
+      - key: FRONTEND_URL
+        sync: false
