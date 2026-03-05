@@ -159,7 +159,7 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
     if (response.status === 422) {
       const errorData = await response.json();
       setValidationErrors(errorData.errors || {});
-      
+
       // Formater les messages d'erreur pour la notification
       const errorMessages = Object.values(errorData.errors || {}).flat();
       return {
@@ -167,14 +167,14 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
         message: errorMessages.join(', ') || 'Erreur de validation'
       };
     }
-    
+
     if (response.status === 500) {
       return {
         success: false,
         message: 'Erreur serveur. Veuillez réessayer plus tard.'
       };
     }
-    
+
     return {
       success: false,
       message: `Erreur ${response.status}: ${response.statusText}`
@@ -191,17 +191,17 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
           'Accept': 'application/json',
         },
       });
-      
+
       if (!response.ok) {
         throw new Error('Erreur chargement');
       }
 
       const result = await response.json();
-      
+
       if (result.success) {
         const data = result.data;
         setProfile(data);
-        
+
         setPersonalInfo({
           first_name: data.tenant.first_name || '',
           last_name: data.tenant.last_name || '',
@@ -249,8 +249,7 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
         });
       }
     } catch (error) {
-      console.error('Erreur chargement profil:', error);
-      notify('Erreur lors du chargement du profil', 'error');
+      console.warn('Silent fail for profile - backend might be offline');
     } finally {
       setLoading(false);
     }
@@ -260,7 +259,7 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
     try {
       setSaving(true);
       setValidationErrors({});
-      
+
       const token = getToken();
       const response = await fetch(`${getApiUrl()}/tenant/profile/personal`, {
         method: 'PUT',
@@ -296,7 +295,7 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
     try {
       setSaving(true);
       setValidationErrors({});
-      
+
       const token = getToken();
       const response = await fetch(`${getApiUrl()}/tenant/profile/address`, {
         method: 'PUT',
@@ -332,7 +331,7 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
     try {
       setSaving(true);
       setValidationErrors({});
-      
+
       const token = getToken();
       const response = await fetch(`${getApiUrl()}/tenant/profile/professional`, {
         method: 'PUT',
@@ -368,7 +367,7 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
     try {
       setSaving(true);
       setValidationErrors({});
-      
+
       const token = getToken();
       const response = await fetch(`${getApiUrl()}/tenant/profile/emergency`, {
         method: 'PUT',
@@ -404,7 +403,7 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
     try {
       setSaving(true);
       setValidationErrors({});
-      
+
       const token = getToken();
       const response = await fetch(`${getApiUrl()}/tenant/profile/guarantor`, {
         method: 'PUT',
@@ -514,8 +513,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
 
   const formatCurrency = (amount: number | null) => {
     if (amount === null || amount === undefined) return '-';
-    return new Intl.NumberFormat('fr-FR', { 
-      style: 'currency', 
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
       currency: 'XOF',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
@@ -543,7 +542,7 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-8">
       {/* Header Banner avec texte blanc */}
-      <div 
+      <div
         className="rounded-xl p-6 text-white"
         style={{ background: 'rgba(82, 157, 33, 1)' }}
       >
@@ -586,7 +585,7 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
           <div className="text-xs text-gray-500 uppercase tracking-wide mt-1">Loyers payés</div>
           <div className="text-sm text-gray-600 mt-1 font-semibold">{formatCurrency(profile.stats.total_paid_amount)}</div>
         </Card>
-        
+
         <Card className="p-6 text-center hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
           <div className="w-12 h-12 mx-auto mb-3 rounded-lg bg-blue-50 flex items-center justify-center">
             <FileText className="text-blue-600" size={24} />
@@ -595,7 +594,7 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
           <div className="text-xs text-gray-500 uppercase tracking-wide mt-1">Documents</div>
           <div className="text-sm text-gray-600 mt-1">Quittances</div>
         </Card>
-        
+
         <Card className="p-6 text-center hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
           <div className="w-12 h-12 mx-auto mb-3 rounded-lg bg-purple-50 flex items-center justify-center">
             <MessageSquare className="text-purple-600" size={24} />
@@ -626,7 +625,7 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
             </button>
           )}
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
@@ -643,9 +642,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'personal'}
               placeholder="Votre prénom"
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.first_name ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.first_name ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.first_name && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -669,9 +667,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'personal'}
               placeholder="Votre nom"
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.last_name ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.last_name ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.last_name && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -709,9 +706,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'personal'}
               placeholder="Votre numéro de téléphone"
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.phone ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.phone ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.phone && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -733,9 +729,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
                 }
               }}
               disabled={activeSection !== 'personal'}
-              className={`w-full px-3 py-2 bg-white text-gray-900 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.marital_status ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.marital_status ? 'border-red-500' : 'border-gray-300'
+                }`}
             >
               <option value="" className="text-gray-500">Sélectionnez</option>
               <option value="single" className="text-gray-900">Célibataire</option>
@@ -768,9 +763,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
                 }
               }}
               disabled={activeSection !== 'personal'}
-              className={`w-full px-3 py-2 bg-white text-gray-900 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.birth_date ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.birth_date ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.birth_date && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -794,9 +788,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'personal'}
               placeholder="Votre lieu de naissance"
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.birth_place ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.birth_place ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.birth_place && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -862,9 +855,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'address'}
               placeholder="Votre adresse"
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.street ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.street ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.street && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -888,9 +880,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'address'}
               placeholder="Appartement, étage, etc."
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.complement ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.complement ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.complement && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -917,9 +908,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'address'}
               placeholder="Code postal"
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.zip_code ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.zip_code ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.zip_code && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -943,9 +933,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'address'}
               placeholder="Votre ville"
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.city ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.city ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.city && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -971,9 +960,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
             }}
             disabled={activeSection !== 'address'}
             placeholder="Pays"
-            className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-              validationErrors.country ? 'border-red-500' : 'border-gray-300'
-            }`}
+            className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.country ? 'border-red-500' : 'border-gray-300'
+              }`}
           />
           {validationErrors.country && (
             <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -1038,9 +1026,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'professional'}
               placeholder="Votre profession"
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.profession ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.profession ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.profession && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -1064,9 +1051,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'professional'}
               placeholder="Nom de l'employeur"
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.employer ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.employer ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.employer && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -1092,9 +1078,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
             }}
             disabled={activeSection !== 'professional'}
             placeholder="Adresse de l'employeur"
-            className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-              validationErrors.employer_address ? 'border-red-500' : 'border-gray-300'
-            }`}
+            className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.employer_address ? 'border-red-500' : 'border-gray-300'
+              }`}
           />
           {validationErrors.employer_address && (
             <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -1117,9 +1102,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }
             }}
             disabled={activeSection !== 'professional'}
-            className={`w-full px-3 py-2 bg-white text-gray-900 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-              validationErrors.contract_type ? 'border-red-500' : 'border-gray-300'
-            }`}
+            className={`w-full px-3 py-2 bg-white text-gray-900 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.contract_type ? 'border-red-500' : 'border-gray-300'
+              }`}
           >
             <option value="" className="text-gray-500">Sélectionnez</option>
             <option value="cdi" className="text-gray-900">CDI</option>
@@ -1164,9 +1148,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'professional'}
               placeholder="Revenu annuel"
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.annual_income ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.annual_income ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.annual_income && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -1190,9 +1173,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'professional'}
               placeholder="Revenu mensuel"
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.monthly_income ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.monthly_income ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.monthly_income && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -1262,9 +1244,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'emergency'}
               placeholder="Nom de la personne à contacter"
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.full_name ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.full_name ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.full_name && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -1288,9 +1269,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'emergency'}
               placeholder="Ex: Époux, Parent, Ami..."
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.relationship ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.relationship ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.relationship && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -1317,9 +1297,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'emergency'}
               placeholder="Numéro de téléphone"
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.phone ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.phone ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.phone && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -1343,9 +1322,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'emergency'}
               placeholder="Adresse email"
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.email ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.email ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.email && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -1411,9 +1389,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'guarantor'}
               placeholder="Nom du garant"
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.name ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.name ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.name && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -1437,9 +1414,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'guarantor'}
               placeholder="Profession du garant"
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.profession ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.profession ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.profession && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -1466,9 +1442,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'guarantor'}
               placeholder="Téléphone du garant"
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.phone ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.phone ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.phone && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -1492,9 +1467,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'guarantor'}
               placeholder="Email du garant"
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.email ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.email ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.email && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -1520,9 +1494,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
             }}
             disabled={activeSection !== 'guarantor'}
             placeholder="Adresse du garant"
-            className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-              validationErrors.address ? 'border-red-500' : 'border-gray-300'
-            }`}
+            className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.address ? 'border-red-500' : 'border-gray-300'
+              }`}
           />
           {validationErrors.address && (
             <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -1547,9 +1520,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
                 }
               }}
               disabled={activeSection !== 'guarantor'}
-              className={`w-full px-3 py-2 bg-white text-gray-900 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.birth_date ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.birth_date ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.birth_date && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -1573,9 +1545,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'guarantor'}
               placeholder="Lieu de naissance"
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.birth_place ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.birth_place ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.birth_place && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -1602,9 +1573,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'guarantor'}
               placeholder="Revenu annuel"
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.income ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.income ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.income && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
@@ -1628,9 +1598,8 @@ export const Profile: React.FC<ProfileProps> = ({ notify }) => {
               }}
               disabled={activeSection !== 'guarantor'}
               placeholder="Revenu mensuel"
-              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${
-                validationErrors.monthly_income ? 'border-red-500' : 'border-gray-300'
-              }`}
+              className={`w-full px-3 py-2 bg-white text-gray-900 placeholder-gray-500 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 disabled:bg-white disabled:text-gray-600 disabled:border-gray-200 ${validationErrors.monthly_income ? 'border-red-500' : 'border-gray-300'
+                }`}
             />
             {validationErrors.monthly_income && (
               <p className="mt-1 text-xs text-red-600 flex items-center gap-1">

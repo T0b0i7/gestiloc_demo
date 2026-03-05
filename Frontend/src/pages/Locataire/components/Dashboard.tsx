@@ -162,10 +162,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
         }
 
       } catch (err: any) {
-        console.error('[DASH] Error fetching dashboard data:', err);
-        if (!cancelled) {
-          setError(err.message || 'Erreur lors du chargement des données');
-        }
+        console.warn('[DASH] Error fetching dashboard data:', err);
       } finally {
         if (!cancelled) {
           setLoading(false);

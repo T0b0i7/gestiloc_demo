@@ -218,8 +218,7 @@ export const Notes: React.FC<NotesProps> = ({ notify }) => {
       const response = await api.get('/tenant/notes');
       setNotes(response.data);
     } catch (error) {
-      console.error('Erreur chargement notes:', error);
-      notify?.('Erreur lors du chargement des notes', 'error');
+      console.warn('Silent fail for notes - backend might be offline');
     } finally {
       setLoading(false);
     }

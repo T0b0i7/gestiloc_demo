@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Search, 
-  ChevronDown, 
-  Building, 
-  User, 
-  DollarSign, 
-  Clock, 
-  MoreHorizontal, 
-  X, 
-  UserPlus, 
+import {
+  Search,
+  ChevronDown,
+  Building,
+  User,
+  DollarSign,
+  Clock,
+  MoreHorizontal,
+  X,
+  UserPlus,
   Loader,
   Filter,
   MapPin,
@@ -85,10 +85,10 @@ Cordialement`
     setLoading(true);
     try {
       const response = await api.get('/tenant/my-leases');
-      setLocations(response.data);
+      setLocations(response.data || []);
     } catch (error) {
-      console.error('Erreur chargement locations:', error);
-      notify?.('Erreur lors du chargement des locations', 'error');
+      console.warn('Silent fail for locations - backend might be offline');
+      // No notify to avoid visual errors
     } finally {
       setLoading(false);
     }
@@ -150,7 +150,7 @@ Cordialement`
     const diffMonths = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30));
     const years = Math.floor(diffMonths / 12);
     const months = diffMonths % 12;
-    
+
     if (years > 0) {
       return `${years} an${years > 1 ? 's' : ''}${months > 0 ? ` ${months} mois` : ''}`;
     }
@@ -160,32 +160,32 @@ Cordialement`
   // Filtrage et tri
   const filteredLocations = locations
     .filter(loc => {
-      const matchesSearch = 
+      const matchesSearch =
         loc.property.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         loc.landlord.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         loc.property.address.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       if (filterStatus === 'all') return matchesSearch;
       if (filterStatus === 'active') return matchesSearch && loc.status === 'active';
       if (filterStatus === 'terminated') return matchesSearch && loc.status === 'terminated';
       if (filterStatus === 'late') return matchesSearch && loc.balance > 0;
-      
+
       return matchesSearch;
     })
     .sort((a, b) => {
       let aValue: any = a[sortField as keyof Location];
       let bValue: any = b[sortField as keyof Location];
-      
+
       if (sortField === 'property') aValue = a.property.name;
       if (sortField === 'landlord') aValue = a.landlord.name;
       if (sortField === 'rent_amount') aValue = a.rent_amount;
       if (sortField === 'balance') aValue = a.balance;
-      
+
       if (sortField === 'property') bValue = b.property.name;
       if (sortField === 'landlord') bValue = b.landlord.name;
       if (sortField === 'rent_amount') bValue = b.rent_amount;
       if (sortField === 'balance') bValue = b.balance;
-      
+
       if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
       return 0;
@@ -257,11 +257,11 @@ Cordialement`
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6">
       {/* Modal Invitation */}
       {showInviteModal && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
           onClick={() => !sendingInvite && setShowInviteModal(false)}
         >
-          <div 
+          <div
             className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-slideUp"
             onClick={(e) => e.stopPropagation()}
           >
@@ -270,7 +270,7 @@ Cordialement`
               <h2 className="text-xl font-semibold text-white">
                 Inviter votre propriétaire
               </h2>
-              <button 
+              <button
                 onClick={() => setShowInviteModal(false)}
                 className="p-2 hover:bg-white/20 rounded-lg transition-colors"
                 disabled={sendingInvite}
@@ -296,7 +296,7 @@ Cordialement`
                   <input
                     type="email"
                     value={inviteForm.email}
-                    onChange={(e) => setInviteForm({...inviteForm, email: e.target.value})}
+                    onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
                     placeholder="email@exemple.com"
                     disabled={sendingInvite}
@@ -310,7 +310,7 @@ Cordialement`
                   <input
                     type="text"
                     value={inviteForm.nom}
-                    onChange={(e) => setInviteForm({...inviteForm, nom: e.target.value})}
+                    onChange={(e) => setInviteForm({ ...inviteForm, nom: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
                     placeholder="Nom du propriétaire"
                     disabled={sendingInvite}
@@ -323,7 +323,7 @@ Cordialement`
                   </label>
                   <textarea
                     value={inviteForm.message}
-                    onChange={(e) => setInviteForm({...inviteForm, message: e.target.value})}
+                    onChange={(e) => setInviteForm({ ...inviteForm, message: e.target.value })}
                     rows={6}
                     className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all resize-none"
                     disabled={sendingInvite}
@@ -496,7 +496,7 @@ Cordialement`
           <table className="w-full">
             <thead>
               <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-                <th 
+                <th
                   className="px-6 py-4 text-left text-sm font-semibold text-gray-700 cursor-pointer hover:text-green-600 transition-colors"
                   onClick={() => handleSort('property')}
                 >
@@ -508,7 +508,7 @@ Cordialement`
                     )}
                   </div>
                 </th>
-                <th 
+                <th
                   className="px-6 py-4 text-left text-sm font-semibold text-gray-700 cursor-pointer hover:text-green-600 transition-colors"
                   onClick={() => handleSort('landlord')}
                 >
@@ -520,7 +520,7 @@ Cordialement`
                     )}
                   </div>
                 </th>
-                <th 
+                <th
                   className="px-6 py-4 text-left text-sm font-semibold text-gray-700 cursor-pointer hover:text-green-600 transition-colors"
                   onClick={() => handleSort('rent_amount')}
                 >
@@ -532,7 +532,7 @@ Cordialement`
                     )}
                   </div>
                 </th>
-                <th 
+                <th
                   className="px-6 py-4 text-left text-sm font-semibold text-gray-700 cursor-pointer hover:text-green-600 transition-colors"
                   onClick={() => handleSort('balance')}
                 >
@@ -557,8 +557,8 @@ Cordialement`
                 paginatedLocations.map((location, index) => {
                   const status = getStatusBadge(location.status, location.balance);
                   return (
-                    <tr 
-                      key={location.id} 
+                    <tr
+                      key={location.id}
                       className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/80 transition-all duration-200 group"
                       style={{ animationDelay: `${index * 50}ms` }}
                     >
