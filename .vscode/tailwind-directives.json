@@ -1,0 +1,297 @@
+{
+  "version": 1.1,
+  "atDirectives": [
+    {
+      "name": "@tailwind",
+      "description": "Use the @tailwind directive to insert Tailwind's base, components, utilities and variants styles into your CSS.",
+      "references": [
+        {
+          "name": "Tailwind CSS Documentation",
+          "url": "https://tailwindcss.com/docs/functions-and-directives#tailwind"
+        }
+      ]
+    },
+    {
+      "name": "@apply",
+      "description": "Use @apply to inline any existing utility classes into your own custom CSS.",
+      "references": [
+        {
+          "name": "Tailwind CSS Documentation",
+          "url": "https://tailwindcss.com/docs/functions-and-directives#apply"
+        }
+      ]
+    },
+    {
+      "name": "@layer",
+      "description": "Use the @layer directive to tell Tailwind which 'bucket' a set of custom styles belong to.",
+      "references": [
+        {
+          "name": "Tailwind CSS Documentation",
+          "url": "https://tailwindcss.com/docs/functions-and-directives#layer"
+        }
+      ]
+    },
+    {
+      "name": "@config",
+      "description": "Use @config to specify which Tailwind configuration file to use.",
+      "references": [
+        {
+          "name": "Tailwind CSS Documentation",
+          "url": "https://tailwindcss.com/docs/functions-and-directives#config"
+        }
+      ]
+    },
+    {
+      "name": "@theme",
+      "description": "Use @theme to define custom theme values in Tailwind CSS v4.",
+      "references": [
+        {
+          "name": "Tailwind CSS v4 Documentation",
+          "url": "https://tailwindcss.com/docs/theme#using-the-theme-directive"
+        }
+      ]
+    },
+    {
+      "name": "@import",
+      "description": "Use @import to import CSS files in Tailwind CSS.",
+      "references": [
+        {
+          "name": "Tailwind CSS Documentation",
+          "url": "https://tailwindcss.com/docs/functions-and-directives#import"
+        }
+      ]
+    },
+    {
+      "name": "@responsive",
+      "description": "Use @responsive to generate responsive variants of custom styles.",
+      "references": [
+        {
+          "name": "Tailwind CSS Documentation",
+          "url": "https://tailwindcss.com/docs/functions-and-directives#responsive"
+        }
+      ]
+    },
+    {
+      "name": "@variants",
+      "description": "Use @variants to generate variant versions of custom utilities.",
+      "references": [
+        {
+          "name": "Tailwind CSS Documentation",
+          "url": "https://tailwindcss.com/docs/functions-and-directives#variants"
+        }
+      ]
+    }
+  ],
+  "pseudoClasses": [
+    {
+      "name": "hover",
+      "description": "Applies styles when the user hovers over an element"
+    },
+    {
+      "name": "focus",
+      "description": "Applies styles when an element has focus"
+    },
+    {
+      "name": "active",
+      "description": "Applies styles when an element is being activated by the user"
+    },
+    {
+      "name": "visited",
+      "description": "Applies styles when a link has been visited"
+    },
+    {
+      "name": "checked",
+      "description": "Applies styles when a checkbox or radio button is checked"
+    },
+    {
+      "name": "disabled",
+      "description": "Applies styles when an element is disabled"
+    },
+    {
+      "name": "first",
+      "description": "Applies styles to the first child element"
+    },
+    {
+      "name": "last",
+      "description": "Applies styles to the last child element"
+    },
+    {
+      "name": "odd",
+      "description": "Applies styles to odd child elements"
+    },
+    {
+      "name": "even",
+      "description": "Applies styles to even child elements"
+    },
+    {
+      "name": "first-child",
+      "description": "Applies styles to the first child element"
+    },
+    {
+      "name": "last-child",
+      "description": "Applies styles to the last child element"
+    },
+    {
+      "name": "nth-child",
+      "description": "Applies styles to elements based on their position"
+    },
+    {
+      "name": "sm",
+      "description": "Applies styles at the small breakpoint (640px)"
+    },
+    {
+      "name": "md",
+      "description": "Applies styles at the medium breakpoint (768px)"
+    },
+    {
+      "name": "lg",
+      "description": "Applies styles at the large breakpoint (1024px)"
+    },
+    {
+      "name": "xl",
+      "description": "Applies styles at the extra large breakpoint (1280px)"
+    },
+    {
+      "name": "2xl",
+      "description": "Applies styles at the 2xl breakpoint (1536px)"
+    },
+    {
+      "name": "dark",
+      "description": "Applies styles in dark mode"
+    },
+    {
+      "name": "group",
+      "description": "Marks a parent element for group-hover and group-focus styles"
+    },
+    {
+      "name": "group-hover",
+      "description": "Applies styles to child elements when the parent is hovered"
+    },
+    {
+      "name": "group-focus",
+      "description": "Applies styles to child elements when the parent has focus"
+    },
+    {
+      "name": "group-active",
+      "description": "Applies styles to child elements when the parent is active"
+    },
+    {
+      "name": "peer",
+      "description": "Marks a sibling element for peer-hover and peer-focus styles"
+    },
+    {
+      "name": "peer-hover",
+      "description": "Applies styles when the preceding sibling element is hovered"
+    },
+    {
+      "name": "peer-focus",
+      "description": "Applies styles when the preceding sibling element has focus"
+    },
+    {
+      "name": "peer-active",
+      "description": "Applies styles when the preceding sibling element is active"
+    },
+    {
+      "name": "required",
+      "description": "Applies styles to required form elements"
+    },
+    {
+      "name": "valid",
+      "description": "Applies styles to valid form elements"
+    },
+    {
+      "name": "invalid",
+      "description": "Applies styles to invalid form elements"
+    },
+    {
+      "name": "in-range",
+      "description": "Applies styles when a form element's value is within the specified range"
+    },
+    {
+      "name": "out-of-range",
+      "description": "Applies styles when a form element's value is outside the specified range"
+    },
+    {
+      "name": "placeholder",
+      "description": "Applies styles to placeholder text"
+    },
+    {
+      "name": "file",
+      "description": "Applies styles to file input elements"
+    },
+    {
+      "name": "read-only",
+      "description": "Applies styles to read-only form elements"
+    },
+    {
+      "name": "open",
+      "description": "Applies styles to details/summary elements when open"
+    },
+    {
+      "name": "backdrop",
+      "description": "Applies styles to the backdrop of an element (e.g., dialog)"
+    },
+    {
+      "name": "selection",
+      "description": "Applies styles to selected text"
+    },
+    {
+      "name": "marker",
+      "description": "Applies styles to list markers"
+    },
+    {
+      "name": "before",
+      "description": "Applies styles to the ::before pseudo-element"
+    },
+    {
+      "name": "after",
+      "description": "Applies styles to the ::after pseudo-element"
+    },
+    {
+      "name": "first-letter",
+      "description": "Applies styles to the first letter of a block-level element"
+    },
+    {
+      "name": "first-line",
+      "description": "Applies styles to the first line of a block-level element"
+    }
+  ],
+  "pseudoElements": [
+    {
+      "name": "before",
+      "description": "Creates a pseudo-element before the element's content"
+    },
+    {
+      "name": "after",
+      "description": "Creates a pseudo-element after the element's content"
+    },
+    {
+      "name": "first-letter",
+      "description": "Styles the first letter of a block-level element"
+    },
+    {
+      "name": "first-line",
+      "description": "Styles the first line of a block-level element"
+    },
+    {
+      "name": "marker",
+      "description": "Styles list markers"
+    },
+    {
+      "name": "selection",
+      "description": "Styles selected text"
+    },
+    {
+      "name": "file",
+      "description": "Styles the file upload button"
+    },
+    {
+      "name": "backdrop",
+      "description": "Styles the backdrop of dialog elements"
+    },
+    {
+      "name": "placeholder",
+      "description": "Styles placeholder text in form elements"
+    }
+  ]
+}
