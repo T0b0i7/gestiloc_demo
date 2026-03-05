@@ -50,8 +50,8 @@ const featuresData = [
   },
   {
     id: "compta",
-    title: "Comptabilité et exportations (CSV, PDF, Excel)",
-    image: "/Ressource_gestiloc/comptabilitées.png",
+    title: "Comptabilité & Exportations et exportations (CSV, PDF, Excel)",
+    image: "/Ressource_gestiloc/Comptabilité & Exportationses.png",
     type: "split-horizontal",
     color: "#9747FF"
   },
