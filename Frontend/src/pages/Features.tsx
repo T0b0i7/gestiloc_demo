@@ -164,12 +164,12 @@ const Features = () => {
         </motion.h1>
 
         <motion.div
-          className="bg-[#D9EDC9] rounded-[24px] p-6 md:p-10 mb-16 shadow-sm border border-[#C5DDB5] max-w-4xl mx-auto text-center"
+          className="mb-16 max-w-4xl mx-auto text-center"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <p className="text-[#2D4A22] text-base md:text-lg leading-relaxed font-manrope font-medium text-center">
+          <p className="text-black text-base md:text-lg leading-relaxed font-manrope font-medium text-center">
             Gestiloc met à votre disposition un outil de gestion locative simple, performant et accessible, conçu pour centraliser l'ensemble de votre activité. En automatisant vos tâches et vos documents, et en facilitant le suivi quotidien, la plateforme rend votre gestion plus fluide, mieux organisée et nettement moins chronophage.
           </p>
         </motion.div>

@@ -430,12 +430,12 @@ export default function FeaturesSection() {
               <div className="md:hidden">
                 <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide" ref={carouselRef} style={{ scrollSnapType: 'x mandatory' }}>
                   {/* Card 1 - Compte sécurisé */}
-                  <div className="flex-shrink-0 w-[85vw] max-w-[320px] px-2 snap-center">
+                  <div className="flex-shrink-0 w-[85vw] max-w-[400px] px-2 snap-center">
                     <motion.div
                       className="flex flex-col items-center p-6 transition-all duration-300"
                       style={{
-                        width: "344px",
-                        height: "295px",
+                        width: "380px",
+                        height: "380px",
                         borderRadius: "25px",
                         border: "1px solid rgba(82, 157, 33, 1)",
                         backgroundColor: "rgba(255, 255, 255, 0.1)"
@@ -445,12 +445,11 @@ export default function FeaturesSection() {
                       viewport={{ once: true }}
                       transition={{ duration: 0.5 }}
                     >
-                      <h4 className="font-semibold text-center mb-4" style={{
+                      <h4 className="font-semibold text-center mb-6" style={{
                         fontFamily: "Manrope",
                         fontWeight: "600",
-                        fontStyle: "SemiBold",
-                        fontSize: "20px",
-                        lineHeight: "100%",
+                        fontSize: "22px",
+                        lineHeight: "1.2",
                         letterSpacing: "-0.17px",
                         verticalAlign: "middle",
                         color: "rgba(0, 0, 0, 1)",
@@ -461,8 +460,8 @@ export default function FeaturesSection() {
                         alt="Compte sécurisé"
                         className="object-contain"
                         style={{
-                          width: "280px",
-                          height: "180px",
+                          width: "320px",
+                          height: "220px",
                           borderRadius: "15px"
                         }}
                       />
@@ -470,12 +469,12 @@ export default function FeaturesSection() {
                   </div>
 
                   {/* Card 2 - Baux pré-remplis */}
-                  <div className="flex-shrink-0 w-[85vw] max-w-[320px] px-2 snap-center">
+                  <div className="flex-shrink-0 w-[85vw] max-w-[400px] px-2 snap-center">
                     <motion.div
                       className="flex flex-col items-center p-6 transition-all duration-300"
                       style={{
-                        width: "344px",
-                        height: "295px",
+                        width: "380px",
+                        height: "380px",
                         borderRadius: "25px",
                         border: "1px solid rgba(82, 157, 33, 1)",
                         backgroundColor: "rgba(255, 255, 255, 0.1)"
@@ -490,54 +489,51 @@ export default function FeaturesSection() {
                         alt="Baux pré-remplis"
                         className="mb-4 object-contain"
                         style={{
-                          width: "82px",
-                          height: "82px"
+                          width: "100px",
+                          height: "100px"
                         }}
                       />
-                      <h4 className="font-semibold text-center mb-4" style={{
+                      <h4 className="font-semibold text-center mb-6" style={{
                         fontFamily: "Manrope",
                         fontWeight: "600",
-                        fontStyle: "SemiBold",
-                        fontSize: "20px",
-                        lineHeight: "100%",
+                        fontSize: "22px",
+                        lineHeight: "1.2",
                         letterSpacing: "-0.17px",
                         verticalAlign: "middle",
                         color: "rgba(0, 0, 0, 1)"
                       }}>Modèles de baux pré-remplis</h4>
-                      <p className="text-center"><span style={{
+                      <p className="text-center mt-2"><span style={{
                         fontFamily: "Manrope",
                         fontWeight: "500",
-                        fontStyle: "Medium",
                         fontSize: "16px",
-                        lineHeight: "100%",
+                        lineHeight: "1.5",
                         letterSpacing: "-0.17px",
                         verticalAlign: "middle",
                         color: "rgba(82, 157, 33, 1)",
-                        padding: "1px 4px",
+                        padding: "4px 8px",
                         borderRadius: "4px"
                       }}>Baux nus, meublés, commerciaux...</span><br /><span style={{
                         fontFamily: "Manrope",
                         fontWeight: "500",
-                        fontStyle: "Medium",
                         fontSize: "16px",
-                        lineHeight: "100%",
+                        lineHeight: "1.5",
                         letterSpacing: "-0.17px",
                         verticalAlign: "middle",
                         color: "rgba(82, 157, 33, 1)",
-                        padding: "1px 4px",
+                        padding: "4px 8px",
                         borderRadius: "4px"
                       }}>Générez des contrats conformes à la législation béninoise.</span></p>
                     </motion.div>
                   </div>
 
                   {/* Card 3 - Quittances */}
-                  <div className="flex-shrink-0 w-[85vw] max-w-[320px] px-2 snap-center">
+                  <div className="flex-shrink-0 w-[85vw] max-w-[400px] px-2 snap-center">
                     <motion.div
                       className="flex flex-col justify-start overflow-hidden relative transition-all duration-300"
                       style={{
-                        width: "344px",
-                        height: "295px",
-                        borderRadius: "15px",
+                        width: "380px",
+                        height: "380px",
+                        borderRadius: "20px",
                         border: "1px solid rgba(82, 157, 33, 1)",
                         backgroundImage: 'url(/Ressource_gestiloc/Quittance_automautomatisée.png)',
                         backgroundSize: 'cover',
@@ -564,12 +560,12 @@ export default function FeaturesSection() {
                   </div>
 
                   {/* Card 4 - Régularisation */}
-                  <div className="flex-shrink-0 w-[85vw] max-w-[320px] px-2 snap-center">
+                  <div className="flex-shrink-0 w-[85vw] max-w-[400px] px-2 snap-center">
                     <motion.div
                       className="flex flex-col items-center p-6 transition-all duration-300"
                       style={{
-                        width: "344px",
-                        height: "295px",
+                        width: "380px",
+                        height: "380px",
                         borderRadius: "25px",
                         border: "1px solid rgba(82, 157, 33, 1)",
                         backgroundColor: "rgba(255, 255, 255, 0.1)"
@@ -602,12 +598,12 @@ export default function FeaturesSection() {
                   </div>
 
                   {/* Card 5 - Statistiques */}
-                  <div className="flex-shrink-0 w-[85vw] max-w-[320px] px-2 snap-center">
+                  <div className="flex-shrink-0 w-[85vw] max-w-[400px] px-2 snap-center">
                     <motion.div
                       className="flex flex-col items-center p-6 transition-all duration-300"
                       style={{
-                        width: "344px",
-                        height: "295px",
+                        width: "380px",
+                        height: "380px",
                         borderRadius: "25px",
                         border: "1px solid rgba(82, 157, 33, 1)",
                         backgroundColor: "rgba(255, 255, 255, 0.1)"
@@ -636,12 +632,12 @@ export default function FeaturesSection() {
                   </div>
 
                   {/* Card 6 - Révision */}
-                  <div className="flex-shrink-0 w-[85vw] max-w-[320px] px-2 snap-center">
+                  <div className="flex-shrink-0 w-[85vw] max-w-[400px] px-2 snap-center">
                     <motion.div
                       className="flex flex-col items-center p-6 transition-all duration-300"
                       style={{
-                        width: "344px",
-                        height: "295px",
+                        width: "380px",
+                        height: "380px",
                         borderRadius: "25px",
                         border: "1px solid rgba(82, 157, 33, 1)",
                         backgroundColor: "rgba(255, 255, 255, 0.1)"
