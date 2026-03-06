@@ -341,7 +341,13 @@ const PRIMARY_COLOR = '#70AE48';
 export const Settings: React.FC<SettingsProps> = ({ notify }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [settings, setSettings] = useState<UserSettings | null>(null);
+  const [settings, setSettings] = useState<UserSettings>({
+    user: { id: 0, email: 'locataire@gestiloc.com', phone: null, created_at: new Date().toISOString() },
+    security: { two_factor_enabled: false, last_password_change: null, last_login_at: null, last_login_ip: null },
+    preferences: { language: 'fr', timezone: 'UTC', date_format: 'DD/MM/YYYY', currency: 'FCFA', dark_mode: false },
+    notifications: { owner_messages: true, payment_reminders: true, receipts_available: true, interventions: true, browser_notifications: true },
+    privacy: { data_sharing: true }
+  });
 
   // Password states
   const [currentPassword, setCurrentPassword] = useState('');
@@ -367,15 +373,15 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
 
   // Appliquer le mode sombre
   useEffect(() => {
-    if (settings?.preferences.dark_mode) {
+    if (settings.preferences.dark_mode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, [settings?.preferences.dark_mode]);
+  }, [settings.preferences.dark_mode]);
 
   // Obtenir la traduction courante
-  const t = translations[settings?.preferences.language as keyof typeof translations] || translations.fr;
+  const t = translations[settings.preferences.language as keyof typeof translations] || translations.fr;
 
   const fetchSettings = async () => {
     setLoading(true);
@@ -385,7 +391,14 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
       setTwoFAEnabled(response.data.security.two_factor_enabled);
     } catch (error) {
       console.warn('Silent fail for settings - using empty state');
-      // Silence fetch errors to prevent visual clutter
+      // Fallback state to prevent error screen
+      setSettings({
+        user: { id: 0, email: 'locataire@gestiloc.com', phone: null, created_at: new Date().toISOString() },
+        security: { two_factor_enabled: false, last_password_change: null, last_login_at: null, last_login_ip: null },
+        preferences: { language: 'fr', timezone: 'UTC', date_format: 'DD/MM/YYYY', currency: 'FCFA', dark_mode: false },
+        notifications: { owner_messages: true, payment_reminders: true, receipts_available: true, interventions: true, browser_notifications: true },
+        privacy: { data_sharing: true }
+      });
     } finally {
       setLoading(false);
     }
@@ -507,7 +520,6 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
   };
 
   const handleToggleDarkMode = async () => {
-    if (!settings) return;
 
     const newValue = !settings.preferences.dark_mode;
     setSaving(true);
@@ -534,7 +546,6 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
   };
 
   const handleToggleDataSharing = async () => {
-    if (!settings) return;
 
     const newValue = !settings.privacy.data_sharing;
     setSaving(true);
@@ -625,38 +636,28 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
 
   const ToggleSwitch = ({ checked, onChange, disabled }: { checked: boolean; onChange: () => void; disabled?: boolean }) => (
     <button
-      onClick={onChange}
+      onClick={(e) => {
+        e.preventDefault();
+        onChange();
+      }}
       disabled={disabled || saving}
-      className={`relative w-12 h-6 rounded-full transition-colors ${checked ? 'bg-[#70AE48]' : 'bg-gray-300'} ${disabled || saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+      className={`relative w-[50px] h-[26px] rounded-full transition-all duration-300 ease-in-out ${checked ? 'bg-[#70AE48] shadow-lg shadow-[#70AE48]/20' : 'bg-gray-200'
+        } ${disabled || saving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:ring-2 hover:ring-offset-2 hover:ring-[#70AE48]/30'}`}
+      type="button"
     >
-      <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${checked ? 'translate-x-7' : 'translate-x-1'}`} />
+      <div
+        className={`absolute top-[3px] w-5 h-5 rounded-full bg-white shadow-md transition-all duration-300 ease-in-out transform ${checked ? 'translate-x-[26px]' : 'translate-x-[4px]'
+          }`}
+      />
     </button>
   );
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4" style={{ color: PRIMARY_COLOR }} />
-          <p className="text-gray-600 dark:text-gray-400">{t.loading}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!settings) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <AlertOctagon className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">{t.error_loading}</p>
-          <button
-            onClick={fetchSettings}
-            className="mt-4 px-4 py-2 text-white rounded-lg hover:opacity-90 transition-colors"
-            style={{ backgroundColor: PRIMARY_COLOR }}
-          >
-            {t.retry}
-          </button>
+          <p className="text-gray-600 font-serif">{t.loading}</p>
         </div>
       </div>
     );
@@ -782,25 +783,25 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="••••••••"
-                  className={`w-full px-4 py-2.5 border ${passwordErrors.currentPassword ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg focus:ring-2 focus:ring-[#70AE48] focus:border-transparent pr-10 dark:bg-gray-700 dark:text-white`}
+                  className={`w-full px-4 py-2.5 border ${passwordErrors.currentPassword ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:ring-2 focus:ring-[#70AE48] focus:border-transparent pr-10 bg-white text-gray-900`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
               {passwordErrors.currentPassword && (
-                <p className="text-xs text-red-600 dark:text-red-400 mt-1">{passwordErrors.currentPassword}</p>
+                <p className="text-xs text-red-600 mt-1">{passwordErrors.currentPassword}</p>
               )}
             </div>
 
             {/* Nouveau mot de passe + Confirmation */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t.new_password}
                 </label>
                 <input
@@ -808,15 +809,15 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••"
-                  className={`w-full px-4 py-2.5 border ${passwordErrors.newPassword ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg focus:ring-2 focus:ring-[#70AE48] focus:border-transparent dark:bg-gray-700 dark:text-white`}
+                  className={`w-full px-4 py-2.5 border ${passwordErrors.newPassword ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:ring-2 focus:ring-[#70AE48] focus:border-transparent bg-white text-gray-900`}
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t.password_min}</p>
+                <p className="text-xs text-gray-400 mt-1">{t.password_min}</p>
                 {passwordErrors.newPassword && (
-                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">{passwordErrors.newPassword}</p>
+                  <p className="text-xs text-red-600 mt-1">{passwordErrors.newPassword}</p>
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t.confirm_password}
                 </label>
                 <input
@@ -824,7 +825,7 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className={`w-full px-4 py-2.5 border ${passwordErrors.confirmPassword ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg focus:ring-2 focus:ring-[#70AE48] focus:border-transparent dark:bg-gray-700 dark:text-white`}
+                  className={`w-full px-4 py-2.5 border ${passwordErrors.confirmPassword ? 'border-red-500' : 'border-gray-200'} rounded-lg focus:ring-2 focus:ring-[#70AE48] focus:border-transparent bg-white text-gray-900`}
                 />
                 {passwordErrors.confirmPassword && (
                   <p className="text-xs text-red-600 dark:text-red-400 mt-1">{passwordErrors.confirmPassword}</p>
@@ -903,11 +904,11 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
                 value={settings.preferences.language}
                 onChange={(e) => handleChangePreference('language', e.target.value)}
                 disabled={saving}
-                className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-[#70AE48] dark:bg-gray-700 dark:text-white"
+                className="px-4 py-1.5 border-2 border-gray-100 rounded-xl text-sm font-semibold text-gray-700 bg-white hover:border-[#70AE48] transition-all cursor-pointer outline-none focus:ring-2 focus:ring-[#70AE48]/20"
               >
-                <option value="fr">Français 🇫🇷</option>
-                <option value="en">English 🇬🇧</option>
-                <option value="es">Español 🇪🇸</option>
+                <option value="fr">Français FR</option>
+                <option value="en">English EN</option>
+                <option value="es">Español ES</option>
               </select>
             </div>
 

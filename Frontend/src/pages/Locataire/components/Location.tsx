@@ -254,7 +254,7 @@ Cordialement`
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6">
+    <div className="animate-fadeIn">
       {/* Modal Invitation */}
       {showInviteModal && (
         <div

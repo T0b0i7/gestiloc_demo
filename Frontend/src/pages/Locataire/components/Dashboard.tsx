@@ -258,8 +258,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
     [notices]
   );
 
-  const hasAnyError = error !== null;
-
   // Afficher le contenu selon l'onglet actif
   const renderContent = () => {
     const activeLease = lease;
@@ -290,128 +288,124 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
               </div>
             </div>
 
-            {/* Quick Actions - Cards Layout */}
-            <div className="grid grid-cols-5 gap-4 mb-8">
-              <button onClick={() => onNavigate?.('receipts')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-lg" style={{ width: '193px', height: '168px', borderRadius: '20px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 6.8px 0px rgba(131, 199, 87, 1)' }}>
-                <img src="/Ressource_gestiloc/Mes_quittances.png" alt="Mes quittances" className="w-12 h-12 object-contain mb-2" />
-                <span className="text-sm font-medium text-gray-900 text-center px-2">Mes quittances</span>
+            {/* Quick Actions - Cards Layout - Enlarged for Desktop */}
+            <div className="flex flex-wrap items-center justify-start gap-6 mb-10">
+              <button onClick={() => onNavigate?.('receipts')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1" style={{ width: '220px', height: '180px', borderRadius: '24px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 10px 0px rgba(131, 199, 87, 0.4)' }}>
+                <img src="/Ressource_gestiloc/Mes_quittances.png" alt="Mes quittances" className="w-14 h-14 object-contain mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-base font-semibold text-gray-900 text-center px-2">Mes quittances</span>
               </button>
 
-              <button onClick={() => onNavigate?.('interventions')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-lg" style={{ width: '193px', height: '168px', borderRadius: '20px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 6.8px 0px rgba(131, 199, 87, 1)' }}>
-                <img src="/Ressource_gestiloc/Tools.png" alt="Nouvelle intervention" className="w-12 h-12 object-contain mb-2" />
-                <span className="text-sm font-medium text-gray-900 text-center px-2">Nouvelle intervention</span>
+              <button onClick={() => onNavigate?.('interventions')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1" style={{ width: '220px', height: '180px', borderRadius: '24px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 10px 0px rgba(131, 199, 87, 0.4)' }}>
+                <img src="/Ressource_gestiloc/Tools.png" alt="Nouvelle intervention" className="w-14 h-14 object-contain mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-base font-semibold text-gray-900 text-center px-2">Nouvelle intervention</span>
               </button>
 
-              <button onClick={() => onNavigate?.('tasks')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-lg" style={{ width: '193px', height: '168px', borderRadius: '20px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 6.8px 0px rgba(131, 199, 87, 1)' }}>
-                <img src="/Ressource_gestiloc/Nouvelles_taches.png" alt="Nouvelle tâche" className="w-12 h-12 object-contain mb-2" />
-                <span className="text-sm font-medium text-gray-900 text-center px-2">Nouvelle tâche</span>
+              <button onClick={() => onNavigate?.('tasks')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1" style={{ width: '220px', height: '180px', borderRadius: '24px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 10px 0px rgba(131, 199, 87, 0.4)' }}>
+                <img src="/Ressource_gestiloc/Nouvelles_taches.png" alt="Nouvelle tâche" className="w-14 h-14 object-contain mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-base font-semibold text-gray-900 text-center px-2">Nouvelle tâche</span>
               </button>
 
-              <button onClick={() => onNavigate?.('notes')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-lg" style={{ width: '193px', height: '168px', borderRadius: '20px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 6.8px 0px rgba(131, 199, 87, 1)' }}>
-                <img src="/Ressource_gestiloc/Edit Property.png" alt="Nouvelle note" className="w-12 h-12 object-contain mb-2" />
-                <span className="text-sm font-medium text-gray-900 text-center px-2">Nouvelle note</span>
+              <button onClick={() => onNavigate?.('notes')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1" style={{ width: '220px', height: '180px', borderRadius: '24px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 10px 0px rgba(131, 199, 87, 0.4)' }}>
+                <img src="/Ressource_gestiloc/Edit Property.png" alt="Nouvelle note" className="w-14 h-14 object-contain mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-base font-semibold text-gray-900 text-center px-2">Nouvelle note</span>
               </button>
 
-              <button onClick={() => onNavigate?.('documents')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-lg" style={{ width: '193px', height: '168px', borderRadius: '20px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 6.8px 0px rgba(131, 199, 87, 1)' }}>
-                <img src="/Ressource_gestiloc/Document In Folder.png" alt="Nouveau document" className="w-12 h-12 object-contain mb-2" />
-                <span className="text-sm font-medium text-gray-900 text-center px-2">Nouveau document</span>
+              <button onClick={() => onNavigate?.('documents')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1" style={{ width: '220px', height: '180px', borderRadius: '24px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 10px 0px rgba(131, 199, 87, 0.4)' }}>
+                <img src="/Ressource_gestiloc/Document In Folder.png" alt="Nouveau document" className="w-14 h-14 object-contain mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-base font-semibold text-gray-900 text-center px-2">Nouveau document</span>
               </button>
             </div>
 
-            {/* Stats Grid - 2x2 layout comme Figma */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Stats Grid - 4 columns layout for professional desktop feel */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
               {/* Locations Card */}
-              <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-[#FFB84D] hover:shadow-xl transition-all duration-300">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold text-gray-900">Locations</h3>
-                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Paramètres" className="w-6 h-6 object-contain" />
+              <div className="bg-white rounded-3xl shadow-lg p-8 border-l-[6px] border-[#529D21] hover:shadow-2xl transition-all duration-300">
+                <div className="flex items-center justify-between mb-8">
+                  <h3 className="text-xl font-bold text-gray-900">Locations</h3>
+                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Paramètres" className="w-7 h-7 object-contain opacity-60 hover:opacity-100 transition-opacity cursor-pointer" />
                 </div>
                 <div className="flex items-end gap-6">
-                  <img src="/Ressource_gestiloc/Key Security.png" alt="Locations" className="w-16 h-16 object-contain" />
+                  <img src="/Ressource_gestiloc/Key Security.png" alt="Locations" className="w-20 h-20 object-contain" />
                   <div>
-                    <p className="text-5xl font-bold text-gray-900">1</p>
-                    <p className="text-sm text-gray-600 mt-1">Location</p>
+                    <p className="text-6xl font-black text-gray-900 leading-none">1</p>
+                    <p className="text-base text-gray-500 font-medium mt-2">Location</p>
                   </div>
                 </div>
-                <div className="mt-6 text-right">
-                  <button onClick={() => onNavigate?.('location')} className="text-xs font-medium text-[#6F00FF] hover:text-[#5500DD] transition-colors duration-200 cursor-pointer">
-                    Tout afficher
+                <div className="mt-8 pt-6 border-t border-gray-50 text-right">
+                  <button onClick={() => onNavigate?.('location')} className="text-sm font-bold text-[#529D21] hover:underline transition-all">
+                    Tout afficher →
                   </button>
                 </div>
               </div>
 
               {/* Loyers en retard Card */}
-              <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-[#FFB84D] hover:shadow-xl transition-all duration-300">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold text-gray-900">Loyers en retard</h3>
-                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Paramètres" className="w-6 h-6 object-contain" />
+              <div className="bg-white rounded-3xl shadow-lg p-8 border-l-[6px] border-[#FFB84D] hover:shadow-2xl transition-all duration-300">
+                <div className="flex items-center justify-between mb-8">
+                  <h3 className="text-xl font-bold text-gray-900">Loyers en retard</h3>
+                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Paramètres" className="w-7 h-7 object-contain opacity-60 hover:opacity-100 transition-opacity cursor-pointer" />
                 </div>
                 <div className="flex items-end gap-6">
-                  <img src="/Ressource_gestiloc/Dollar Bag.png" alt="Loyers" className="w-16 h-16 object-contain" />
+                  <img src="/Ressource_gestiloc/Dollar Bag.png" alt="Loyers" className="w-20 h-20 object-contain" />
                   <div>
-                    <p className="text-5xl font-bold text-gray-900">0</p>
-                    <p className="text-sm text-gray-600 mt-1">Loyers en retard</p>
+                    <p className="text-6xl font-black text-gray-900 leading-none">0</p>
+                    <p className="text-base text-gray-500 font-medium mt-2">Loyers en retard</p>
                   </div>
                 </div>
-                <div className="mt-6 text-right">
-                  <button onClick={() => onNavigate?.('payments')} className="text-xs font-medium text-[#6F00FF] hover:text-[#5500DD] transition-colors duration-200 cursor-pointer">
-                    Tout afficher
+                <div className="mt-8 pt-6 border-t border-gray-50 text-right">
+                  <button onClick={() => onNavigate?.('payments')} className="text-sm font-bold text-[#FFB84D] hover:underline transition-all">
+                    Tout afficher →
                   </button>
                 </div>
               </div>
 
               {/* Interventions Card */}
-              <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-[#FFB84D] hover:shadow-xl transition-all duration-300">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold text-gray-900">Interventions</h3>
-                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Paramètres" className="w-6 h-6 object-contain" />
+              <div className="bg-white rounded-3xl shadow-lg p-8 border-l-[6px] border-[#529D21] hover:shadow-2xl transition-all duration-300">
+                <div className="flex items-center justify-between mb-8">
+                  <h3 className="text-xl font-bold text-gray-900">Interventions</h3>
+                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Paramètres" className="w-7 h-7 object-contain opacity-60 hover:opacity-100 transition-opacity cursor-pointer" />
                 </div>
                 <div className="flex items-end gap-4">
-                  <img src="/Ressource_gestiloc/Tools.png" alt="Interventions" className="w-16 h-16 object-contain" />
-                  <div className="flex gap-8">
+                  <img src="/Ressource_gestiloc/Tools.png" alt="Interventions" className="w-20 h-20 object-contain" />
+                  <div className="flex gap-6">
                     <div className="flex flex-col items-center">
-                      <p className="text-4xl font-bold text-gray-900">{openIncidents}</p>
-                      <p className="text-xs text-gray-600 mt-1">Querelle</p>
+                      <p className="text-4xl font-black text-gray-900 leading-none">{openIncidents}</p>
+                      <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mt-2">Ouvert</p>
                     </div>
-                    <div className="flex flex-col items-center">
-                      <p className="text-4xl font-bold text-gray-900">0</p>
-                      <p className="text-xs text-gray-600 mt-1">En retard</p>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <p className="text-4xl font-bold text-gray-900">0</p>
-                      <p className="text-xs text-gray-600 mt-1">En cours</p>
+                    <div className="flex flex-col items-center opacity-40">
+                      <p className="text-4xl font-black text-gray-900 leading-none">0</p>
+                      <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mt-2">En retard</p>
                     </div>
                   </div>
                 </div>
-                <div className="mt-6 text-right">
-                  <button onClick={() => onNavigate?.('interventions')} className="text-xs font-medium text-[#6F00FF] hover:text-[#5500DD] transition-colors duration-200 cursor-pointer">
-                    Tout afficher
+                <div className="mt-8 pt-6 border-t border-gray-50 text-right">
+                  <button onClick={() => onNavigate?.('interventions')} className="text-sm font-bold text-[#529D21] hover:underline transition-all">
+                    Tout afficher →
                   </button>
                 </div>
               </div>
 
               {/* Tâches Card */}
-              <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-[#FFB84D] hover:shadow-xl transition-all duration-300">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold text-gray-900">Tâches</h3>
-                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Paramètres" className="w-6 h-6 object-contain" />
+              <div className="bg-white rounded-3xl shadow-lg p-8 border-l-[6px] border-[#FFB84D] hover:shadow-2xl transition-all duration-300">
+                <div className="flex items-center justify-between mb-8">
+                  <h3 className="text-xl font-bold text-gray-900">Tâches</h3>
+                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Paramètres" className="w-7 h-7 object-contain opacity-60 hover:opacity-100 transition-opacity cursor-pointer" />
                 </div>
                 <div className="flex items-end gap-4">
-                  <img src="/Ressource_gestiloc/Inspection.png" alt="Tâches" className="w-16 h-16 object-contain" />
-                  <div className="flex gap-8">
+                  <img src="/Ressource_gestiloc/Inspection.png" alt="Tâches" className="w-20 h-20 object-contain" />
+                  <div className="flex gap-6">
                     <div className="flex flex-col items-center">
-                      <p className="text-4xl font-bold text-gray-900">0</p>
-                      <p className="text-xs text-gray-600 mt-1">Querelle</p>
+                      <p className="text-4xl font-black text-gray-900 leading-none">0</p>
+                      <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mt-2">A faire</p>
                     </div>
-                    <div className="flex flex-col items-center">
-                      <p className="text-4xl font-bold text-gray-900">0</p>
-                      <p className="text-xs text-gray-600 mt-1">En retard</p>
+                    <div className="flex flex-col items-center opacity-40">
+                      <p className="text-4xl font-black text-gray-900 leading-none">0</p>
+                      <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mt-2">En retard</p>
                     </div>
                   </div>
                 </div>
-                <div className="mt-6 text-right">
-                  <button onClick={() => onNavigate?.('tasks')} className="text-xs font-medium text-[#6F00FF] hover:text-[#5500DD] transition-colors duration-200 cursor-pointer">
-                    Tout afficher
+                <div className="mt-8 pt-6 border-t border-gray-50 text-right">
+                  <button onClick={() => onNavigate?.('tasks')} className="text-sm font-bold text-[#FFB84D] hover:underline transition-all">
+                    Tout afficher →
                   </button>
                 </div>
               </div>
@@ -899,32 +893,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
   }, [activeTab]);
 
   // ---------- UI ----------
-  if (loading && activeTab !== 'home') {
+  if (loading) {
     return (
-      <div className="space-y-8 animate-fade-in">
-        <div className="flex flex-col md:flex-row justify-between items-end gap-4">
-          <div className="space-y-2">
-            <Skeleton className="h-10 w-64 rounded-xl" />
-            <Skeleton className="h-4 w-48 rounded-lg" />
-          </div>
-          <div className="flex gap-3">
-            <Skeleton className="h-12 w-32 rounded-xl" />
-            <Skeleton className="h-12 w-32 rounded-xl" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-56 w-full rounded-3xl" />
+      <div className="space-y-10 animate-pulse px-2 sm:px-0">
+        <div className="h-48 sm:h-56 w-full rounded-2xl bg-gray-200/60" />
+        <div className="flex flex-wrap gap-6">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="w-[200px] h-[160px] rounded-2xl bg-gray-100" />
           ))}
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <Skeleton className="h-56 w-full rounded-3xl" />
-            <Skeleton className="h-40 w-full rounded-3xl" />
-          </div>
-          <Skeleton className="h-96 w-full rounded-3xl" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-64 w-full rounded-2xl bg-gray-100" />
+          ))}
         </div>
       </div>
     );
@@ -939,16 +920,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
         notify={notify}
       />
 
-      {hasAnyError ? (
-        <div className="mt-20 mb-6 rounded-3xl border border-rose-200 bg-rose-50 p-5 text-rose-800 font-bold relative z-0">
-          Certaines données n'ont pas pu être chargées (le dashboard reste utilisable).
-          <div className="mt-2 text-sm font-semibold">
-            <div>• Erreur: {error}</div>
-          </div>
-        </div>
-      ) : null}
 
-      {renderContent()}
+
+      <div className="animate-fadeIn">
+        {renderContent()}
+      </div>
     </>
   );
 };

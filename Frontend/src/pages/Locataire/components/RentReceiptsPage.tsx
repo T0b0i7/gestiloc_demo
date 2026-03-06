@@ -46,7 +46,7 @@ export default function RentReceiptsPage() {
   const periodeOptions = useMemo(() => {
     const options = new Set<string>();
     options.add('Tous');
-    
+
     items.forEach(item => {
       if (item.issued_date) {
         const date = new Date(item.issued_date);
@@ -54,13 +54,13 @@ export default function RentReceiptsPage() {
         options.add(monthYear);
       }
     });
-    
+
     return Array.from(options);
   }, [items]);
 
   const filtered = useMemo(() => {
     let filtered = items;
-    
+
     // Filtre par recherche textuelle
     const needle = q.trim().toLowerCase();
     if (needle) {
@@ -79,7 +79,7 @@ export default function RentReceiptsPage() {
         return blob.includes(needle);
       });
     }
-    
+
     // Filtre par période
     if (periode && periode !== 'Tous') {
       filtered = filtered.filter((r) => {
@@ -89,7 +89,7 @@ export default function RentReceiptsPage() {
         return monthYear === periode;
       });
     }
-    
+
     return filtered;
   }, [items, q, periode]);
 
@@ -117,11 +117,11 @@ export default function RentReceiptsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
+    <div className="animate-fadeIn">
       {/* Header with Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Filtrer les quittances</h2>
-        
+
         <div className="flex flex-col gap-4">
           {/* First row - Dropdowns */}
           <div className="flex flex-col sm:flex-row gap-4">
@@ -216,32 +216,32 @@ export default function RentReceiptsPage() {
             <div className="mb-8">
               <svg width="280" height="200" viewBox="0 0 280 200" fill="none" xmlns="http://www.w3.org/2000/svg">
                 {/* Calendar */}
-                <rect x="100" y="30" width="80" height="70" rx="8" fill="#E8F4FD" stroke="#2196F3" strokeWidth="2"/>
-                <rect x="110" y="42" width="60" height="8" rx="2" fill="#2196F3"/>
-                <rect x="118" y="58" width="12" height="12" rx="2" fill="#64B5F6"/>
-                <rect x="134" y="58" width="12" height="12" rx="2" fill="#64B5F6"/>
-                <rect x="150" y="58" width="12" height="12" rx="2" fill="#64B5F6"/>
-                <rect x="118" y="76" width="12" height="12" rx="2" fill="#64B5F6"/>
-                <rect x="134" y="76" width="12" height="12" rx="2" fill="#64B5F6"/>
-                
+                <rect x="100" y="30" width="80" height="70" rx="8" fill="#E8F4FD" stroke="#2196F3" strokeWidth="2" />
+                <rect x="110" y="42" width="60" height="8" rx="2" fill="#2196F3" />
+                <rect x="118" y="58" width="12" height="12" rx="2" fill="#64B5F6" />
+                <rect x="134" y="58" width="12" height="12" rx="2" fill="#64B5F6" />
+                <rect x="150" y="58" width="12" height="12" rx="2" fill="#64B5F6" />
+                <rect x="118" y="76" width="12" height="12" rx="2" fill="#64B5F6" />
+                <rect x="134" y="76" width="12" height="12" rx="2" fill="#64B5F6" />
+
                 {/* People */}
-                <circle cx="60" cy="130" r="20" fill="#FFCCBC"/>
-                <ellipse cx="60" cy="165" rx="25" ry="30" fill="#FFCCBC"/>
-                
-                <circle cx="220" cy="130" r="20" fill="#C8E6C9"/>
-                <ellipse cx="220" cy="165" rx="25" ry="30" fill="#C8E6C9"/>
-                
+                <circle cx="60" cy="130" r="20" fill="#FFCCBC" />
+                <ellipse cx="60" cy="165" rx="25" ry="30" fill="#FFCCBC" />
+
+                <circle cx="220" cy="130" r="20" fill="#C8E6C9" />
+                <ellipse cx="220" cy="165" rx="25" ry="30" fill="#C8E6C9" />
+
                 {/* Money/Dollar */}
-                <circle cx="230" cy="60" r="25" fill="#FFF3E0" stroke="#FF9800" strokeWidth="2"/>
+                <circle cx="230" cy="60" r="25" fill="#FFF3E0" stroke="#FF9800" strokeWidth="2" />
                 <text x="230" y="68" textAnchor="middle" fill="#FF9800" fontSize="24" fontWeight="bold">$</text>
-                
+
                 {/* Decorative elements */}
-                <circle cx="40" cy="50" r="8" fill="#E1BEE7"/>
-                <circle cx="250" cy="150" r="10" fill="#B2DFDB"/>
-                <rect x="30" y="90" width="20" height="20" rx="4" fill="#FFEBEE" transform="rotate(15 40 100)"/>
+                <circle cx="40" cy="50" r="8" fill="#E1BEE7" />
+                <circle cx="250" cy="150" r="10" fill="#B2DFDB" />
+                <rect x="30" y="90" width="20" height="20" rx="4" fill="#FFEBEE" transform="rotate(15 40 100)" />
               </svg>
             </div>
-            
+
             <p className="text-gray-500 text-center max-w-md">
               Aucune quittance disponible pour le moment.
             </p>
@@ -268,13 +268,13 @@ export default function RentReceiptsPage() {
               <tbody>
                 {filtered.map((r) => {
                   const propLine = [r.property?.address, r.property?.city].filter(Boolean).join(", ");
-                  
+
                   // FORCER le statut à "Active" pour TOUTES les lignes
-                  const statusInfo = { 
-                    label: 'Active', 
-                    className: 'bg-green-100 text-green-800' 
+                  const statusInfo = {
+                    label: 'Active',
+                    className: 'bg-green-100 text-green-800'
                   };
-                  
+
                   return (
                     <tr key={r.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/50">
                       <td className="px-6 py-4 text-sm text-gray-900">
