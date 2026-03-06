@@ -147,7 +147,7 @@ export default function FeaturesSection() {
                           <motion.img
                             src={f.image}
                             alt={f.title}
-                            className="max-h-[140px] w-auto object-contain"
+                            className="max-h-[120px] w-auto object-contain"
                             animate={{ scale: [1, 1.05, 1] }}
                             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                           />
@@ -163,12 +163,12 @@ export default function FeaturesSection() {
                 {/* Desktop Grid - 380x380 Professional Layout */}
                 <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-16 place-items-center">
                   {features.map((f, i) => (
-                    <motion.div key={i} className="flex flex-col items-center p-10 bg-white border-2 border-[#529D21] rounded-[50px] shadow-sm hover:shadow-2xl transition-all duration-500 w-[380px] h-[380px] group" whileHover={{ y: -15, scale: 1.02 }}>
-                      <h4 className="font-black text-center mb-6 group-hover:text-[#529D21] transition-colors" style={{ fontFamily: "Merriweather", fontSize: "22px" }}>{f.title}</h4>
-                      <div className="flex-1 flex items-center justify-center mb-6">
-                        <motion.img src={f.image} alt={f.title} className="max-h-[140px] object-contain" whileHover={{ scale: 1.15 }} />
+                    <motion.div key={i} className="flex flex-col items-center p-8 bg-white border-2 border-[#529D21] rounded-[50px] shadow-sm hover:shadow-2xl transition-all duration-500 w-[380px] h-[380px] group overflow-hidden" whileHover={{ y: -15, scale: 1.02 }}>
+                      <h4 className="font-black text-center mb-4 group-hover:text-[#529D21] transition-colors" style={{ fontFamily: "Merriweather", fontSize: "22px", lineHeight: "1.2" }}>{f.title}</h4>
+                      <div className="flex-1 flex items-center justify-center mb-4 w-full px-4">
+                        <motion.img src={f.image} alt={f.title} className="max-h-[110px] w-auto object-contain" whileHover={{ scale: 1.1 }} />
                       </div>
-                      <p className="text-center text-gray-600 leading-relaxed" style={{ fontFamily: "Manrope", fontSize: "15px" }}>{f.description}</p>
+                      <p className="text-center text-gray-600 leading-relaxed px-2" style={{ fontFamily: "Manrope", fontSize: "14px", height: "auto" }}>{f.description}</p>
                     </motion.div>
                   ))}
                 </div>
