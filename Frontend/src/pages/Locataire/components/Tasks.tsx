@@ -142,7 +142,7 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'completed'>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
-  
+
   // Confirmation suppression
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<number | null>(null);
@@ -228,8 +228,8 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
       await api.put(`/tenant/tasks/${id}`, {
         completed: !task.completed
       });
-      
-      setTasks(tasks.map(t => 
+
+      setTasks(tasks.map(t =>
         t.id === id ? { ...t, completed: !t.completed } : t
       ));
       notify?.('Statut de la tâche mis à jour', 'success');
@@ -246,7 +246,7 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
 
   const handleConfirmDelete = async () => {
     if (!taskToDelete) return;
-    
+
     setDeleting(true);
     try {
       await api.delete(`/tenant/tasks/${taskToDelete}`);
@@ -372,8 +372,8 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
       if (filterPriority === 'all') return true;
       return task.priority === filterPriority;
     })
-    .filter(task => 
-      searchQuery === '' || 
+    .filter(task =>
+      searchQuery === '' ||
       task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       task.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       task.property?.name?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -390,26 +390,26 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
   const EmptyStateIllustration = () => (
     <div className="flex flex-col items-center justify-center py-12">
       <svg width="200" height="160" viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-4">
-        <circle cx="100" cy="80" r="60" fill="#FFF5F5"/>
-        <circle cx="70" cy="60" r="8" fill="#FFB6B6"/>
-        <circle cx="130" cy="50" r="6" fill="#FFD6D6"/>
-        <circle cx="140" cy="90" r="4" fill="#FFE6E6"/>
-        <rect x="85" y="40" width="30" height="40" rx="4" fill="#7CB342" opacity="0.8"/>
-        <rect x="80" y="50" width="40" height="30" rx="3" fill="#8BC34A"/>
-        <rect x="90" y="45" width="20" height="25" rx="2" fill="#AED581"/>
-        <circle cx="100" cy="100" r="25" fill="#FFCCBC" opacity="0.6"/>
-        <path d="M85 95 Q100 85 115 95" stroke="#8D6E63" strokeWidth="2" fill="none"/>
-        <circle cx="92" cy="90" r="3" fill="#5D4037"/>
-        <circle cx="108" cy="90" r="3" fill="#5D4037"/>
-        <ellipse cx="100" cy="98" rx="4" ry="3" fill="#5D4037"/>
-        <rect x="75" y="110" width="12" height="25" rx="6" fill="#FFCCBC"/>
-        <rect x="113" y="110" width="12" height="25" rx="6" fill="#FFCCBC"/>
-        <rect x="70" y="100" width="15" height="20" rx="7" fill="#FFAB91"/>
-        <rect x="115" y="100" width="15" height="20" rx="7" fill="#FFAB91"/>
-        <path d="M60 70 Q55 60 65 55" stroke="#8BC34A" strokeWidth="2" fill="none"/>
-        <circle cx="65" cy="55" r="3" fill="#8BC34A"/>
-        <path d="M140 75 Q145 65 135 60" stroke="#8BC34A" strokeWidth="2" fill="none"/>
-        <circle cx="135" cy="60" r="3" fill="#8BC34A"/>
+        <circle cx="100" cy="80" r="60" fill="#FFF5F5" />
+        <circle cx="70" cy="60" r="8" fill="#FFB6B6" />
+        <circle cx="130" cy="50" r="6" fill="#FFD6D6" />
+        <circle cx="140" cy="90" r="4" fill="#FFE6E6" />
+        <rect x="85" y="40" width="30" height="40" rx="4" fill="#7CB342" opacity="0.8" />
+        <rect x="80" y="50" width="40" height="30" rx="3" fill="#8BC34A" />
+        <rect x="90" y="45" width="20" height="25" rx="2" fill="#AED581" />
+        <circle cx="100" cy="100" r="25" fill="#FFCCBC" opacity="0.6" />
+        <path d="M85 95 Q100 85 115 95" stroke="#8D6E63" strokeWidth="2" fill="none" />
+        <circle cx="92" cy="90" r="3" fill="#5D4037" />
+        <circle cx="108" cy="90" r="3" fill="#5D4037" />
+        <ellipse cx="100" cy="98" rx="4" ry="3" fill="#5D4037" />
+        <rect x="75" y="110" width="12" height="25" rx="6" fill="#FFCCBC" />
+        <rect x="113" y="110" width="12" height="25" rx="6" fill="#FFCCBC" />
+        <rect x="70" y="100" width="15" height="20" rx="7" fill="#FFAB91" />
+        <rect x="115" y="100" width="15" height="20" rx="7" fill="#FFAB91" />
+        <path d="M60 70 Q55 60 65 55" stroke="#8BC34A" strokeWidth="2" fill="none" />
+        <circle cx="65" cy="55" r="3" fill="#8BC34A" />
+        <path d="M140 75 Q145 65 135 60" stroke="#8BC34A" strokeWidth="2" fill="none" />
+        <circle cx="135" cy="60" r="3" fill="#8BC34A" />
       </svg>
       <button
         onClick={() => setShowCreateForm(true)}
@@ -450,11 +450,11 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6">
       {/* Modal de confirmation de suppression */}
       {showDeleteConfirm && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fadeIn"
           onClick={handleCancelDelete}
         >
-          <div 
+          <div
             className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all animate-slideUp"
             onClick={(e) => e.stopPropagation()}
           >
@@ -548,9 +548,9 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
                   </label>
                   <select
                     value={newTask.property_id || ''}
-                    onChange={(e) => setNewTask({ 
-                      ...newTask, 
-                      property_id: e.target.value ? Number(e.target.value) : undefined 
+                    onChange={(e) => setNewTask({
+                      ...newTask,
+                      property_id: e.target.value ? Number(e.target.value) : undefined
                     })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-opacity-20"
                     style={{ borderColor: `${PRIMARY_COLOR}80` }}
@@ -607,11 +607,10 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
                         <button
                           key={p}
                           onClick={() => setNewTask({ ...newTask, priority: p })}
-                          className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                            newTask.priority === p
+                          className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all ${newTask.priority === p
                               ? 'text-white shadow-md'
                               : `${priorityStyle.bg} ${priorityStyle.text} hover:opacity-80`
-                          }`}
+                            }`}
                           style={newTask.priority === p ? { backgroundColor: PRIMARY_COLOR } : {}}
                         >
                           {priorityStyle.icon}
@@ -741,39 +740,36 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
           {/* Filtres */}
           <Card className="p-4">
             <h3 className="text-sm font-medium text-gray-900 mb-4">Filtrer les tâches</h3>
-            
+
             <div className="flex flex-col md:flex-row gap-3">
               {/* Filtre statut */}
               <div className="flex gap-2">
                 <button
                   onClick={() => setFilterStatus('all')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    filterStatus === 'all'
-                      ? 'text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${filterStatus === 'all'
+                      ? 'text-white border-transparent'
+                      : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200'
+                    }`}
                   style={filterStatus === 'all' ? { backgroundColor: PRIMARY_COLOR } : {}}
                 >
                   Toutes
                 </button>
                 <button
                   onClick={() => setFilterStatus('active')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    filterStatus === 'active'
-                      ? 'text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${filterStatus === 'active'
+                      ? 'text-white border-transparent'
+                      : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200'
+                    }`}
                   style={filterStatus === 'active' ? { backgroundColor: PRIMARY_COLOR } : {}}
                 >
                   En cours
                 </button>
                 <button
                   onClick={() => setFilterStatus('completed')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    filterStatus === 'completed'
-                      ? 'text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${filterStatus === 'completed'
+                      ? 'text-white border-transparent'
+                      : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200'
+                    }`}
                   style={filterStatus === 'completed' ? { backgroundColor: PRIMARY_COLOR } : {}}
                 >
                   Terminées
@@ -784,7 +780,7 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
               <select
                 value={filterPriority}
                 onChange={(e) => setFilterPriority(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-opacity-20"
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-opacity-20"
                 style={{ borderColor: `${PRIMARY_COLOR}80` }}
               >
                 <option value="all">Toutes priorités</option>
@@ -827,7 +823,7 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
                   placeholder="Rechercher une tâche..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-opacity-20"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-opacity-20"
                   style={{ borderColor: `${PRIMARY_COLOR}80` }}
                 />
               </div>
@@ -856,13 +852,12 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
               paginatedTasks.map((task) => {
                 const priorityStyle = getPriorityColor(task.priority);
                 const isTaskOverdue = isOverdue(task.due_date) && !task.completed;
-                
+
                 return (
-                  <Card 
-                    key={task.id} 
-                    className={`p-4 hover:shadow-md transition-all duration-300 ${
-                      task.completed ? 'opacity-75' : ''
-                    } ${isTaskOverdue ? 'border-l-4 border-l-red-500' : ''}`}
+                  <Card
+                    key={task.id}
+                    className={`p-4 hover:shadow-md transition-all duration-300 ${task.completed ? 'opacity-75' : ''
+                      } ${isTaskOverdue ? 'border-l-4 border-l-red-500' : ''}`}
                   >
                     <div className="flex items-start gap-4">
                       {/* Checkbox personnalisée */}
@@ -881,17 +876,15 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                           <div className="flex-1">
-                            <h3 className={`text-lg font-semibold ${
-                              task.completed ? 'line-through text-gray-400' : 'text-gray-900'
-                            }`}>
+                            <h3 className={`text-lg font-semibold ${task.completed ? 'line-through text-gray-400' : 'text-gray-900'
+                              }`}>
                               {task.title}
                             </h3>
-                            
+
                             {/* Description */}
                             {task.description && (
-                              <p className={`text-sm mt-2 ${
-                                task.completed ? 'text-gray-400' : 'text-gray-600'
-                              }`}>
+                              <p className={`text-sm mt-2 ${task.completed ? 'text-gray-400' : 'text-gray-600'
+                                }`}>
                                 {task.description}
                               </p>
                             )}
@@ -908,11 +901,10 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
 
                               {/* Date d'échéance */}
                               {task.due_date && (
-                                <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${
-                                  isTaskOverdue
+                                <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${isTaskOverdue
                                     ? 'bg-red-100 text-red-700'
                                     : 'bg-gray-100 text-gray-700'
-                                }`}>
+                                  }`}>
                                   <Calendar size={12} />
                                   <span>Échéance: {formatDate(task.due_date)}</span>
                                   {isTaskOverdue && (

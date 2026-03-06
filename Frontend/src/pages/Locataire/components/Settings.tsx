@@ -904,7 +904,7 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
                 value={settings.preferences.language}
                 onChange={(e) => handleChangePreference('language', e.target.value)}
                 disabled={saving}
-                className="px-4 py-1.5 border-2 border-gray-100 rounded-xl text-sm font-semibold text-gray-700 bg-white hover:border-[#70AE48] transition-all cursor-pointer outline-none focus:ring-2 focus:ring-[#70AE48]/20"
+                className="px-4 py-1.5 border-2 border-gray-100 rounded-xl text-sm font-semibold text-[#1f2d1b] bg-white hover:border-[#70AE48] transition-all cursor-pointer outline-none focus:ring-2 focus:ring-[#70AE48]/20"
               >
                 <option value="fr">Français FR</option>
                 <option value="en">English EN</option>

@@ -268,7 +268,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
         return (
           <>
             {/* Welcome Card - Exact comme la maquette Figma */}
-            <div className="bg-gradient-to-r from-[#529D21] to-[#7CB342] rounded-2xl shadow-lg p-6 mb-6 relative overflow-hidden">
+            <div className="rounded-2xl shadow-lg p-6 mb-8 relative overflow-hidden"
+              style={{ background: 'linear-gradient(94.5deg, #8CCC63 5.47%, rgba(82, 157, 33, 0.87) 91.93%)' }}>
               <div className="flex justify-between items-start md:items-center gap-6">
                 <div className="z-10 flex-1">
                   <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">
@@ -289,7 +290,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
             </div>
 
             {/* Quick Actions - Cards Layout - Enlarged for Desktop */}
-            <div className="flex flex-wrap items-center justify-start gap-6 mb-10">
+            <div className="flex flex-wrap items-center justify-start gap-12 mb-12">
               <button onClick={() => onNavigate?.('receipts')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1" style={{ width: '220px', height: '180px', borderRadius: '24px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 10px 0px rgba(131, 199, 87, 0.4)' }}>
                 <img src="/Ressource_gestiloc/Mes_quittances.png" alt="Mes quittances" className="w-14 h-14 object-contain mb-2 group-hover:scale-110 transition-transform" />
                 <span className="text-base font-semibold text-gray-900 text-center px-2">Mes quittances</span>
