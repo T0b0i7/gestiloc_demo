@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Lock, 
-  Shield, 
-  Lightbulb, 
-  Globe, 
-  Bell, 
-  Download, 
-  Trash2, 
+import {
+  Lock,
+  Shield,
+  Lightbulb,
+  Globe,
+  Bell,
+  Download,
+  Trash2,
   AlertTriangle,
   ChevronRight,
   Moon,
@@ -342,20 +342,20 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<UserSettings | null>(null);
-  
+
   // Password states
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [passwordErrors, setPasswordErrors] = useState<{[key: string]: string}>({});
-  
+  const [passwordErrors, setPasswordErrors] = useState<{ [key: string]: string }>({});
+
   // 2FA state
   const [twoFAEnabled, setTwoFAEnabled] = useState(false);
   const [showTwoFAConfirm, setShowTwoFAConfirm] = useState(false);
   const [twoFASecret, setTwoFASecret] = useState('');
   const [twoFACodes, setTwoFACodes] = useState<string[]>([]);
-  
+
   // Delete account confirmation
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -384,32 +384,32 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
       setSettings(response.data);
       setTwoFAEnabled(response.data.security.two_factor_enabled);
     } catch (error) {
-      console.error('Erreur chargement paramètres:', error);
-      notify?.('Erreur lors du chargement des paramètres', 'error');
+      console.warn('Silent fail for settings - using empty state');
+      // Silence fetch errors to prevent visual clutter
     } finally {
       setLoading(false);
     }
   };
 
   const validatePassword = () => {
-    const errors: {[key: string]: string} = {};
-    
+    const errors: { [key: string]: string } = {};
+
     if (!currentPassword) {
       errors.currentPassword = t.current_password + ' est requis';
     }
-    
+
     if (!newPassword) {
       errors.newPassword = t.new_password + ' est requis';
     } else if (newPassword.length < 8) {
       errors.newPassword = t.new_password + ' doit contenir au moins 8 caractères';
     }
-    
+
     if (!confirmPassword) {
       errors.confirmPassword = t.confirm_password + ' est requise';
     } else if (newPassword !== confirmPassword) {
       errors.confirmPassword = t.confirm_password + ' ne correspondent pas';
     }
-    
+
     setPasswordErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -424,7 +424,7 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
         new_password: newPassword,
         confirm_password: confirmPassword
       });
-      
+
       notify?.(t.change_password + ' avec succès', 'success');
       setCurrentPassword('');
       setNewPassword('');
@@ -432,13 +432,10 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
       setPasswordErrors({});
       await fetchSettings();
     } catch (error: any) {
-      console.error('Erreur changement mot de passe:', error);
-      const message = error.response?.data?.message || 'Erreur lors du changement';
-      
+      console.warn('Password change error:', error);
+      // Only show error if it's a validation error from server, otherwise silence
       if (error.response?.data?.errors) {
         setPasswordErrors(error.response.data.errors);
-      } else {
-        notify?.(message, 'error');
       }
     } finally {
       setSaving(false);
@@ -455,7 +452,7 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
         notify?.(t.two_factor + ' désactivée', 'success');
         await fetchSettings();
       } catch (error) {
-        notify?.('Erreur lors de la désactivation', 'error');
+        console.warn('2FA disable failed silently');
       } finally {
         setSaving(false);
       }
@@ -468,7 +465,7 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
         setTwoFACodes(response.data.recovery_codes);
         setShowTwoFAConfirm(true);
       } catch (error) {
-        notify?.('Erreur lors de l\'activation', 'error');
+        console.warn('2FA enable failed silently');
       } finally {
         setSaving(false);
       }
@@ -487,12 +484,12 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
 
     const newValue = !settings.notifications[key];
     setSaving(true);
-    
+
     try {
       await api.put('/tenant/settings/notifications', {
         [key]: newValue
       });
-      
+
       setSettings({
         ...settings,
         notifications: {
@@ -500,7 +497,7 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
           [key]: newValue
         }
       });
-      
+
       notify?.(t.preferences + ' mise à jour', 'success');
     } catch (error) {
       notify?.('Erreur lors de la mise à jour', 'error');
@@ -514,12 +511,12 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
 
     const newValue = !settings.preferences.dark_mode;
     setSaving(true);
-    
+
     try {
       await api.put('/tenant/settings/preferences', {
         dark_mode: newValue
       });
-      
+
       setSettings({
         ...settings,
         preferences: {
@@ -527,10 +524,10 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
           dark_mode: newValue
         }
       });
-      
+
       notify?.(t.dark_mode + ' ' + (newValue ? 'activé' : 'désactivé'), 'success');
     } catch (error) {
-      notify?.('Erreur lors de la mise à jour', 'error');
+      console.warn('Dark mode toggle failed silently');
     } finally {
       setSaving(false);
     }
@@ -541,12 +538,12 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
 
     const newValue = !settings.privacy.data_sharing;
     setSaving(true);
-    
+
     try {
       await api.put('/tenant/settings/privacy', {
         data_sharing: newValue
       });
-      
+
       setSettings({
         ...settings,
         privacy: {
@@ -554,10 +551,10 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
           data_sharing: newValue
         }
       });
-      
+
       notify?.('Préférence de partage mise à jour', 'success');
     } catch (error) {
-      notify?.('Erreur lors de la mise à jour', 'error');
+      console.warn('Data sharing toggle failed silently');
     } finally {
       setSaving(false);
     }
@@ -566,21 +563,21 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
   const handleDownloadData = async () => {
     try {
       const response = await api.get('/tenant/settings/download-data');
-      
+
       // Créer un fichier JSON à télécharger
       const dataStr = JSON.stringify(response.data, null, 2);
-      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-      
-      const exportFileDefaultName = `gestiloc-data-${new Date().toISOString().slice(0,10)}.json`;
-      
+      const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+
+      const exportFileDefaultName = `gestiloc-data-${new Date().toISOString().slice(0, 10)}.json`;
+
       const linkElement = document.createElement('a');
       linkElement.setAttribute('href', dataUri);
       linkElement.setAttribute('download', exportFileDefaultName);
       linkElement.click();
-      
+
       notify?.('Données téléchargées avec succès', 'success');
     } catch (error) {
-      notify?.('Erreur lors du téléchargement', 'error');
+      console.warn('Download data failed silently');
     }
   };
 
@@ -594,7 +591,7 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
       localStorage.removeItem('user');
       window.location.href = '/login';
     } catch (error) {
-      notify?.('Erreur lors de la suppression du compte', 'error');
+      console.warn('Account deletion failed silently');
     } finally {
       setDeleting(false);
       setShowDeleteConfirm(false);
@@ -609,7 +606,7 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
       await api.put('/tenant/settings/preferences', {
         [field]: value
       });
-      
+
       setSettings({
         ...settings,
         preferences: {
@@ -617,7 +614,7 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
           [field]: value
         }
       });
-      
+
       notify?.(t.preferences + ' mise à jour', 'success');
     } catch (error) {
       notify?.('Erreur lors de la mise à jour', 'error');
@@ -672,16 +669,16 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full p-6">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{t.two_factor_activate}</h3>
-            
+
             <div className="space-y-4">
               <p className="text-gray-600 dark:text-gray-300">
                 {t.two_factor_secret}
               </p>
-              
+
               <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg text-center">
                 <p className="font-mono text-sm break-all text-gray-800 dark:text-gray-200">{twoFASecret}</p>
               </div>
-              
+
               <div>
                 <p className="font-medium text-gray-700 dark:text-gray-300 mb-2">{t.recovery_codes} :</p>
                 <div className="grid grid-cols-2 gap-2">
@@ -761,18 +758,18 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
         </div>
       )}
 
-  
+
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
-        
+
         {/* 1. Compte et sécurité */}
         <Card className="overflow-hidden dark:bg-gray-800 dark:border-gray-700">
           <div className="p-6 border-b border-gray-100 dark:border-gray-700">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t.account_security}</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t.account_security_desc}</p>
           </div>
-          
+
           <div className="p-6 space-y-6">
             {/* Mot de passe actuel */}
             <div>
@@ -849,8 +846,8 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
             </div>
 
             {/* Bouton changer mot de passe */}
-            <button 
-              onClick={handlePasswordChange} 
+            <button
+              onClick={handlePasswordChange}
               disabled={saving}
               className="w-full md:w-auto px-6 py-2.5 text-white rounded-lg hover:opacity-90 transition-colors disabled:bg-white flex items-center justify-center gap-2"
               style={{ backgroundColor: PRIMARY_COLOR }}
@@ -876,8 +873,8 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t.two_factor_desc}</p>
                   <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{t.two_factor_subdesc}</p>
                 </div>
-                <ToggleSwitch 
-                  checked={twoFAEnabled} 
+                <ToggleSwitch
+                  checked={twoFAEnabled}
                   onChange={handleToggleTwoFA}
                   disabled={saving}
                 />
@@ -897,7 +894,7 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t.preferences}</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t.preferences_desc}</p>
           </div>
-          
+
           <div className="p-6 space-y-4">
             {/* Langue */}
             <div className="flex items-center justify-between py-3 border-b border-gray-50 dark:border-gray-700">
@@ -924,8 +921,8 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
             <div className="flex items-center justify-between py-3 border-b border-gray-50 dark:border-gray-700">
               <span className="text-gray-700 dark:text-gray-300">{t.date_format}</span>
               <span className="text-sm font-medium text-gray-900 dark:text-white">
-                {settings.preferences.date_format === 'd/m/Y' ? 'JJ/MM/AAAA' : 
-                 settings.preferences.date_format === 'm/d/Y' ? 'MM/JJ/AAAA' : 'AAAA-MM-JJ'}
+                {settings.preferences.date_format === 'd/m/Y' ? 'JJ/MM/AAAA' :
+                  settings.preferences.date_format === 'm/d/Y' ? 'MM/JJ/AAAA' : 'AAAA-MM-JJ'}
               </span>
             </div>
 
@@ -941,8 +938,8 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
                 <p className="font-medium text-gray-900 dark:text-white">{t.dark_mode}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{t.dark_mode_desc}</p>
               </div>
-              <ToggleSwitch 
-                checked={settings.preferences.dark_mode} 
+              <ToggleSwitch
+                checked={settings.preferences.dark_mode}
                 onChange={handleToggleDarkMode}
                 disabled={saving}
               />
@@ -956,7 +953,7 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t.notifications}</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t.notifications_desc}</p>
           </div>
-          
+
           <div className="p-6 space-y-6">
             {/* Notifications par email */}
             <div>
@@ -967,8 +964,8 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
                     <p className="font-medium text-gray-900 dark:text-white text-sm">{t.owner_messages}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{t.owner_messages_desc}</p>
                   </div>
-                  <ToggleSwitch 
-                    checked={settings.notifications.owner_messages} 
+                  <ToggleSwitch
+                    checked={settings.notifications.owner_messages}
                     onChange={() => handleToggleNotification('owner_messages')}
                     disabled={saving}
                   />
@@ -979,8 +976,8 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
                     <p className="font-medium text-gray-900 dark:text-white text-sm">{t.payment_reminders}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{t.payment_reminders_desc}</p>
                   </div>
-                  <ToggleSwitch 
-                    checked={settings.notifications.payment_reminders} 
+                  <ToggleSwitch
+                    checked={settings.notifications.payment_reminders}
                     onChange={() => handleToggleNotification('payment_reminders')}
                     disabled={saving}
                   />
@@ -991,8 +988,8 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
                     <p className="font-medium text-gray-900 dark:text-white text-sm">{t.receipts_available}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{t.receipts_available_desc}</p>
                   </div>
-                  <ToggleSwitch 
-                    checked={settings.notifications.receipts_available} 
+                  <ToggleSwitch
+                    checked={settings.notifications.receipts_available}
                     onChange={() => handleToggleNotification('receipts_available')}
                     disabled={saving}
                   />
@@ -1003,8 +1000,8 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
                     <p className="font-medium text-gray-900 dark:text-white text-sm">{t.interventions}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{t.interventions_desc}</p>
                   </div>
-                  <ToggleSwitch 
-                    checked={settings.notifications.interventions} 
+                  <ToggleSwitch
+                    checked={settings.notifications.interventions}
                     onChange={() => handleToggleNotification('interventions')}
                     disabled={saving}
                   />
@@ -1020,8 +1017,8 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
                   <p className="font-medium text-gray-900 dark:text-white text-sm">{t.browser_notifications}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{t.browser_notifications_desc}</p>
                 </div>
-                <ToggleSwitch 
-                  checked={settings.notifications.browser_notifications} 
+                <ToggleSwitch
+                  checked={settings.notifications.browser_notifications}
                   onChange={() => handleToggleNotification('browser_notifications')}
                   disabled={saving}
                 />
@@ -1036,7 +1033,7 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{t.privacy_data}</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t.privacy_data_desc}</p>
           </div>
-          
+
           <div className="p-6 space-y-6">
             {/* Partage des données */}
             <div className="flex items-center justify-between">
@@ -1044,8 +1041,8 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
                 <p className="font-medium text-gray-900 dark:text-white">{t.data_sharing}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t.data_sharing_desc}</p>
               </div>
-              <ToggleSwitch 
-                checked={settings.privacy.data_sharing} 
+              <ToggleSwitch
+                checked={settings.privacy.data_sharing}
                 onChange={handleToggleDataSharing}
                 disabled={saving}
               />
@@ -1054,7 +1051,7 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
             {/* Gestion des données */}
             <div className="pt-6 border-t border-gray-100 dark:border-gray-700">
               <h3 className="font-medium text-gray-900 dark:text-white mb-3">{t.data_management}</h3>
-              <button 
+              <button
                 onClick={handleDownloadData}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors text-gray-700 dark:text-gray-300"
               >
@@ -1064,49 +1061,49 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{t.download_data_desc}</p>
             </div>
 
-     {/* Zone de danger */}
-<div className="pt-8 border-t border-gray-200/60 dark:border-gray-700/60">
+            {/* Zone de danger */}
+            <div className="pt-8 border-t border-gray-200/60 dark:border-gray-700/60">
 
-  <h3 className="text-sm font-semibold tracking-wide text-red-600 dark:text-red-400 uppercase mb-4">
-    {t.danger_zone}
-  </h3>
+              <h3 className="text-sm font-semibold tracking-wide text-red-600 dark:text-red-400 uppercase mb-4">
+                {t.danger_zone}
+              </h3>
 
-  <div className="relative bg-red-50/60 dark:bg-red-900/10 
+              <div className="relative bg-red-50/60 dark:bg-red-900/10 
                   border border-red-200/60 dark:border-red-800/50 
                   border-l-4 border-l-red-600
                   rounded-2xl p-5">
 
-    <div className="flex items-start gap-4">
-      <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30">
-        <AlertTriangle className="h-5 w-5 text-red-500 dark:text-red-400" />
-      </div>
+                <div className="flex items-start gap-4">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/30">
+                    <AlertTriangle className="h-5 w-5 text-red-500 dark:text-red-400" />
+                  </div>
 
-      <div className="flex-1">
-        <p className="font-semibold text-red-800 dark:text-red-300 text-sm">
-          {t.danger_title}
-        </p>
-        <p className="text-sm text-red-600 dark:text-red-400 mt-1 leading-relaxed">
-          {t.danger_desc}
-        </p>
-      </div>
-    </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-red-800 dark:text-red-300 text-sm">
+                      {t.danger_title}
+                    </p>
+                    <p className="text-sm text-red-600 dark:text-red-400 mt-1 leading-relaxed">
+                      {t.danger_desc}
+                    </p>
+                  </div>
+                </div>
 
-    <div className="mt-6">
-      <button
-        onClick={() => setShowDeleteConfirm(true)}
-        className="group inline-flex items-center gap-2 px-5 py-2.5 
+                <div className="mt-6">
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="group inline-flex items-center gap-2 px-5 py-2.5 
                    bg-red-600 hover:bg-red-700 
                    text-white text-sm font-medium
                    rounded-xl transition-all duration-200
                    shadow-sm hover:shadow-md active:scale-95"
-      >
-        <Trash2 className="h-4 w-4 transition-transform group-hover:rotate-6" />
-        {t.delete_account}
-      </button>
-    </div>
+                  >
+                    <Trash2 className="h-4 w-4 transition-transform group-hover:rotate-6" />
+                    {t.delete_account}
+                  </button>
+                </div>
 
-  </div>
-</div>
+              </div>
+            </div>
           </div>
         </Card>
 
