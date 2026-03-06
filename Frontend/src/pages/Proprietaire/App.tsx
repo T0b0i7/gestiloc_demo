@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-
 import './responsive.css';
 import { Layout } from './components/Layout';
 import Bureau from './components/Bureau';
+import Dashboard from './components/Dashboard';
 import { Payments } from './components/Payments';
 import { Messages } from './components/Messages';
 import { Interventions } from './components/Interventions';
@@ -172,7 +173,7 @@ const ProprietaireApp: React.FC = () => {
             isDarkMode={false}
             toggleTheme={() => { }}
           >
-            <Bureau onNavigate={handleNavigation} notify={notify} />
+            <Dashboard onNavigate={handleNavigation} notify={notify} />
           </Layout>
         } />
         <Route path="biens/*" element={
