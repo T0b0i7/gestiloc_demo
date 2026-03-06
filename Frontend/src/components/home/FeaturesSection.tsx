@@ -216,7 +216,7 @@ export default function FeaturesSection() {
             </motion.div>
 
             {/* Card 5: 67% */}
-            <motion.div className="md:absolute bottom-[5%] left-[50%] md:translate-x-[-50%] bg-[#065F46] p-14 rounded-[55px] shadow-2xl w-full md:w-[550px] text-white" whileHover={{ scale: 1.05, y: -15, zIndex: 10 }} animate={{ y: [0, -10, 0] }} transition={{ duration: 5.5, repeat: Infinity, delay: 2 }}>
+            <motion.div className="md:absolute bottom-[-8%] left-[50%] md:translate-x-[-50%] bg-[#065F46] p-14 rounded-[55px] shadow-2xl w-full md:w-[550px] text-white" whileHover={{ scale: 1.05, y: -15, zIndex: 10 }} animate={{ y: [0, -10, 0] }} transition={{ duration: 5.5, repeat: Infinity, delay: 2 }}>
               <div className="text-7xl font-black mb-6" style={{ fontFamily: "Manrope" }}>67%</div>
               <p className="text-xl font-bold leading-tight text-white/95">de nos clients recommandent GestiLoc à leur entourage.</p>
             </motion.div>
