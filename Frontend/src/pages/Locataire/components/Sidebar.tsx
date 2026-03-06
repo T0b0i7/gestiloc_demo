@@ -1,18 +1,6 @@
 import { useState } from "react";
 
-interface SVGProps {
-  children?: React.ReactNode;
-  stroke?: string;
-  fill?: string;
-  strokeWidth?: number;
-  strokeLinecap?: "inherit" | "round" | "butt" | "square" | undefined;
-  strokeLinejoin?: "inherit" | "round" | "bevel" | "miter" | undefined;
-  viewBox?: string;
-  width?: number;
-  height?: number;
-}
-
-const ic = (c: string): SVGProps => ({ stroke: c, fill: "none", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" });
+const ic = (c) => ({ stroke: c, fill: "none", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" });
 
 const Icons = {
   LayoutDashboard: ({ c }) => (

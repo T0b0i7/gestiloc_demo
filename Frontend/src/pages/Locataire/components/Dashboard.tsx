@@ -316,98 +316,102 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
               </button>
             </div>
 
-            {/* Stats Grid - 4 columns layout for professional desktop feel */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
+            {/* Stats Grid - MATCHING IMAGE 3 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-8 mb-12">
               {/* Locations Card */}
-              <div className="bg-white rounded-3xl shadow-lg p-8 border-l-[6px] border-[#529D21] hover:shadow-2xl transition-all duration-300">
-                <div className="flex items-center justify-between mb-8">
+              <div className="bg-[#F8F9FD] rounded-2xl border border-blue-100 p-8 flex flex-col h-[320px] relative">
+                <div className="flex items-center justify-between mb-2">
                   <h3 className="text-xl font-bold text-gray-900">Locations</h3>
-                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Paramètres" className="w-7 h-7 object-contain opacity-60 hover:opacity-100 transition-opacity cursor-pointer" />
+                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Settings" className="w-6 h-6 opacity-40 hover:opacity-100 cursor-pointer" />
                 </div>
-                <div className="flex items-end gap-6">
-                  <img src="/Ressource_gestiloc/Key Security.png" alt="Locations" className="w-20 h-20 object-contain" />
-                  <div>
-                    <p className="text-6xl font-black text-gray-900 leading-none">1</p>
-                    <p className="text-base text-gray-500 font-medium mt-2">Location</p>
+                <div className="flex-1 flex flex-col items-center justify-center -mt-4">
+                  <div className="flex items-center gap-12">
+                    <img src="/Ressource_gestiloc/Key Security.png" alt="Key" className="w-32 h-32 object-contain" />
+                    <div className="text-center">
+                      <p className="text-8xl font-black text-gray-900 leading-none">1</p>
+                      <p className="text-lg text-gray-500 font-medium mt-4">Location</p>
+                    </div>
                   </div>
                 </div>
-                <div className="mt-8 pt-6 border-t border-gray-50 text-right">
-                  <button onClick={() => onNavigate?.('location')} className="text-sm font-bold text-[#529D21] hover:underline transition-all">
-                    Tout afficher →
-                  </button>
-                </div>
+                <button onClick={() => onNavigate?.('location')} className="absolute bottom-6 right-8 text-sm font-bold text-[#6366F1] hover:underline">
+                  Tout afficher →
+                </button>
               </div>
 
               {/* Loyers en retard Card */}
-              <div className="bg-white rounded-3xl shadow-lg p-8 border-l-[6px] border-[#FFB84D] hover:shadow-2xl transition-all duration-300">
-                <div className="flex items-center justify-between mb-8">
+              <div className="bg-[#F8F9FD] rounded-2xl border border-blue-100 p-8 flex flex-col h-[320px] relative">
+                <div className="flex items-center justify-between mb-2">
                   <h3 className="text-xl font-bold text-gray-900">Loyers en retard</h3>
-                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Paramètres" className="w-7 h-7 object-contain opacity-60 hover:opacity-100 transition-opacity cursor-pointer" />
+                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Settings" className="w-6 h-6 opacity-40 hover:opacity-100 cursor-pointer" />
                 </div>
-                <div className="flex items-end gap-6">
-                  <img src="/Ressource_gestiloc/Dollar Bag.png" alt="Loyers" className="w-20 h-20 object-contain" />
-                  <div>
-                    <p className="text-6xl font-black text-gray-900 leading-none">0</p>
-                    <p className="text-base text-gray-500 font-medium mt-2">Loyers en retard</p>
+                <div className="flex-1 flex flex-col items-center justify-center -mt-4">
+                  <div className="flex items-center gap-12">
+                    <img src="/Ressource_gestiloc/Dollar Bag.png" alt="Money" className="w-32 h-32 object-contain" />
+                    <div className="text-center">
+                      <p className="text-8xl font-black text-gray-900 leading-none">0</p>
+                      <p className="text-lg text-gray-500 font-medium mt-4">Loyers en retard</p>
+                    </div>
                   </div>
                 </div>
-                <div className="mt-8 pt-6 border-t border-gray-50 text-right">
-                  <button onClick={() => onNavigate?.('payments')} className="text-sm font-bold text-[#FFB84D] hover:underline transition-all">
-                    Tout afficher →
-                  </button>
-                </div>
+                <button onClick={() => onNavigate?.('payments')} className="absolute bottom-6 right-8 text-sm font-bold text-[#6366F1] hover:underline">
+                  Tout afficher →
+                </button>
               </div>
 
               {/* Interventions Card */}
-              <div className="bg-white rounded-3xl shadow-lg p-8 border-l-[6px] border-[#529D21] hover:shadow-2xl transition-all duration-300">
-                <div className="flex items-center justify-between mb-8">
+              <div className="bg-[#F8F9FD] rounded-2xl border border-blue-100 p-8 flex flex-col h-[320px] relative">
+                <div className="flex items-center justify-between mb-2">
                   <h3 className="text-xl font-bold text-gray-900">Interventions</h3>
-                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Paramètres" className="w-7 h-7 object-contain opacity-60 hover:opacity-100 transition-opacity cursor-pointer" />
+                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Settings" className="w-6 h-6 opacity-40 hover:opacity-100 cursor-pointer" />
                 </div>
-                <div className="flex items-end gap-4">
-                  <img src="/Ressource_gestiloc/Tools.png" alt="Interventions" className="w-20 h-20 object-contain" />
-                  <div className="flex gap-6">
-                    <div className="flex flex-col items-center">
-                      <p className="text-4xl font-black text-gray-900 leading-none">{openIncidents}</p>
-                      <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mt-2">Ouvert</p>
-                    </div>
-                    <div className="flex flex-col items-center opacity-40">
-                      <p className="text-4xl font-black text-gray-900 leading-none">0</p>
-                      <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mt-2">En retard</p>
+                <div className="flex-1 flex flex-col items-center justify-center -mt-4">
+                  <div className="flex items-center gap-8 w-full px-4">
+                    <img src="/Ressource_gestiloc/Tools.png" alt="Tools" className="w-24 h-24 object-contain" />
+                    <div className="flex flex-1 justify-around">
+                      <div className="text-center">
+                        <p className="text-6xl font-black text-gray-900 leading-none">0</p>
+                        <p className="text-sm text-gray-500 font-bold mt-3">Ouverte</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-6xl font-black text-gray-900 leading-none">0</p>
+                        <p className="text-sm text-gray-500 font-bold mt-3">En retard</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-6xl font-black text-gray-900 leading-none">0</p>
+                        <p className="text-sm text-gray-500 font-bold mt-3">En cours</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div className="mt-8 pt-6 border-t border-gray-50 text-right">
-                  <button onClick={() => onNavigate?.('interventions')} className="text-sm font-bold text-[#529D21] hover:underline transition-all">
-                    Tout afficher →
-                  </button>
-                </div>
+                <button onClick={() => onNavigate?.('interventions')} className="absolute bottom-6 right-8 text-sm font-bold text-[#6366F1] hover:underline">
+                  Tout afficher →
+                </button>
               </div>
 
               {/* Tâches Card */}
-              <div className="bg-white rounded-3xl shadow-lg p-8 border-l-[6px] border-[#FFB84D] hover:shadow-2xl transition-all duration-300">
-                <div className="flex items-center justify-between mb-8">
+              <div className="bg-[#F8F9FD] rounded-2xl border border-blue-100 p-8 flex flex-col h-[320px] relative">
+                <div className="flex items-center justify-between mb-2">
                   <h3 className="text-xl font-bold text-gray-900">Tâches</h3>
-                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Paramètres" className="w-7 h-7 object-contain opacity-60 hover:opacity-100 transition-opacity cursor-pointer" />
+                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Settings" className="w-6 h-6 opacity-40 hover:opacity-100 cursor-pointer" />
                 </div>
-                <div className="flex items-end gap-4">
-                  <img src="/Ressource_gestiloc/Inspection.png" alt="Tâches" className="w-20 h-20 object-contain" />
-                  <div className="flex gap-6">
-                    <div className="flex flex-col items-center">
-                      <p className="text-4xl font-black text-gray-900 leading-none">0</p>
-                      <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mt-2">A faire</p>
-                    </div>
-                    <div className="flex flex-col items-center opacity-40">
-                      <p className="text-4xl font-black text-gray-900 leading-none">0</p>
-                      <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mt-2">En retard</p>
+                <div className="flex-1 flex flex-col items-center justify-center -mt-4">
+                  <div className="flex items-center gap-12 w-full px-8">
+                    <img src="/Ressource_gestiloc/Inspection.png" alt="Tasks" className="w-24 h-24 object-contain" />
+                    <div className="flex flex-1 justify-around gap-8">
+                      <div className="text-center">
+                        <p className="text-6xl font-black text-gray-900 leading-none">0</p>
+                        <p className="text-sm text-gray-500 font-bold mt-3">Ouverte</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-6xl font-black text-gray-900 leading-none">0</p>
+                        <p className="text-sm text-gray-500 font-bold mt-3">En retard</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div className="mt-8 pt-6 border-t border-gray-50 text-right">
-                  <button onClick={() => onNavigate?.('tasks')} className="text-sm font-bold text-[#FFB84D] hover:underline transition-all">
-                    Tout afficher →
-                  </button>
-                </div>
+                <button onClick={() => onNavigate?.('tasks')} className="absolute bottom-6 right-8 text-sm font-bold text-[#6366F1] hover:underline">
+                  Tout afficher →
+                </button>
               </div>
             </div>
           </>
@@ -893,23 +897,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
   }, [activeTab]);
 
   // ---------- UI ----------
-  if (loading) {
-    return (
-      <div className="space-y-10 animate-pulse px-2 sm:px-0">
-        <div className="h-48 sm:h-56 w-full rounded-2xl bg-gray-200/60" />
-        <div className="flex flex-wrap gap-6">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="w-[200px] h-[160px] rounded-2xl bg-gray-100" />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-64 w-full rounded-2xl bg-gray-100" />
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -922,7 +909,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
 
 
 
-      <div className="animate-fadeIn">
+      <div>
         {renderContent()}
       </div>
     </>

@@ -547,11 +547,11 @@ export const Layout: React.FC<LayoutProps> = ({
         <main className="h-full ml-0 lg:ml-[320px] transition-all duration-300">
           <div id="app-scroll-container" className="h-full overflow-y-auto px-4 sm:px-12 py-8 scroll-smooth scrollbar-hide">
             {activeTab === 'landlord' ? (
-              <div className="animate-fadeIn">
+              <div>
                 <Landlord notify={notify} />
               </div>
             ) : (
-              <div className="max-w-[1400px] mx-auto animate-fadeIn">
+              <div className="max-w-[1400px] mx-auto">
                 {children}
               </div>
             )}
