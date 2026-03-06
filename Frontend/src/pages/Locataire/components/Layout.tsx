@@ -314,7 +314,7 @@ export const Layout: React.FC<LayoutProps> = ({
   };
 
   const menuItems = [
-    { id: 'home', label: 'Tableau de bord', icon: 'LayoutDashboard' },
+    { id: 'home', label: 'Bureau', icon: 'LayoutDashboard' },
     { id: 'location', label: 'Ma location', icon: 'Home' },
     { id: 'landlord', label: 'Mon propriétaire', icon: 'Building' },
     { id: 'receipts', label: 'Mes quittances', icon: 'Receipt' },

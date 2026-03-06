@@ -2,14 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import './responsive.css';
 import { Layout } from './components/Layout';
-import Dashboard from './components/Dashboard';
+import Bureau from './components/Bureau';
 import { Payments } from './components/Payments';
 import { Messages } from './components/Messages';
 import { Interventions } from './components/Interventions';
 import { Documents } from './components/Documents';
 import { Property } from './components/Property';
 import { Profile } from './components/Profile';
-import { Bureau } from './components/Bureau';
 import { AjouterBien } from './components/AjouterBien';
 import AjouterLocataire from './components/AjouterLocataire';
 import NouvelleLocation from './components/NouvelleLocation';
@@ -173,7 +172,7 @@ const ProprietaireApp: React.FC = () => {
             isDarkMode={false}
             toggleTheme={() => { }}
           >
-            <Dashboard onNavigate={handleNavigation} notify={notify} />
+            <Bureau onNavigate={handleNavigation} notify={notify} />
           </Layout>
         } />
         <Route path="biens/*" element={

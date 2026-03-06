@@ -42,7 +42,7 @@ const ParametresPage: React.FC<ParametresPageProps> = ({ notify }) => {
         .sp-plan-features li { font-size: 0.78rem; padding: 3px 0; color: #374151; }
         .sp-plan-features li::before { content: '✓ '; color: #83C757; font-weight: 700; }
         .sp-plan-btn { background: #83C757; color: #fff; border: none; border-radius: 10px; padding: 8px 22px; font-family: 'Manrope', sans-serif; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
-        .sp-select { padding: 0.5rem 0.85rem; border: 1.5px solid #d1d5db; border-radius: 10px; font-size: 0.82rem; font-family: 'Manrope', sans-serif; font-weight: 500; color: #6b7280; background: transparent; outline: none; min-width: 160px; }
+        .sp-select { padding: 0.5rem 0.85rem; border: 1.5px solid #d1d5db; border-radius: 10px; font-size: 0.82rem; font-family: 'Manrope', sans-serif; font-weight: 500; color: #6b7280; background: #fff; outline: none; min-width: 160px; }
         .sp-info-banner { background: #f0fdf4; border: 1.5px solid #83C757; border-radius: 10px; padding: 10px 16px; font-size: 0.78rem; color: #166534; margin-top: 10px; }
         .sp-danger { background: #fff; border: 1.5px solid #fecaca; border-radius: 14px; padding: 1.5rem; margin-bottom: 1.25rem; }
         .sp-danger-title { font-family: 'Merriweather', serif; font-size: 1rem; font-weight: 800; color: #ef4444; margin: 0 0 4px 0; }

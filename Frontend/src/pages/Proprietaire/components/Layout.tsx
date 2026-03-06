@@ -201,7 +201,7 @@ export const Layout: React.FC<LayoutProps> = ({
     {
       label: 'Menu Principal',
       items: [
-        { id: 'dashboard', label: 'Tableau de bord', icon: <SideIcon src="tb_locataire.png" /> },
+        { id: 'dashboard', label: 'Bureau', icon: <SideIcon src="tb_locataire.png" /> },
       ],
     },
     {
