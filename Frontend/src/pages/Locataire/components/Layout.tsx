@@ -73,87 +73,105 @@ interface LayoutProps {
   toggleTheme: () => void;
 }
 
-const ic = (c: string) => ({
-  stroke: c,
-  fill: "none",
-  strokeWidth: 2,
-  strokeLinecap: "round" as const,
-  strokeLinejoin: "round" as const
-});
-
-const Icons: Record<string, React.FC<{ c: string }>> = {
-  LayoutDashboard: ({ c }) => (
-    <svg viewBox="0 0 24 24" width={19} height={19} {...ic(c)}>
-      <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
-      <rect x="14" y="14" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" />
+// Icônes SVG colorées style illustration — comme dans la photo
+const NavIcons: Record<string, React.FC<{ active?: boolean }>> = {
+  home: () => (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="3" y="13" width="22" height="13" rx="2" fill="#a8d5a2" />
+      <polygon points="14,3 2,14 26,14" fill="#529D21" />
+      <rect x="11" y="18" width="6" height="8" rx="1" fill="#fff" />
     </svg>
   ),
-  Home: ({ c }) => (
-    <svg viewBox="0 0 24 24" width={19} height={19} {...ic(c)}>
-      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
-      <path d="M9 21V12h6v9" />
+  location: () => (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <ellipse cx="14" cy="26" rx="6" ry="1.5" fill="#e0e0e0" />
+      <path d="M14 3C9.58 3 6 6.58 6 11c0 6.63 8 14 8 14s8-7.37 8-14c0-4.42-3.58-8-8-8z" fill="#F5A623" />
+      <circle cx="14" cy="11" r="3" fill="#fff" />
     </svg>
   ),
-  Building: ({ c }) => (
-    <svg viewBox="0 0 24 24" width={19} height={19} {...ic(c)}>
-      <rect x="3" y="3" width="18" height="18" rx="1" />
-      <path d="M9 3v18M15 3v18M3 9h18M3 15h18" />
+  landlord: () => (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="4" y="8" width="20" height="17" rx="2" fill="#fbd38d" />
+      <rect x="2" y="11" width="24" height="3" rx="1" fill="#F5A623" />
+      <rect x="8" y="14" width="5" height="5" rx="1" fill="#fff" />
+      <rect x="15" y="14" width="5" height="5" rx="1" fill="#fff" />
+      <polygon points="14,2 3,11 25,11" fill="#e8c97e" />
     </svg>
   ),
-  Receipt: ({ c }) => (
-    <svg viewBox="0 0 24 24" width={19} height={19} {...ic(c)}>
-      <path d="M4 2v20l3-2 2 2 3-2 3 2 2-2 3 2V2l-3 2-2-2-3 2-3-2-2 2-3-2z" />
-      <line x1="8" y1="10" x2="16" y2="10" /><line x1="8" y1="14" x2="14" y2="14" />
+  receipts: () => (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="5" y="3" width="18" height="22" rx="2" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="1" />
+      <rect x="8" y="8" width="12" height="1.5" rx="0.75" fill="#64748b" />
+      <rect x="8" y="12" width="9" height="1.5" rx="0.75" fill="#64748b" />
+      <rect x="8" y="16" width="6" height="1.5" rx="0.75" fill="#64748b" />
+      <rect x="5" y="21" width="18" height="4" rx="0 0 2 2" fill="#529D21" opacity="0.3" />
     </svg>
   ),
-  FileText: ({ c }) => (
-    <svg viewBox="0 0 24 24" width={19} height={19} {...ic(c)}>
-      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
-      <line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="15" y2="17" />
+  documents: () => (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="3" y="6" width="16" height="20" rx="2" fill="#fef08a" stroke="#ca8a04" strokeWidth="1" />
+      <rect x="7" y="6" width="18" height="20" rx="2" fill="#fde047" stroke="#ca8a04" strokeWidth="1" />
+      <rect x="10" y="11" width="10" height="1.5" rx="0.75" fill="#92400e" />
+      <rect x="10" y="15" width="7" height="1.5" rx="0.75" fill="#92400e" />
     </svg>
   ),
-  Wrench: ({ c }) => (
-    <svg viewBox="0 0 24 24" width={19} height={19} {...ic(c)}>
-      <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
+  interventions: () => (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="12" y="3" width="4" height="16" rx="2" fill="#94a3b8" transform="rotate(45 14 14)" />
+      <rect x="12" y="9" width="4" height="16" rx="2" fill="#64748b" transform="rotate(-45 14 14)" />
+      <circle cx="20" cy="8" r="4" fill="#f87171" />
+      <line x1="18" y1="8" x2="22" y2="8" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="20" y1="6" x2="20" y2="10" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   ),
-  CheckSquare: ({ c }) => (
-    <svg viewBox="0 0 24 24" width={19} height={19} {...ic(c)}>
-      <polyline points="9 11 12 14 22 4" />
-      <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+  tasks: () => (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="5" y="4" width="18" height="20" rx="2" fill="#f1f5f9" stroke="#cbd5e1" strokeWidth="1" />
+      <rect x="9" y="2" width="10" height="4" rx="2" fill="#94a3b8" />
+      <path d="M9 13 l3 3 l7-7" stroke="#529D21" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </svg>
   ),
-  StickyNote: ({ c }) => (
-    <svg viewBox="0 0 24 24" width={19} height={19} {...ic(c)}>
-      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h8l6-6V4a2 2 0 00-2-2z" />
-      <polyline points="14 2 14 8 20 8" />
+  notes: () => (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="4" y="4" width="20" height="20" rx="2" fill="#fef9c3" stroke="#fde68a" strokeWidth="1" />
+      <rect x="8" y="9" width="12" height="1.5" rx="0.75" fill="#78716c" />
+      <rect x="8" y="13" width="9" height="1.5" rx="0.75" fill="#78716c" />
+      <rect x="8" y="17" width="5" height="1.5" rx="0.75" fill="#78716c" />
+      <path d="M20 20 l4-4 v4 z" fill="#fde68a" />
     </svg>
   ),
-  Calendar: ({ c }) => (
-    <svg viewBox="0 0 24 24" width={19} height={19} {...ic(c)}>
-      <rect x="3" y="4" width="18" height="18" rx="2" />
-      <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
+  notice: () => (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="4" y="6" width="20" height="18" rx="2" fill="#ede9fe" stroke="#a78bfa" strokeWidth="1" />
+      <path d="M9 6 V4 Q14 2 19 4 V6" fill="#c4b5fd" />
+      <rect x="8" y="11" width="12" height="1.5" rx="0.75" fill="#7c3aed" />
+      <rect x="8" y="15" width="8" height="1.5" rx="0.75" fill="#7c3aed" />
+      <path d="M17 19 l3-2 v4 z" fill="#a78bfa" />
     </svg>
   ),
-  CreditCard: ({ c }) => (
-    <svg viewBox="0 0 24 24" width={19} height={19} {...ic(c)}>
-      <rect x="1" y="4" width="22" height="16" rx="2" />
-      <line x1="1" y1="10" x2="23" y2="10" />
+  payments: () => (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="2" y="8" width="24" height="14" rx="3" fill="#529D21" />
+      <rect x="2" y="12" width="24" height="4" fill="#3d7a18" />
+      <rect x="5" y="17" width="5" height="2" rx="1" fill="#a8d5a2" />
+      <rect x="12" y="17" width="3" height="2" rx="1" fill="#a8d5a2" />
+      <circle cx="22" cy="9" r="5" fill="#F5A623" />
+      <text x="22" y="13" textAnchor="middle" fill="#fff" fontSize="7" fontWeight="bold">$</text>
     </svg>
   ),
-  Settings: ({ c }) => (
-    <svg viewBox="0 0 24 24" width={19} height={19} {...ic(c)}>
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 01-2.83 0l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
-    </svg>
-  ),
-  LogOut: ({ c }) => (
-    <svg viewBox="0 0 24 24" width={19} height={19} {...ic(c)}>
-      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
-      <polyline points="16 17 21 12 16 7" />
-      <line x1="21" y1="12" x2="9" y2="12" />
+  settings: () => (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <circle cx="14" cy="14" r="4" fill="#64748b" />
+      {[0, 45, 90, 135, 180, 225, 270, 315].map((deg, i) => (
+        <rect
+          key={i}
+          x="13" y="3"
+          width="2" height="4"
+          rx="1"
+          fill="#94a3b8"
+          transform={`rotate(${deg} 14 14)`}
+        />
+      ))}
     </svg>
   ),
 };
@@ -314,17 +332,17 @@ export const Layout: React.FC<LayoutProps> = ({
   };
 
   const menuItems = [
-    { id: 'home', label: 'Bureau', icon: 'LayoutDashboard' },
-    { id: 'location', label: 'Ma location', icon: 'Home' },
-    { id: 'landlord', label: 'Mon propriétaire', icon: 'Building' },
-    { id: 'receipts', label: 'Mes quittances', icon: 'Receipt' },
-    { id: 'documents', label: 'Documents', icon: 'FileText' },
-    { id: 'interventions', label: 'Mes interventions', icon: 'Wrench' },
-    { id: 'tasks', label: 'Mes tâches', icon: 'CheckSquare' },
-    { id: 'notes', label: 'Mes notes', icon: 'StickyNote' },
-    { id: 'notice', label: 'Préavis', icon: 'Calendar' },
-    { id: 'payments', label: 'Paiements', icon: 'CreditCard' },
-    { id: 'settings', label: 'Paramètres', icon: 'Settings' },
+    { id: 'home', label: 'Tableau de bord', image: '/Ressource_gestiloc/tb_locataire.png' },
+    { id: 'location', label: 'Ma location', image: '/Ressource_gestiloc/Ma_location.png' },
+    { id: 'landlord', label: 'Mon propriétaire', image: '/Ressource_gestiloc/mon_proprio.png' },
+    { id: 'receipts', label: 'Mes quittances', image: '/Ressource_gestiloc/Mes_quittances.png' },
+    { id: 'documents', label: 'Documents', image: '/Ressource_gestiloc/Document In Folder.png' },
+    { id: 'interventions', label: 'Mes interventions', image: '/Ressource_gestiloc/Tools.png' },
+    { id: 'tasks', label: 'Mes tâches', image: '/Ressource_gestiloc/Nouvelles_taches.png' },
+    { id: 'notes', label: 'Mes notes', image: '/Ressource_gestiloc/Edit Property.png' },
+    { id: 'notice', label: 'Préavis', image: '/Ressource_gestiloc/preavis.png' },
+    { id: 'payments', label: 'Paiements', image: '/Ressource_gestiloc/paiement.png' },
+    { id: 'settings', label: 'Paramètres', image: '/Ressource_gestiloc/parametre_loc.png' },
   ];
 
   const userInitials = user
@@ -342,53 +360,51 @@ export const Layout: React.FC<LayoutProps> = ({
 
   const NavItem = ({ item, isActive, onNavigate, isLogout }: any) => {
     const [hovered, setHovered] = useState(false);
-    const IconComponent = Icons[item.icon as keyof typeof Icons];
-
-    const iconColor = isLogout
-      ? (hovered ? "#e53935" : "#aaa")
-      : isActive ? "#4CAF50" : hovered ? "#4CAF50" : "#888";
-
-    const textColor = isLogout
-      ? (hovered ? "#e53935" : "#888")
-      : isActive ? "#4CAF50" : hovered ? "#4CAF50" : "#444";
+    const IconComponent = NavIcons[item.id as keyof typeof NavIcons];
 
     return (
       <button
         onClick={() => onNavigate(item.id)}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className="w-full relative flex items-center gap-3 px-6 py-3.5 transition-all duration-300 group"
+        className="w-full relative flex items-center gap-3 px-6 py-4 transition-all duration-300 group"
         style={{
-          background: isActive ? 'linear-gradient(90deg, rgba(255, 213, 124, 0.4) 0%, rgba(255, 255, 255, 0) 100%)' : 'transparent',
+          background: isActive ? 'linear-gradient(90deg, rgba(255, 235, 180, 0.4) 0%, rgba(255, 255, 255, 0) 100%)' : 'transparent',
           border: 'none',
           cursor: 'pointer',
-          borderRadius: '10px',
-          marginBottom: '2px'
+          borderRadius: '12px',
+          marginBottom: '4px'
         }}
       >
         {/* Yellow indicator for active tab precisely as requested */}
         {isActive && (
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[60%] bg-[#FFB300] rounded-r-full" />
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[5px] h-[30px] bg-[#FFB300] rounded-r-full shadow-[0px_0px_10px_#FFB300]" />
         )}
 
-        <div className={`transition-all duration-300 ${isActive || hovered ? 'scale-110' : 'scale-100'}`}>
+        <div className={`transition-all duration-300 ${isActive || hovered ? 'scale-110' : 'scale-100 opacity-70'}`}>
           {isLogout ? (
-            <Icons.LogOut c={iconColor} />
+            <LogOut size={20} color={hovered ? "#e53935" : "#666"} />
           ) : (
-            IconComponent ? <IconComponent c={iconColor} /> : <div className="w-5 h-5 bg-gray-200 rounded-full" />
+            IconComponent ? <IconComponent active={isActive} /> : <div className="w-5 h-5 bg-gray-200 rounded-full" />
           )}
         </div>
 
-        <span className={`text-sm whitespace-nowrap transition-colors duration-300 ${isActive ? 'font-bold' : 'font-medium'} ${isActive || hovered ? 'text-[#4CAF50]' : 'text-[#444]'}`}>
+        <span className={`text-sm font-bold whitespace-nowrap transition-colors duration-300 ${isActive || hovered ? 'text-[#529D21]' : 'text-gray-500'}`}>
           {item.label}
         </span>
+
+        {isActive && (
+          <div className="ml-auto">
+            <ChevronRight size={16} className="text-[#529D21]" />
+          </div>
+        )}
       </button>
     );
   };
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full overflow-hidden bg-white rounded-[24px]">
-      <div className="flex-1 overflow-y-auto py-4 px-3 sidebar-scroll scrollbar-hide">
+      <div className="flex-1 overflow-y-auto py-6 px-4 sidebar-scroll scrollbar-hide">
         <style>{`
           .sidebar-scroll::-webkit-scrollbar { width: 4px; }
           .sidebar-scroll::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 10px; }
@@ -396,27 +412,16 @@ export const Layout: React.FC<LayoutProps> = ({
           .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         `}</style>
 
-        <div style={{
-          fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.10em",
-          color: "#bbb", textTransform: "uppercase",
-          padding: "0.4rem 1.2rem 0.8rem", whiteSpace: "nowrap",
-          fontFamily: "'Manrope', sans-serif"
-        }}>
-          Menu Locataire
-        </div>
-
         {menuItems.map((item) => (
-          <div key={item.id}>
-            {item.id === "settings" && (
-              <div className="border-t border-gray-100 my-2 mx-2" />
-            )}
-            <NavItem
-              item={item}
-              isActive={activeTab === item.id}
-              onNavigate={handleNavigate}
-            />
-          </div>
+          <NavItem
+            key={item.id}
+            item={item}
+            isActive={activeTab === item.id}
+            onNavigate={handleNavigate}
+          />
         ))}
+
+        <div className="border-t border-gray-100 my-4 mx-2" />
 
         <NavItem
           item={{ id: 'logout', label: 'Déconnexion' }}
@@ -542,11 +547,11 @@ export const Layout: React.FC<LayoutProps> = ({
         <main className="h-full ml-0 lg:ml-[320px] transition-all duration-300">
           <div id="app-scroll-container" className="h-full overflow-y-auto px-4 sm:px-12 py-8 scroll-smooth scrollbar-hide">
             {activeTab === 'landlord' ? (
-              <div>
+              <div className="animate-fadeIn">
                 <Landlord notify={notify} />
               </div>
             ) : (
-              <div className="max-w-[1400px] mx-auto">
+              <div className="max-w-[1400px] mx-auto animate-fadeIn">
                 {children}
               </div>
             )}
