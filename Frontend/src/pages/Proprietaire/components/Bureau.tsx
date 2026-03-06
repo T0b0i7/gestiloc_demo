@@ -956,3 +956,5 @@ export const Bureau: React.FC<DashboardProps> = ({ activeTab = 'home', notify, o
     </>
   );
 };
+
+export default Bureau;
