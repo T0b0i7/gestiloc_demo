@@ -474,22 +474,8 @@ export const Notes: React.FC<NotesProps> = ({ notify }) => {
 
   // List view component
   const ListView: React.FC = () => {
-    if (loading) {
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-          <div className="text-center">
-            <div className="relative">
-              <Loader2 className="w-16 h-16 animate-spin mx-auto mb-4" style={{ color: PRIMARY_COLOR }} />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <StickyNote size={24} className="text-gray-400" />
-              </div>
-            </div>
-            <p className="text-gray-600 font-medium">Chargement de vos notes...</p>
-          </div>
-        </div>
-      );
-    }
-
+    // Update search input to use primary color for text
+    // Removed loading state block to ensure immediate rendering as requested by user
     return (
       <div className="space-y-4">
         {/* Top button */}
@@ -951,7 +937,7 @@ export const Notes: React.FC<NotesProps> = ({ notify }) => {
                       placeholder="Rechercher une note..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-opacity-20"
+                      className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-opacity-20 text-[#70AE48]"
                       style={{ borderColor: `${PRIMARY_COLOR}80` }}
                     />
                   </div>

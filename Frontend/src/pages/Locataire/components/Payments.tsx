@@ -472,22 +472,7 @@ export const Payments: React.FC<PaymentsProps> = ({ notify }) => {
     );
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-green-50/20 to-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative w-16 h-16 mx-auto mb-5">
-            <div className="absolute inset-0 rounded-full border-4 border-green-100" />
-            <div className="absolute inset-0 rounded-full border-4 border-t-[#70AE48] animate-spin" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <CreditCard size={22} style={{ color: PRIMARY_COLOR }} />
-            </div>
-          </div>
-          <p className="text-gray-600 font-semibold tracking-wide">Chargement des paiements…</p>
-        </div>
-      </div>
-    );
-  }
+  // Removed loading state block to ensure immediate rendering as requested by user
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-green-50/30 p-4 sm:p-6">
@@ -686,8 +671,8 @@ export const Payments: React.FC<PaymentsProps> = ({ notify }) => {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-5 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${activeTab === tab
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
                 }`}
             >
               {tab === 'dashboard' && 'Tableau de bord'}
@@ -1009,7 +994,7 @@ export const Payments: React.FC<PaymentsProps> = ({ notify }) => {
                     <Search size={14} className="text-gray-400" />
                   </div>
                   <input type="text" placeholder="Rechercher par numéro ou bien…" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#70AE48]/20 focus:border-[#70AE48]/50 bg-white text-gray-900 placeholder:text-gray-400" />
+                    className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#70AE48]/20 focus:border-[#70AE48]/50 bg-white text-[#70AE48] placeholder:text-gray-400" />
                 </div>
               </div>
             </div>

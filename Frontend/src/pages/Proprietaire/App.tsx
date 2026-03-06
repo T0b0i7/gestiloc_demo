@@ -73,7 +73,10 @@ const ProprietaireApp: React.FC = () => {
 
         // Vérifier que l'utilisateur a le bon rôle
         const user = JSON.parse(userStr);
-        const isProprietaire = user.roles?.includes('proprietaire') || user.roles?.includes('landlord');
+        const roles = Array.isArray(user.roles) ? user.roles.map((r: string) => r.toLowerCase()) : [];
+        const mainRole = (user.role || '').toLowerCase();
+        const isProprietaire = roles.includes('proprietaire') || roles.includes('landlord') ||
+          mainRole === 'proprietaire' || mainRole === 'landlord';
 
         if (!isProprietaire) {
           // Rediriger vers le tableau de bord approprié en fonction du rôle

@@ -280,7 +280,7 @@ export const TenantsList: React.FC<LocatairesProps> = ({ notify }) => {
           box-sizing: border-box;
         }
         .tl-search-input::placeholder { color: #83C757; font-weight: 600; }
-        .tl-search-input:focus { box-shadow: 0 0 0 3px rgba(131,199,87,0.12); color: #1a1a1a; }
+        .tl-search-input:focus { box-shadow: 0 0 0 3px rgba(131,199,87,0.12); color: #83C757; }
 
         .tl-btn-display {
           display: inline-flex;
@@ -488,9 +488,7 @@ export const TenantsList: React.FC<LocatairesProps> = ({ notify }) => {
 
         {/* Table OR empty state */}
         <div className="tl-table-card">
-          {loading && (
-            <div className="tl-loading">Chargement des locataires...</div>
-          )}
+          {/* Removed loading indicator as requested by user */}
 
           {!loading && !error && filteredLocataires.length > 0 && (
             <table className="tl-table">

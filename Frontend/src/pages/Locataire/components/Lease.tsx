@@ -144,15 +144,7 @@ export const Lease: React.FC<LeaseProps> = ({ notify }) => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 space-y-4">
-        <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
-        <span className="text-gray-600">Chargement des informations du bail...</span>
-        <p className="text-sm text-gray-500">Veuillez patienter</p>
-      </div>
-    );
-  }
+  // Removed loading state block to ensure immediate rendering as requested by user
 
   if (error) {
     return (
@@ -422,17 +414,17 @@ export const Lease: React.FC<LeaseProps> = ({ notify }) => {
                       lease.status === 'active'
                         ? 'success'
                         : lease.status === 'terminated'
-                        ? 'error'
-                        : 'neutral'
+                          ? 'error'
+                          : 'neutral'
                     }
                   >
                     {lease.status === 'active'
                       ? 'Actif'
                       : lease.status === 'terminated'
-                      ? 'Résilié'
-                      : lease.status === 'draft'
-                      ? 'Brouillon'
-                      : 'Inconnu'}
+                        ? 'Résilié'
+                        : lease.status === 'draft'
+                          ? 'Brouillon'
+                          : 'Inconnu'}
                   </Badge>
                 </div>
               </div>

@@ -207,10 +207,7 @@ const AppContent = () => {
 
   useEffect(() => {
     console.log("AppContent mounted");
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
+    setIsLoading(false);
   }, []);
 
   if (isLoading) {

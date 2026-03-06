@@ -236,22 +236,7 @@ Cordialement`
     };
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative">
-            <Loader className="w-16 h-16 text-green-600 animate-spin mx-auto mb-4" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Home className="w-6 h-6 text-green-700 animate-pulse" />
-            </div>
-          </div>
-          <p className="text-gray-600 font-medium">Chargement de vos locations...</p>
-          <p className="text-sm text-gray-400 mt-2">Veuillez patienter</p>
-        </div>
-      </div>
-    );
-  }
+  // Removed loading state block to ensure immediate rendering as requested by user
 
   return (
     <div className="animate-fadeIn">
@@ -459,7 +444,7 @@ Cordialement`
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-[#70AE48]"
             />
             {searchQuery && (
               <button

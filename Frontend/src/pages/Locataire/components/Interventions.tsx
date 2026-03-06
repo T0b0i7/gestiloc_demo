@@ -396,16 +396,7 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
     </div>
   );
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="flex items-center gap-3 text-gray-700">
-          <Loader2 className="w-5 h-5 animate-spin" />
-          Chargement…
-        </div>
-      </div>
-    );
-  }
+  // Removed blank loading state as requested by user
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
@@ -869,7 +860,7 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
                   placeholder="Rechercher une intervention..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-opacity-20"
+                  className="w-full pl-10 pr-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-opacity-20 bg-white text-gray-900"
                   style={{ borderColor: `${PRIMARY_COLOR}80` }}
                 />
               </div>
@@ -920,18 +911,18 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
                           </td>
                           <td className="px-4 py-3 text-sm">
                             <span className={`px-2 py-1 rounded-full text-xs ${incident.priority === 'emergency' ? 'bg-red-100 text-red-800' :
-                                incident.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                                  incident.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                    'bg-green-100 text-green-800'
+                              incident.priority === 'high' ? 'bg-orange-100 text-orange-800' :
+                                incident.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-green-100 text-green-800'
                               }`}>
                               {priorityMeta[incident.priority]?.label || incident.priority}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-sm">
                             <span className={`px-2 py-1 rounded-full text-xs ${incident.status === 'open' ? 'bg-blue-100 text-blue-800' :
-                                incident.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
-                                  incident.status === 'resolved' ? 'bg-green-100 text-green-800' :
-                                    'bg-gray-100 text-gray-800'
+                              incident.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
+                                incident.status === 'resolved' ? 'bg-green-100 text-green-800' :
+                                  'bg-gray-100 text-gray-800'
                               }`}>
                               {statusLabel(incident.status)}
                             </span>

@@ -123,13 +123,13 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
     try {
       setLoading(true);
       console.log('=== DÉBUT FETCH CO-OWNERS ===');
-      
+
       const response = await api.get('/co-owners');
       console.log('📥 Réponse API complète:', response.data);
-      
+
       let coOwnersData: any[] = [];
       let invitationsData: any[] = [];
-      
+
       if (response.data?.data?.co_owners) {
         console.log('✅ Structure détectée: response.data.data');
         coOwnersData = response.data.data.co_owners;
@@ -149,21 +149,21 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
         notify('Format de réponse inattendu', 'error');
         coOwnersData = [];
       }
-      
+
       console.log(`📊 ${coOwnersData.length} co-owners trouvés:`, coOwnersData);
       console.log(`📊 ${invitationsData.length} invitations trouvées`);
-      
+
       const transformedCoOwners = coOwnersData.map((coOwner: any) => {
         console.log(`🔄 Transformation co-owner ${coOwner.id}:`, coOwner);
-        
+
         const meta = coOwner.meta || {};
-        const invitationType = coOwner.invitation_type || 
-                             (coOwner.is_professional ? 'agency' : 'co_owner');
-        
+        const invitationType = coOwner.invitation_type ||
+          (coOwner.is_professional ? 'agency' : 'co_owner');
+
         const delegations: Delegation[] = coOwner.delegations || [];
-        
+
         console.log(`✅ Délégations pour ${coOwner.id}:`, delegations.length, 'délégations');
-        
+
         return {
           id: coOwner.id,
           user_id: coOwner.user_id,
@@ -188,10 +188,10 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
           updated_at: coOwner.updated_at
         };
       });
-      
+
       console.log('✅ Co-owners transformés:', transformedCoOwners);
       setCoOwners(transformedCoOwners);
-      
+
       const transformedInvitations = invitationsData.map((inv: any) => {
         const meta = inv.meta || {};
         return {
@@ -201,24 +201,24 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
           token: inv.token || '',
           expires_at: inv.expires_at,
           created_at: inv.created_at,
-          invited_by_type: 'landlord',
-          target_type: 'co_owner',
+          invited_by_type: 'landlord' as const,
+          target_type: 'co_owner' as const,
           is_professional: meta.is_professional || inv.is_professional || false,
-          invitation_type: inv.invitation_type || 
-                         (meta.is_professional || inv.is_professional ? 'agency' : 'co_owner'),
+          invitation_type: (inv.invitation_type ||
+            (meta.is_professional || inv.is_professional ? 'agency' : 'co_owner')) as 'co_owner' | 'agency',
           meta: meta
         };
       });
-      
-      setInvitations(transformedInvitations);
-      
+
+      setInvitations(transformedInvitations as CoOwnerInvitation[]);
+
       if (transformedCoOwners.length === 0 && transformedInvitations.length === 0) {
         notify('Aucun gestionnaire ou invitation trouvé', 'info');
       } else {
         console.log(`✅ Chargement terminé: ${transformedCoOwners.length} co-owners, ${transformedInvitations.length} invitations`);
         console.log(`📊 Total délégations: ${transformedCoOwners.reduce((sum, co) => sum + (co.delegations?.length || 0), 0)}`);
       }
-      
+
     } catch (error: any) {
       console.error('❌ Erreur fetchCoOwners:', error);
       notify(`Erreur: ${error.message || 'Impossible de charger les données'}`, 'error');
@@ -394,26 +394,26 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
   };
 
   const filteredCoOwners = coOwners.filter(coOwner => {
-    const matchesSearch = 
+    const matchesSearch =
       (coOwner.first_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (coOwner.last_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (coOwner.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (coOwner.company_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (coOwner.phone?.toLowerCase() || '').includes(searchTerm.toLowerCase());
-    
+
     const matchesStatus = statusFilter === 'all' || coOwner.status === statusFilter;
     const matchesType = typeFilter === 'all' || coOwner.invitation_type === typeFilter;
-    
+
     return matchesSearch && matchesStatus && matchesType;
   });
 
   const filteredInvitations = invitations.filter(invitation => {
-    const matchesSearch = 
+    const matchesSearch =
       (invitation.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
       (invitation.name?.toLowerCase() || '').includes(searchTerm.toLowerCase());
-    
+
     const matchesType = typeFilter === 'all' || invitation.invitation_type === typeFilter;
-    
+
     return matchesSearch && matchesType;
   });
 
@@ -421,30 +421,7 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
     fetchCoOwners();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Co-propriétaires & Agences</h1>
-        </div>
-        <Card className="p-6">
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="border rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-48 animate-pulse"></div>
-                    <div className="h-3 bg-gray-200 rounded w-32 animate-pulse"></div>
-                  </div>
-                  <div className="h-6 bg-gray-200 rounded w-20 animate-pulse"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      </div>
-    );
-  }
+  // Removed loading state block to ensure immediate rendering as requested by user
 
   return (
     <div className="space-y-6">
@@ -459,7 +436,7 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
         <div className="flex gap-3">
           <Button
             variant="outline"
-            onClick={() => {}}
+            onClick={() => { }}
             className="flex items-center gap-2"
           >
             <UserPlus className="w-4 h-4" />
@@ -486,7 +463,7 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
             placeholder="Rechercher par nom, email, téléphone ou entreprise..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#70AE48] focus:border-transparent text-[#70AE48]"
           />
         </div>
         <div className="flex gap-2">
@@ -571,8 +548,8 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
         <Card className="p-12 text-center">
           <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {searchTerm || statusFilter !== 'all' || typeFilter !== 'all' 
-              ? 'Aucun gestionnaire trouvé' 
+            {searchTerm || statusFilter !== 'all' || typeFilter !== 'all'
+              ? 'Aucun gestionnaire trouvé'
               : 'Aucun gestionnaire'}
           </h3>
           <p className="text-gray-600">
@@ -593,17 +570,15 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
           {filteredCoOwners.map((coOwner) => (
             <Card key={coOwner.id} className="overflow-hidden">
               {/* En-tête */}
-              <div className={`p-6 border-b border-gray-200 ${
-                coOwner.invitation_type === 'agency' 
-                  ? 'bg-gradient-to-r from-purple-50 to-indigo-50' 
-                  : 'bg-gradient-to-r from-blue-50 to-indigo-50'
-              }`}>
+              <div className={`p-6 border-b border-gray-200 ${coOwner.invitation_type === 'agency'
+                ? 'bg-gradient-to-r from-purple-50 to-indigo-50'
+                : 'bg-gradient-to-r from-blue-50 to-indigo-50'
+                }`}>
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold ${
-                      coOwner.invitation_type === 'agency' ? 'bg-purple-600' : 'bg-blue-600'
-                    }`}>
-                      {coOwner.invitation_type === 'agency' 
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold ${coOwner.invitation_type === 'agency' ? 'bg-purple-600' : 'bg-blue-600'
+                      }`}>
+                      {coOwner.invitation_type === 'agency'
                         ? <Building2 className="w-6 h-6" />
                         : `${coOwner.first_name?.charAt(0) || ''}${coOwner.last_name?.charAt(0) || ''}`
                       }
@@ -611,7 +586,7 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="text-lg font-semibold text-gray-900">
-                          {coOwner.invitation_type === 'agency' 
+                          {coOwner.invitation_type === 'agency'
                             ? coOwner.company_name || `${coOwner.first_name} ${coOwner.last_name}`
                             : `${coOwner.first_name} ${coOwner.last_name}`
                           }
@@ -796,11 +771,11 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
                           <div className="flex flex-col">
                             <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Statut</span>
                             <span className="text-gray-900 mt-1">
-                              {coOwner.is_professional ? 
+                              {coOwner.is_professional ?
                                 <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">
                                   <CheckCircle className="w-4 h-4" />
                                   Professionnel
-                                </span> : 
+                                </span> :
                                 'Particulier'
                               }
                             </span>
@@ -882,12 +857,12 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
                         Ajouter une délégation
                       </Button>
                     </div>
-                    
+
                     {coOwner.delegations && coOwner.delegations.length > 0 ? (
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {coOwner.delegations.map((delegation) => (
-                          <div 
-                            key={delegation.id} 
+                          <div
+                            key={delegation.id}
                             className="relative bg-white rounded-2xl p-6 shadow-xl border-t-4 border-blue-500 
                                      hover:shadow-2xl transition-all duration-300 
                                      bg-gradient-to-br from-white via-blue-50/30 to-white
@@ -899,7 +874,7 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
                           >
                             {/* Effet de bordure lumineuse */}
                             <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-2xl opacity-10 blur-sm"></div>
-                            
+
                             {/* Contenu principal */}
                             <div className="relative">
                               {/* En-tête avec nom du bien et statut */}
@@ -914,11 +889,11 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
                                     </h5>
                                     <div className="flex flex-wrap items-center gap-3">
                                       <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold border-2 ${getDelegationStatusColor(delegation.status)}`}>
-                                        {delegation.status === 'active' ? 
+                                        {delegation.status === 'active' ?
                                           <div className="flex items-center gap-2">
                                             <CheckCircle className="w-4 h-4" />
                                             <span className="animate-pulse">●</span> Active
-                                          </div> : 
+                                          </div> :
                                           delegation.status === 'revoked' ? 'Révoquée' : 'Expirée'
                                         }
                                       </span>
@@ -941,7 +916,7 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
                                   </div>
                                 )}
                               </div>
-                              
+
                               {/* Informations du bien */}
                               <div className="bg-gradient-to-r from-blue-50/50 to-cyan-50/50 rounded-xl p-5 mb-6 border border-blue-100">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -958,7 +933,7 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
                                         </p>
                                       </div>
                                     </div>
-                                    
+
                                     {/* Surface */}
                                     {delegation.property?.surface && (
                                       <div className="flex items-center gap-3">
@@ -972,7 +947,7 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
                                       </div>
                                     )}
                                   </div>
-                                  
+
                                   {/* Dates */}
                                   <div className="space-y-3">
                                     <div className="flex items-center gap-3">
@@ -984,7 +959,7 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
                                         <p className="text-gray-900 font-medium">{formatDate(delegation.delegated_at)}</p>
                                       </div>
                                     </div>
-                                    
+
                                     {/* Loyer */}
                                     {delegation.property?.rent_amount && (
                                       <div className="flex items-center gap-3">
@@ -1000,7 +975,7 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
                                   </div>
                                 </div>
                               </div>
-                              
+
                               {/* Notes */}
                               {delegation.notes && (
                                 <div className="mb-6">
@@ -1015,7 +990,7 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
                                   </div>
                                 </div>
                               )}
-                              
+
                               {/* Permissions */}
                               <div>
                                 <div className="flex items-center gap-2 mb-4">
@@ -1093,7 +1068,7 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
                             En attente
                           </span>
                         </div>
-                        
+
                         <div className="flex flex-wrap gap-3 text-sm text-gray-600 mb-4">
                           <span className="inline-flex items-center gap-1">
                             <UserCheck className="w-4 h-4" />
@@ -1108,7 +1083,7 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
                             Expire le {formatDate(invitation.expires_at)}
                           </span>
                         </div>
-                        
+
                         {invitation.meta && (
                           <div className="bg-white/80 border border-yellow-100 rounded-lg p-4 mb-4">
                             <h6 className="font-medium text-gray-900 mb-2">Informations supplémentaires :</h6>
@@ -1140,7 +1115,7 @@ export const CoOwnersList: React.FC<CoOwnersListProps> = ({ notify }) => {
                             </div>
                           </div>
                         )}
-                        
+
                         <div className="flex gap-2">
                           <Button
                             variant="outline"

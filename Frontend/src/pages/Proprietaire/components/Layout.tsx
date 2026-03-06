@@ -102,155 +102,303 @@ export const Layout: React.FC<LayoutProps> = ({
     if (el) el.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // ── SVG Icons pour le menu ──
-  const SvgDashboard = () => (
-    <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#e6a817" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="12" width="4" height="8" /><rect x="10" y="7" width="4" height="13" /><rect x="17" y="3" width="4" height="17" />
-    </svg>
-  );
-  const SvgPlus = () => (
-    <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#4CAF50" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
-  const SvgHouse = () => (
-    <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#FF9800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" /><path d="M9 21V12h6v9" />
-    </svg>
-  );
-  const SvgPeople = () => (
-    <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#FF7043" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="9" cy="7" r="3" /><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" />
-      <path d="M16 3.13a4 4 0 010 7.75" /><path d="M21 21v-2a4 4 0 00-3-3.85" />
-    </svg>
-  );
-  const SvgPersonHouse = () => (
-    <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#00897b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" /><circle cx="12" cy="13" r="2.5" />
-    </svg>
-  );
-  const SvgList = () => (
-    <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#757575" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
-      <line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" />
-    </svg>
-  );
-  const SvgLock = () => (
-    <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#3949ab" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 018 0v4" />
-    </svg>
-  );
-  const SvgFileDoc = () => (
-    <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#00acc1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-      <polyline points="14 2 14 8 20 8" /><line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="15" y2="17" />
-    </svg>
-  );
-  const SvgClipboard = () => (
-    <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#757575" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="5" y="3" width="14" height="18" rx="2" />
-      <line x1="9" y1="8" x2="15" y2="8" /><line x1="9" y1="12" x2="15" y2="12" /><line x1="9" y1="16" x2="12" y2="16" />
-    </svg>
-  );
-  const SvgWarning = () => (
-    <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#e53935" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-      <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
-    </svg>
-  );
-  const SvgBellMenu = () => (
-    <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#FFC107" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 01-3.46 0" />
-    </svg>
-  );
-  const SvgReceipt = () => (
-    <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#1976D2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="4 7 4 4 20 4 20 7" /><line x1="9" y1="20" x2="15" y2="20" /><line x1="12" y1="4" x2="12" y2="20" />
-    </svg>
-  );
-  const SvgFolder = () => (
-    <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#795548" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
-    </svg>
-  );
-  const SvgWrench = () => (
-    <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#9e6b2e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
-    </svg>
-  );
-  const SvgGrid = () => (
-    <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#4CAF50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
-      <rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" />
-    </svg>
-  );
-  const SvgGear = () => (
-    <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#757575" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
-    </svg>
-  );
+  // ── Icons (SVG harmonisés) ────────────────────────────────
+  const ic = (c: string) => ({ stroke: c, fill: "none", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const });
 
-  // ── Helper for sidebar PNG icons ──
-  const SideIcon = ({ src }: { src: string }) => (
-    <img src={`/Ressource_gestiloc/${src}`} alt="" style={{ width: 20, height: 20, objectFit: 'contain' }} />
-  );
+  const Icons = {
+    Dashboard: ({ c }: { c: string }) => (
+      <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke={c || "#e6a817"} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="12" width="4" height="8" /><rect x="10" y="7" width="4" height="13" /><rect x="17" y="3" width="4" height="17" />
+      </svg>
+    ),
+    Plus: ({ c }: { c: string }) => (
+      <svg viewBox="0 0 24 24" width={16} height={16} {...ic(c || "#4CAF50")}>
+        <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+    ),
+    House: ({ c }: { c: string }) => (
+      <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#FF9800")}>
+        <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" /><path d="M9 21V12h6v9" />
+      </svg>
+    ),
+    People: ({ c }: { c: string }) => (
+      <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#FF7043")}>
+        <circle cx="9" cy="7" r="3" /><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" />
+        <path d="M16 3.13a4 4 0 010 7.75" /><path d="M21 21v-2a4 4 0 00-3-3.85" />
+      </svg>
+    ),
+    PersonHouse: ({ c }: { c: string }) => (
+      <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#00897b")}>
+        <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" /><circle cx="12" cy="13" r="2.5" />
+      </svg>
+    ),
+    List: ({ c }: { c: string }) => (
+      <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#757575")}>
+        <line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" />
+        <line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" />
+      </svg>
+    ),
+    Lock: ({ c }: { c: string }) => (
+      <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#3949ab")}>
+        <rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 018 0v4" />
+      </svg>
+    ),
+    File: ({ c }: { c: string }) => (
+      <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#00acc1")}>
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14 2 14 8 20 8" /><line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="15" y2="17" />
+      </svg>
+    ),
+    Clipboard: ({ c }: { c: string }) => (
+      <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#757575")}>
+        <rect x="5" y="3" width="14" height="18" rx="2" />
+        <line x1="9" y1="8" x2="15" y2="8" /><line x1="9" y1="12" x2="15" y2="12" /><line x1="9" y1="16" x2="12" y2="16" />
+      </svg>
+    ),
+    Warning: ({ c }: { c: string }) => (
+      <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke={c || "#e53935"} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+        <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+      </svg>
+    ),
+    Bell: ({ c }: { c: string }) => (
+      <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#FFC107")}>
+        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 01-3.46 0" />
+      </svg>
+    ),
+    Receipt: ({ c }: { c: string }) => (
+      <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#1976D2")}>
+        <polyline points="4 7 4 4 20 4 20 7" /><line x1="9" y1="20" x2="15" y2="20" /><line x1="12" y1="4" x2="12" y2="20" />
+      </svg>
+    ),
+    Folder: ({ c }: { c: string }) => (
+      <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#795548")}>
+        <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
+      </svg>
+    ),
+    Wrench: ({ c }: { c: string }) => (
+      <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#9e6b2e")}>
+        <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
+      </svg>
+    ),
+    Grid: ({ c }: { c: string }) => (
+      <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#4CAF50")}>
+        <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+        <rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" />
+      </svg>
+    ),
+    Settings: ({ c }: { c: string }) => (
+      <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#757575")}>
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
+      </svg>
+    ),
+    LogOut: ({ c }: { c: string }) => (
+      <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#aaa")}>
+        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+        <polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
+      </svg>
+    ),
+    Chevron: ({ open, c }: { open?: boolean, c?: string }) => (
+      <svg viewBox="0 0 24 24" width={14} height={14} fill="none" stroke={c || "#bbb"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+        style={{ flexShrink: 0, marginLeft: "auto", transition: "transform 0.25s", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
+    ),
+  };
 
-  // ── Menu sections ──
+  const iconColors: Record<string, string> = {
+    Dashboard: "#e6a817",
+    Plus: "#4CAF50",
+    House: "#FF9800",
+    People: "#FF7043",
+    PersonHouse: "#00897b",
+    List: "#757575",
+    Lock: "#3949ab",
+    File: "#00acc1",
+    Clipboard: "#757575",
+    Warning: "#e53935",
+    Bell: "#FFC107",
+    Receipt: "#1976D2",
+    Folder: "#795548",
+    Wrench: "#9e6b2e",
+    Grid: "#4CAF50",
+    Settings: "#757575",
+    LogOut: "#aaa",
+  };
+
+  const ACTIVE_BG = "linear-gradient(90deg, rgba(255, 213, 124, 0.87) 0%, #FFFFFF 100%)";
+  const ACTIVE_BAR = "#FFB300";
+
+  // ── Menu structure — liste complète du profil Propriétaire ──
   const menuSections = [
     {
-      label: 'Menu Principal',
+      label: "Menu Principal",
       items: [
-        { id: 'dashboard', label: 'Bureau', icon: <SideIcon src="tb_locataire.png" /> },
+        { id: "dashboard", label: "Bureau", icon: "Dashboard" as keyof typeof Icons, submenu: [] },
       ],
     },
     {
-      label: 'Gestion des biens',
+      label: "Gestion des biens",
       items: [
-        { id: 'ajouter-bien', label: 'Ajouter un bien', icon: <SideIcon src="Plus Math.png" /> },
-        { id: 'mes-biens', label: 'Mes biens', icon: <SideIcon src="Home.png" /> },
+        {
+          id: "biens", label: "Mes biens", icon: "House" as keyof typeof Icons,
+          submenu: [
+            { id: "ajouter-bien", label: "Ajouter un bien", icon: "Plus" as keyof typeof Icons },
+            { id: "mes-biens", label: "Mes biens", icon: "House" as keyof typeof Icons },
+          ],
+        },
       ],
     },
     {
-      label: 'Gestion Locative',
+      label: "Gestion Locative",
       items: [
-        { id: 'nouvelle-location', label: 'Nouvelle location', icon: <SideIcon src="Neighborhood.png" /> },
-        { id: 'ajouter-locataire', label: 'Ajouter un locataire', icon: <SideIcon src="Person at Home.png" /> },
-        { id: 'locataires', label: 'Liste des locataires', icon: <SideIcon src="Edit Property.png" /> },
-        { id: 'paiements', label: 'Gestion des paiements', icon: <SideIcon src="Dollar Bag.png" /> },
+        { id: "nouvelle-location", label: "Nouvelle location", icon: "People" as keyof typeof Icons, submenu: [] },
+        { id: "ajouter-locataire", label: "Ajouter un locataire", icon: "PersonHouse" as keyof typeof Icons, submenu: [] },
+        { id: "locataires", label: "Liste des locataires", icon: "List" as keyof typeof Icons, submenu: [] },
+        { id: "paiements", label: "Gestion des paiements", icon: "Lock" as keyof typeof Icons, submenu: [] },
       ],
     },
     {
-      label: 'Documents',
+      label: "Documents",
       items: [
-        { id: 'baux', label: 'Contrats de bails', icon: <SideIcon src="Profile.png" /> },
-        { id: 'etats-lieux', label: 'Etats de lieux', icon: <SideIcon src="US Capitol.png" /> },
-        { id: 'avis-echeance', label: "Avis d'échéance", icon: <SideIcon src="Error.png" /> },
-        { id: 'quittances', label: 'Quittances de loyers', icon: <SideIcon src="Bell.png" /> },
-        { id: 'factures', label: 'Factures et documents divers', icon: <SideIcon src="Signing A Document.png" /> },
-        { id: 'archives', label: 'Archivage de documents', icon: <SideIcon src="document.png" /> },
+        {
+          id: "documents", label: "Documents", icon: "File" as keyof typeof Icons,
+          submenu: [
+            { id: "baux", label: "Contrats de bails", icon: "File" as keyof typeof Icons },
+            { id: "etats-lieux", label: "Etats de lieux", icon: "Clipboard" as keyof typeof Icons },
+            { id: "avis-echeance", label: "Avis d'échéance", icon: "Warning" as keyof typeof Icons },
+            { id: "quittances", label: "Quittances de loyers", icon: "Bell" as keyof typeof Icons },
+            { id: "factures", label: "Factures et documents divers", icon: "Receipt" as keyof typeof Icons },
+            { id: "archives", label: "Archivage de documents", icon: "Folder" as keyof typeof Icons },
+          ],
+        },
       ],
     },
     {
-      label: 'Réparations et Travaux',
+      label: "Réparations et Travaux",
       items: [
-        { id: 'incidents', label: 'Répartitions et travaux', icon: <SideIcon src="Tools.png" /> },
+        { id: "incidents", label: "Répartitions et travaux", icon: "Wrench" as keyof typeof Icons, submenu: [] },
       ],
     },
     {
-      label: 'Comptabilité et Statistiques',
+      label: "Comptabilité et Statistiques",
       items: [
-        { id: 'comptabilite', label: 'Comptabilité et travaux', icon: <SideIcon src="Accounting.png" /> },
+        { id: "comptabilite", label: "Comptabilité et travaux", icon: "Grid" as keyof typeof Icons, submenu: [] },
       ],
     },
     {
-      label: 'Configuration',
+      label: "Configuration",
       items: [
-        { id: 'parametres', label: 'Paramètres', icon: <SideIcon src="parametre_loc.png" /> },
-        { id: 'logout', label: 'Déconnexion', icon: <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="#e53935" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg> },
+        { id: "parametres", label: "Paramètres", icon: "Settings" as keyof typeof Icons, submenu: [] },
+        { id: "logout", label: "Déconnexion", icon: "LogOut" as keyof typeof Icons, submenu: [], isLogout: true },
       ],
     },
   ];
+
+  const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
+  const toggleMenu = (id: string) =>
+    setExpandedMenus(prev => prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]);
+
+  const NavItem = ({ item }: { item: any }) => {
+    const [hovered, setHovered] = useState(false);
+    const [hoveredSub, setHoveredSub] = useState<string | null>(null);
+
+    const hasSubmenu = item.submenu.length > 0;
+    const isActive = activeTab === item.id || item.submenu.some((s: any) => s.id === activeTab);
+    const isExpanded = expandedMenus.includes(item.id) || isActive;
+    const Ico = Icons[item.icon as keyof typeof Icons];
+
+    const iconC = item.isLogout ? (hovered ? "#e53935" : "#aaa") : isActive ? "#4CAF50" : iconColors[item.icon] || "#888";
+    const textC = item.isLogout ? (hovered ? "#e53935" : "#888") : isActive ? "#4CAF50" : "#333";
+    const bg = item.isLogout
+      ? (hovered ? "#fff5f5" : "transparent")
+      : isActive && !hasSubmenu ? ACTIVE_BG : hovered ? "#f6fdf6" : "transparent";
+
+    return (
+      <div className="w-full">
+        <button
+          onClick={() => {
+            if (hasSubmenu) {
+              toggleMenu(item.id);
+            } else if (item.isLogout) {
+              onLogout();
+            } else {
+              handleNavigate(item.id as Tab);
+            }
+          }}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          className="relative flex items-center gap-3 px-4 py-2.5 w-full transition-all duration-150"
+          style={{
+            background: bg,
+            borderRadius: 10,
+            border: "none",
+            cursor: "pointer",
+            textAlign: "left",
+            fontSize: "0.88rem",
+            fontWeight: isActive ? 700 : 500,
+            color: textC,
+          }}
+        >
+          {isActive && !hasSubmenu && (
+            <span style={{
+              position: "absolute", left: 0, top: "18%", bottom: "18%",
+              width: 3, borderRadius: 99, background: ACTIVE_BAR,
+            }} />
+          )}
+          <span style={{ width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            {Ico ? <Ico c={iconC} /> : null}
+          </span>
+          <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{item.label}</span>
+          {hasSubmenu && <Icons.Chevron open={isExpanded} />}
+        </button>
+
+        {/* Sous-menu */}
+        {hasSubmenu && isExpanded && (
+          <div className="ml-6 pl-3 border-l-2 border-slate-100 dark:border-slate-800 mt-1 mb-2 space-y-1">
+            {item.submenu.map((sub: any) => {
+              const isSubActive = activeTab === sub.id;
+              const SubIco = Icons[sub.icon as keyof typeof Icons];
+              return (
+                <button
+                  key={sub.id}
+                  onClick={() => handleNavigate(sub.id as Tab)}
+                  onMouseEnter={() => setHoveredSub(sub.id)}
+                  onMouseLeave={() => setHoveredSub(null)}
+                  className="relative flex items-center gap-3 px-3 py-2 w-full transition-all duration-150"
+                  style={{
+                    fontSize: "0.82rem",
+                    fontWeight: isSubActive ? 700 : 500,
+                    color: isSubActive ? "#4CAF50" : hoveredSub === sub.id ? "#4CAF50" : "#444",
+                    background: isSubActive
+                      ? ACTIVE_BG
+                      : hoveredSub === sub.id ? "#f6fdf6" : "transparent",
+                    borderRadius: 8,
+                    border: "none",
+                    textAlign: "left",
+                    cursor: "pointer",
+                  }}
+                >
+                  {isSubActive && (
+                    <span style={{
+                      position: "absolute", left: 0, top: "15%", bottom: "15%",
+                      width: 2, borderRadius: 99, background: ACTIVE_BAR,
+                    }} />
+                  )}
+                  <span style={{ width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    {SubIco ? <SubIco c={isSubActive ? "#4CAF50" : iconColors[sub.icon] || "#888"} /> : null}
+                  </span>
+                  <span className="overflow-hidden text-ellipsis whitespace-nowrap">{sub.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
 
   const userInitials = user
     ? (`${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}`.toUpperCase() ||
@@ -408,15 +556,15 @@ export const Layout: React.FC<LayoutProps> = ({
         </div>
 
         {/* Menu sections */}
-        <nav className="flex-1 overflow-y-auto py-3">
+        <nav className="flex-1 overflow-y-auto py-3 hide-scrollbar">
           {menuSections.map((section, si) => (
             <div key={section.label} className={`menu-section-enter animate-delay-${si * 100}`}>
               {/* Section label */}
               <div style={{
-                fontSize: '0.67rem',
+                fontSize: '0.61rem',
                 fontWeight: 700,
                 letterSpacing: '0.10em',
-                color: '#999',
+                color: '#c0c0c0',
                 textTransform: 'uppercase',
                 padding: si === 0 ? '0.2rem 1.3rem 0.35rem' : '0.9rem 1.3rem 0.35rem',
                 whiteSpace: 'nowrap',
@@ -425,49 +573,31 @@ export const Layout: React.FC<LayoutProps> = ({
               }}>
                 {section.label}
               </div>
-              {/* Section items */}
-              {section.items.map((item, ii) => {
-                const isActive = activeTab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => item.id === 'logout' ? onLogout() : handleNavigate(item.id as Tab)}
-                    className={`menu-item menu-item-enter animate-delay-${(si * 100) + (ii * 50)}`}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.7rem',
-                      padding: '0.55rem 1.3rem',
-                      fontSize: '0.88rem',
-                      fontWeight: isActive ? 700 : 500,
-                      color: isActive ? '#4CAF50' : '#2d2d2d',
-                      cursor: 'pointer',
-                      background: isActive ? '#f5f0e8' : 'transparent',
-                      borderRadius: isActive ? '8px' : '0',
-                      margin: isActive ? '0 0.6rem' : '0',
-                      border: 'none',
-                      width: isActive ? 'calc(100% - 1.2rem)' : '100%',
-                      textAlign: 'left',
-                      transition: 'background 0.15s',
-                      fontFamily: "'Manrope', sans-serif",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isActive) e.currentTarget.style.background = '#f4faf4';
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isActive) e.currentTarget.style.background = 'transparent';
-                    }}
-                  >
-                    <span style={{ width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      {item.icon}
-                    </span>
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
-                  </button>
-                );
-              })}
+              {/* Section items using NavItem component */}
+              <div className="space-y-0.5">
+                {section.items.map((item) => (
+                  <NavItem key={item.id} item={item} />
+                ))}
+              </div>
             </div>
           ))}
         </nav>
+
+        {/* Profil Section at bottom */}
+        <div style={{ borderTop: "1px solid #f5f5f5", padding: "0.65rem 0.8rem" }}>
+          <div
+            onClick={() => handlePageChange('profil')}
+            className="group flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-all duration-200 hover:bg-green-50/50"
+          >
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#4CAF50] to-[#2e7d32] flex items-center justify-center text-white font-extrabold text-xs shadow-md shadow-green-500/20 group-hover:scale-105 transition-transform flex-shrink-0">
+              {userInitials}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-[0.83rem] text-gray-900 truncate">{userLabel}</p>
+              <p className="text-[0.65rem] text-gray-400 font-medium">Propriétaire Premium</p>
+            </div>
+          </div>
+        </div>
 
 
       </aside>

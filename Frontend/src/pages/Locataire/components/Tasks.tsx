@@ -430,21 +430,7 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative">
-            <Loader2 className="w-16 h-16 animate-spin mx-auto mb-4" style={{ color: PRIMARY_COLOR }} />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <CheckSquare size={24} className="text-gray-400" />
-            </div>
-          </div>
-          <p className="text-gray-600 font-medium">Chargement de vos tâches...</p>
-        </div>
-      </div>
-    );
-  }
+  // Removed loading indicator as requested by user
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6">
@@ -608,8 +594,8 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
                           key={p}
                           onClick={() => setNewTask({ ...newTask, priority: p })}
                           className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all ${newTask.priority === p
-                              ? 'text-white shadow-md'
-                              : `${priorityStyle.bg} ${priorityStyle.text} hover:opacity-80`
+                            ? 'text-white shadow-md'
+                            : `${priorityStyle.bg} ${priorityStyle.text} hover:opacity-80`
                             }`}
                           style={newTask.priority === p ? { backgroundColor: PRIMARY_COLOR } : {}}
                         >
@@ -747,8 +733,8 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
                 <button
                   onClick={() => setFilterStatus('all')}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${filterStatus === 'all'
-                      ? 'text-white border-transparent'
-                      : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200'
+                    ? 'text-white border-transparent'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200'
                     }`}
                   style={filterStatus === 'all' ? { backgroundColor: PRIMARY_COLOR } : {}}
                 >
@@ -757,8 +743,8 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
                 <button
                   onClick={() => setFilterStatus('active')}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${filterStatus === 'active'
-                      ? 'text-white border-transparent'
-                      : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200'
+                    ? 'text-white border-transparent'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200'
                     }`}
                   style={filterStatus === 'active' ? { backgroundColor: PRIMARY_COLOR } : {}}
                 >
@@ -767,8 +753,8 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
                 <button
                   onClick={() => setFilterStatus('completed')}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${filterStatus === 'completed'
-                      ? 'text-white border-transparent'
-                      : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200'
+                    ? 'text-white border-transparent'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200'
                     }`}
                   style={filterStatus === 'completed' ? { backgroundColor: PRIMARY_COLOR } : {}}
                 >
@@ -823,7 +809,7 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
                   placeholder="Rechercher une tâche..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-opacity-20"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-opacity-20 text-[#70AE48]"
                   style={{ borderColor: `${PRIMARY_COLOR}80` }}
                 />
               </div>
@@ -902,8 +888,8 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
                               {/* Date d'échéance */}
                               {task.due_date && (
                                 <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${isTaskOverdue
-                                    ? 'bg-red-100 text-red-700'
-                                    : 'bg-gray-100 text-gray-700'
+                                  ? 'bg-red-100 text-red-700'
+                                  : 'bg-gray-100 text-gray-700'
                                   }`}>
                                   <Calendar size={12} />
                                   <span>Échéance: {formatDate(task.due_date)}</span>

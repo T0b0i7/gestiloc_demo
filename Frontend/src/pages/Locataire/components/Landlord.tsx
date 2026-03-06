@@ -276,22 +276,7 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center animate-pulse">
-          <div className="relative">
-            <Loader className="w-16 h-16 text-[#529D21] animate-spin mx-auto mb-4" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-8 h-8 bg-white rounded-full"></div>
-            </div>
-          </div>
-          <p className="text-gray-600 font-medium">Chargement des informations...</p>
-          <p className="text-sm text-gray-400 mt-2">Veuillez patienter</p>
-        </div>
-      </div>
-    );
-  }
+  // Removed blank loading state as requested by user
 
   if (error && allPeople.length === 0) {
     return (
@@ -565,7 +550,7 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
                 placeholder="Rechercher par nom, email, téléphone ou entreprise..."
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#529D21]/20 focus:border-[#529D21] transition-all"
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#529D21]/20 focus:border-[#529D21] transition-all bg-white text-gray-900"
               />
               {searchTerm && (
                 <button onClick={() => setSearchTerm('')} className="absolute inset-y-0 right-0 pr-3 flex items-center">

@@ -910,21 +910,7 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
 
   const paginatedDocuments = filteredDocuments.slice(0, parseInt(itemsPerPage));
 
-  if (loading && activeTab === 'documents' && activeFilter !== 'templates') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative">
-            <Loader2 className="w-16 h-16 animate-spin mx-auto mb-4" style={{ color: PRIMARY_COLOR }} />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <FileText size={24} className="text-gray-400" />
-            </div>
-          </div>
-          <p className="text-gray-600 font-medium">Chargement de vos documents...</p>
-        </div>
-      </div>
-    );
-  }
+  // Removed blank loading state as requested by user
 
   return (
     <>
@@ -1223,8 +1209,8 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
           <button
             onClick={() => setActiveTab('documents')}
             className={`flex-1 py-3 px-6 text-sm font-medium rounded-l-lg transition-colors ${activeTab === 'documents'
-                ? 'bg-[#FFB74D] text-white'
-                : 'bg-[#FFF3E0] text-gray-700 hover:bg-[#FFE0B2]'
+              ? 'bg-[#FFB74D] text-white'
+              : 'bg-[#FFF3E0] text-gray-700 hover:bg-[#FFE0B2]'
               }`}
           >
             MES DOCUMENTS
@@ -1232,8 +1218,8 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
           <button
             onClick={() => setActiveTab('dossier')}
             className={`flex-1 py-3 px-6 text-sm font-medium rounded-r-lg transition-colors ${activeTab === 'dossier'
-                ? 'bg-[#FFB74D] text-white'
-                : 'bg-[#FFF3E0] text-gray-700 hover:bg-[#FFE0B2]'
+              ? 'bg-[#FFB74D] text-white'
+              : 'bg-[#FFF3E0] text-gray-700 hover:bg-[#FFE0B2]'
               }`}
           >
             MON DOSSIER
@@ -1823,7 +1809,7 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
                     placeholder="Rechercher un document..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-opacity-20 bg-white text-gray-900"
+                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-opacity-20 bg-white text-[#70AE48]"
                     style={{ borderColor: `${PRIMARY_COLOR}80` }}
                   />
                 </div>
