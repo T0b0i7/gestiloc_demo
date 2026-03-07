@@ -104,7 +104,7 @@ const NavIcons: Record<string, React.FC<{ active?: boolean }>> = {
       <rect x="8" y="8" width="12" height="1.5" rx="0.75" fill="#64748b" />
       <rect x="8" y="12" width="9" height="1.5" rx="0.75" fill="#64748b" />
       <rect x="8" y="16" width="6" height="1.5" rx="0.75" fill="#64748b" />
-      <rect x="5" y="21" width="18" height="4" rx="0 0 2 2" fill="#529D21" opacity="0.3" />
+      <rect x="5" y="21" width="18" height="4" rx="2" fill="#529D21" opacity="0.3" />
     </svg>
   ),
   documents: () => (
