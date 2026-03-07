@@ -10,6 +10,7 @@ import {
   CreditCard,
   Building,
   Zap,
+  Handshake,
 } from "lucide-react";
 import { Card } from "../../Proprietaire/components/ui/Card";
 import { Button } from "../../Proprietaire/components/ui/Button";
