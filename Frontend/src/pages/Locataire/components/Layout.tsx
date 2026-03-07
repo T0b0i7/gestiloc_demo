@@ -212,6 +212,14 @@ export const Layout: React.FC<LayoutProps> = ({
     fetchNotifications();
   }, []);
 
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+  }, [isMobileMenuOpen]);
+
   const handleLogout = async () => {
     if (isLoggingOut) return;
     setIsLoggingOut(true);
@@ -369,7 +377,7 @@ export const Layout: React.FC<LayoutProps> = ({
         onMouseLeave={() => setHovered(false)}
         className="w-full relative flex items-center gap-3 px-6 py-4 transition-all duration-300 group"
         style={{
-          background: isActive ? 'linear-gradient(90deg, rgba(255, 235, 180, 0.4) 0%, rgba(255, 255, 255, 0) 100%)' : 'transparent',
+          background: isActive ? 'linear-gradient(90deg, rgba(255, 213, 124, 0.87) 0%, #FFFFFF 100%)' : 'transparent',
           border: 'none',
           cursor: 'pointer',
           borderRadius: '12px',
@@ -447,7 +455,15 @@ export const Layout: React.FC<LayoutProps> = ({
           >
             <Menu size={24} className="text-white" />
           </button>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Gestiloc</h1>
+          <span style={{
+            fontFamily: "'Merriweather', serif",
+            fontWeight: 900,
+            fontSize: '1.85rem',
+            color: '#fff',
+            letterSpacing: '-0.01em',
+          }}>
+            Gestiloc
+          </span>
         </div>
 
         {/* Right: action buttons with pill style as shown in the image */}
@@ -498,7 +514,7 @@ export const Layout: React.FC<LayoutProps> = ({
             }}
             aria-label="Mon compte"
           >
-            <UserIcon size={18} className="text-gray-900" />
+            <img src="/Ressource_gestiloc/customer.png" alt="Mon compte" className="w-6 h-6 rounded-full object-cover" />
             <span className="hidden sm:inline">Mon compte</span>
           </button>
         </div>
@@ -507,7 +523,7 @@ export const Layout: React.FC<LayoutProps> = ({
       {/* ── MOBILE BACKDROP ── */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-[90] lg:hidden"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[90] lg:hidden animate-in fade-in duration-300"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}

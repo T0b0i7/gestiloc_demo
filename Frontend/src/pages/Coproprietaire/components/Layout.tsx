@@ -10,6 +10,8 @@ import {
   Handshake,
   TrendingUp,
   AlertTriangle,
+  ChevronRight,
+  Building,
 } from 'lucide-react';
 import { Tab, ToastMessage } from '../types';
 import { Toast } from './ui/Toast';
@@ -37,7 +39,7 @@ interface LayoutProps {
   toggleTheme: () => void;
 }
 
-// ─── COMPOSANTS DU NOUVEAU DESIGN HARMONISÉ ───────────────────
+// ─── COMPOSANTS ET CONSTANTES DU DESIGN HARMONISÉ ───────────────────
 const ic = (c: string) => ({ stroke: c, fill: "none", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const });
 
 const Icons = {
@@ -68,7 +70,7 @@ const Icons = {
     </svg>
   ),
   UserPlus: ({ c }: { c: string }) => (
-    <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#2196F3")}>
+    <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#8CCC63")}>
       <path d="M16 21v-2a4 4 0 00-3-3.87" /><path d="M8 21v-2a4 4 0 014-4h1" /><circle cx="12" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" />
     </svg>
   ),
@@ -130,9 +132,9 @@ const iconColors: Record<string, string> = {
   PersonHouse: "#00897b",
   Handshake: "#4CAF50",
   Eye: "#FF9800",
-  UserPlus: "#2196F3",
+  UserPlus: "#8CCC63",
   House: "#FF9800",
-  File: "#00acc1",
+  File: "#529D21",
   Clipboard: "#7b1fa2",
   Wallet: "#ffa726",
   TrendingUp: "#4CAF50",
@@ -140,6 +142,10 @@ const iconColors: Record<string, string> = {
   Settings: "#607d8b",
   LogOut: "#aaa",
 };
+
+const ACTIVE_BG = 'linear-gradient(90deg, rgba(140, 204, 99, 0.1) 0%, rgba(255, 255, 255, 0) 100%)';
+const TEXT_GREEN = "#529D21";
+const GRADIENT_GREEN = "linear-gradient(94.5deg, #8CCC63 5.47%, rgba(82, 157, 33, 0.87) 91.93%)";
 
 const menuSections = [
   {
@@ -188,6 +194,157 @@ const menuSections = [
   },
 ];
 
+// ─── NAV ITEM COMPONENT (HORS LAYOUT POUR LA STABILITÉ) ────────────
+const NavItem: React.FC<{
+  item: any,
+  activeTab: Tab,
+  onNavigate: (tab: Tab) => void,
+  onLogout: () => void,
+  isExpanded: boolean,
+  toggleMenu: (id: string) => void
+}> = ({ item, activeTab, onNavigate, onLogout, isExpanded, toggleMenu }) => {
+  const [hovered, setHovered] = useState(false);
+  const [hoveredSub, setHoveredSub] = useState<string | null>(null);
+
+  const hasSubmenu = item.submenu && item.submenu.length > 0;
+  const isSubActive = (subId: string) => activeTab === subId;
+  const isActive = activeTab === item.id || (item.submenu?.some((s: any) => s.id === activeTab));
+  const Ico = Icons[item.icon as keyof typeof Icons];
+
+  return (
+    <div className="w-full">
+      <button
+        onClick={() => {
+          if (hasSubmenu) {
+            toggleMenu(item.id);
+          } else if (item.isLogout) {
+            onLogout();
+          } else {
+            onNavigate(item.id as Tab);
+          }
+        }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        className="w-full relative flex items-center gap-3 px-6 py-3 transition-all duration-300 group"
+        style={{
+          background: isActive && !hasSubmenu ? 'linear-gradient(90deg, rgba(255, 213, 124, 0.87) 0%, #FFFFFF 100%)' : 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          borderRadius: '12px',
+          marginBottom: '2px'
+        }}
+      >
+        {isActive && !hasSubmenu && (
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[5px] h-[30px] bg-[#FFB300] rounded-r-full shadow-[0px_0px_10px_rgba(255,179,0,0.4)]" />
+        )}
+
+        <div className={`transition-all duration-300 ${isActive || hovered ? 'scale-110' : 'scale-100 opacity-60'}`}>
+          {Ico ? <Ico c={item.isLogout ? (hovered ? "#e53935" : "#aaa") : isActive ? TEXT_GREEN : iconColors[item.icon] || "#888"} /> : null}
+        </div>
+
+        <span className={`text-[0.9rem] font-bold whitespace-nowrap transition-colors duration-300 ${isActive || hovered ? `text-[${TEXT_GREEN}]` : 'text-gray-500'}`} style={{ color: (isActive || hovered) && !item.isLogout ? TEXT_GREEN : undefined }}>
+          {item.label}
+        </span>
+
+        {hasSubmenu ? (
+          <div className="ml-auto">
+            <Icons.Chevron open={isExpanded} c={isActive ? TEXT_GREEN : "#bbb"} />
+          </div>
+        ) : isActive && (
+          <div className="ml-auto">
+            <ChevronRight size={14} className="text-[#529D21]" />
+          </div>
+        )}
+      </button>
+
+      {hasSubmenu && isExpanded && (
+        <div className="ml-10 pl-4 border-l-2 border-slate-100 mt-1 mb-2 space-y-1">
+          {item.submenu.map((sub: any) => {
+            const active = isSubActive(sub.id);
+            const SubIco = Icons[sub.icon as keyof typeof Icons];
+            return (
+              <button
+                key={sub.id}
+                onClick={() => onNavigate(sub.id as Tab)}
+                onMouseEnter={() => setHoveredSub(sub.id)}
+                onMouseLeave={() => setHoveredSub(null)}
+                className="w-full relative flex items-center gap-3 px-3 py-2 transition-all duration-300"
+                style={{
+                  fontSize: "0.85rem",
+                  fontWeight: active ? 700 : 500,
+                  color: active ? TEXT_GREEN : hoveredSub === sub.id ? TEXT_GREEN : "#666",
+                  background: active ? 'linear-gradient(90deg, rgba(255, 213, 124, 0.4) 0%, #FFFFFF 100%)' : 'transparent',
+                  borderRadius: 10,
+                  textAlign: "left"
+                }}
+              >
+                {active && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[18px] bg-[#FFB300] rounded-r-full" />
+                )}
+                <span className="scale-90 transition-opacity opacity-70 group-hover:opacity-100">
+                  {SubIco ? <SubIco c={active ? TEXT_GREEN : (hoveredSub === sub.id ? TEXT_GREEN : "#aaa")} /> : null}
+                </span>
+                <span className="truncate">{sub.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── SIDEBAR COMPONENT (HORS LAYOUT POUR LA STABILITÉ) ────────────
+const SidebarContent: React.FC<{
+  activeTab: Tab,
+  onNavigate: (tab: Tab) => void,
+  onLogout: () => void,
+  expandedMenus: string[],
+  toggleMenu: (id: string) => void
+}> = ({ activeTab, onNavigate, onLogout, expandedMenus, toggleMenu }) => (
+  <div className="flex flex-col h-full overflow-hidden bg-white">
+    <div className="flex-1 overflow-y-auto py-6 px-3 sidebar-scroll scrollbar-hide">
+      <style>{`
+        .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 10px; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
+      {menuSections.map((section) => (
+        <div key={section.label} className="mb-4">
+          <div style={{
+            fontSize: '0.62rem',
+            fontWeight: 800,
+            letterSpacing: '0.12em',
+            color: '#BDBDBD',
+            padding: '1.2rem 1.4rem 0.6rem',
+            textAlign: 'left',
+            fontFamily: "'Merriweather', serif",
+            lineHeight: '100%',
+            verticalAlign: 'middle',
+            textTransform: 'uppercase'
+          }}>
+            {section.label}
+          </div>
+          <div className="space-y-0.5">
+            {section.items.map((item) => (
+              <NavItem
+                key={item.id}
+                item={item}
+                activeTab={activeTab}
+                onNavigate={onNavigate}
+                onLogout={onLogout}
+                isExpanded={expandedMenus.includes(item.id) || activeTab === item.id || (item.submenu?.some((s: any) => s.id === activeTab))}
+                toggleMenu={toggleMenu}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 export const Layout: React.FC<LayoutProps> = ({
   children,
   activeTab,
@@ -213,179 +370,28 @@ export const Layout: React.FC<LayoutProps> = ({
     }
   }, []);
 
-  const ownerName = user
-    ? user.first_name || user.last_name
-      ? `${user.first_name || ''} ${user.last_name || ''}`.trim()
-      : user.email
-    : 'Co-propriétaire';
-
-  const ownerInitials = user
-    ? (`${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}`.toUpperCase() ||
-      user.email?.[0]?.toUpperCase() ||
-      'C')
-    : 'C';
-
   const handleNavigate = (tab: Tab) => {
     onNavigate(tab);
     setIsMobileMenuOpen(false);
-    const el = document.getElementById('app-scroll-container');
-    if (el) el.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const toggleMenu = (id: string) =>
     setExpandedMenus(prev => prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]);
 
-  const ACTIVE_BG = "linear-gradient(90deg, rgba(255, 213, 124, 0.45) 0%, rgba(255, 255, 255, 0) 100%)";
-  const ACTIVE_BAR = "#FFB300";
-
-  const NavItem = ({ item }: { item: any }) => {
-    const [hovered, setHovered] = useState(false);
-    const hasSubmenu = item.submenu && item.submenu.length > 0;
-    const isActive = activeTab === item.id || (item.submenu && item.submenu.some((s: any) => s.id === activeTab));
-    const isExpanded = expandedMenus.includes(item.id) || isActive;
-    const Ico = Icons[item.icon as keyof typeof Icons];
-
-    const iconC = item.isLogout ? (hovered ? "#e53935" : "#aaa") : isActive ? "#4CAF50" : iconColors[item.icon as keyof typeof iconColors] || "#888";
-    const textC = item.isLogout ? (hovered ? "#e53935" : "#666") : isActive ? "#4CAF50" : "#444";
-    const bg = item.isLogout
-      ? (hovered ? "#fff5f5" : "transparent")
-      : isActive && !hasSubmenu ? ACTIVE_BG : hovered ? "#f6fdf6" : "transparent";
-
-    return (
-      <div className="w-full">
-        <button
-          onClick={() => {
-            if (hasSubmenu) {
-              toggleMenu(item.id);
-            } else if (item.isLogout) {
-              onLogout();
-            } else {
-              handleNavigate(item.id as Tab);
-            }
-          }}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-          className="relative flex items-center gap-3 px-6 py-3.5 w-full transition-all duration-200"
-          style={{
-            background: bg,
-            borderRadius: 14,
-            border: "none",
-            cursor: "pointer",
-            textAlign: "left",
-            fontSize: "0.88rem",
-            fontWeight: isActive ? 700 : 600,
-            color: textC,
-          }}
-        >
-          {isActive && !hasSubmenu && (
-            <span style={{
-              position: "absolute", left: 0, top: "20%", bottom: "20%",
-              width: 4, borderRadius: "0 4px 4px 0", background: ACTIVE_BAR,
-              boxShadow: "0 0 10px rgba(255, 179, 0, 0.5)"
-            }} />
-          )}
-          <span style={{ width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            {Ico ? <Ico c={iconC} /> : null}
-          </span>
-          <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{item.label}</span>
-          {hasSubmenu && <Icons.Chevron open={isExpanded} />}
-        </button>
-
-        {hasSubmenu && isExpanded && (
-          <div className="ml-8 pl-4 border-l-2 border-gray-100 mt-1 mb-2 space-y-1">
-            {item.submenu.map((sub: any) => {
-              const isSubActive = activeTab === sub.id;
-              const SubIco = Icons[sub.icon as keyof typeof Icons];
-              return (
-                <button
-                  key={sub.id}
-                  onClick={() => handleNavigate(sub.id as Tab)}
-                  className="relative flex items-center gap-3 px-3 py-2.5 w-full transition-all duration-150"
-                  style={{
-                    fontSize: "0.82rem",
-                    fontWeight: isSubActive ? 700 : 500,
-                    color: isSubActive ? "#4CAF50" : "#555",
-                    background: isSubActive ? ACTIVE_BG : "transparent",
-                    borderRadius: 10,
-                    border: "none",
-                    textAlign: "left",
-                    cursor: "pointer",
-                  }}
-                >
-                  {isSubActive && (
-                    <span style={{
-                      position: "absolute", left: 0, top: "15%", bottom: "15%",
-                      width: 2, borderRadius: 99, background: ACTIVE_BAR,
-                    }} />
-                  )}
-                  <span style={{ width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    {SubIco ? <SubIco c={isSubActive ? "#4CAF50" : iconColors[sub.icon as keyof typeof iconColors] || "#888"} /> : null}
-                  </span>
-                  <span className="overflow-hidden text-ellipsis whitespace-nowrap">{sub.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full overflow-hidden bg-white">
-      <div className="flex-1 overflow-y-auto py-6 px-3 sidebar-scroll scrollbar-hide">
-        <style>{`
-          .sidebar-scroll::-webkit-scrollbar { width: 4px; }
-          .sidebar-scroll::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 10px; }
-          .scrollbar-hide::-webkit-scrollbar { display: none; }
-          .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        `}</style>
-        {menuSections.map((section) => (
-          <div key={section.label} className="mb-4">
-            <div style={{
-              fontSize: '0.62rem',
-              fontWeight: 800,
-              letterSpacing: '0.12em',
-              color: '#bbb',
-              textTransform: 'uppercase',
-              padding: '0 1.5rem 0.5rem',
-              whiteSpace: 'nowrap'
-            }}>
-              {section.label}
-            </div>
-            <div className="space-y-0.5">
-              {section.items.map((item) => (
-                <NavItem key={item.id} item={item} />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-auto border-t border-gray-100 p-4">
-        <div
-          onClick={() => handleNavigate('profile')}
-          className="group flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all duration-300 hover:bg-green-50"
-        >
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#4CAF50] to-[#388E3C] flex items-center justify-center text-white font-extrabold shadow-md group-hover:scale-105 transition-transform">
-            {ownerInitials}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-gray-900 truncate">{ownerName}</p>
-            <p className="text-[0.65rem] text-[#4CAF50] font-bold uppercase tracking-wider">Co-propriétaire</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+  }, [isMobileMenuOpen]);
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-white h-screen w-screen overflow-hidden flex flex-col transition-all duration-300" style={{ background: "#fff", fontFamily: "'Merriweather', serif" }}>
       {/* HEADER */}
       <header className="fixed top-0 left-0 right-0 z-[100] h-[72px] flex items-center justify-between px-6 sm:px-12" style={{
-        background: 'linear-gradient(90deg, #4CAF50 0%, #43a047 60%, #388E3C 100%)',
+        background: GRADIENT_GREEN,
       }}>
-        {/* Left: mobile menu + logo */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsMobileMenuOpen(true)}
@@ -394,14 +400,18 @@ export const Layout: React.FC<LayoutProps> = ({
           >
             <Menu size={24} className="text-white" />
           </button>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight" style={{ fontFamily: "'Merriweather', serif" }}>
+          <span style={{
+            fontFamily: "'Merriweather', serif",
+            fontWeight: 900,
+            fontSize: '1.85rem',
+            color: '#fff',
+            letterSpacing: '-0.01em',
+          }}>
             Gestiloc
-          </h1>
+          </span>
         </div>
 
-        {/* Right: action buttons with pill style */}
         <div className="flex items-center gap-2 sm:gap-4">
-          {/* Notifications */}
           <button
             onClick={() => setShowNotifications(!showNotifications)}
             className="flex items-center gap-2 py-2 px-6 rounded-full text-white text-xs sm:text-sm font-semibold transition-all hover:bg-white/20 relative"
@@ -410,13 +420,11 @@ export const Layout: React.FC<LayoutProps> = ({
               border: 'none',
               backdropFilter: 'blur(8px)',
             }}
-            aria-label="Notifications"
           >
             <Bell size={18} fill="#FFC107" stroke="#FFC107" />
             <span className="hidden sm:inline">Notifications</span>
           </button>
 
-          {/* Aide */}
           <button
             onClick={() => setShowHelp(!showHelp)}
             className="flex items-center gap-2 py-2 px-6 rounded-full text-white text-xs sm:text-sm font-semibold transition-all hover:bg-white/20"
@@ -425,13 +433,11 @@ export const Layout: React.FC<LayoutProps> = ({
               border: 'none',
               backdropFilter: 'blur(8px)',
             }}
-            aria-label="Aide"
           >
             <HelpCircle size={18} />
             <span className="hidden sm:inline">Aide</span>
           </button>
 
-          {/* Mon compte */}
           <button
             onClick={() => handleNavigate('profile')}
             className="flex items-center gap-2 py-2 px-6 rounded-full text-white text-xs sm:text-sm font-semibold transition-all hover:bg-white/20"
@@ -440,11 +446,8 @@ export const Layout: React.FC<LayoutProps> = ({
               border: 'none',
               backdropFilter: 'blur(8px)',
             }}
-            aria-label="Mon compte"
           >
-            <div className="w-6 h-6 rounded-full bg-white/30 flex items-center justify-center text-[10px] font-bold text-white">
-              {ownerInitials}
-            </div>
+            <img src="/Ressource_gestiloc/customer.png" alt="Mon compte" className="w-6 h-6 rounded-full object-cover shadow-sm bg-white" />
             <span className="hidden sm:inline">Mon compte</span>
           </button>
         </div>
@@ -452,7 +455,6 @@ export const Layout: React.FC<LayoutProps> = ({
 
       {/* MAIN CONTENT AREA */}
       <div className="flex flex-1 h-[calc(100vh-72px)] relative pt-[72px]">
-        {/* MOBILE BACKDROP */}
         {isMobileMenuOpen && (
           <div
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[90] lg:hidden"
@@ -460,31 +462,36 @@ export const Layout: React.FC<LayoutProps> = ({
           />
         )}
 
-        {/* SIDEBAR */}
         <aside
           className={`
             fixed h-auto z-[120]
             bg-white
             flex flex-col
             transition-all duration-300 ease-in-out
-            ${isMobileMenuOpen ? 'translate-x-0 bottom-0 top-0 left-0 w-[280px]' : '-translate-x-full lg:translate-x-0 lg:left-[30px] lg:top-[100px] lg:w-[265px]'}
+            ${isMobileMenuOpen ? 'translate-x-0 bottom-0 top-0 left-0 w-[280px]' : '-translate-x-full lg:translate-x-0 lg:left-[30px] lg:top-[100px] lg:w-[310px]'}
           `}
           style={
             !isMobileMenuOpen ? {
               borderRadius: '24px',
-              boxShadow: '0px 0px 20px rgba(0, 0, 0, 0.05), 0px 5px 25px rgba(76, 175, 80, 0.15)',
+              boxShadow: '0px 0px 20px rgba(0, 0, 0, 0.05), 0px 5px 25px rgba(112, 174, 72, 0.15)',
               maxHeight: 'calc(100vh - 140px)',
+              overflow: 'hidden'
             } : {
               boxShadow: '10px 0px 30px rgba(0,0,0,0.1)',
             }
           }
         >
-          <SidebarContent />
+          <SidebarContent
+            activeTab={activeTab}
+            onNavigate={handleNavigate}
+            onLogout={onLogout}
+            expandedMenus={expandedMenus}
+            toggleMenu={toggleMenu}
+          />
         </aside>
 
-        {/* CONTENT AREA */}
-        <div className="flex-1 lg:ml-[320px] bg-gray-50">
-          <div id="app-scroll-container" className="flex-1 h-full overflow-y-auto overflow-x-hidden bg-gray-50 scroll-smooth scrollbar-hide">
+        <div className="flex-1 lg:ml-[390px] bg-white">
+          <div id="app-scroll-container" className="flex-1 h-full overflow-y-auto overflow-x-hidden bg-white scroll-smooth scrollbar-hide">
             <div className="p-4 sm:p-12 max-w-7xl mx-auto">
               <AnimatedPage animation="fadeInUp" delay={100}>
                 {children}

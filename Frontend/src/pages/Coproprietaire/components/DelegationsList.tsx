@@ -12,7 +12,8 @@ import {
   Filter,
   Search,
   Download,
-  RefreshCw
+  RefreshCw,
+  MapPin
 } from 'lucide-react';
 import { Card } from '../../Proprietaire/components/ui/Card';
 import { Button } from '../../Proprietaire/components/ui/Button';
@@ -144,31 +145,28 @@ export const DelegationsList: React.FC<DelegationsListProps> = ({ notify }) => {
 
   const formatCurrency = (amount: string | number) => {
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-    return new Intl.NumberFormat('fr-FR', { 
-      style: 'currency', 
-      currency: 'EUR' 
-    }).format(num || 0);
+    return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(num || 0) + ' FCFA';
   };
 
   const getPermissionBadge = (permission: string) => {
     const colors: Record<string, string> = {
-      'manage_lease': 'bg-blue-100 text-blue-800',
-      'collect_rent': 'bg-green-100 text-green-800',
-      'manage_maintenance': 'bg-orange-100 text-orange-800',
-      'send_invoices': 'bg-purple-100 text-purple-800'
+      'manage_lease': 'bg-emerald-50 text-emerald-600 border-emerald-100',
+      'collect_rent': 'bg-green-50 text-green-600 border-green-100',
+      'manage_maintenance': 'bg-orange-50 text-orange-600 border-orange-100',
+      'send_invoices': 'bg-purple-50 text-purple-600 border-purple-100'
     };
 
     const labels: Record<string, string> = {
-      'manage_lease': 'Gérer baux',
+      'manage_lease': 'Gestion des baux',
       'collect_rent': 'Encaisser loyers',
-      'manage_maintenance': 'Gérer maintenance',
-      'send_invoices': 'Envoyer factures'
+      'manage_maintenance': 'Maintenance',
+      'send_invoices': 'Facturation'
     };
 
     return (
-      <span 
+      <span
         key={permission}
-        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${colors[permission] || 'bg-gray-100 text-gray-800'}`}
+        className={`inline-flex items-center px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${colors[permission] || 'bg-gray-50 text-gray-400 border-gray-100'} font-manrope`}
       >
         {labels[permission] || permission}
       </span>
@@ -177,70 +175,65 @@ export const DelegationsList: React.FC<DelegationsListProps> = ({ notify }) => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Délégations</h1>
-        </div>
-        <Card className="p-6">
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="border rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-48"></div>
-                    <div className="h-3 bg-gray-200 rounded w-32"></div>
-                  </div>
-                  <div className="h-6 bg-gray-200 rounded w-20"></div>
-                </div>
-              </div>
-            ))}
+      <div className="space-y-8 py-4" style={{ fontFamily: "'Merriweather', serif" }}>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-2">
+            <div className="h-10 w-48 bg-gray-100 rounded-2xl animate-pulse" />
+            <div className="h-4 w-64 bg-gray-50 rounded-lg animate-pulse" />
           </div>
-        </Card>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="p-10 rounded-[3rem] border-gray-100 shadow-xl shadow-green-900/5 bg-white relative overflow-hidden">
+              <div className="h-4 w-32 bg-gray-100 rounded-lg animate-pulse mb-6" />
+              <div className="h-6 w-full bg-gray-50 rounded-lg animate-pulse mb-4" />
+              <div className="h-4 w-2/3 bg-gray-50 rounded-lg animate-pulse" />
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10 py-4" style={{ fontFamily: "'Merriweather', serif" }}>
       {/* En-tête */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Délégations</h1>
-          <p className="text-gray-600 mt-1">
-            {filteredDelegations.length} délégation{filteredDelegations.length > 1 ? 's' : ''} trouvée{filteredDelegations.length > 1 ? 's' : ''}
+      <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-6">
+        <div className="space-y-2">
+          <h1 className="text-4xl md:text-5xl font-black text-gray-900 font-merriweather tracking-tight">Délégations</h1>
+          <p className="text-gray-400 font-manrope font-medium text-lg max-w-2xl">
+            {filteredDelegations.length} propriété{filteredDelegations.length > 1 ? 's' : ''} sous votre gestion déléguée.
           </p>
         </div>
         <Button
           onClick={fetchDelegations}
-          variant="outline"
-          className="flex items-center space-x-2"
+          className="bg-green-600 hover:bg-green-700 text-white rounded-[2rem] px-10 py-7 text-xs font-black font-manrope shadow-[0_20px_50px_rgba(22,163,74,0.25)] transition-all hover:scale-105 active:scale-95 flex items-center gap-3 border-none uppercase tracking-widest"
         >
-          <RefreshCw className="w-4 h-4" />
+          <RefreshCw className="w-5 h-5" />
           <span>Actualiser</span>
         </Button>
       </div>
 
       {/* Filtres */}
-      <Card className="p-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Rechercher une propriété, adresse ou propriétaire..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+      <Card className="p-3 rounded-[2.5rem] border-gray-100 shadow-2xl shadow-green-900/5 bg-white overflow-hidden">
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex-1 relative group">
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-green-600 w-6 h-6 transition-colors group-focus-within:text-green-700" />
+            <input
+              type="text"
+              placeholder="Rechercher une propriété, adresse ou propriétaire..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-16 pr-8 py-5 bg-white border border-transparent rounded-[2rem] text-sm font-bold text-gray-900 outline-none focus:bg-gray-50/50 transition-all font-manrope placeholder:text-gray-300"
+            />
           </div>
-          <div className="flex items-center space-x-2">
-            <Filter className="w-4 h-4 text-gray-500" />
+          <div className="flex items-center gap-3 px-6 lg:border-l border-gray-50">
+            <Filter className="w-5 h-5 text-green-600" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="py-5 bg-white border border-transparent rounded-[1.5rem] text-sm font-black text-gray-700 outline-none cursor-pointer font-manrope min-w-[180px]"
             >
               <option value="all">Tous les statuts</option>
               <option value="active">Actives</option>
@@ -252,201 +245,209 @@ export const DelegationsList: React.FC<DelegationsListProps> = ({ notify }) => {
       </Card>
 
       {/* Liste des délégations */}
-      <Card className="p-6">
-        {filteredDelegations.length === 0 ? (
-          <div className="text-center py-12">
-            <Building className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              {searchTerm || statusFilter !== 'all' 
-                ? 'Aucune délégation trouvée' 
-                : 'Aucune délégation'
-              }
-            </h3>
-            <p className="text-gray-600">
-              {searchTerm || statusFilter !== 'all'
-                ? 'Essayez de modifier vos filtres de recherche'
-                : 'Les propriétés qui vous sont déléguées apparaîtront ici'
-              }
-            </p>
+      {filteredDelegations.length === 0 ? (
+        <Card className="p-32 text-center bg-gray-50/20 rounded-[5rem] border-dashed border-gray-200">
+          <div className="bg-white w-24 h-24 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-gray-200/50 relative">
+            <Building className="w-10 h-10 text-green-100" />
+            <div className="absolute inset-x-0 bottom-0 h-1 bg-green-500 rounded-full w-12 mx-auto mb-2" />
           </div>
-        ) : (
-          <div className="space-y-4">
-            {filteredDelegations.map((delegation) => (
-              <div
-                key={delegation.id}
-                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {delegation.property.name}
-                      </h3>
-                      <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(delegation.status)}`}>
-                        {getStatusIcon(delegation.status)}
-                        <span>{getStatusText(delegation.status)}</span>
-                      </div>
+          <h3 className="text-3xl font-black text-gray-900 mb-4 font-merriweather tracking-tight">
+            Aucun patrimoine
+          </h3>
+          <p className="text-gray-400 font-manrope font-medium text-lg max-w-sm mx-auto leading-relaxed">
+            {searchTerm
+              ? `Votre recherche pour "${searchTerm}" n'a donné aucun résultat.`
+              : 'Les propriétés qui vous sont déléguées apparaîtront ici dès leur activation.'
+            }
+          </p>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {filteredDelegations.map((delegation) => (
+            <Card
+              key={delegation.id}
+              className="overflow-hidden rounded-[3.5rem] border-gray-100 shadow-xl shadow-green-900/5 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 bg-white group flex flex-col h-full relative border-t-8 border-t-green-600/10"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-green-50 opacity-20 group-hover:opacity-100 rounded-full -mr-16 -mt-16 blur-2xl transition-all" />
+
+              <div className="p-10 flex-grow relative">
+                <div className="flex justify-between items-start mb-8">
+                  <div className="space-y-4">
+                    <div className={`inline-flex items-center space-x-2 px-5 py-2 rounded-2xl text-[9px] font-black uppercase tracking-widest border transition-all ${getStatusColor(delegation.status).replace('bg-', 'bg-').replace('text-', 'text-')}`}>
+                      {getStatusIcon(delegation.status)}
+                      <span>{getStatusText(delegation.status)}</span>
                     </div>
-                    
-                    <div className="space-y-1 text-sm text-gray-600">
-                      <p className="flex items-center space-x-2">
-                        <Building className="w-4 h-4" />
-                        <span>{delegation.property.address}, {delegation.property.city}</span>
-                      </p>
-                      <p className="flex items-center space-x-2">
-                        <User className="w-4 h-4" />
-                        <span>
-                          Propriétaire: {delegation.landlord.user.first_name} {delegation.landlord.user.last_name} 
-                          ({delegation.landlord.user.email})
-                        </span>
-                      </p>
-                      <p className="flex items-center space-x-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>
-                          Déléguée le {formatDate(delegation.delegated_at)}
-                          {delegation.expires_at && ` • Expire le ${formatDate(delegation.expires_at)}`}
-                        </span>
-                      </p>
-                      {delegation.property.rent_amount && (
-                        <p className="font-medium text-green-600">
-                          Loyer: {formatCurrency(delegation.property.rent_amount)}
+                    <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">ID Délég. #{delegation.id}</p>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setSelectedDelegation(delegation);
+                      setShowDetailsModal(true);
+                    }}
+                    className="p-5 rounded-[1.5rem] bg-gray-900 text-white hover:bg-green-600 transition-all shadow-xl shadow-gray-900/10 group-hover:scale-110 active:scale-90"
+                  >
+                    <Eye className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <h3 className="text-2xl font-black text-gray-900 mb-4 font-merriweather leading-tight group-hover:text-green-700 transition-colors">
+                  {delegation.property.name}
+                </h3>
+
+                <div className="space-y-6">
+                  <div className="flex items-center gap-4 text-sm font-black text-gray-900 bg-green-50/50 p-4 rounded-2xl border border-green-100/50 font-manrope">
+                    <Building className="w-5 h-5 text-green-600" />
+                    <span className="truncate">{delegation.property.address}, {delegation.property.city}</span>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-gray-500 font-manrope">
+                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 font-black text-[10px] uppercase">
+                      {delegation.landlord.user.first_name?.[0]}{delegation.landlord.user.last_name?.[0]}
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-gray-900 uppercase tracking-tighter">Propriétaire Mandant</p>
+                      <p className="text-sm font-bold">{delegation.landlord.user.first_name} {delegation.landlord.user.last_name}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6 pt-6 border-t border-gray-50">
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-black text-gray-300 uppercase tracking-tighter">Mandat activé le</p>
+                      <p className="text-xs font-bold text-gray-600 font-manrope">{formatDate(delegation.delegated_at)}</p>
+                    </div>
+                    {delegation.property.rent_amount && (
+                      <div className="space-y-1">
+                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-tighter">Loyer Actuel</p>
+                        <p className="text-xs font-black text-green-600 font-manrope">{formatCurrency(delegation.property.rent_amount)}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Permissions Section */}
+                {delegation.permissions && delegation.permissions.length > 0 && (
+                  <div className="mt-8 pt-8 border-t border-gray-50">
+                    <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] mb-4 font-manrope">Actions Autorisées</p>
+                    <div className="flex flex-wrap gap-2">
+                      {delegation.permissions.map(permission => getPermissionBadge(permission))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer Expiry */}
+              <div className="p-10 bg-gray-50/50 flex items-center justify-between border-t border-white overflow-hidden relative group-hover:bg-green-600 transition-colors duration-500">
+                <div className="relative z-10 flex items-center gap-4 text-gray-400 group-hover:text-white transition-colors">
+                  <Calendar className="w-5 h-5" />
+                  <p className="text-[10px] font-black uppercase tracking-widest font-manrope">
+                    {delegation.expires_at
+                      ? `Expire le ${formatDate(delegation.expires_at)}`
+                      : 'Contrat à durée indéterminée'}
+                  </p>
+                </div>
+                <button className="relative z-10 text-[10px] font-black text-green-600 group-hover:text-white uppercase tracking-widest flex items-center gap-2 group/btn">
+                  <span>Gérer</span>
+                  <Settings className="w-4 h-4 group-hover/btn:rotate-90 transition-transform" />
+                </button>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Modal de détails - Premium Design */}
+      {showDetailsModal && selectedDelegation && (
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-xl flex items-center justify-center z-[100] p-6 animate-in fade-in duration-300">
+          <Card className="bg-white rounded-[4rem] p-12 max-w-3xl w-full shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] border-none relative overflow-hidden animate-in zoom-in-95 duration-500">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-green-50 rounded-full -mr-32 -mt-32 blur-3xl opacity-50" />
+
+            <div className="relative">
+              <div className="flex items-center justify-between mb-12">
+                <div className="space-y-1">
+                  <h2 className="text-3xl font-black text-gray-900 font-merriweather">Détails du Mandat</h2>
+                  <p className="text-gray-400 font-manrope font-black text-[10px] uppercase tracking-widest">Réf. Archive #DL-{selectedDelegation.id}</p>
+                </div>
+                <button
+                  onClick={() => setShowDetailsModal(false)}
+                  className="p-5 rounded-3xl bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all active:scale-90"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div className="space-y-10">
+                  <div>
+                    <p className="text-[10px] font-black text-green-600 uppercase tracking-widest mb-4 font-manrope">Actif Immobilier</p>
+                    <div className="bg-green-50/30 p-8 rounded-[2.5rem] border border-green-100/50 space-y-4">
+                      <p className="text-xl font-black text-gray-900 font-merriweather">{selectedDelegation.property.name}</p>
+                      <div className="flex items-start gap-4 text-sm font-bold text-gray-500 font-manrope">
+                        <MapPin className="w-5 h-5 text-green-600 mt-0.5" />
+                        <p>{selectedDelegation.property.address}<br />{selectedDelegation.property.zip_code} {selectedDelegation.property.city}</p>
+                      </div>
+                      {selectedDelegation.property.rent_amount && (
+                        <p className="text-2xl font-black text-green-600 font-manrope mt-4">
+                          {formatCurrency(selectedDelegation.property.rent_amount)} <span className="text-[10px] uppercase text-gray-400">/ mois</span>
                         </p>
                       )}
                     </div>
+                  </div>
 
-                    {/* Permissions */}
-                    {delegation.permissions && delegation.permissions.length > 0 && (
-                      <div className="mt-3">
-                        <p className="text-xs font-medium text-gray-700 mb-2">Permissions:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {delegation.permissions.map(permission => getPermissionBadge(permission))}
+                  <div>
+                    <p className="text-[10px] font-black text-green-600 uppercase tracking-widest mb-4 font-manrope">Propriétaire Mandant</p>
+                    <div className="bg-green-50/30 p-8 rounded-[2.5rem] border border-green-100/50">
+                      <p className="text-xl font-black text-gray-900 font-merriweather">
+                        {selectedDelegation.landlord.user.first_name} {selectedDelegation.landlord.user.last_name}
+                      </p>
+                      <p className="text-sm font-bold text-green-600 font-manrope mt-2">{selectedDelegation.landlord.user.email}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-10">
+                  <div>
+                    <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-4 font-manrope">Statut Juridique</p>
+                    <div className="bg-gray-50/50 p-8 rounded-[2.5rem] border border-gray-100 space-y-6">
+                      <div className="flex justify-between items-center group">
+                        <span className="text-xs font-black text-gray-400 uppercase font-manrope">État actuel</span>
+                        <div className={`flex items-center space-x-2 px-5 py-2 rounded-2xl text-[9px] font-black uppercase tracking-widest border ${getStatusColor(selectedDelegation.status).replace('bg-', 'bg-').replace('text-', 'text-')}`}>
+                          {getStatusIcon(selectedDelegation.status)}
+                          <span>{getStatusText(selectedDelegation.status)}</span>
                         </div>
                       </div>
-                    )}
-
-                    {/* Notes */}
-                    {delegation.notes && (
-                      <div className="mt-3 p-2 bg-gray-50 rounded text-sm text-gray-600">
-                        <p className="font-medium text-gray-700 mb-1">Notes:</p>
-                        <p>{delegation.notes}</p>
+                      <div className="flex justify-between">
+                        <span className="text-xs font-black text-gray-400 uppercase font-manrope">Début du mandat</span>
+                        <span className="text-sm font-black text-gray-900">{formatDate(selectedDelegation.delegated_at)}</span>
                       </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center space-x-2 ml-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedDelegation(delegation);
-                        setShowDetailsModal(true);
-                      }}
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-
-      {/* Modal de détails */}
-      {showDetailsModal && selectedDelegation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">
-                Détails de la délégation
-              </h2>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowDetailsModal(false)}
-              >
-                ×
-              </Button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Propriété</h3>
-                <div className="bg-gray-50 p-3 rounded">
-                  <p className="font-medium">{selectedDelegation.property.name}</p>
-                  <p className="text-sm text-gray-600">{selectedDelegation.property.address}</p>
-                  <p className="text-sm text-gray-600">
-                    {selectedDelegation.property.zip_code} {selectedDelegation.property.city}
-                  </p>
-                  {selectedDelegation.property.rent_amount && (
-                    <p className="text-sm font-medium text-green-600 mt-1">
-                      Loyer: {formatCurrency(selectedDelegation.property.rent_amount)}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Informations</h3>
-                <div className="bg-gray-50 p-3 rounded space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Statut:</span>
-                    <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedDelegation.status)}`}>
-                      {getStatusIcon(selectedDelegation.status)}
-                      <span>{getStatusText(selectedDelegation.status)}</span>
+                      <div className="flex justify-between">
+                        <span className="text-xs font-black text-gray-400 uppercase font-manrope">Échéance prévue</span>
+                        <span className="text-sm font-black text-yellow-600">{selectedDelegation.expires_at ? formatDate(selectedDelegation.expires_at) : 'Reuconductible'}</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Déléguée le:</span>
-                    <span className="text-sm">{formatDate(selectedDelegation.delegated_at)}</span>
-                  </div>
-                  {selectedDelegation.expires_at && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Expire le:</span>
-                      <span className="text-sm">{formatDate(selectedDelegation.expires_at)}</span>
+
+                  {selectedDelegation.permissions && selectedDelegation.permissions.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-4 font-manrope">Domaines de gestion</p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedDelegation.permissions.map(permission => getPermissionBadge(permission))}
+                      </div>
                     </div>
                   )}
                 </div>
               </div>
 
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Propriétaire</h3>
-                <div className="bg-gray-50 p-3 rounded">
-                  <p className="font-medium">
-                    {selectedDelegation.landlord.user.first_name} {selectedDelegation.landlord.user.last_name}
-                  </p>
-                  <p className="text-sm text-gray-600">{selectedDelegation.landlord.user.email}</p>
-                </div>
+              <div className="mt-12 flex justify-center">
+                <Button
+                  onClick={() => setShowDetailsModal(false)}
+                  className="bg-gray-900 hover:bg-gray-800 text-white rounded-[2rem] px-16 py-7 text-xs font-black uppercase tracking-[0.2em] font-manrope shadow-2xl transition-all active:scale-95 border-none"
+                >
+                  Clore la fiche
+                </Button>
               </div>
-
-              {selectedDelegation.permissions && selectedDelegation.permissions.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Permissions</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedDelegation.permissions.map(permission => getPermissionBadge(permission))}
-                  </div>
-                </div>
-              )}
-
-              {selectedDelegation.notes && (
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Notes</h3>
-                  <div className="bg-gray-50 p-3 rounded">
-                    <p className="text-sm text-gray-600">{selectedDelegation.notes}</p>
-                  </div>
-                </div>
-              )}
             </div>
-
-            <div className="flex justify-end space-x-3 mt-6">
-              <Button
-                variant="outline"
-                onClick={() => setShowDetailsModal(false)}
-              >
-                Fermer
-              </Button>
-            </div>
-          </div>
+          </Card>
         </div>
       )}
     </div>

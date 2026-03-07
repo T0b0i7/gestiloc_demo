@@ -227,10 +227,12 @@ export const Layout: React.FC<LayoutProps> = ({
     LogOut: "#aaa",
   };
 
-  const ACTIVE_BG = "linear-gradient(90deg, rgba(255, 213, 124, 0.87) 0%, #FFFFFF 100%)";
+  const ACTIVE_BG = 'linear-gradient(90deg, rgba(255, 213, 124, 0.87) 0%, #FFFFFF 100%)';
   const ACTIVE_BAR = "#FFB300";
+  const PRIMARY_GREEN = "#70AE48";
+  const TEXT_GREEN = "#529D21";
 
-  // ── Menu structure — liste complète du profil Propriétaire ──
+  // ── Menu structure — Avec Sous-menus ──
   const menuSections = [
     {
       label: "Menu Principal",
@@ -296,6 +298,14 @@ export const Layout: React.FC<LayoutProps> = ({
     },
   ];
 
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+  }, [isMobileMenuOpen]);
+
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
   const toggleMenu = (id: string) =>
     setExpandedMenus(prev => prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]);
@@ -304,16 +314,11 @@ export const Layout: React.FC<LayoutProps> = ({
     const [hovered, setHovered] = useState(false);
     const [hoveredSub, setHoveredSub] = useState<string | null>(null);
 
-    const hasSubmenu = item.submenu.length > 0;
-    const isActive = activeTab === item.id || item.submenu.some((s: any) => s.id === activeTab);
+    const hasSubmenu = item.submenu && item.submenu.length > 0;
+    const isSubActive = (subId: string) => activeTab === subId;
+    const isActive = activeTab === item.id || (item.submenu?.some((s: any) => s.id === activeTab));
     const isExpanded = expandedMenus.includes(item.id) || isActive;
     const Ico = Icons[item.icon as keyof typeof Icons];
-
-    const iconC = item.isLogout ? (hovered ? "#e53935" : "#aaa") : isActive ? "#4CAF50" : iconColors[item.icon] || "#888";
-    const textC = item.isLogout ? (hovered ? "#e53935" : "#888") : isActive ? "#4CAF50" : "#333";
-    const bg = item.isLogout
-      ? (hovered ? "#fff5f5" : "transparent")
-      : isActive && !hasSubmenu ? ACTIVE_BG : hovered ? "#f6fdf6" : "transparent";
 
     return (
       <div className="w-full">
@@ -329,36 +334,44 @@ export const Layout: React.FC<LayoutProps> = ({
           }}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
-          className="relative flex items-center gap-3 px-4 py-2.5 w-full transition-all duration-150"
+          className="w-full relative flex items-center gap-3 px-6 py-3.5 transition-all duration-300 group"
           style={{
-            background: bg,
-            borderRadius: 10,
-            border: "none",
-            cursor: "pointer",
-            textAlign: "left",
-            fontSize: "0.88rem",
-            fontWeight: isActive ? 700 : 500,
-            color: textC,
+            background: isActive && !hasSubmenu ? ACTIVE_BG : 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            borderRadius: '12px',
+            marginBottom: '2px'
           }}
         >
+          {/* Yellow indicator for active tab precisely as requested */}
           {isActive && !hasSubmenu && (
-            <span style={{
-              position: "absolute", left: 0, top: "18%", bottom: "18%",
-              width: 3, borderRadius: 99, background: ACTIVE_BAR,
-            }} />
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[5px] h-[30px] bg-[#FFB300] rounded-r-full shadow-[0px_0px_10px_#FFB300]" />
           )}
-          <span style={{ width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-            {Ico ? <Ico c={iconC} /> : null}
+
+          <div className={`transition-all duration-300 ${isActive || hovered ? 'scale-110' : 'scale-100 opacity-70'}`}>
+            {Ico ? <Ico c={item.isLogout ? (hovered ? "#e53935" : "#aaa") : isActive ? TEXT_GREEN : iconColors[item.icon] || "#888"} /> : null}
+          </div>
+
+          <span className={`text-[0.9rem] font-bold whitespace-nowrap transition-colors duration-300 ${isActive || hovered ? `text-[${TEXT_GREEN}]` : 'text-gray-500'}`} style={{ color: (isActive || hovered) && !item.isLogout ? TEXT_GREEN : undefined }}>
+            {item.label}
           </span>
-          <span className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{item.label}</span>
-          {hasSubmenu && <Icons.Chevron open={isExpanded} />}
+
+          {hasSubmenu ? (
+            <div className="ml-auto">
+              <Icons.Chevron open={isExpanded} c={isActive ? TEXT_GREEN : "#bbb"} />
+            </div>
+          ) : isActive && (
+            <div className="ml-auto">
+              <ChevronRight size={16} style={{ color: TEXT_GREEN }} />
+            </div>
+          )}
         </button>
 
-        {/* Sous-menu */}
+        {/* Sous-menu interactif */}
         {hasSubmenu && isExpanded && (
-          <div className="ml-6 pl-3 border-l-2 border-slate-100 dark:border-slate-800 mt-1 mb-2 space-y-1">
+          <div className="ml-10 pl-4 border-l-2 border-slate-100 mt-1 mb-2 space-y-1">
             {item.submenu.map((sub: any) => {
-              const isSubActive = activeTab === sub.id;
+              const active = isSubActive(sub.id);
               const SubIco = Icons[sub.icon as keyof typeof Icons];
               return (
                 <button
@@ -366,30 +379,23 @@ export const Layout: React.FC<LayoutProps> = ({
                   onClick={() => handleNavigate(sub.id as Tab)}
                   onMouseEnter={() => setHoveredSub(sub.id)}
                   onMouseLeave={() => setHoveredSub(null)}
-                  className="relative flex items-center gap-3 px-3 py-2 w-full transition-all duration-150"
+                  className="w-full relative flex items-center gap-3 px-3 py-2.5 transition-all duration-300"
                   style={{
-                    fontSize: "0.82rem",
-                    fontWeight: isSubActive ? 700 : 500,
-                    color: isSubActive ? "#4CAF50" : hoveredSub === sub.id ? "#4CAF50" : "#444",
-                    background: isSubActive
-                      ? ACTIVE_BG
-                      : hoveredSub === sub.id ? "#f6fdf6" : "transparent",
-                    borderRadius: 8,
-                    border: "none",
-                    textAlign: "left",
-                    cursor: "pointer",
+                    fontSize: "0.85rem",
+                    fontWeight: active ? 700 : 500,
+                    color: active ? TEXT_GREEN : hoveredSub === sub.id ? TEXT_GREEN : "#666",
+                    background: active ? ACTIVE_BG : 'transparent',
+                    borderRadius: 10,
+                    textAlign: "left"
                   }}
                 >
-                  {isSubActive && (
-                    <span style={{
-                      position: "absolute", left: 0, top: "15%", bottom: "15%",
-                      width: 2, borderRadius: 99, background: ACTIVE_BAR,
-                    }} />
+                  {active && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[18px] bg-[#FFB300] rounded-r-full" />
                   )}
-                  <span style={{ width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    {SubIco ? <SubIco c={isSubActive ? "#4CAF50" : iconColors[sub.icon] || "#888"} /> : null}
+                  <span className="scale-90 transition-opacity opacity-80 group-hover:opacity-100">
+                    {SubIco ? <SubIco c={active ? TEXT_GREEN : (hoveredSub === sub.id ? TEXT_GREEN : "#aaa")} /> : null}
                   </span>
-                  <span className="overflow-hidden text-ellipsis whitespace-nowrap">{sub.label}</span>
+                  <span className="truncate">{sub.label}</span>
                 </button>
               );
             })}
@@ -413,10 +419,10 @@ export const Layout: React.FC<LayoutProps> = ({
     : 'Propriétaire';
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-gray-50 flex flex-col">
+    <div className="h-screen w-screen overflow-hidden flex flex-col transition-all duration-300" style={{ background: "rgba(254,255,253,1)", fontFamily: "'Merriweather', serif" }}>
       {/* HEADER */}
-      <header className="fixed top-0 left-0 right-0 z-[100] h-[58px] flex items-center justify-between px-4 sm:px-8" style={{
-        background: 'linear-gradient(90deg, #4CAF50 0%, #43a047 60%, #388E3C 100%)',
+      <header className="fixed top-0 left-0 right-0 z-[100] h-[72px] flex items-center justify-between px-6 sm:px-12" style={{
+        background: PRIMARY_GREEN,
       }}>
         {/* Left: mobile menu + logo */}
         <div className="flex items-center gap-3">
@@ -430,7 +436,7 @@ export const Layout: React.FC<LayoutProps> = ({
           <span style={{
             fontFamily: "'Merriweather', serif",
             fontWeight: 900,
-            fontSize: '1.35rem',
+            fontSize: '1.85rem',
             color: '#fff',
             letterSpacing: '-0.01em',
           }}>
@@ -438,84 +444,51 @@ export const Layout: React.FC<LayoutProps> = ({
           </span>
         </div>
 
-        {/* Right: action buttons */}
-        <div className="flex items-center gap-2">
+        {/* Right: action buttons with pill style as shown in the image */}
+        <div className="flex items-center gap-2 sm:gap-4">
           {/* Notifications */}
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="hidden sm:flex items-center gap-2 py-2 px-4 rounded-full text-white text-sm font-semibold transition-all hover:bg-white/30 btn-hover"
+            className="flex items-center gap-2 py-2 px-6 rounded-full text-white text-xs sm:text-sm font-semibold transition-all hover:bg-white/20 relative"
             style={{
-              background: 'rgba(255,255,255,0.18)',
-              border: '1.5px solid rgba(255,255,255,0.45)',
-              backdropFilter: 'blur(4px)',
-              fontFamily: "'Manrope', sans-serif",
-              letterSpacing: '0.01em',
+              background: 'rgba(255, 255, 255, 0.4)',
+              border: 'none',
+              backdropFilter: 'blur(8px)',
             }}
             aria-label="Notifications"
           >
-            <img src="/Ressource_gestiloc/Bell.png" alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />
-            Notifications
-          </button>
-          {/* Notifications mobile */}
-          <button
-            onClick={() => setShowNotifications(!showNotifications)}
-            className="sm:hidden flex items-center justify-center w-9 h-9 rounded-full text-white transition-all hover:bg-white/30 btn-hover"
-            style={{ background: 'rgba(255,255,255,0.18)', border: '1.5px solid rgba(255,255,255,0.45)' }}
-            aria-label="Notifications"
-          >
-            <img src="/Ressource_gestiloc/Bell.png" alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />
+            <Bell size={18} fill="#FFC107" stroke="#FFC107" />
+            <span className="hidden sm:inline">Notifications</span>
           </button>
 
           {/* Aide */}
           <button
             onClick={() => setShowHelp(!showHelp)}
-            className="hidden sm:flex items-center gap-2 py-2 px-4 rounded-full text-white text-sm font-semibold transition-all hover:bg-white/30 btn-hover"
+            className="flex items-center gap-2 py-2 px-6 rounded-full text-white text-xs sm:text-sm font-semibold transition-all hover:bg-white/20"
             style={{
-              background: 'rgba(255,255,255,0.18)',
-              border: '1.5px solid rgba(255,255,255,0.45)',
-              backdropFilter: 'blur(4px)',
-              fontFamily: "'Manrope', sans-serif",
-              letterSpacing: '0.01em',
+              background: 'rgba(255, 255, 255, 0.4)',
+              border: 'none',
+              backdropFilter: 'blur(8px)',
             }}
             aria-label="Aide"
           >
-            <img src="/Ressource_gestiloc/question_mark.png" alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />
-            Aide
-          </button>
-          {/* Aide mobile */}
-          <button
-            onClick={() => setShowHelp(!showHelp)}
-            className="sm:hidden flex items-center justify-center w-9 h-9 rounded-full text-white transition-all hover:bg-white/30 btn-hover"
-            style={{ background: 'rgba(255,255,255,0.18)', border: '1.5px solid rgba(255,255,255,0.45)' }}
-            aria-label="Aide"
-          >
-            <img src="/Ressource_gestiloc/question_mark.png" alt="" style={{ width: 16, height: 16, objectFit: 'contain' }} />
+            <HelpCircle size={18} className="text-red-400" />
+            <span className="hidden sm:inline">Aide</span>
           </button>
 
           {/* Mon compte */}
           <button
             onClick={() => handlePageChange('profil')}
-            className="hidden sm:flex items-center gap-2 py-2 px-4 rounded-full text-white text-sm font-semibold transition-all hover:bg-white/30 btn-hover"
+            className="flex items-center gap-2 py-2 px-6 rounded-full text-white text-xs sm:text-sm font-semibold transition-all hover:bg-white/20"
             style={{
-              background: 'rgba(255,255,255,0.18)',
-              border: '1.5px solid rgba(255,255,255,0.45)',
-              backdropFilter: 'blur(4px)',
-              fontFamily: "'Manrope', sans-serif",
-              letterSpacing: '0.01em',
+              background: 'rgba(255, 255, 255, 0.4)',
+              border: 'none',
+              backdropFilter: 'blur(8px)',
             }}
             aria-label="Mon compte"
           >
-            <img src="/Ressource_gestiloc/customer.png" alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />
-            Mon compte
-          </button>
-          {/* Mon compte mobile */}
-          <button
-            onClick={() => handlePageChange('profil')}
-            className="sm:hidden flex items-center justify-center w-9 h-9 rounded-full text-white transition-all hover:bg-white/30 btn-hover"
-            style={{ background: 'rgba(255,255,255,0.18)', border: '1.5px solid rgba(255,255,255,0.45)' }}
-            aria-label="Mon compte"
-          >
-            <img src="/Ressource_gestiloc/customer.png" alt="" style={{ width: 17, height: 17, objectFit: 'contain' }} />
+            <img src="/Ressource_gestiloc/customer.png" alt="Mon compte" className="w-6 h-6 rounded-full object-cover" />
+            <span className="hidden sm:inline">Mon compte</span>
           </button>
         </div>
       </header>
@@ -523,7 +496,7 @@ export const Layout: React.FC<LayoutProps> = ({
       {/* Mobile Backdrop - HORS du conteneur relative */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-[90] lg:hidden"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[90] lg:hidden animate-in fade-in duration-300"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
@@ -531,20 +504,25 @@ export const Layout: React.FC<LayoutProps> = ({
       {/* SIDEBAR */}
       <aside
         className={`
-          fixed top-0 left-0 h-full w-[270px] z-[100]
+          fixed z-[120]
+          bg-white
           flex flex-col
-          transition-transform duration-300 ease-out
-          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:w-[260px] lg:top-[58px] lg:h-[calc(100vh-58px)] lg:z-40'}
+          transition-all duration-300 ease-in-out
+          ${isMobileMenuOpen ? 'translate-x-0 bottom-0 top-0 left-0 w-[280px]' : '-translate-x-full lg:translate-x-0 lg:left-[30px] lg:top-[100px] lg:w-[310px]'}
         `}
-        style={{
-          background: '#fff',
-          boxShadow: '0px 5px 8.6px 0px rgba(131, 199, 87, 1)',
-          borderRadius: isMobileMenuOpen ? '0' : '0 14px 14px 0',
-          fontFamily: "'Manrope', sans-serif",
-        }}
+        style={
+          !isMobileMenuOpen ? {
+            borderRadius: '24px',
+            boxShadow: '0px 0px 20px rgba(0, 0, 0, 0.05), 0px 5px 25px rgba(112, 174, 72, 0.15)',
+            maxHeight: 'calc(100vh - 140px)',
+            overflow: 'hidden'
+          } : {
+            boxShadow: '10px 0px 30px rgba(0,0,0,0.1)',
+          }
+        }
       >
         {/* Mobile Header with Close */}
-        <div className="lg:hidden flex items-center justify-between p-4 border-b border-gray-200" style={{ background: 'linear-gradient(90deg, #4CAF50 0%, #43a047 60%, #388E3C 100%)' }}>
+        <div className="lg:hidden flex items-center justify-between p-4 border-b border-gray-200" style={{ background: PRIMARY_GREEN }}>
           <h2 className="text-lg font-bold text-white">Menu</h2>
           <button
             onClick={() => setIsMobileMenuOpen(false)}
@@ -556,17 +534,23 @@ export const Layout: React.FC<LayoutProps> = ({
         </div>
 
         {/* Menu sections */}
-        <nav className="flex-1 overflow-y-auto py-3 hide-scrollbar">
+        <nav className="flex-1 overflow-y-auto py-6 px-4 sidebar-scroll scrollbar-hide">
+          <style>{`
+            .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+            .sidebar-scroll::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 10px; }
+            .scrollbar-hide::-webkit-scrollbar { display: none; }
+            .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+          `}</style>
           {menuSections.map((section, si) => (
             <div key={section.label} className={`menu-section-enter animate-delay-${si * 100}`}>
               {/* Section label */}
               <div style={{
-                fontSize: '0.61rem',
-                fontWeight: 700,
-                letterSpacing: '0.10em',
-                color: '#c0c0c0',
+                fontSize: '0.62rem',
+                fontWeight: 800,
+                letterSpacing: '0.12em',
+                color: '#bbb',
                 textTransform: 'uppercase',
-                padding: si === 0 ? '0.2rem 1.3rem 0.35rem' : '0.9rem 1.3rem 0.35rem',
+                padding: '1.2rem 1.4rem 0.6rem',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -583,27 +567,11 @@ export const Layout: React.FC<LayoutProps> = ({
           ))}
         </nav>
 
-        {/* Profil Section at bottom */}
-        <div style={{ borderTop: "1px solid #f5f5f5", padding: "0.65rem 0.8rem" }}>
-          <div
-            onClick={() => handlePageChange('profil')}
-            className="group flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-all duration-200 hover:bg-green-50/50"
-          >
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#4CAF50] to-[#2e7d32] flex items-center justify-center text-white font-extrabold text-xs shadow-md shadow-green-500/20 group-hover:scale-105 transition-transform flex-shrink-0">
-              {userInitials}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-[0.83rem] text-gray-900 truncate">{userLabel}</p>
-              <p className="text-[0.65rem] text-gray-400 font-medium">Propriétaire Premium</p>
-            </div>
-          </div>
-        </div>
-
-
+        {/* Profil Section supprimée comme demandé */}
       </aside>
 
       {/* CONTENU PRINCIPAL - IDENTIQUE au locataire */}
-      <div className="flex flex-1 h-[calc(100vh-58px)] relative pt-[58px]">
+      <div className="flex flex-1 h-[calc(100vh-72px)] relative pt-[72px]">
         {/* Toasts */}
         <div className="fixed bottom-6 right-6 z-[70] flex flex-col gap-3">
           {toasts.map((toast) => (
@@ -612,10 +580,14 @@ export const Layout: React.FC<LayoutProps> = ({
         </div>
 
         {/* MAIN CONTENT */}
-        <main className="flex-1 flex flex-col ml-0 lg:ml-[260px] h-full overflow-hidden z-0 relative">
+        <main className="flex-1 flex flex-col ml-0 lg:ml-[360px] h-full overflow-hidden z-0 relative">
           {/* Content */}
-          <div id="app-scroll-container" className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 scroll-smooth">
-            <div className="p-4 sm:p-6 pt-6 sm:pt-8 max-w-7xl mx-auto">
+          <div id="app-scroll-container" className="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth scrollbar-hide" style={{ background: "rgba(254,255,253,1)" }}>
+            <div className="p-4 sm:p-6 pt-6 sm:pt-10 max-w-7xl mx-auto animation-fadeIn">
+              <style>{`
+                @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+                .animation-fadeIn { animation: fadeIn 0.5s ease-out forwards; }
+              `}</style>
               <AnimatedPage animation="fadeInUp" delay={100}>
                 {children}
               </AnimatedPage>
@@ -625,90 +597,94 @@ export const Layout: React.FC<LayoutProps> = ({
       </div>
 
       {/* Notifications Dropdown - Adaptive position and size */}
-      {showNotifications && (
-        <div className="fixed inset-0 sm:inset-auto sm:top-20 sm:right-6 sm:w-96 bg-white sm:rounded-xl shadow-2xl border-t sm:border border-gray-200 z-[110] flex flex-col h-full sm:h-auto dropdown-enter">
-          <div className="p-4 border-b border-gray-200 flex flex-shrink-0 items-center justify-between">
-            <h3 className="text-lg font-bold text-gray-900 font-merriweather">Notifications</h3>
-            <button
-              onClick={() => setShowNotifications(false)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors btn-hover"
-              aria-label="Fermer"
-            >
-              <X size={24} className="text-gray-500" />
-            </button>
-          </div>
+      {
+        showNotifications && (
+          <div className="fixed inset-0 sm:inset-auto sm:top-20 sm:right-6 sm:w-96 bg-white sm:rounded-xl shadow-2xl border-t sm:border border-gray-200 z-[110] flex flex-col h-full sm:h-auto dropdown-enter">
+            <div className="p-4 border-b border-gray-200 flex flex-shrink-0 items-center justify-between">
+              <h3 className="text-lg font-bold text-gray-900 font-merriweather">Notifications</h3>
+              <button
+                onClick={() => setShowNotifications(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors btn-hover"
+                aria-label="Fermer"
+              >
+                <X size={24} className="text-gray-500" />
+              </button>
+            </div>
 
-          <div className="flex-1 overflow-y-auto overflow-x-hidden">
-            {notifications.map((notif, idx) => (
-              <div key={notif.id} className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100 last:border-0 active:bg-gray-100 menu-item-enter animate-delay-${idx * 100}`}>
-                <div className="flex items-start gap-4">
-                  <div className={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 ${notif.type === 'critical' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]'}`} />
-                  <div className="flex-1">
-                    <p className="text-[0.9rem] font-bold text-gray-900 leading-tight">{notif.message}</p>
-                    {notif.subtext && <p className="text-[0.85rem] text-gray-600 mt-1 leading-relaxed">{notif.subtext}</p>}
-                    <p className="text-[0.75rem] text-gray-400 mt-2 font-medium uppercase tracking-wider">Il y a {notif.type === 'critical' ? '2 heures' : '1 jour'}</p>
+            <div className="flex-1 overflow-y-auto overflow-x-hidden">
+              {notifications.map((notif, idx) => (
+                <div key={notif.id} className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100 last:border-0 active:bg-gray-100 menu-item-enter animate-delay-${idx * 100}`}>
+                  <div className="flex items-start gap-4">
+                    <div className={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 ${notif.type === 'critical' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]'}`} />
+                    <div className="flex-1">
+                      <p className="text-[0.9rem] font-bold text-gray-900 leading-tight">{notif.message}</p>
+                      {notif.subtext && <p className="text-[0.85rem] text-gray-600 mt-1 leading-relaxed">{notif.subtext}</p>}
+                      <p className="text-[0.75rem] text-gray-400 mt-2 font-medium uppercase tracking-wider">Il y a {notif.type === 'critical' ? '2 heures' : '1 jour'}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-            {notifications.length === 0 && (
-              <div className="p-12 text-center">
-                <p className="text-gray-400 font-medium">Aucune notification</p>
-              </div>
-            )}
-          </div>
+              ))}
+              {notifications.length === 0 && (
+                <div className="p-12 text-center">
+                  <p className="text-gray-400 font-medium">Aucune notification</p>
+                </div>
+              )}
+            </div>
 
-          <div className="p-4 border-t border-gray-200 flex-shrink-0 bg-gray-50">
-            <button className="w-full py-3 bg-white border border-gray-200 rounded-xl text-sm text-green-600 hover:text-green-700 font-bold shadow-sm transition-all active:scale-[0.98] btn-hover">
-              Voir toutes les notifications
-            </button>
+            <div className="p-4 border-t border-gray-200 flex-shrink-0 bg-gray-50">
+              <button className="w-full py-3 bg-white border border-gray-200 rounded-xl text-sm text-green-600 hover:text-green-700 font-bold shadow-sm transition-all active:scale-[0.98] btn-hover">
+                Voir toutes les notifications
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Help Dropdown - Adaptive position and size */}
-      {showHelp && (
-        <div className="fixed inset-0 sm:inset-auto sm:top-20 sm:right-6 sm:w-96 bg-white sm:rounded-xl shadow-2xl border-t sm:border border-gray-200 z-[110] flex flex-col h-full sm:h-auto dropdown-enter">
-          <div className="p-4 border-b border-gray-200 flex flex-shrink-0 items-center justify-between">
-            <h3 className="text-lg font-bold text-gray-900 font-merriweather">Aide & Support</h3>
-            <button
-              onClick={() => setShowHelp(false)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors btn-hover"
-              aria-label="Fermer"
-            >
-              <X size={24} className="text-gray-500" />
-            </button>
-          </div>
+      {
+        showHelp && (
+          <div className="fixed inset-0 sm:inset-auto sm:top-20 sm:right-6 sm:w-96 bg-white sm:rounded-xl shadow-2xl border-t sm:border border-gray-200 z-[110] flex flex-col h-full sm:h-auto dropdown-enter">
+            <div className="p-4 border-b border-gray-200 flex flex-shrink-0 items-center justify-between">
+              <h3 className="text-lg font-bold text-gray-900 font-merriweather">Aide & Support</h3>
+              <button
+                onClick={() => setShowHelp(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors btn-hover"
+                aria-label="Fermer"
+              >
+                <X size={24} className="text-gray-500" />
+              </button>
+            </div>
 
-          <div className="flex-1 overflow-y-auto p-2">
-            {[
-              { title: 'Guide de démarrage', desc: 'Apprenez les bases de GestiLoc', color: 'bg-green-500' },
-              { title: "Centre d'aide complet", desc: 'Accédez à tous nos guides', color: 'bg-blue-500' },
-              { title: 'Contactez le support', desc: 'Notre équipe est là pour vous aider', color: 'bg-purple-500' },
-            ].map((help, idx) => (
-              <div key={idx} className={`p-4 m-1 hover:bg-gray-50 rounded-xl transition-all cursor-pointer border border-transparent hover:border-gray-100 active:bg-gray-100 menu-item-enter animate-delay-${idx * 100}`}>
-                <div className="flex items-start gap-4">
-                  <div className={`w-3 h-3 ${help.color} rounded-full mt-2 flex-shrink-0 shadow-lg`} />
-                  <div className="flex-1">
-                    <p className="text-[0.95rem] font-bold text-gray-900">{help.title}</p>
-                    <p className="text-[0.85rem] text-gray-600 mt-1">{help.desc}</p>
+            <div className="flex-1 overflow-y-auto p-2">
+              {[
+                { title: 'Guide de démarrage', desc: 'Apprenez les bases de GestiLoc', color: 'bg-green-500' },
+                { title: "Centre d'aide complet", desc: 'Accédez à tous nos guides', color: 'bg-blue-500' },
+                { title: 'Contactez le support', desc: 'Notre équipe est là pour vous aider', color: 'bg-purple-500' },
+              ].map((help, idx) => (
+                <div key={idx} className={`p-4 m-1 hover:bg-gray-50 rounded-xl transition-all cursor-pointer border border-transparent hover:border-gray-100 active:bg-gray-100 menu-item-enter animate-delay-${idx * 100}`}>
+                  <div className="flex items-start gap-4">
+                    <div className={`w-3 h-3 ${help.color} rounded-full mt-2 flex-shrink-0 shadow-lg`} />
+                    <div className="flex-1">
+                      <p className="text-[0.95rem] font-bold text-gray-900">{help.title}</p>
+                      <p className="text-[0.85rem] text-gray-600 mt-1">{help.desc}</p>
+                    </div>
+                    <ChevronRight size={18} className="text-gray-300 mt-1" />
                   </div>
-                  <ChevronRight size={18} className="text-gray-300 mt-1" />
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          <div className="p-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
-            <button
-              onClick={() => setShowHelp(false)}
-              className="w-full py-3 bg-white border border-gray-200 rounded-xl text-sm text-green-600 hover:text-green-700 font-bold shadow-sm transition-all active:scale-[0.98] btn-hover"
-            >
-              Consulter toute l'aide
-            </button>
+            <div className="p-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+              <button
+                onClick={() => setShowHelp(false)}
+                className="w-full py-3 bg-white border border-gray-200 rounded-xl text-sm text-green-600 hover:text-green-700 font-bold shadow-sm transition-all active:scale-[0.98] btn-hover"
+              >
+                Consulter toute l'aide
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
     </div>
   );
 };

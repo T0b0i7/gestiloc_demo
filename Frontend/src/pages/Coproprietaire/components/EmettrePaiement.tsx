@@ -12,11 +12,15 @@ import {
   CalendarDays,
   CreditCard,
   FileText,
+  Zap,
+  ArrowRight,
 } from "lucide-react";
 
 import { coOwnerApi } from "@/services/coOwnerApi";
 import { landlordPayments, type Invoice, type InvoiceType } from "@/services/landlordPayments";
 import { leaseService, type Lease } from "@/services/api";
+import { Card } from "../../Proprietaire/components/ui/Card";
+import { Button } from "../../Proprietaire/components/ui/Button";
 
 type Props = {
   onNavigate: (tab: string) => void;
@@ -27,7 +31,7 @@ type Props = {
 type LeaseLite = Lease & {
   rent_amount?: number;
   property_id?: number;
-  property?: { id?: number; address?: string; city?: string } | null;
+  property?: { id?: number; address?: string; city?: string; name?: string } | null;
   tenant?: {
     first_name?: string;
     last_name?: string;
@@ -42,10 +46,9 @@ const addDays = (days: number) => {
   return d.toISOString().slice(0, 10);
 };
 
-const money = (v: any) => {
+const formatCurrency = (v: any) => {
   const n = Number(v ?? 0);
-  if (Number.isNaN(n)) return "0";
-  return new Intl.NumberFormat("fr-FR").format(n);
+  return new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
 };
 
 type ApiErr = {
@@ -54,160 +57,33 @@ type ApiErr = {
   message?: string;
 };
 
-function looksTechnical(msg?: string) {
-  if (!msg) return false;
-  const m = msg.toLowerCase();
-  return (
-    m.includes("sql") ||
-    m.includes("exception") ||
-    m.includes("stack") ||
-    m.includes("trace") ||
-    m.includes("undefined") ||
-    m.includes("vendor/") ||
-    m.includes("laravel") ||
-    m.includes("symfony")
-  );
-}
-
 function normalizeApiError(err: ApiErr, fallback: string) {
   if (err?.request && !err?.response) return "Le serveur ne répond pas. Vérifie ta connexion puis réessaie.";
   const status = err?.response?.status;
-
   if (status === 401) return "Session expirée. Reconnecte-toi.";
   if (status === 403) return "Accès refusé.";
-  if (status === 413) return "Fichiers trop volumineux.";
-  if (status === 422) return "Certains champs sont invalides. Vérifie le formulaire.";
-  if (status && status >= 500) return "Problème serveur. Réessaie dans quelques instants.";
-
-  const backendMsg =
-    String(err?.response?.data?.message ?? "").trim() ||
-    String(err?.response?.data?.error ?? "").trim() ||
-    String(err?.message ?? "").trim();
-
-  if (backendMsg && !looksTechnical(backendMsg)) return backendMsg;
-
-  return fallback;
-}
-
-function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <div className="text-xs font-extrabold tracking-wide text-gray-600 uppercase">{children}</div>;
-}
-
-function Select({
-  value,
-  onChange,
-  disabled,
-  options,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  disabled?: boolean;
-  options: { value: string; label: string }[];
-}) {
-  return (
-    <div className="relative">
-      <select
-        value={value}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.value)}
-        className="
-          w-full appearance-none rounded-2xl
-          bg-white text-gray-900
-          border border-blue-200
-          px-4 py-3 pr-10
-          text-sm font-semibold
-          outline-none
-          focus:ring-4 focus:ring-blue-200/60 focus:border-blue-400
-          disabled:opacity-60 disabled:cursor-not-allowed
-          transition
-        "
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-      <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-400">▾</div>
-    </div>
-  );
-}
-
-function Input({
-  value,
-  onChange,
-  placeholder,
-  disabled,
-  type = "text",
-  min,
-  step,
-}: {
-  value: string | number;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
-  type?: string;
-  min?: number | string;
-  step?: number | string;
-}) {
-  return (
-    <input
-      value={value}
-      disabled={disabled}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      type={type}
-      min={min as any}
-      step={step as any}
-      className="
-        w-full rounded-2xl bg-white text-gray-900
-        border border-blue-200
-        px-4 py-3
-        text-sm font-semibold
-        placeholder:text-gray-400
-        outline-none
-        focus:ring-4 focus:ring-blue-200/60 focus:border-blue-400
-        disabled:opacity-60 disabled:cursor-not-allowed
-        transition
-      "
-    />
-  );
-}
-
-function Chip({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-extrabold text-gray-700">
-      {children}
-    </span>
-  );
+  const backendMsg = String(err?.response?.data?.message || err?.response?.data?.error || err?.message || "").trim();
+  return backendMsg || fallback;
 }
 
 export const EmettrePaiement: React.FC<Props> = ({ onNavigate, notify, onCreated }) => {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [busyPaylink, setBusyPaylink] = useState(false);
-
   const [leases, setLeases] = useState<LeaseLite[]>([]);
   const [pageError, setPageError] = useState<string | null>(null);
 
   const [leaseId, setLeaseId] = useState<number | "">("");
   const [type, setType] = useState<"rent" | "deposit" | "charge" | "repair">("rent");
-
   const [periodStart, setPeriodStart] = useState<string>(isoToday());
   const [periodEnd, setPeriodEnd] = useState<string>(isoToday());
   const [dueDate, setDueDate] = useState<string>(addDays(3));
-
   const [amountTotal, setAmountTotal] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<string>("fedapay");
 
   const [createdInvoice, setCreatedInvoice] = useState<any>(null);
   const [payLinkUrl, setPayLinkUrl] = useState<string | null>(null);
   const [payLinkExpiresAt, setPayLinkExpiresAt] = useState<string | null>(null);
-
-  const pushNotify = (msg: string, type: "success" | "info" | "error") => {
-    if (notify) notify(msg, type);
-    else alert(msg);
-  };
 
   const selectedLease = useMemo<LeaseLite | null>(() => {
     if (!leaseId) return null;
@@ -216,462 +92,312 @@ export const EmettrePaiement: React.FC<Props> = ({ onNavigate, notify, onCreated
 
   const leaseLabel = useMemo(() => {
     if (!selectedLease) return "—";
-    const addr = selectedLease.property?.address || `Bien #${selectedLease.property_id ?? "—"}`;
+    const name = selectedLease.property?.name || `Bien #${selectedLease.property_id ?? "—"}`;
     const city = selectedLease.property?.city ? `, ${selectedLease.property.city}` : "";
-    const t = selectedLease.tenant
-      ? `${selectedLease.tenant.first_name || ""} ${selectedLease.tenant.last_name || ""}`.trim()
-      : "";
-    return `${addr}${city}${t ? ` — ${t}` : ""}`;
+    return `${name}${city}`;
   }, [selectedLease]);
 
   const tenantName = useMemo(() => {
-    if (!selectedLease?.tenant) return "—";
+    if (!selectedLease?.tenant) return "Non assigné";
     const name = `${selectedLease.tenant.first_name || ""} ${selectedLease.tenant.last_name || ""}`.trim();
     return name || selectedLease.tenant.user?.email || "Locataire";
   }, [selectedLease]);
 
-  const tenantEmail = selectedLease?.tenant?.user?.email || "";
-  const tenantPhone = selectedLease?.tenant?.user?.phone || "";
-
   const fetchAll = async () => {
     setLoading(true);
-    setPageError(null);
-
     try {
-      // Utiliser les baux délégués du co-propriétaire
       const list = await coOwnerApi.getDelegatedLeases();
       setLeases(Array.isArray(list) ? list : []);
     } catch (e: any) {
-      const msg = normalizeApiError(e as ApiErr, "Erreur lors du chargement.");
-      setPageError(msg);
-      pushNotify(msg, "error");
+      setPageError(normalizeApiError(e, "Erreur de chargement."));
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchAll();
-  }, []);
+  useEffect(() => { fetchAll(); }, []);
 
   useEffect(() => {
     if (!selectedLease) return;
-    const rent = Number(selectedLease.rent_amount ?? 0);
-    if (type === "rent") setAmountTotal(Number.isFinite(rent) ? rent : 0);
-    if (type !== "rent" && !amountTotal) setAmountTotal(0);
+    if (type === "rent") setAmountTotal(Number(selectedLease.rent_amount ?? 0));
   }, [selectedLease, type]);
-
-  const resetAfterCreate = () => {
-    setPayLinkUrl(null);
-    setPayLinkExpiresAt(null);
-  };
 
   const handleCreateInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
-    setPageError(null);
-
-    if (!leaseId) return pushNotify("Choisis un bail.", "error");
-    if (!dueDate) return pushNotify("Choisis une date d'échéance.", "error");
-    if (Number(amountTotal) <= 0) return pushNotify("Le montant doit être > 0.", "error");
-    if (!paymentMethod) return pushNotify("Choisis un moyen de paiement.", "error");
-
+    if (!leaseId) return notify("Veuillez sélectionner un bail.", "error");
     setBusy(true);
-    resetAfterCreate();
-
     try {
-      // Utiliser le même service que le propriétaire
       const invoice = await landlordPayments.createInvoice({
         lease_id: Number(leaseId),
         type,
         due_date: dueDate,
-        period_start: periodStart || undefined,
-        period_end: periodEnd || undefined,
+        period_start: periodStart,
+        period_end: periodEnd,
         amount_total: Number(amountTotal),
         payment_method: paymentMethod,
       });
-
       setCreatedInvoice(invoice);
-      pushNotify("Facture créée ✅", "success");
-      
-      // Appeler onCreated si disponible
-      if (onCreated) {
-        onCreated(invoice);
-      }
+      notify("Demande de paiement générée avec succès.", "success");
+      if (onCreated) onCreated(invoice);
     } catch (e: any) {
-      const msg = normalizeApiError(e as ApiErr, "Erreur lors de la création de la facture.");
-      setPageError(msg);
-      pushNotify(msg, "error");
-    } finally {
-      setBusy(false);
-    }
+      notify(normalizeApiError(e, "Impossible de créer la facture."), "error");
+    } finally { setBusy(false); }
   };
 
   const handleCreatePayLink = async () => {
     if (!createdInvoice?.id) return;
     setBusyPaylink(true);
-
     try {
-      // Utiliser le même service que le propriétaire
       const res = await landlordPayments.createPayLink(createdInvoice.id, { hours: 24, send_email: true });
       setPayLinkUrl(res.url);
       setPayLinkExpiresAt(res.expires_at);
-      pushNotify("Lien de paiement généré ✅", "success");
+      notify("Lien de paiement FedaPay généré.", "success");
     } catch (e: any) {
-      const msg = normalizeApiError(e as ApiErr, "Erreur lors de la création du lien de paiement.");
-      pushNotify(msg, "error");
-    } finally {
-      setBusyPaylink(false);
-    }
+      notify(normalizeApiError(e, "Erreur lien de paiement."), "error");
+    } finally { setBusyPaylink(false); }
   };
 
-  const copy = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      pushNotify("Lien copié ✅", "success");
-    } catch {
-      pushNotify("Impossible de copier automatiquement. Copie manuellement le lien.", "info");
-    }
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    notify("Lien copié dans le presse-papier.", "success");
   };
 
-  const resetAll = () => {
-    setCreatedInvoice(null);
-    setPayLinkUrl(null);
-    setPayLinkExpiresAt(null);
-    setLeaseId("");
-    setType("rent");
-    setAmountTotal(0);
-    setPeriodStart(isoToday());
-    setPeriodEnd(isoToday());
-    setDueDate(addDays(3));
-  };
+  if (loading) {
+    return (
+      <div className="p-8 space-y-6" style={{ fontFamily: "'Merriweather', serif" }}>
+        <div className="h-12 w-1/3 bg-gray-100 animate-pulse rounded-2xl" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="h-32 bg-gray-50 animate-pulse rounded-[2.5rem]" />
+          <div className="h-32 bg-gray-50 animate-pulse rounded-[2.5rem]" />
+        </div>
+        <div className="h-[400px] bg-gray-50 animate-pulse rounded-[3rem]" />
+      </div>
+    );
+  }
 
   return (
-    <div className="py-8">
-      {/* Header */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-extrabold text-blue-700">
-            <CreditCard size={14} />
-            Paiements
-          </div>
-
-          <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-gray-900">Demande de paiement</h1>
-
-          <p className="mt-1 text-sm font-semibold text-gray-600">
-            Crée une facture, puis génère un lien FedaPay à envoyer au locataire.
+    <div className="space-y-10 py-4" style={{ fontFamily: "'Merriweather', serif" }}>
+      {/* Header Premium */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="space-y-2">
+          <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">Recouvrement</h1>
+          <p className="text-gray-400 font-manrope font-medium text-lg max-w-2xl">
+            Émettez des demandes de paiement sécurisées FedaPay pour vos locataires en quelques secondes.
           </p>
         </div>
-
-        <div className="flex items-center gap-2 mt-4 md:mt-0">
-          <button
-            onClick={fetchAll}
-            disabled={busy || busyPaylink}
-            className="
-              inline-flex items-center justify-center gap-2
-              rounded-2xl border border-blue-200 bg-white px-4 py-3
-              text-sm font-extrabold text-gray-800
-              hover:bg-blue-50 hover:text-blue-700
-              disabled:opacity-60 disabled:cursor-not-allowed
-              transition
-            "
-            type="button"
+        <div className="flex gap-4">
+          <Button
+            onClick={() => { setCreatedInvoice(null); setPayLinkUrl(null); }}
+            className="bg-white hover:bg-gray-50 text-gray-900 border border-gray-100 rounded-[2rem] px-8 py-7 shadow-xl shadow-gray-200/50 transition-all font-manrope font-black text-xs uppercase tracking-widest"
           >
-            {loading ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
-            Actualiser
-          </button>
-
-          <button
-            onClick={resetAll}
-            disabled={busy || busyPaylink}
-            className="
-              inline-flex items-center justify-center gap-2
-              rounded-2xl border border-blue-200 bg-white px-4 py-3
-              text-sm font-extrabold text-gray-800
-              hover:bg-blue-50 hover:text-blue-700
-              disabled:opacity-60 disabled:cursor-not-allowed
-              transition
-            "
-            type="button"
-          >
-            <Plus size={18} />
+            <Plus className="w-5 h-5 mr-3 text-green-600" />
             Nouveau
-          </button>
-
-          {createdInvoice?.id ? (
-            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700">
-              <CheckCircle2 size={14} /> Facture créée
-            </span>
-          ) : null}
+          </Button>
+          <Button
+            onClick={fetchAll}
+            className="bg-green-600 hover:bg-green-700 text-white rounded-[2rem] px-8 py-7 shadow-[0_20px_50px_rgba(22,163,74,0.25)] transition-all font-manrope font-black text-xs uppercase tracking-widest border-none"
+          >
+            <RefreshCw className={`w-5 h-5 mr-3 ${busy ? 'animate-spin' : ''}`} />
+            Actualiser
+          </Button>
         </div>
       </div>
 
-      <div className="mt-6 flex justify-center">
-        <div className="w-full max-w-3xl">
-          {pageError && (
-            <div className="mb-4 rounded-3xl border border-red-200 bg-red-50 p-5 text-red-700 font-bold">
-              <div className="flex items-center gap-2">
-                <AlertTriangle size={18} />
-                <span>{pageError}</span>
-              </div>
-            </div>
-          )}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        {/* Formulaire Principal */}
+        <div className="lg:col-span-12 xl:col-span-8">
+          <Card className="p-10 md:p-14 rounded-[4rem] border-none shadow-2xl shadow-green-900/5 bg-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-green-50 rounded-full -mr-32 -mt-32 blur-3xl opacity-50" />
 
-          <div className="rounded-3xl border border-blue-200 bg-white shadow-sm hover:shadow-md transition p-5 md:p-6">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-lg md:text-xl font-extrabold text-gray-900">Créer une facture</h2>
-                  <Chip>Co-propriétaire</Chip>
-                  <Chip>Moyen actuel : {paymentMethod}</Chip>
-                </div>
-                <p className="mt-1 text-sm font-semibold text-gray-600">
-                  Étape 1 : facture · Étape 2 : lien de paiement (FedaPay).
-                </p>
-              </div>
-            </div>
-
-            <form onSubmit={handleCreateInvoice} className="mt-5 space-y-5">
-              <div>
-                <FieldLabel>Bail (location)</FieldLabel>
-                <div className="mt-2">
-                  <Select
-                    value={String(leaseId || "")}
-                    onChange={(v) => setLeaseId(v ? Number(v) : "")}
-                    disabled={loading}
-                    options={[
-                      { value: "", label: loading ? "Chargement des baux..." : "— Sélectionner un bail —" },
-                      ...leases.map((l) => {
-                        const addr = l.property?.address || `Bien #${l.property_id ?? "—"}`;
-                        const city = l.property?.city ? `, ${l.property.city}` : "";
-                        const t = l.tenant ? `${l.tenant.first_name || ""} ${l.tenant.last_name || ""}`.trim() : "";
-                        const label = `${addr}${city}${t ? ` — ${t}` : ""} · Loyer: ${money(l.rent_amount)} XOF`;
-                        return { value: String(l.id), label };
-                      }),
-                    ]}
-                  />
-                </div>
-
-                <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
-                  <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
-                    <div className="flex items-center gap-2 text-xs font-extrabold tracking-wide text-blue-700 uppercase">
-                      <Home size={14} /> Bien
-                    </div>
-                    <div className="mt-1 text-sm font-extrabold text-gray-900">{leaseId ? leaseLabel : "—"}</div>
-                  </div>
-
-                  <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
-                    <div className="flex items-center gap-2 text-xs font-extrabold tracking-wide text-blue-700 uppercase">
-                      <User size={14} /> Locataire
-                    </div>
-                    <div className="mt-1 text-sm font-extrabold text-gray-900">{tenantName}</div>
-                    <div className="mt-1 text-xs font-bold text-gray-600">
-                      {tenantEmail ? <span>{tenantEmail}</span> : <span className="text-gray-500">Email —</span>}
-                      {tenantPhone ? <span> • {tenantPhone}</span> : null}
+            <form onSubmit={handleCreateInvoice} className="relative z-10 space-y-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                {/* Sélection du Bien */}
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] font-manrope ml-2">Propriété & Bail</label>
+                  <div className="relative group">
+                    <Home className="absolute left-6 top-1/2 -translate-y-1/2 text-green-600 w-5 h-5" />
+                    <select
+                      value={String(leaseId)}
+                      onChange={(e) => setLeaseId(Number(e.target.value))}
+                      className="w-full pl-16 pr-8 py-6 bg-gray-50 border-none rounded-[2rem] text-sm font-bold text-gray-900 outline-none focus:ring-4 focus:ring-green-500/10 transition-all font-manrope appearance-none cursor-pointer"
+                    >
+                      <option value="">Sélectionner un bien actif</option>
+                      {leases.map(l => (
+                        <option key={l.id} value={l.id}>
+                          {l.property?.name || 'Sans nom'} - {l.tenant?.last_name} ({formatCurrency(l.rent_amount)})
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-green-600">
+                      <ArrowRight className="w-5 h-5 opacity-50" />
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Type + Montant */}
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
-                  <FieldLabel>Type de facture</FieldLabel>
-                  <div className="mt-2">
-                    <Select
+                {/* Nature du Paiement */}
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] font-manrope ml-2">Type de frais</label>
+                  <div className="relative group">
+                    <Zap className="absolute left-6 top-1/2 -translate-y-1/2 text-green-600 w-5 h-5" />
+                    <select
                       value={type}
-                      onChange={(v) => setType(v as any)}
-                      options={[
-                        { value: "rent", label: "Loyer" },
-                        { value: "deposit", label: "Caution" },
-                        { value: "charge", label: "Charges" },
-                        { value: "repair", label: "Réparation" },
-                      ]}
-                    />
-                  </div>
-                  <div className="mt-2 text-xs font-bold text-gray-500">
-                    Astuce : <span className="text-gray-700">"Loyer"</span> reprend automatiquement le montant du bail.
+                      onChange={(e) => setType(e.target.value as any)}
+                      className="w-full pl-16 pr-8 py-6 bg-gray-50 border-none rounded-[2rem] text-sm font-bold text-gray-900 outline-none focus:ring-4 focus:ring-green-500/10 transition-all font-manrope appearance-none cursor-pointer"
+                    >
+                      <option value="rent">Loyer du mois</option>
+                      <option value="deposit">Dépôt de garantie</option>
+                      <option value="charge">Provision sur charges</option>
+                      <option value="repair">Travaux & Dégradations</option>
+                    </select>
                   </div>
                 </div>
+              </div>
 
-                <div>
-                  <FieldLabel>Montant (XOF)</FieldLabel>
-                  <div className="mt-2">
-                    <Input
+              {/* Montant & Méthode */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] font-manrope ml-2">Montant à collecter</label>
+                  <div className="relative group">
+                    <CreditCard className="absolute left-6 top-1/2 -translate-y-1/2 text-green-600 w-5 h-5" />
+                    <input
                       type="number"
-                      min={0}
-                      step="1"
                       value={amountTotal}
-                      onChange={(v) => setAmountTotal(Number(v))}
+                      onChange={(e) => setAmountTotal(Number(e.target.value))}
+                      className="w-full pl-16 pr-24 py-6 bg-gray-50 border-none rounded-[2rem] text-xl font-black text-gray-900 outline-none focus:ring-4 focus:ring-green-500/10 transition-all font-manrope"
                       placeholder="0"
                     />
+                    <span className="absolute right-8 top-1/2 -translate-y-1/2 font-black text-gray-400 text-xs">FCFA</span>
                   </div>
                 </div>
-              </div>
 
-              {/* Payment method */}
-              <div>
-                <FieldLabel>Moyen de paiement</FieldLabel>
-                <div className="mt-2">
-                  <Select
-                    value={paymentMethod}
-                    onChange={setPaymentMethod}
-                    options={[
-                      { value: "fedapay", label: "FedaPay (le locataire choisit carte / mobile money / etc.)" },
-                      { value: "mobile_money", label: "Mobile Money" },
-                      { value: "card", label: "Carte bancaire" },
-                      { value: "bank_transfer", label: "Virement bancaire" },
-                      { value: "cash", label: "Espèces" },
-                    ]}
-                  />
-                </div>
-                <div className="mt-2 text-xs font-bold text-gray-500">
-                  Recommandé : <span className="text-gray-700">FedaPay</span> (le locataire choisit le canal au moment de payer).
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] font-manrope ml-2">Mode de recouvrement</label>
+                  <div className="relative">
+                    <select
+                      value={paymentMethod}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="w-full px-8 py-6 bg-green-50/50 border-2 border-green-100/50 rounded-[2rem] text-sm font-black text-green-700 outline-none focus:border-green-400 transition-all font-manrope appearance-none cursor-pointer text-center"
+                    >
+                      <option value="fedapay">FedaPay (Carte & Mobile Money)</option>
+                      <option value="mobile_money">Mobile Money Direct</option>
+                      <option value="bank_transfer">Virement Bancaire</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
               {/* Dates */}
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <div>
-                  <FieldLabel>Début période</FieldLabel>
-                  <div className="mt-2">
-                    <Input type="date" value={periodStart} onChange={setPeriodStart} />
-                  </div>
-                  <div className="mt-2 text-xs font-bold text-gray-500 flex items-center gap-2">
-                    <CalendarDays size={14} className="text-blue-700" />
-                    Période
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 p-10 bg-gray-50/50 rounded-[3rem] border border-gray-100">
+                <div className="space-y-3 text-center md:text-left">
+                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest font-manrope">Période du</label>
+                  <input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} className="w-full bg-white border-none rounded-xl py-3 px-4 text-sm font-bold text-gray-700 outline-none shadow-sm" />
                 </div>
-
-                <div>
-                  <FieldLabel>Fin période</FieldLabel>
-                  <div className="mt-2">
-                    <Input type="date" value={periodEnd} onChange={setPeriodEnd} />
-                  </div>
+                <div className="space-y-3 text-center md:text-left">
+                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest font-manrope">Période au</label>
+                  <input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} className="w-full bg-white border-none rounded-xl py-3 px-4 text-sm font-bold text-gray-700 outline-none shadow-sm" />
                 </div>
-
-                <div>
-                  <FieldLabel>Échéance</FieldLabel>
-                  <div className="mt-2">
-                    <Input type="date" value={dueDate} onChange={setDueDate} />
-                  </div>
+                <div className="space-y-3 text-center md:text-left">
+                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest font-manrope">Échéance limite</label>
+                  <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="w-full bg-green-600 border-none rounded-xl py-3 px-4 text-sm font-bold text-white outline-none shadow-lg shadow-green-600/20" />
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-end">
-                <button
+              <div className="pt-6">
+                <Button
                   type="submit"
-                  disabled={busy || busyPaylink || !leaseId}
-                  className="
-                    inline-flex items-center justify-center gap-2
-                    rounded-2xl bg-blue-600 px-4 py-3
-                    text-sm font-extrabold text-white
-                    hover:bg-blue-700
-                    disabled:opacity-60 disabled:cursor-not-allowed
-                    transition
-                  "
+                  disabled={busy || !leaseId}
+                  className="w-full bg-gray-900 hover:bg-black text-white rounded-[2.5rem] py-10 shadow-2xl shadow-gray-900/20 transition-all active:scale-[0.98] font-manrope font-black text-sm uppercase tracking-[0.3em] flex items-center justify-center gap-4 border-none"
                 >
-                  {busy ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
-                  Créer la facture
-                </button>
+                  {busy ? <Loader2 className="w-6 h-6 animate-spin" /> : (
+                    <>
+                      <span>Initialiser la facturation</span>
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
+                </Button>
               </div>
             </form>
+          </Card>
+        </div>
 
-            {/* Résultat */}
-            {createdInvoice?.id && (
-              <div className="mt-6 rounded-3xl border border-blue-200 bg-white p-5">
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-lg font-extrabold text-gray-900">
-                        Facture #{createdInvoice.id}
-                        {createdInvoice.invoice_number ? ` — ${createdInvoice.invoice_number}` : ""}
-                      </h3>
-                      <Chip>{createdInvoice.type}</Chip>
-                      <Chip>{String(createdInvoice.status ?? "pending")}</Chip>
-                    </div>
+        {/* Résumé & Actions Latérales */}
+        <div className="lg:col-span-12 xl:col-span-4 space-y-8">
+          {/* Carte Résumé Dynamique */}
+          <Card className="p-10 rounded-[3.5rem] bg-gradient-to-br from-green-600 to-green-700 text-white border-none shadow-2xl shadow-green-900/20 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
+            <div className="relative z-10 space-y-8">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-md">
+                  <CreditCard className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-extrabold uppercase tracking-widest">Résumé</h3>
+              </div>
 
-                    <div className="mt-2 text-sm font-semibold text-gray-700">
-                      Montant:{" "}
-                      <span className="font-extrabold text-gray-900">{money(createdInvoice.amount_total)} XOF</span>{" "}
-                      · Échéance: <span className="font-extrabold text-gray-900">{createdInvoice.due_date}</span>
-                    </div>
+              <div className="space-y-6">
+                <div>
+                  <p className="text-[10px] font-black opacity-60 uppercase tracking-widest mb-1">Locataire cible</p>
+                  <p className="text-2xl font-black leading-tight">{tenantName}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black opacity-60 uppercase tracking-widest mb-1">Bien concerné</p>
+                  <p className="text-lg font-bold leading-tight line-clamp-2">{leaseLabel}</p>
+                </div>
+                <div className="pt-6 border-t border-white/10">
+                  <p className="text-[10px] font-black opacity-60 uppercase tracking-widest mb-1">Montant à payer</p>
+                  <p className="text-4xl font-black tracking-tighter">{formatCurrency(amountTotal)}</p>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Actions après création */}
+          {createdInvoice && (
+            <Card className="p-10 rounded-[3.5rem] bg-white border border-green-100 shadow-2xl shadow-green-900/5 animate-in slide-in-from-right-10 duration-500">
+              <div className="space-y-8">
+                <div className="flex items-center gap-4 mb-2">
+                  <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+                    <CheckCircle2 className="w-6 h-6" />
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={handleCreatePayLink}
-                    disabled={busyPaylink}
-                    className="
-                      inline-flex items-center justify-center gap-2
-                      rounded-2xl bg-emerald-600 px-4 py-3
-                      text-sm font-extrabold text-white
-                      hover:bg-emerald-700
-                      disabled:opacity-60 disabled:cursor-not-allowed
-                      transition
-                    "
-                  >
-                    {busyPaylink ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-                    Générer le lien de paiement
-                  </button>
+                  <h4 className="text-xl font-black text-gray-900">Facture Prête</h4>
                 </div>
 
-                {payLinkUrl ? (
-                  <div className="mt-4 rounded-3xl border border-emerald-200 bg-emerald-50 p-4">
-                    <div className="text-sm font-extrabold text-emerald-800">Lien de paiement (à envoyer au locataire)</div>
-
-                    <div className="mt-2 break-all rounded-2xl border border-emerald-200 bg-white p-3 text-sm font-semibold text-gray-800">
+                {!payLinkUrl ? (
+                  <Button
+                    onClick={handleCreatePayLink}
+                    disabled={busyPaylink}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white rounded-[1.5rem] py-6 shadow-xl shadow-green-600/20 transition-all font-manrope font-black text-xs uppercase tracking-widest border-none"
+                  >
+                    {busyPaylink ? <Loader2 className="animate-spin" /> : 'Générer lien FedaPay'}
+                  </Button>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="p-6 bg-gray-50 rounded-[2rem] border border-gray-100 break-all text-[11px] font-bold text-gray-500 font-manrope text-center">
                       {payLinkUrl}
                     </div>
-
-                    <div className="mt-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                      <div className="text-xs font-bold text-emerald-800">
-                        Expire le : <span className="font-extrabold">{payLinkExpiresAt ?? "—"}</span>{" "}
-                        <span className="ml-2 font-bold text-emerald-700/80">(email locataire envoyé si disponible)</span>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => copy(payLinkUrl)}
-                          className="
-                            inline-flex items-center justify-center gap-2
-                            rounded-2xl border border-emerald-200 bg-white px-4 py-3
-                            text-xs font-extrabold text-emerald-800
-                            hover:bg-emerald-100
-                            transition
-                          "
-                        >
-                          <Copy size={14} />
-                          Copier
-                        </button>
-
-                        <a
-                          href={payLinkUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="
-                            inline-flex items-center justify-center gap-2
-                            rounded-2xl bg-gray-900 px-4 py-3
-                            text-xs font-extrabold text-white
-                            hover:bg-gray-800
-                            transition
-                          "
-                        >
-                          <ExternalLink size={14} />
-                          Ouvrir
-                        </a>
-                      </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <Button
+                        onClick={() => copyToClipboard(payLinkUrl)}
+                        className="bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-2xl py-5 font-manrope font-black text-[10px] uppercase tracking-widest border-none"
+                      >
+                        <Copy className="w-4 h-4 mr-2" /> Copier
+                      </Button>
+                      <a
+                        href={payLinkUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white rounded-2xl py-5 font-manrope font-black text-[10px] uppercase tracking-widest transition-all"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" /> Aperçu
+                      </a>
                     </div>
-                  </div>
-                ) : (
-                  <div className="mt-3 text-xs font-bold text-gray-500">
-                    Étape suivante : clique sur <span className="text-gray-700">"Générer le lien de paiement"</span> pour produire
-                    une URL FedaPay.
+                    <p className="text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                      Expire le : {payLinkExpiresAt ? new Date(payLinkExpiresAt).toLocaleDateString() : '-'}
+                    </p>
                   </div>
                 )}
               </div>
-            )}
-          </div>
+            </Card>
+          )}
         </div>
       </div>
     </div>
