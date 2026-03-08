@@ -193,10 +193,22 @@ class PropertyController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
+        $status = $request->query('status'); // Filtre par statut: available, rented, maintenance
 
         // ADMIN : Voir tout
         if ($user->isAdmin()) {
-            $properties = Property::with(['landlord'])->latest()->paginate(20);
+            $query = Property::with(['landlord']);
+            
+            // Appliquer le filtre de statut si présent
+            if ($status === 'available') {
+                $query->where('status', 'available');
+            } elseif ($status === 'rented') {
+                $query->where('status', 'rented');
+            } elseif ($status === 'maintenance') {
+                $query->where('status', 'maintenance');
+            }
+            
+            $properties = $query->latest()->paginate(20);
             $formattedProperties = $properties->getCollection()->map(function ($property) use ($user) {
                 return $this->formatPropertyForApi($property, $user);
             });
@@ -223,7 +235,18 @@ class PropertyController extends Controller
                 ]);
             }
 
-            $properties = $landlord->properties()->with(['landlord'])->latest()->paginate(20);
+            $query = $landlord->properties()->with(['landlord']);
+            
+            // Appliquer le filtre de statut si présent
+            if ($status === 'available') {
+                $query->where('status', 'available');
+            } elseif ($status === 'rented') {
+                $query->where('status', 'rented');
+            } elseif ($status === 'maintenance') {
+                $query->where('status', 'maintenance');
+            }
+            
+            $properties = $query->latest()->paginate(20);
             $formattedProperties = $properties->getCollection()->map(function ($property) use ($user) {
                 return $this->formatPropertyForApi($property, $user);
             });
@@ -251,10 +274,19 @@ class PropertyController extends Controller
                 ]);
             }
 
-            $properties = Property::with(['landlord'])
-                ->where('landlord_id', $coOwner->landlord_id)
-                ->latest()
-                ->paginate(20);
+            $query = Property::with(['landlord'])
+                ->where('landlord_id', $coOwner->landlord_id);
+            
+            // Appliquer le filtre de statut si présent
+            if ($status === 'available') {
+                $query->where('status', 'available');
+            } elseif ($status === 'rented') {
+                $query->where('status', 'rented');
+            } elseif ($status === 'maintenance') {
+                $query->where('status', 'maintenance');
+            }
+            
+            $properties = $query->latest()->paginate(20);
 
             $formattedProperties = $properties->getCollection()->map(function ($property) use ($user) {
                 return $this->formatPropertyForApi($property, $user);

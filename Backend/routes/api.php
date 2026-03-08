@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\TenantController;
@@ -25,6 +24,11 @@ use App\Http\Controllers\Api\NoticeController;
 use App\Http\Controllers\Api\RentReceiptController;
 use App\Http\Controllers\Api\Tenant\MaintenanceRequestController as TenantMaintenanceRequestController;
 use App\Http\Controllers\Api\Landlord\MaintenanceRequestController as LandlordMaintenanceRequestController;
+use App\Http\Controllers\Api\Landlord\AccountingController;
+use App\Http\Controllers\Api\Landlord\AccountingController as LandlordAccountingController;
+use App\Http\Controllers\Api\Landlord\DocumentArchiveController;
+use App\Http\Controllers\Api\Landlord\SettingsController;
+use App\Http\Controllers\Api\Landlord\LandlordNotificationController;
 use App\Http\Controllers\Api\TenantPaymentController;
 use App\Http\Controllers\Api\FedapayWebhookController;
 use App\Http\Controllers\Api\TenantQuittanceController;
@@ -32,6 +36,8 @@ use App\Http\Controllers\Api\PaymentLinkController;
 use App\Http\Controllers\Api\Landlord\FedapayController as LandlordFedapayController;
 use App\Http\Controllers\Api\CoOwner\FedapayController as CoOwnerFedapayController;
 use App\Http\Controllers\Api\FedapayReturnController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -150,6 +156,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/upload', [UploadController::class, 'store']);
 
     /* ========= Condition Reports ========= */
+    // Route pour un bien spécifique
     Route::prefix('properties/{property}/condition-reports')->group(function () {
         Route::get('/', [PropertyConditionReportController::class, 'index']);
         Route::post('/', [PropertyConditionReportController::class, 'store']);
@@ -158,6 +165,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/{report}/sign', [PropertyConditionReportController::class, 'sign']);
         Route::delete('/{report}', [PropertyConditionReportController::class, 'destroy']);
     });
+
+    // Route globale pour tous les états des lieux du landlord
+    Route::get('/condition-reports', [PropertyConditionReportController::class, 'index']);
 
     Route::prefix('leases/{lease}')->group(function () {
         Route::get('/condition-reports', [PropertyConditionReportController::class, 'forLease']);
@@ -319,6 +329,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('properties/{property}/history', [TenantController::class, 'getPropertyHistory']);
         Route::get('occupation-stats', [TenantController::class, 'getOccupationStats']);
 
+        // ✅ NOUVELLES ROUTES - Documents des locataires
+        Route::post('tenants/{tenant}/documents', [TenantController::class, 'uploadDocuments']);
+        Route::get('tenants/{tenant}/documents', [TenantController::class, 'listDocuments']);
+
         // Co-owners
         Route::post('co-owners/invite', [CoOwnerController::class, 'invite']);
         Route::get('co-owners', [CoOwnerController::class, 'index']);
@@ -339,6 +353,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
         // Incidents landlord
         Route::get('incidents', [LandlordMaintenanceRequestController::class, 'index']);
+        Route::post('incidents', [LandlordMaintenanceRequestController::class, 'store']);
         Route::get('incidents/{id}', [LandlordMaintenanceRequestController::class, 'show']);
         Route::put('incidents/{id}', [LandlordMaintenanceRequestController::class, 'update']);
 
@@ -350,6 +365,32 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // ✅ Fedapay settings (payout)
         Route::get('landlord/fedapay', [LandlordFedapayController::class, 'show']);
         Route::post('landlord/fedapay/subaccount', [LandlordFedapayController::class, 'createOrUpdate']);
+
+        // ✅ Comptabilité - Stats et transactions
+        Route::get('accounting/stats', [AccountingController::class, 'stats']);
+        Route::get('accounting/transactions', [AccountingController::class, 'transactions']);
+        Route::post('accounting/transactions', [AccountingController::class, 'store']);
+
+        // ✅ Archives de documents
+        Route::get('archives', [DocumentArchiveController::class, 'index']);
+        Route::get('archives/stats', [DocumentArchiveController::class, 'stats']);
+
+        // ✅ Notifications du landlord
+        Route::get('notifications', [LandlordNotificationController::class, 'index']);
+        Route::post('notifications/{id}/read', [LandlordNotificationController::class, 'markAsRead']);
+        Route::post('notifications/read-all', [LandlordNotificationController::class, 'markAllAsRead']);
+
+        // ✅ Paramètres du landlord
+        Route::get('settings', [SettingsController::class, 'index']);
+        Route::put('settings/profile', [SettingsController::class, 'updateProfile']);
+        Route::put('settings/password', [SettingsController::class, 'updatePassword']);
+        Route::put('settings/preferences', [SettingsController::class, 'updatePreferences']);
+        Route::put('settings/notifications', [SettingsController::class, 'updateNotifications']);
+        Route::put('settings/privacy', [SettingsController::class, 'updatePrivacy']);
+        Route::post('settings/2fa/enable', [SettingsController::class, 'enableTwoFactor']);
+        Route::post('settings/2fa/disable', [SettingsController::class, 'disableTwoFactor']);
+        Route::get('settings/download-data', [SettingsController::class, 'downloadData']);
+        Route::delete('settings/account', [SettingsController::class, 'deleteAccount']);
     });
 
     /* =========================

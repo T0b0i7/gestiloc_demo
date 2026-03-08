@@ -349,6 +349,55 @@ HTML;
         return new MaintenanceRequestResource($incident);
     }
 
+    public function store(Request $request)
+    {
+        $landlord = $this->landlordOrFail();
+
+        $data = $request->validate([
+            'property_id' => ['required', 'integer', 'exists:properties,id'],
+            'title' => ['required', 'string', 'max:255'],
+            'category' => ['required', 'in:plumbing,electricity,heating,other'],
+            'priority' => ['required', 'in:low,medium,high,emergency'],
+            'description' => ['nullable', 'string'],
+            'preferred_slots' => ['nullable', 'array'],
+            'preferred_slots.*.date' => ['required_with:preferred_slots', 'date_format:Y-m-d'],
+            'preferred_slots.*.from' => ['required_with:preferred_slots', 'date_format:H:i'],
+            'preferred_slots.*.to' => ['required_with:preferred_slots', 'date_format:H:i'],
+            'photos' => ['nullable', 'array'],
+            'photos.*' => ['string'],
+            'assigned_provider' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        // Verify the property belongs to this landlord
+        $property = \App\Models\Property::where('id', $data['property_id'])
+            ->where('landlord_id', $landlord->id)
+            ->first();
+
+        if (!$property) {
+            return response()->json(['message' => 'Ce bien ne vous appartient pas.'], 403);
+        }
+
+        $incident = MaintenanceRequest::create([
+            'property_id' => $property->id,
+            'landlord_id' => $landlord->id,
+            'tenant_id' => null, // Created by landlord, no tenant associated
+            'title' => $data['title'],
+            'category' => $data['category'],
+            'priority' => $data['priority'],
+            'description' => $data['description'] ?? null,
+            'preferred_slots' => $data['preferred_slots'] ?? [],
+            'photos' => $data['photos'] ?? [],
+            'assigned_provider' => $data['assigned_provider'] ?? null,
+            'status' => 'open',
+        ]);
+
+        $incident->load(['property.landlord.user', 'tenant.user', 'property']);
+
+        return (new MaintenanceRequestResource($incident))
+            ->response()
+            ->setStatusCode(201);
+    }
+
     public function update(Request $request, $id)
     {
         $landlord = $this->landlordOrFail();

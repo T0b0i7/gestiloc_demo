@@ -43,22 +43,19 @@ class CoOwnerAssignPropertyController extends Controller
             return redirect()->route('login')->with('error', 'Profil co-propriétaire non trouvé');
         }
 
-        // Récupérer TOUS les biens délégués disponibles (pas déjà loués)
+        // 🔥 CORRECTION : Récupérer UNIQUEMENT les biens NON LOUÉS
         $delegatedProperties = PropertyDelegation::where('co_owner_id', $coOwner->id)
             ->where('status', 'active')
             ->with('property')
             ->get()
             ->filter(function ($delegation) {
-                // Vérifier que la propriété existe et n'est pas déjà louée
+                // Vérifier que la propriété existe
                 if (!$delegation->property) {
                     return false;
                 }
 
-                $isRented = Lease::where('property_id', $delegation->property->id)
-                    ->where('status', 'active')
-                    ->exists();
-
-                return !$isRented;
+                // 🔥 FILTRE PRINCIPAL : Garder seulement les biens dont le statut n'est PAS 'rented'
+                return $delegation->property->status !== 'rented';
             })
             ->map(function ($delegation) {
                 return $delegation->property;
@@ -74,7 +71,7 @@ class CoOwnerAssignPropertyController extends Controller
 
         Log::info('Données pour formulaire assignation', [
             'properties_count' => $delegatedProperties->count(),
-            'properties' => $delegatedProperties->pluck('id')->toArray(),
+            'properties' => $delegatedProperties->pluck('id', 'status')->toArray(),
             'tenants_count' => $tenants->count(),
             'co_owner_id' => $coOwner->id,
             'landlord_id' => $coOwner->landlord_id,
@@ -100,7 +97,7 @@ class CoOwnerAssignPropertyController extends Controller
             return back()->with('error', 'Profil co-propriétaire non trouvé')->withInput();
         }
 
-        // Validation - MODIFIÉ : 'nu' et 'meuble' au lieu de 'residential' et 'seasonal'
+        // Validation - avec les types 'nu' et 'meuble'
         $validated = $request->validate([
             'property_id' => [
                 'required',
@@ -116,13 +113,19 @@ class CoOwnerAssignPropertyController extends Controller
                         $fail('Ce bien ne vous est pas délégué.');
                     }
 
-                    // Vérifier que le bien n'est pas déjà loué
+                    // 🔥 Vérifier que le bien n'est pas déjà loué (double vérification)
+                    $property = Property::find($value);
+                    if ($property && $property->status === 'rented') {
+                        $fail('Ce bien est déjà loué.');
+                    }
+
+                    // Vérifier qu'il n'y a pas de bail actif (sécurité supplémentaire)
                     $isRented = Lease::where('property_id', $value)
                         ->where('status', 'active')
                         ->exists();
 
                     if ($isRented) {
-                        $fail('Ce bien est déjà loué.');
+                        $fail('Ce bien a déjà un bail actif.');
                     }
                 }
             ],
@@ -146,7 +149,6 @@ class CoOwnerAssignPropertyController extends Controller
                     }
                 }
             ],
-            // MODIFICATION ICI : 'nu' et 'meuble' au lieu de 'residential' et 'seasonal'
             'lease_type' => 'required|in:nu,meuble',
             'lease_status' => 'required|in:draft,active,pending_signature',
             'start_date' => 'required|date',
@@ -161,6 +163,12 @@ class CoOwnerAssignPropertyController extends Controller
 
         try {
             DB::beginTransaction();
+
+            // Vérification finale avant création
+            $property = Property::find($validated['property_id']);
+            if ($property->status === 'rented') {
+                throw new \Exception('Ce bien est déjà loué. Veuillez rafraîchir la page.');
+            }
 
             // Générer un numéro de bail unique
             $leaseNumber = 'BAIL-' . date('Y') . '-' . str_pad(Lease::count() + 1, 4, '0', STR_PAD_LEFT);
@@ -182,7 +190,7 @@ class CoOwnerAssignPropertyController extends Controller
                 'property_id' => $validated['property_id'],
                 'tenant_id' => $validated['tenant_id'],
                 'lease_number' => $leaseNumber,
-                'type' => $validated['lease_type'], // Ici aussi : 'nu' ou 'meuble'
+                'type' => $validated['lease_type'],
                 'start_date' => $validated['start_date'],
                 'end_date' => $endDate,
                 'tacit_renewal' => true,
@@ -218,7 +226,6 @@ class CoOwnerAssignPropertyController extends Controller
 
             // 3. Mettre à jour le statut du bien si le bail est actif
             if ($validated['lease_status'] === 'active') {
-                $property = Property::find($validated['property_id']);
                 $property->status = 'rented';
                 $property->save();
 

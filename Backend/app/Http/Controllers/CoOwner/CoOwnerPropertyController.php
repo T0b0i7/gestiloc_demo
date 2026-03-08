@@ -132,7 +132,7 @@ class CoOwnerPropertyController extends Controller
             'construction_year' => 'nullable|integer|min:1800|max:' . date('Y'),
             'rent_amount' => 'nullable|numeric|min:0',
             'charges_amount' => 'nullable|numeric|min:0',
-            'caution' => 'nullable|numeric|min:0', // AJOUTÉ - Dépôt de garantie
+            'caution' => 'nullable|numeric|min:0',
             'has_garage' => 'nullable|boolean',
             'has_parking' => 'nullable|boolean',
             'is_furnished' => 'nullable|boolean',
@@ -173,6 +173,18 @@ class CoOwnerPropertyController extends Controller
                 }
             }
 
+            // 🔥 SOLUTION : S'assurer que tous les champs numériques ont une valeur par défaut
+            $rent_amount = isset($validated['rent_amount']) && $validated['rent_amount'] !== '' ? $validated['rent_amount'] : 0;
+            $charges_amount = isset($validated['charges_amount']) && $validated['charges_amount'] !== '' ? $validated['charges_amount'] : 0;
+            $caution = isset($validated['caution']) && $validated['caution'] !== '' ? $validated['caution'] : 0;
+            $surface = isset($validated['surface']) && $validated['surface'] !== '' ? $validated['surface'] : 0;
+            $floor = isset($validated['floor']) && $validated['floor'] !== '' ? $validated['floor'] : null;
+            $total_floors = isset($validated['total_floors']) && $validated['total_floors'] !== '' ? $validated['total_floors'] : null;
+            $room_count = isset($validated['room_count']) && $validated['room_count'] !== '' ? $validated['room_count'] : 0;
+            $bedroom_count = isset($validated['bedroom_count']) && $validated['bedroom_count'] !== '' ? $validated['bedroom_count'] : 0;
+            $bathroom_count = isset($validated['bathroom_count']) && $validated['bathroom_count'] !== '' ? $validated['bathroom_count'] : 0;
+            $wc_count = isset($validated['wc_count']) && $validated['wc_count'] !== '' ? $validated['wc_count'] : 0;
+
             // Créer la propriété
             $property = Property::create([
                 'uuid' => Str::uuid(),
@@ -190,17 +202,17 @@ class CoOwnerPropertyController extends Controller
                 'country' => $validated['country'] ?? null,
                 'latitude' => $validated['latitude'] ?? null,
                 'longitude' => $validated['longitude'] ?? null,
-                'surface' => $validated['surface'],
-                'floor' => $validated['floor'] ?? null,
-                'total_floors' => $validated['total_floors'] ?? null,
-                'room_count' => $validated['room_count'] ?? null,
-                'bedroom_count' => $validated['bedroom_count'] ?? null,
-                'bathroom_count' => $validated['bathroom_count'] ?? null,
-                'wc_count' => $validated['wc_count'] ?? null,
+                'surface' => $surface,
+                'floor' => $floor,
+                'total_floors' => $total_floors,
+                'room_count' => $room_count,
+                'bedroom_count' => $bedroom_count,
+                'bathroom_count' => $bathroom_count,
+                'wc_count' => $wc_count,
                 'construction_year' => $validated['construction_year'] ?? null,
-                'rent_amount' => $validated['rent_amount'] ?? null,
-                'charges_amount' => $validated['charges_amount'] ?? null,
-                'caution' => $validated['caution'] ?? null, // AJOUTÉ
+                'rent_amount' => $rent_amount,
+                'charges_amount' => $charges_amount,
+                'caution' => $caution,
                 'has_garage' => $validated['has_garage'],
                 'has_parking' => $validated['has_parking'],
                 'is_furnished' => $validated['is_furnished'],
@@ -241,7 +253,9 @@ class CoOwnerPropertyController extends Controller
                 'co_owner_id' => $coOwner->id,
                 'landlord_id' => $coOwner->landlord_id,
                 'delegation_id' => $delegation->id,
-                'caution' => $property->caution,
+                'rent_amount' => $rent_amount,
+                'charges_amount' => $charges_amount,
+                'caution' => $caution,
             ]);
 
             // ✅ REDIRECTION VERS LE FORMULAIRE DE CRÉATION AVEC MESSAGE DE SUCCÈS
@@ -255,10 +269,11 @@ class CoOwnerPropertyController extends Controller
             Log::error('Erreur création bien par co-propriétaire', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
+                'data' => $validated
             ]);
 
             return back()
-                ->with('error', 'Erreur lors de la création du bien: ' . $e->getMessage())
+                ->with('error', 'Erreur lors de la création du bien. Veuillez vérifier tous les champs.')
                 ->withInput();
         }
     }
@@ -324,7 +339,7 @@ class CoOwnerPropertyController extends Controller
                 'construction_year' => 'sometimes|nullable|integer|min:1800|max:' . date('Y'),
                 'rent_amount' => 'sometimes|nullable|numeric|min:0',
                 'charges_amount' => 'sometimes|nullable|numeric|min:0',
-                'caution' => 'sometimes|nullable|numeric|min:0', // AJOUT ICI
+                'caution' => 'sometimes|nullable|numeric|min:0',
                 'property_type' => 'sometimes|nullable|string|max:255',
                 'description' => 'sometimes|nullable|string|max:2000',
                 'has_garage' => 'sometimes|boolean',
@@ -361,16 +376,31 @@ class CoOwnerPropertyController extends Controller
             }
         }
 
+        // 🔥 SOLUTION : Pour la mise à jour, on garde les valeurs existantes si non fournies
+        $dataToUpdate = [];
+
+        // Liste des champs numériques qui doivent avoir 0 par défaut
+        $numericFields = ['rent_amount', 'charges_amount', 'caution', 'surface', 'room_count', 'bedroom_count', 'bathroom_count', 'wc_count'];
+
+        foreach ($validated as $key => $value) {
+            if (in_array($key, $numericFields)) {
+                // Pour les champs numériques, si c'est null ou vide, on met 0
+                $dataToUpdate[$key] = ($value === null || $value === '') ? 0 : $value;
+            } else {
+                $dataToUpdate[$key] = $value;
+            }
+        }
+
         // Gérer le code de référence
-        if (!isset($validated['reference_code']) || empty($validated['reference_code'])) {
-            $validated['reference_code'] = $property->reference_code ?: 'REF-' . time();
+        if (!isset($dataToUpdate['reference_code']) || empty($dataToUpdate['reference_code'])) {
+            $dataToUpdate['reference_code'] = $property->reference_code ?: 'REF-' . time();
         }
 
         // Traiter les champs booléens
         $booleanFields = ['has_garage', 'has_parking', 'is_furnished', 'has_elevator', 'has_balcony', 'has_terrace', 'has_cellar'];
         foreach ($booleanFields as $field) {
-            if (isset($validated[$field])) {
-                $validated[$field] = (bool) $validated[$field];
+            if (isset($dataToUpdate[$field])) {
+                $dataToUpdate[$field] = (bool) $dataToUpdate[$field];
             }
         }
 
@@ -378,7 +408,7 @@ class CoOwnerPropertyController extends Controller
 
         try {
             // Mise à jour de la propriété
-            $property->update($validated);
+            $property->update($dataToUpdate);
 
             // Enregistrer dans l'audit
             DB::table('property_modification_audits')->insert([
@@ -386,7 +416,7 @@ class CoOwnerPropertyController extends Controller
                 'co_owner_id' => $coOwner->id,
                 'landlord_id' => $property->landlord_id,
                 'original_data' => json_encode($originalData),
-                'modified_data' => json_encode($validated),
+                'modified_data' => json_encode($dataToUpdate),
                 'status' => 'modified',
                 'notification_sent_at' => now(),
                 'created_at' => now(),
@@ -401,7 +431,7 @@ class CoOwnerPropertyController extends Controller
                         $property,
                         $coOwner,
                         $originalData,
-                        $validated
+                        $dataToUpdate
                     ));
                 }
             } catch (\Exception $e) {

@@ -5,8 +5,6 @@
 @section('content')
 <div class="content-container">
     <div class="content-card">
-
-
         <div class="content-body">
             <a href="{{ route('co-owner.maintenance.index') }}" class="back-button">
                 <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i>
@@ -294,23 +292,20 @@
                         Répondre au locataire
                     </h3>
                    <form action="{{ route('co-owner.maintenance.reply', $maintenance) }}" method="POST" class="reply-form">
-    @csrf
-    <div class="form-group">
-        <label class="form-label">Votre message</label>
-    <textarea name="reply_message" class="form-textarea"  placeholder="Envoyez un message au locataire pour l'informer de l'avancement..." required></textarea>
+                        @csrf
+                        <div class="form-group">
+                            <label class="form-label">Votre message</label>
+                            <textarea name="reply_message" class="form-textarea"  placeholder="Envoyez un message au locataire pour l'informer de l'avancement..." required></textarea>
+                        </div>
 
-    </div>
-
-
-    <!-- Conteneur pour bouton aligné à droite -->
-    <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
-        <button type="submit" class="button button-primary" style="display: inline-flex; align-items: center; gap: 6px;">
-            <i data-lucide="send" style="width: 16px; height: 16px;"></i>
-            Envoyer au locataire
-        </button>
-    </div>
-</form>
-
+                        <!-- Conteneur pour bouton aligné à droite -->
+                        <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
+                            <button type="submit" class="button button-primary" style="display: inline-flex; align-items: center; gap: 6px;">
+                                <i data-lucide="send" style="width: 16px; height: 16px;"></i>
+                                Envoyer au locataire
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -325,211 +320,41 @@
     </button>
 </div>
 
-    <script>
-        // Initialiser les icônes
-        lucide.createIcons();
-
-        // Fonction UNIFIÉE - React sur 8080, Laravel sur 8000
-        function goToReact(path) {
-            const token = localStorage.getItem('token') || getUrlParam('api_token');
-
-            if (!token) {
-                alert('Session expirée, veuillez vous reconnecter');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-                return;
-            }
-
-            // Déterminer si c'est une route React ou Laravel
-            const isLaravelRoute = path.includes('/tenants') ||
-                                  path.includes('/assign-property') ||
-                                  path.includes('/leases') ||
-                                  path.includes('/notices') ||
-                                  path.includes('/maintenance') ||
-                                  path.includes('/test-laravel');
-
-            let baseUrl = 'http://localhost:';
-
-            if (isLaravelRoute) {
-                baseUrl += '8000'; // Laravel
-            } else {
-                baseUrl += '8080'; // React
-            }
-
-            let fullUrl = baseUrl + path;
-
-            const separator = fullUrl.includes('?') ? '&' : '?';
-            fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-            console.log('Navigation vers:', fullUrl);
-            window.location.href = fullUrl;
-        }
-
-        // Pour les routes Laravel
-        function navigateTo(path) {
-            const token = localStorage.getItem('token') || getUrlParam('api_token');
-
-            if (!token) {
-                alert('Session expirée, veuillez vous reconnecter');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-                return;
-            }
-
-            const baseUrl = 'https://wheat-skunk-120710.hostingersite.com';
-            let fullUrl = baseUrl + path;
-
-            const separator = fullUrl.includes('?') ? '&' : '?';
-            fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-            console.log('Navigation Laravel vers:', fullUrl);
-            window.location.href = fullUrl;
-        }
-
-        // Helper pour récupérer un paramètre d'URL
-        function getUrlParam(name) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(name);
-        }
-
-        // Gestion des sous-menus
-        function toggleSubmenu(menuId) {
-            const submenu = document.getElementById(menuId);
-            const parent = document.querySelector(`[onclick="toggleSubmenu('${menuId}')"]`);
-
-            if (submenu.style.display === 'none' || !submenu.style.display) {
-                submenu.style.display = 'block';
-                parent.classList.add('active');
-            } else {
-                submenu.style.display = 'none';
-                parent.classList.remove('active');
-            }
-        }
-
-        // Gestion de la sidebar mobile
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        }
-
-        document.getElementById('overlay').addEventListener('click', toggleSidebar);
-
-        // Logout
-        function logout() {
-            if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/logout';
-            }
-        }
-
-        // Au chargement
-        function checkMobile() {
-            const mobileBtn = document.querySelector('.mobile-menu-btn');
-            if (window.innerWidth <= 768) {
-                mobileBtn.style.display = 'block';
-            } else {
-                mobileBtn.style.display = 'none';
-            }
-        }
-
-        window.addEventListener('resize', checkMobile);
-        checkMobile();
-
-        // Ajouter le token à la page actuelle si présent dans l'URL
-        const urlToken = getUrlParam('api_token');
-        if (urlToken) {
-            localStorage.setItem('token', urlToken);
-        }
-
-        // Gestion des formulaires d'action
-        function toggleAssignForm() {
-            const form = document.getElementById('assign-form');
-            form.style.display = form.style.display === 'none' ? 'block' : 'none';
-        }
-
-        function toggleCancelForm() {
-            const form = document.getElementById('cancel-form');
-            form.style.display = form.style.display === 'none' ? 'block' : 'none';
-        }
-
-        function toggleResolveForm() {
-            const form = document.getElementById('resolve-form');
-            form.style.display = form.style.display === 'none' ? 'block' : 'none';
-        }
-
-        // Modal pour les photos
-        function openModal(imageSrc) {
-            document.getElementById('modalImage').src = imageSrc;
-            document.getElementById('photoModal').style.display = 'flex';
-        }
-
-        function closeModal() {
-            document.getElementById('photoModal').style.display = 'none';
-        }
-
-        // Fermer modal avec ESC
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeModal();
-            }
-        });
-
-        // Fermer modal en cliquant à côté
-        document.getElementById('photoModal').addEventListener('click', function(e) {
-            if (e.target.id === 'photoModal') {
-                closeModal();
-            }
-        });
-    </script>
-
-    <script>
-    // Initialiser les icônes
-    lucide.createIcons();
-
-    // Navigation vers React (8080)
-    function goToReact(path) {
-        const token = localStorage.getItem('token') || getUrlParam('api_token');
-
-        if (!token) {
-            alert('Session expirée, veuillez vous reconnecter');
-            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-            return;
-        }
-
-        const baseUrl = 'http://localhost:8080';
-        let fullUrl = baseUrl + path;
-
-        const separator = fullUrl.includes('?') ? '&' : '?';
-        fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-        console.log('Navigation React vers:', fullUrl);
-        window.location.href = fullUrl;
+<style>
+    :root {
+        --gradA: #667eea;
+        --gradB: #764ba2;
+        --indigo: #4f46e5;
+        --violet: #7c3aed;
+        --emerald: #10b981;
+        --yellow: #f59e0b;
+        --red: #ef4444;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --muted2: #94a3b8;
+        --line: rgba(15,23,42,.10);
+        --line2: rgba(15,23,42,.08);
+        --shadow: 0 22px 70px rgba(0,0,0,.18);
     }
 
-  .content-container {
-    min-height: 100vh;
-    background: #ffffff;
-    padding: 2rem;
-    width: 70%;
-    margin: 0 auto; /* centre horizontalement */
-}
+    .content-container {
+        min-height: 100vh;
+        background: #ffffff;
+        padding: 2rem;
+        width: 70%;
+        margin: 0 auto;
+    }
 
-        if (!token) {
-            alert('Session expirée, veuillez vous reconnecter');
-            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-            return;
-        }
-
-        const baseUrl = 'https://wheat-skunk-120710.hostingersite.com';
-        let fullUrl = baseUrl + path;
-
-        const separator = fullUrl.includes('?') ? '&' : '?';
-        fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-        console.log('Navigation Laravel vers:', fullUrl);
-        window.location.href = fullUrl;
+    .content-container::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background:
+            radial-gradient(900px 520px at 12% -8%, rgba(102,126,234,.16) 0%, rgba(102,126,234,0) 62%),
+            radial-gradient(900px 520px at 92% 8%, rgba(118,75,162,.14) 0%, rgba(118,75,162,0) 64%),
+            radial-gradient(700px 420px at 40% 110%, rgba(16,185,129,.10) 0%, rgba(16,185,129,0) 60%);
+        pointer-events: none;
+        z-index: -2;
     }
 
     .content-card {
@@ -544,50 +369,10 @@
         backdrop-filter: blur(10px);
     }
 
-    .content-header {
-        background: linear-gradient(135deg, var(--gradA) 0%, var(--gradB) 100%);
-        padding: 2.5rem;
-        color: white;
-        position: relative;
-        overflow: hidden;
-        z-index: 1;
-    }
-
-    .content-header h1 {
-        font-size: 2rem;
-        font-weight: 900;
-        margin: 0 0 0.6rem 0;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        letter-spacing: -0.02em;
-    }
-
-    .content-header p {
-        opacity: 0.9;
-        font-weight: 650;
-        font-size: 0.95rem;
-    }
-
     .content-body {
         padding: 2.5rem;
         position: relative;
         z-index: 1;
-    }
-
-    .top-actions {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 2rem;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-
-    .top-actions-right {
-        display: flex;
-        gap: .75rem;
-        flex-wrap: wrap;
     }
 
     .alert-box {
@@ -599,18 +384,6 @@
         display: flex;
         align-items: flex-start;
         gap: 10px;
-    }
-
-    .alert-info {
-        background: rgba(239,246,255,.92);
-        border-color: rgba(59,130,246,.30);
-        color: #1e40af;
-    }
-
-    .alert-warning {
-        background: rgba(254,252,232,.92);
-        border-color: rgba(245,158,11,.30);
-        color: #92400e;
     }
 
     .alert-error {
@@ -644,22 +417,22 @@
     .button-primary {
         background: #70AE48;
         color: #fff;
-        box-shadow: 0 14px 30px rgba(79,70,229,.22);
+        box-shadow: 0 14px 30px rgba(112, 174, 72, 0.22);
     }
 
     .button-primary:hover:not(:disabled) {
         transform: translateY(-1px);
-        box-shadow: 0 18px 34px rgba(79,70,229,.28);
+        box-shadow: 0 18px 34px rgba(112, 174, 72, 0.28);
     }
 
     .button-secondary {
         background: rgba(255,255,255,.92);
-        color: #4338ca;
-        border: 2px solid rgba(67,56,202,.20);
+        color: #70AE48;
+        border: 2px solid rgba(112, 174, 72, 0.20);
     }
 
     .button-secondary:hover {
-        background: rgba(67,56,202,.06);
+        background: rgba(112, 174, 72, 0.06);
     }
 
     .button-danger {
@@ -694,7 +467,7 @@
     }
 
     .back-button:hover {
-        color: #4f46e5;
+        color: #70AE48;
     }
 
     .details-grid {
@@ -717,13 +490,14 @@
         padding: 1.5rem;
     }
 
-    // Logout
-    function logout() {
-        if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/logout';
-        }
+    .detail-section-title {
+        font-size: 1.1rem;
+        font-weight: 950;
+        color: var(--ink);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 
     .detail-row {
@@ -828,8 +602,8 @@
 
     .photo-item:hover {
         transform: translateY(-2px);
-        border-color: rgba(102,126,234,.35);
-        box-shadow: 0 10px 25px rgba(102,126,234,.15);
+        border-color: #70AE48;
+        box-shadow: 0 10px 25px rgba(112, 174, 72, 0.15);
     }
 
     .photo-item img {
@@ -895,13 +669,12 @@
     .form-input:focus,
     .form-textarea:focus {
         outline: none;
-        border-color: var(--indigo);
-        box-shadow: 0 0 0 3px rgba(79,70,229,.15);
+        border-color: #70AE48;
+        box-shadow: 0 0 0 3px rgba(112, 174, 72, 0.15);
     }
 </style>
 
 <script>
-    // Scripts spécifiques à cette page
     document.addEventListener('DOMContentLoaded', function() {
         // Initialiser les icônes Lucide
         if (typeof lucide !== 'undefined') {
@@ -930,7 +703,7 @@
         document.getElementById('modalImage').src = imageSrc;
         document.getElementById('photoModal').style.display = 'flex';
 
-        // Re-initialiser les icônes pour le modal
+        // Réinitialiser les icônes pour le modal
         if (typeof lucide !== 'undefined') {
             lucide.createIcons();
         }

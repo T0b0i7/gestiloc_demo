@@ -5,12 +5,10 @@
 @section('content')
 <div class="form-container">
     <div class="form-card">
-        <!-- Header -->
+        <!-- Header avec bouton retour -->
         <div style="margin-bottom: 2rem; padding: 0 1.5rem;">
             <br><br>
-            <a href="{{ route('co-owner.tenants.index') }}"
-               class="btn-back"
-               onclick="navigateTo('/coproprietaire/tenants'); return false;">
+            <a href="{{ route('co-owner.tenants.index') }}" class="btn-back">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M19 12H5M12 19l-7-7 7-7"/>
                 </svg>
@@ -18,6 +16,7 @@
             </a>
         </div>
 
+        <!-- Titre et boutons d'action -->
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2.5rem; padding: 0 1.5rem;">
             <div>
                 <h1 style="font-size: 2rem; font-weight: 700; color: #111827; margin-bottom: 0.5rem; line-height: 1.2;">
@@ -37,10 +36,8 @@
                     </svg>
                     <span>Annuler</span>
                 </button>
-                <button type="submit"
-                        form="lease-form"
-                        class="btn-submit">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" >
+                <button type="submit" form="lease-form" class="btn-submit">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
                     <span>Créer le contrat</span>
@@ -48,6 +45,7 @@
             </div>
         </div>
 
+        <!-- Styles CSS -->
         <style>
             /* Bouton Retour */
             .btn-back {
@@ -195,14 +193,10 @@
                 z-index: 1;
             }
 
-            /* Animation de chargement pour le bouton submit */
+            /* Animation de chargement */
             .btn-submit.loading {
                 pointer-events: none;
                 opacity: 0.7;
-            }
-
-            .btn-submit.loading span {
-                opacity: 0;
             }
 
             @keyframes spin {
@@ -210,6 +204,7 @@
             }
         </style>
 
+        <!-- Corps du formulaire -->
         <div class="form-body" style="padding: 0 1.5rem;">
             <!-- Messages de succès/erreur -->
             @if (session('success'))
@@ -246,6 +241,7 @@
                 </div>
             @endif
 
+            <!-- Formulaire -->
             <form method="POST" action="{{ route('co-owner.assign-property.store') }}" id="lease-form">
                 @csrf
 
@@ -295,8 +291,7 @@
                                     <i data-lucide="users" style="width: 48px; height: 48px; color: #D97706; margin: 0 auto 8px;"></i>
                                     <p style="color: #92400E; margin: 0 0 8px 0; font-size: 0.9rem;">Aucun locataire disponible</p>
                                     <a href="{{ route('co-owner.tenants.create') }}"
-                                       style="display: inline-block; padding: 6px 12px; background: #10B981; color: white; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"
-                                       onclick="navigateTo('/coproprietaire/tenants/create'); return false;">
+                                       style="display: inline-block; padding: 6px 12px; background: #10B981; color: white; border-radius: 6px; text-decoration: none; font-size: 0.85rem;">
                                         Créer un locataire
                                     </a>
                                 </div>
@@ -321,26 +316,25 @@
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                         <!-- Type de bail -->
-                <!-- Type de bail -->
-<div>
-    <label style="display: block; font-weight: 500; color: #374151; margin-bottom: 0.5rem; font-size: 0.9rem;">
-        Type de bail
-    </label>
-    <div style="display: flex; gap: 1rem;">
-        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-            <input type="radio" name="lease_type" value="nu"
-                   {{ old('lease_type', 'nu') == 'nu' ? 'checked' : '' }}
-                   style="width: 16px; height: 16px; accent-color: #10B981;">
-            <span style="font-size: 0.9rem; color: #374151;">Bail nu</span>
-        </label>
-        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-            <input type="radio" name="lease_type" value="meuble"
-                   {{ old('lease_type') == 'meuble' ? 'checked' : '' }}
-                   style="width: 16px; height: 16px; accent-color: #10B981;">
-            <span style="font-size: 0.9rem; color: #374151;">Bail meublé</span>
-        </label>
-    </div>
-</div>
+                        <div>
+                            <label style="display: block; font-weight: 500; color: #374151; margin-bottom: 0.5rem; font-size: 0.9rem;">
+                                Type de bail
+                            </label>
+                            <div style="display: flex; gap: 1rem;">
+                                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                    <input type="radio" name="lease_type" value="nu"
+                                           {{ old('lease_type', 'nu') == 'nu' ? 'checked' : '' }}
+                                           style="width: 16px; height: 16px; accent-color: #10B981;">
+                                    <span style="font-size: 0.9rem; color: #374151;">Bail nu</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                    <input type="radio" name="lease_type" value="meuble"
+                                           {{ old('lease_type') == 'meuble' ? 'checked' : '' }}
+                                           style="width: 16px; height: 16px; accent-color: #10B981;">
+                                    <span style="font-size: 0.9rem; color: #374151;">Bail meublé</span>
+                                </label>
+                            </div>
+                        </div>
 
                         <!-- Statut du bail -->
                         <div>
@@ -361,16 +355,10 @@
                                     <span style="font-size: 0.9rem; color: #374151;">En attente</span>
                                 </label>
                                 <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                                    <input type="radio" name="lease_status" value="draft"
-                                           {{ old('lease_status') == 'draft' ? 'checked' : '' }}
-                                           style="width: 16px; height: 16px; accent-color: #6B7280;">
-                                    <span style="font-size: 0.9rem; color: #374151;">Résilié</span>
-                                </label>
-                                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
                                     <input type="radio" name="lease_status" value="terminated"
                                            {{ old('lease_status') == 'terminated' ? 'checked' : '' }}
                                            style="width: 16px; height: 16px; accent-color: #EF4444;">
-                                    <span style="font-size: 0.9rem; color: #374151;">Expiré</span>
+                                    <span style="font-size: 0.9rem; color: #374151;">Résilié</span>
                                 </label>
                             </div>
                         </div>
@@ -390,12 +378,6 @@
                                 <p style="color: #EF4444; font-size: 0.8rem; margin-top: 4px;">{{ $message }}</p>
                             @enderror
                         </div>
-
-            if (!token) {
-                alert('Session expirée, veuillez vous reconnecter');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-                return;
-            }
 
                         <!-- Dépôt de garantie -->
                         <div>
@@ -422,7 +404,7 @@
                                    class="@error('duration') border-red-500 @enderror">
                             <p style="color: #6B7280; font-size: 0.75rem; margin-top: 4px;">
                                 <i data-lucide="refresh-cw" style="width: 12px; height: 12px; display: inline; vertical-align: middle;"></i>
-                                Renouvellement par tacite: cochez la case
+                                Renouvellement par tacite reconduction
                             </p>
                             @error('duration')
                                 <p style="color: #EF4444; font-size: 0.8rem; margin-top: 4px;">{{ $message }}</p>
@@ -465,7 +447,7 @@
                         </div>
                     </div>
 
-                    <!-- Mode de paiement (pleine largeur) -->
+                    <!-- Mode de paiement -->
                     <div style="margin-top: 1.5rem;">
                         <label style="display: block; font-weight: 500; color: #374151; margin-bottom: 0.5rem; font-size: 0.9rem;">
                             Mode de paiement
@@ -483,7 +465,7 @@
                         @enderror
                     </div>
 
-                    <!-- Détails / conditions particulières -->
+                    <!-- Conditions particulières -->
                     <div style="margin-top: 1.5rem;">
                         <label style="display: block; font-weight: 500; color: #374151; margin-bottom: 0.5rem; font-size: 0.9rem;">
                             Détails / conditions particulières
@@ -493,184 +475,45 @@
                                   style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 0.9rem; resize: vertical; font-family: inherit;"
                                   class="@error('special_conditions') border-red-500 @enderror">{{ old('special_conditions') }}</textarea>
                         <p style="color: #6B7280; font-size: 0.75rem; margin-top: 4px;">
-                            Ces informations seront envoyées dans le champ terme du bail
+                            Ces informations seront ajoutées aux conditions générales du bail
                         </p>
                         @error('special_conditions')
                             <p style="color: #EF4444; font-size: 0.8rem; margin-top: 4px;">{{ $message }}</p>
                         @enderror
+                    </div>
+                </div>
 
-
-            if (!token) {
-                alert('Session expirée, veuillez vous reconnecter');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-                return;
-            }
-
-            const baseUrl = 'https://wheat-skunk-120710.hostingersite.com';
-            let fullUrl = baseUrl + path;
-
+                <!-- Boutons de soumission en bas -->
+                <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; padding-bottom: 2rem;">
+                    <button type="button"
+                            class="btn-cancel"
+                            onclick="if(confirm('Voulez-vous vraiment annuler ? Les modifications seront perdues.')) { window.location.href='{{ route('co-owner.assign-property.create') }}'; }">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                        <span>Annuler</span>
                     </button>
-
-                    <button type="submit"
-                            class="btn-submit-bottom">
+                    <button type="submit" class="btn-submit">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
                         <span>Créer le contrat</span>
                     </button>
-
                 </div>
-                    </div>
-                </div>
-
-
-
-
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        }
-
-        document.getElementById('overlay').addEventListener('click', toggleSidebar);
-
-        // Logout
-        function logout() {
-            if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/logout';
-            }
-        }
-
-        // Au chargement
-        function checkMobile() {
-            const mobileBtn = document.querySelector('.mobile-menu-btn');
-            if (window.innerWidth <= 768) {
-                mobileBtn.style.display = 'block';
-            } else {
-                mobileBtn.style.display = 'none';
-            }
-        }
-
-        window.addEventListener('resize', checkMobile);
-        checkMobile();
-
-        // Ajouter le token à la page actuelle si présent dans l'URL
-        const urlToken = getUrlParam('api_token');
-        if (urlToken) {
-            localStorage.setItem('token', urlToken);
-        }
-
-        // Calcul automatique du dépôt (1 mois de loyer)
-        document.addEventListener('DOMContentLoaded', function() {
-            const rentInput = document.querySelector('input[name="rent_amount"]');
-            const depositInput = document.querySelector('input[name="deposit_amount"]');
-
-            if (rentInput && depositInput) {
-                rentInput.addEventListener('change', function() {
-                    if (this.value && !depositInput.value) {
-                        depositInput.value = this.value;
-                    }
-
-                    .btn-cancel-bottom::before {
-                        content: '';
-                        position: absolute;
-                        top: 50%;
-                        left: 50%;
-                        width: 0;
-                        height: 0;
-                        border-radius: 50%;
-                        background: rgba(220, 38, 38, 0.1);
-                        transform: translate(-50%, -50%);
-                        transition: width 0.6s, height 0.6s;
-                    }
-
-                    .btn-cancel-bottom:hover::before {
-                        width: 300px;
-                        height: 300px;
-                    }
-
-                    .btn-cancel-bottom:hover {
-                        background: #FEF2F2;
-                        border-color: #EF4444;
-                        color: #B91C1C;
-                        transform: translateY(-1px);
-                        box-shadow: 0 4px 6px rgba(220, 38, 38, 0.15);
-                    }
-
-                    .btn-cancel-bottom:active {
-                        transform: translateY(0);
-                        box-shadow: 0 1px 2px rgba(220, 38, 38, 0.1);
-                    }
-
-                    .btn-cancel-bottom svg, .btn-cancel-bottom span {
-                        position: relative;
-                        z-index: 1;
-                    }
-
-                    .btn-submit-bottom {
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 8px;
-                        padding: 11px 28px;
-                        background: #70AE48;
-                        border: none;
-                        border-radius: 10px;
-                        color: #FFFFFF;
-                        font-size: 0.95rem;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                        box-shadow: 0 4px 6px rgba(16, 185, 129, 0.25), 0 1px 3px rgba(0, 0, 0, 0.08);
-                        position: relative;
-                        overflow: hidden;
-                    }
-
-                    .btn-submit-bottom::before {
-                        content: '';
-                        position: absolute;
-                        top: 0;
-                        left: -100%;
-                        width: 100%;
-                        height: 100%;
-                        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-                        transition: left 0.5s;
-                    }
-
-                    .btn-submit-bottom:hover::before {
-                        left: 100%;
-                    }
-
-                    .btn-submit-bottom:hover {
-                        background: linear-gradient(135deg, #059669 0%, #047857 100%);
-                        transform: translateY(-2px);
-                        box-shadow: 0 6px 12px rgba(16, 185, 129, 0.35), 0 3px 6px rgba(0, 0, 0, 0.1);
-                    }
-
-                    .btn-submit-bottom:active {
-                        transform: translateY(0);
-                        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.25);
-                    }
-
-                    .btn-submit-bottom svg {
-                        transition: transform 0.3s ease;
-                    }
-
-                    .btn-submit-bottom:hover svg {
-                        transform: scale(1.1);
-                    }
-
-                    .btn-submit-bottom svg, .btn-submit-bottom span {
-                        position: relative;
-                        z-index: 1;
-                    }
-                </style>
             </form>
         </div>
     </div>
 </div>
 
+<!-- Script JavaScript -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser les icônes Lucide
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+
     // Auto-remplir le dépôt de garantie avec le loyer
     const rentInput = document.querySelector('input[name="rent_amount"]');
     const guaranteeInput = document.querySelector('input[name="guarantee_amount"]');
@@ -685,7 +528,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Effet de chargement sur les boutons submit
     const form = document.getElementById('lease-form');
-    const submitButtons = document.querySelectorAll('.btn-submit, .btn-submit-bottom');
+    const submitButtons = document.querySelectorAll('.btn-submit');
 
     if (form) {
         form.addEventListener('submit', function(e) {
@@ -695,153 +538,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     btn.classList.add('loading');
                     btn.disabled = true;
 
-                    // Remplacer le contenu par un spinner
+                    // Sauvegarder le contenu original
                     const originalContent = btn.innerHTML;
+
+                    // Remplacer par un spinner
                     btn.innerHTML = `
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite;">
-                            <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
-                            <path d="M12 2a10 10 0 0 1 10 10" stroke-opacity="1"></path>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-opacity="0.25" fill="none"></circle>
+                            <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" stroke-opacity="1" fill="none"></path>
                         </svg>
-                        <span style="opacity: 1;">Création en cours...</span>
+                        <span>Création en cours...</span>
                     `;
-
-            if (!token) {
-                alert('Session expirée, veuillez vous reconnecter');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-                return;
+                });
             }
-
-            const baseUrl = 'http://localhost:8080';
-            let fullUrl = baseUrl + path;
-
-            const separator = fullUrl.includes('?') ? '&' : '?';
-            fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-            console.log('Navigation React vers:', fullUrl);
-            window.location.href = fullUrl;
-        }
-
-        // Navigation vers Laravel (8000)
-        function navigateTo(path) {
-            const token = localStorage.getItem('token') || getUrlParam('api_token');
-
-            if (!token) {
-                alert('Session expirée, veuillez vous reconnecter');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-                return;
-            }
-
-            const baseUrl = 'https://wheat-skunk-120710.hostingersite.com';
-            let fullUrl = baseUrl + path;
-
-            const separator = fullUrl.includes('?') ? '&' : '?';
-            fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-            console.log('Navigation Laravel vers:', fullUrl);
-            window.location.href = fullUrl;
-        }
-
-        // Helper pour récupérer un paramètre d'URL
-        function getUrlParam(name) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(name);
-        }
-
-        // Gestion des sous-menus
-        function toggleSubmenu(menuId) {
-            const submenu = document.getElementById(menuId);
-            const parent = document.querySelector(`[onclick="toggleSubmenu('${menuId}')"]`);
-
-            if (submenu.style.display === 'none' || !submenu.style.display) {
-                submenu.style.display = 'block';
-                parent.classList.add('active');
-            } else {
-                submenu.style.display = 'none';
-                parent.classList.remove('active');
-            }
-        }
-
-        // Gestion de la sidebar mobile
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        }
-
-        // Logout
-        function logout() {
-            if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/logout';
-            }
-        }
-
-        // Au chargement
-        function checkMobile() {
-            const mobileBtn = document.querySelector('.mobile-menu-btn');
-            if (window.innerWidth <= 768) {
-                mobileBtn.style.display = 'block';
-            } else {
-                mobileBtn.style.display = 'none';
-            }
-        }
-
-        window.addEventListener('resize', checkMobile);
-        checkMobile();
-
-        // Ajouter le token à la page actuelle si présent dans l'URL
-        const urlToken = getUrlParam('api_token');
-        if (urlToken) {
-            localStorage.setItem('token', urlToken);
-        }
-
-        // Marquer le menu actif en fonction de la page courante
-        document.addEventListener('DOMContentLoaded', function() {
-            const currentPath = window.location.pathname;
-
-            // Définir quel sous-menu doit être ouvert par défaut
-            const menuConfig = {
-                '/coproprietaire/tenants': 'locative-menu',
-                '/coproprietaire/tenants/create': 'locative-menu',
-                '/coproprietaire/assign-property/create': 'locative-menu',
-                '/coproprietaire/leases': 'locative-menu',
-                '/coproprietaire/quittances': 'locative-menu',
-                '/coproprietaire/notices': 'locative-menu',
-                '/coproprietaire/maintenance': 'locative-menu',
-                '/coproprietaire/biens': 'biens-menu',
-                '/coproprietaire/delegations': 'biens-menu',
-                '/coproprietaire/documents': 'documents-menu',
-                '/coproprietaire/finances': 'documents-menu',
-                '/coproprietaire/profile': 'profile-menu',
-                '/coproprietaire/parametres': 'profile-menu',
-                '/coproprietaire/audit': 'profile-menu',
-                '/coproprietaire/mes-delegations': 'delegations-menu',
-                '/coproprietaire/demandes-delegation': 'delegations-menu',
-                '/coproprietaire/inviter-proprietaire': 'delegations-menu',
-                '/coproprietaire/emettre-paiement': 'finances-menu',
-                '/coproprietaire/retrait-methode': 'finances-menu',
-                '/admin/statistiques': 'admin-menu',
-                '/admin/logs': 'admin-menu'
-            };
-
-            // Ouvrir le sous-menu approprié
-            for (const [path, menuId] of Object.entries(menuConfig)) {
-                if (currentPath.includes(path)) {
-                    setTimeout(() => toggleSubmenu(menuId), 100);
-                    break;
-                }
-            }
-
-            // Marquer l'élément actif
-            document.querySelectorAll('.submenu-item').forEach(item => {
-                const itemPath = item.getAttribute('onclick');
-                if (itemPath && itemPath.includes(currentPath)) {
-                    item.classList.add('active');
-                }
-            });
         });
     }
 
@@ -868,4 +577,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+<style>
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+</style>
 @endsection

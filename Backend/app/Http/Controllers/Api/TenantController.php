@@ -434,6 +434,17 @@ HTML;
             ]);
 
             // Créer le locataire avec le user_id
+            // Gérer le nom du garant (peut être un nom complet ou prénom + nom)
+            $guarantorFirstName = $data['guarantor_first_name'] ?? null;
+            $guarantorLastName = $data['guarantor_last_name'] ?? null;
+
+            // Si only guarantor_name is provided, split it
+            if (empty($guarantorFirstName) && !empty($data['guarantor_name'])) {
+                $nameParts = explode(' ', trim($data['guarantor_name']), 2);
+                $guarantorFirstName = $nameParts[0] ?? null;
+                $guarantorLastName = $nameParts[1] ?? null;
+            }
+
             $tenant = Tenant::create([
                 'user_id' => $tenantUser->id,
                 'first_name' => $data['first_name'] ?? '',
@@ -445,6 +456,38 @@ HTML;
                     'phone' => $data['phone'] ?? null,
                     'invitation_id' => $invitation->id,
                     'invitation_status' => 'invited',
+                    // Informations personnelles
+                    'birth_date' => $data['birth_date'] ?? null,
+                    'birth_place' => $data['birth_place'] ?? null,
+                    'address' => $data['address'] ?? null,
+                    'city' => $data['city'] ?? null,
+                    'country' => $data['country'] ?? null,
+                    'marital_status' => $data['marital_status'] ?? null,
+                    // Contact d'urgence
+                    'emergency_contact_name' => $data['emergency_contact_name'] ?? null,
+                    'emergency_contact_phone' => $data['emergency_contact_phone'] ?? null,
+                    'emergency_contact_email' => $data['emergency_contact_email'] ?? null,
+                    // Situation professionnelle
+                    'profession' => $data['profession'] ?? null,
+                    'employer' => $data['employer'] ?? null,
+                    'contract_type' => $data['contract_type'] ?? null,
+                    'monthly_income' => $data['monthly_income'] ?? null,
+                    'annual_income' => $data['annual_income'] ?? null,
+                    // Informations garant
+                    'has_guarantor' => $data['has_guarantor'] ?? false,
+                    'guarantor_first_name' => $guarantorFirstName,
+                    'guarantor_last_name' => $guarantorLastName,
+                    'guarantor_name' => $data['guarantor_name'] ?? null,
+                    'guarantor_relationship' => $data['guarantor_relationship'] ?? null,
+                    'guarantor_phone' => $data['guarantor_phone'] ?? null,
+                    'guarantor_email' => $data['guarantor_email'] ?? null,
+                    'guarantor_address' => $data['guarantor_address'] ?? null,
+                    'guarantor_profession' => $data['guarantor_profession'] ?? null,
+                    'guarantor_monthly_income' => $data['guarantor_monthly_income'] ?? null,
+                    'guarantor_annual_income' => $data['guarantor_annual_income'] ?? null,
+                    'guarantor_birth_date' => $data['guarantor_birth_date'] ?? null,
+                    'guarantor_birth_place' => $data['guarantor_birth_place'] ?? null,
+                    'guarantor_nationality' => $data['guarantor_nationality'] ?? null,
                 ],
             ]);
 
@@ -674,14 +717,33 @@ HTML;
             ];
         });
 
-        $invitations = $landlord->invitations()
+        // Récupérer les invitations en attente avec les informations du meta et du tenant associé
+        $invitationsQuery = $landlord->invitations()
             ->whereNull('accepted_at')
-            ->get([
-                'id',
-                'email',
-                'expires_at',
-                'created_at',
-            ]);
+            ->get();
+        
+        // Formater les invitations pour inclure first_name et last_name du meta, et le tenant_id associé
+        $invitations = $invitationsQuery->map(function ($inv) {
+            $meta = $inv->meta ?? [];
+            
+            // Chercher le tenant associé via tenant_user_id
+            $tenantId = null;
+            if ($inv->tenant_user_id) {
+                $tenant = \App\Models\Tenant::where('user_id', $inv->tenant_user_id)->first();
+                $tenantId = $tenant?->id;
+            }
+            
+            return [
+                'id' => $inv->id,
+                'email' => $inv->email,
+                'name' => $inv->name,
+                'first_name' => $meta['first_name'] ?? null,
+                'last_name' => $meta['last_name'] ?? null,
+                'tenant_id' => $tenantId, // ID du locataire associé
+                'expires_at' => $inv->expires_at,
+                'created_at' => $inv->created_at,
+            ];
+        });
 
         return response()->json([
             'tenants'     => $formattedTenants,
@@ -1000,5 +1062,112 @@ HTML;
         }
 
         return response()->json($stats);
+    }
+
+    /**
+     * ✅ Upload documents for a tenant
+     */
+    public function uploadDocuments(Request $request, $tenantId): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user->isLandlord()) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $landlord = $user->landlord;
+        if (!$landlord) {
+            return response()->json(['message' => 'Landlord profile missing'], 422);
+        }
+
+        $tenant = Tenant::findOrFail($tenantId);
+
+        // Vérifier que le locataire appartient au landlord
+        if (($tenant->meta['landlord_id'] ?? null) != $landlord->id) {
+            return response()->json(['message' => 'Tenant does not belong to this landlord'], 403);
+        }
+
+        $request->validate([
+            'documents' => 'required|array',
+            'documents.*' => 'file|max:15360', // 15MB max per file
+            'document_types' => 'nullable|array',
+        ]);
+
+        $uploadedDocuments = [];
+        $documentTypes = $request->input('document_types', []);
+
+        if ($request->hasFile('documents')) {
+            foreach ($request->file('documents') as $index => $file) {
+                // Determine document type
+                $docType = isset($documentTypes[$index]) ? $documentTypes[$index] : 'other';
+
+                // Store file
+                $path = $file->store('tenant-documents/' . $tenant->id, 'public');
+
+                $uploadedDocuments[] = [
+                    'original_name' => $file->getClientOriginalName(),
+                    'stored_path' => $path,
+                    'mime_type' => $file->getMimeType(),
+                    'size' => $file->getSize(),
+                    'type' => $docType,
+                    'uploaded_at' => now()->toISOString(),
+                ];
+            }
+        }
+
+        // Get existing documents from tenant meta
+        $existingDocs = $tenant->meta['documents'] ?? [];
+
+        // Merge with new documents
+        $allDocuments = array_merge($existingDocs, $uploadedDocuments);
+
+        // Update tenant meta with documents
+        $tenant->meta = array_merge($tenant->meta ?? [], [
+            'documents' => $allDocuments,
+        ]);
+        $tenant->save();
+
+        Log::info('Tenant documents uploaded', [
+            'tenant_id' => $tenant->id,
+            'document_count' => count($uploadedDocuments),
+            'total_documents' => count($allDocuments),
+        ]);
+
+        return response()->json([
+            'message' => 'Documents uploaded successfully',
+            'documents' => $uploadedDocuments,
+            'total_documents' => count($allDocuments),
+        ], 201);
+    }
+
+    /**
+     * ✅ List documents for a tenant
+     */
+    public function listDocuments(Request $request, $tenantId): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user->isLandlord()) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        $landlord = $user->landlord;
+        if (!$landlord) {
+            return response()->json(['message' => 'Landlord profile missing'], 422);
+        }
+
+        $tenant = Tenant::findOrFail($tenantId);
+
+        // Vérifier que le locataire appartient au landlord
+        if (($tenant->meta['landlord_id'] ?? null) != $landlord->id) {
+            return response()->json(['message' => 'Tenant does not belong to this landlord'], 403);
+        }
+
+        $documents = $tenant->meta['documents'] ?? [];
+
+        return response()->json([
+            'documents' => $documents,
+            'total_documents' => count($documents),
+        ]);
     }
 }

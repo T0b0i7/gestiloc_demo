@@ -5,8 +5,6 @@
 @section('content')
 <div class="form-container">
     <div class="form-card">
-
-
         <div class="form-body">
             <div class="top-actions">
                 <a href="{{ route('co-owner.tenants.index') }}" class="button button-secondary">
@@ -39,7 +37,7 @@
             @endif
 
             @if (session('success'))
-                <div style="margin-bottom: 1rem; background: rgba(236,253,245,.92); border: 1px solid rgba(16,185,129,.30); border-radius: 14px; padding: 12px 14px; color: #065f46; font-weight: 950; display: flex; align-items: center; gap: 10px;">
+                <div style="margin-bottom: 1rem; background: rgba(112, 174, 72, 0.1); border: 1px solid rgba(112, 174, 72, 0.3); border-radius: 14px; padding: 12px 14px; color: #2e5e1e; font-weight: 950; display: flex; align-items: center; gap: 10px;">
                     <i data-lucide="check-circle" style="width: 18px; height: 18px;"></i>
                     <span>{{ session('success') }}</span>
                 </div>
@@ -503,7 +501,7 @@
                     </div>
 
                     <div id="guarantorFields" style="display: none;">
-                        <div style="background: rgba(99,102,241,.08); padding: 1.5rem; border-radius: 14px; border: 1px solid rgba(99,102,241,.18); margin-bottom: 1.5rem;">
+                        <div style="background: rgba(112, 174, 72, 0.08); padding: 1.5rem; border-radius: 14px; border: 1px solid rgba(112, 174, 72, 0.18); margin-bottom: 1.5rem;">
                             <h3 class="form-label" style="margin-bottom: 1rem;">
                                 Informations du garant
                             </h3>
@@ -736,12 +734,11 @@
 </div>
 
 <style>
-    /* Styles spécifiques à la page de création de locataire */
     :root {
-        --gradA: #667eea;
-        --gradB: #764ba2;
-        --indigo: #4f46e5;
-        --violet: #7c3aed;
+        --gradA: #70AE48;
+        --gradB: #8BC34A;
+        --indigo: #70AE48;
+        --violet: #8BC34A;
         --emerald: #10b981;
         --ink: #0f172a;
         --muted: #64748b;
@@ -763,8 +760,8 @@
         position: fixed;
         inset: 0;
         background:
-            radial-gradient(900px 520px at 12% -8%, rgba(102,126,234,.16) 0%, rgba(102,126,234,0) 62%),
-            radial-gradient(900px 520px at 92% 8%, rgba(118,75,162,.14) 0%, rgba(118,75,162,0) 64%),
+            radial-gradient(900px 520px at 12% -8%, rgba(112, 174, 72, .16) 0%, rgba(112, 174, 72, 0) 62%),
+            radial-gradient(900px 520px at 92% 8%, rgba(139, 195, 74, .14) 0%, rgba(139, 195, 74, 0) 64%),
             radial-gradient(700px 420px at 40% 110%, rgba(16,185,129,.10) 0%, rgba(16,185,129,0) 60%);
         pointer-events: none;
         z-index: -2;
@@ -777,34 +774,9 @@
         border-radius: 22px;
         box-shadow: var(--shadow);
         overflow: hidden;
-        border: 1px solid rgba(102,126,234,.18);
+        border: 1px solid rgba(112, 174, 72, .18);
         position: relative;
         backdrop-filter: blur(10px);
-    }
-
-    .form-header {
-        background: linear-gradient(135deg, var(--gradA) 0%, var(--gradB) 100%);
-        padding: 2.5rem;
-        color: white;
-        position: relative;
-        overflow: hidden;
-        z-index: 1;
-    }
-
-    .form-header h1 {
-        font-size: 2rem;
-        font-weight: 900;
-        margin: 0 0 0.6rem 0;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        letter-spacing: -0.02em;
-    }
-
-    .form-header p {
-        opacity: 0.9;
-        font-weight: 650;
-        font-size: 0.95rem;
     }
 
     .form-body {
@@ -829,7 +801,7 @@
         color: var(--ink);
         margin: 0 0 1.25rem 0;
         padding-bottom: 0.85rem;
-        border-bottom: 2px solid rgba(102,126,234,.28);
+        border-bottom: 2px solid rgba(112, 174, 72, .28);
         display: flex;
         align-items: center;
         gap: 0.6rem;
@@ -882,7 +854,7 @@
 
     .form-input:focus, .form-select:focus, .form-textarea:focus {
         outline: none;
-        border-color: rgba(112, 174, 72, .75);
+        border-color: #70AE48;
         box-shadow: 0 0 0 4px rgba(112, 174, 72, 0.14);
     }
 
@@ -1123,8 +1095,8 @@
     .file-preview {
         margin-top: 1rem;
         padding: 1rem;
-        background: rgba(16,185,129,.1);
-        border: 1px solid rgba(16,185,129,.3);
+        background: rgba(112, 174, 72, 0.1);
+        border: 1px solid rgba(112, 174, 72, 0.3);
         border-radius: 12px;
     }
 
@@ -1132,7 +1104,7 @@
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        color: #065f46;
+        color: #2e5e1e;
         font-weight: 700;
     }
 
@@ -1157,100 +1129,12 @@
 </style>
 
 <script>
-    // Initialiser les icônes
-    lucide.createIcons();
-
-    // Fonction UNIFIÉE - React sur 8080, Laravel sur 8000
-    function goToReact(path) {
-        const token = localStorage.getItem('token') || getUrlParam('api_token');
-
-        if (!token) {
-            alert('Session expirée, veuillez vous reconnecter');
-            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-            return;
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialiser les icônes Lucide
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
         }
-
-        // Déterminer si c'est une route React ou Laravel
-        const isLaravelRoute = path.includes('/tenants') ||
-                              path.includes('/assign-property') ||
-                              path.includes('/test-laravel');
-
-        let baseUrl = 'http://localhost:';
-
-        if (isLaravelRoute) {
-            baseUrl += '8000'; // Laravel
-        } else {
-            baseUrl += '8080'; // React
-        }
-
-        let fullUrl = baseUrl + path;
-
-        const separator = fullUrl.includes('?') ? '&' : '?';
-        fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-        console.log('Navigation vers:', fullUrl);
-        window.location.href = fullUrl;
-    }
-
-    // Pour les routes Laravel
-    function navigateTo(path) {
-        const token = localStorage.getItem('token') || getUrlParam('api_token');
-
-        if (!token) {
-            alert('Session expirée, veuillez vous reconnecter');
-            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-            return;
-        }
-
-        const baseUrl = 'https://wheat-skunk-120710.hostingersite.com';
-        let fullUrl = baseUrl + path;
-
-        const separator = fullUrl.includes('?') ? '&' : '?';
-        fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-        console.log('Navigation Laravel vers:', fullUrl);
-        window.location.href = fullUrl;
-    }
-
-    // Helper pour récupérer un paramètre d'URL
-    function getUrlParam(name) {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get(name);
-    }
-
-    // Gestion des sous-menus
-    function toggleSubmenu(menuId) {
-        const submenu = document.getElementById(menuId);
-        const parent = document.querySelector(`[onclick="toggleSubmenu('${menuId}')"]`);
-
-        if (submenu.style.display === 'none' || !submenu.style.display) {
-            submenu.style.display = 'block';
-            parent.classList.add('active');
-        } else {
-            submenu.style.display = 'none';
-            parent.classList.remove('active');
-        }
-    }
-
-    // Gestion de la sidebar mobile
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('overlay');
-
-        sidebar.classList.toggle('active');
-        overlay.classList.toggle('active');
-    }
-
-    document.getElementById('overlay').addEventListener('click', toggleSidebar);
-
-    // Logout
-    function logout() {
-        if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/logout';
-        }
-    }
+    });
 
     // Confirmation d'annulation
     function confirmCancel() {
@@ -1346,157 +1230,13 @@
             star.style.display = isActive ? 'inline' : 'none';
         });
 
-    // Ajouter le token à la page actuelle si présent dans l'URL
-    const urlToken = getUrlParam('api_token');
-    if (urlToken) {
-        localStorage.setItem('token', urlToken);
-    }
-</script>
-
-
-<script>
-    // Initialiser les icônes
-    lucide.createIcons();
-
-    // Navigation vers React (8080)
-    function goToReact(path) {
-        const token = localStorage.getItem('token') || getUrlParam('api_token');
-
-        if (!token) {
-            alert('Session expirée, veuillez vous reconnecter');
-            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-            return;
-        }
-
-        const baseUrl = 'http://localhost:8080';
-        let fullUrl = baseUrl + path;
-
-        const separator = fullUrl.includes('?') ? '&' : '?';
-        fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-        console.log('Navigation React vers:', fullUrl);
-        window.location.href = fullUrl;
-    }
-
-    // Navigation vers Laravel (8000)
-    function navigateTo(path) {
-        const token = localStorage.getItem('token') || getUrlParam('api_token');
-
-        if (!token) {
-            alert('Session expirée, veuillez vous reconnecter');
-            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-            return;
-        }
-
-        const baseUrl = 'https://wheat-skunk-120710.hostingersite.com';
-        let fullUrl = baseUrl + path;
-
-        const separator = fullUrl.includes('?') ? '&' : '?';
-        fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-        console.log('Navigation Laravel vers:', fullUrl);
-        window.location.href = fullUrl;
-    }
-
-    // Helper pour récupérer un paramètre d'URL
-    function getUrlParam(name) {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get(name);
-    }
-
-    // Gestion des sous-menus
-    function toggleSubmenu(menuId) {
-        const submenu = document.getElementById(menuId);
-        const parent = document.querySelector(`[onclick="toggleSubmenu('${menuId}')"]`);
-
-        if (submenu.style.display === 'none' || !submenu.style.display) {
-            submenu.style.display = 'block';
-            parent.classList.add('active');
-        } else {
-            submenu.style.display = 'none';
-            parent.classList.remove('active');
-        }
-    }
-
-    // Gestion de la sidebar mobile
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('overlay');
-
-        sidebar.classList.toggle('active');
-        overlay.classList.toggle('active');
-    }
-
-    // Logout
-    function logout() {
-        if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/logout';
-        }
-    }
-
-    // Au chargement
-    function checkMobile() {
-        const mobileBtn = document.querySelector('.mobile-menu-btn');
-        if (window.innerWidth <= 768) {
-            mobileBtn.style.display = 'block';
-        } else {
-            mobileBtn.style.display = 'none';
-        }
-    }
-
-    window.addEventListener('resize', checkMobile);
-    checkMobile();
-
-    // Ajouter le token à la page actuelle si présent dans l'URL
-    const urlToken = getUrlParam('api_token');
-    if (urlToken) {
-        localStorage.setItem('token', urlToken);
-    }
-
-    // Marquer le menu actif en fonction de la page courante
-    document.addEventListener('DOMContentLoaded', function() {
-        const currentPath = window.location.pathname;
-
-        // Définir quel sous-menu doit être ouvert par défaut
-        const menuConfig = {
-            '/coproprietaire/tenants': 'locative-menu',
-            '/coproprietaire/tenants/create': 'locative-menu',
-            '/coproprietaire/assign-property/create': 'locative-menu',
-            '/coproprietaire/leases': 'locative-menu',
-            '/coproprietaire/quittances': 'locative-menu',
-            '/coproprietaire/notices': 'locative-menu',
-            '/coproprietaire/maintenance': 'locative-menu',
-            '/coproprietaire/biens': 'biens-menu',
-            '/coproprietaire/delegations': 'biens-menu',
-            '/coproprietaire/documents': 'documents-menu',
-            '/coproprietaire/finances': 'documents-menu',
-            '/coproprietaire/profile': 'profile-menu',
-            '/coproprietaire/parametres': 'profile-menu',
-            '/coproprietaire/audit': 'profile-menu',
-            '/coproprietaire/mes-delegations': 'delegations-menu',
-            '/coproprietaire/demandes-delegation': 'delegations-menu',
-            '/coproprietaire/inviter-proprietaire': 'delegations-menu',
-            '/coproprietaire/emettre-paiement': 'finances-menu',
-            '/coproprietaire/retrait-methode': 'finances-menu',
-            '/admin/statistiques': 'admin-menu',
-            '/admin/logs': 'admin-menu'
-        };
-
-        // Ouvrir le sous-menu approprié
-        for (const [path, menuId] of Object.entries(menuConfig)) {
-            if (currentPath.includes(path)) {
-                setTimeout(() => toggleSubmenu(menuId), 100);
-                break;
-            }
-        }
-
-        // Marquer l'élément actif
-        document.querySelectorAll('.submenu-item').forEach(item => {
-            const itemPath = item.getAttribute('onclick');
-            if (itemPath && itemPath.includes(currentPath)) {
-                item.classList.add('active');
+        guarantorInputs.forEach(input => {
+            if (isActive) {
+                input.setAttribute('required', 'required');
+            } else {
+                input.removeAttribute('required');
+                input.value = '';
+                input.classList.remove('input-error');
             }
         });
     }

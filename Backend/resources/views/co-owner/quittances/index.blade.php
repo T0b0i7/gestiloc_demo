@@ -159,6 +159,20 @@
             </div>
         @endif
 
+        @if(session('error'))
+            <div style="background: #FEE2E2; border: 1px solid #EF4444; border-radius: 16px; padding: 1rem 1.5rem; margin-bottom: 2rem; display: flex; align-items: start; gap: 12px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <div>
+                    <strong style="color: #991B1B; font-weight: 600; display: block; margin-bottom: 4px;">Erreur !</strong>
+                    <p style="color: #DC2626; margin: 0; font-size: 0.9rem;">{{ session('error') }}</p>
+                </div>
+            </div>
+        @endif
+
         <!-- Grille des quittances -->
         @if($receipts->isEmpty())
             <div style="text-align: center; padding: 4rem 2rem; background: white; border-radius: 20px; border: 2px dashed #E5E7EB;">
@@ -320,190 +334,17 @@
     </div>
 </div>
 
-    <script>
-        // Initialiser les icônes
-        lucide.createIcons();
-
-        // Fonction UNIFIÉE - React sur 8080, Laravel sur 8000
-        function goToReact(path) {
-            const token = localStorage.getItem('token') || getUrlParam('api_token');
-
-            if (!token) {
-                alert('Session expirée, veuillez vous reconnecter');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-                return;
-            }
-
-            // Déterminer si c'est une route React ou Laravel
-            const isLaravelRoute = path.includes('/tenants') ||
-                                  path.includes('/assign-property') ||
-                                  path.includes('/leases') ||
-                                  path.includes('/notices') ||
-                                  path.includes('/quittances') ||
-                                  path.includes('/test-laravel');
-
-            let baseUrl = 'http://localhost:';
-
-            if (isLaravelRoute) {
-                baseUrl += '8000'; // Laravel
-            } else {
-                baseUrl += '8080'; // React
-            }
-
-            let fullUrl = baseUrl + path;
-
-            const separator = fullUrl.includes('?') ? '&' : '?';
-            fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-            console.log('Navigation vers:', fullUrl);
-            window.location.href = fullUrl;
-        }
-
-        // Pour les routes Laravel
-        function navigateTo(path) {
-            const token = localStorage.getItem('token') || getUrlParam('api_token');
-
-            if (!token) {
-                alert('Session expirée, veuillez vous reconnecter');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-                return;
-            }
-
-            const baseUrl = 'https://wheat-skunk-120710.hostingersite.com';
-            let fullUrl = baseUrl + path;
-
-            const separator = fullUrl.includes('?') ? '&' : '?';
-            fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-            console.log('Navigation Laravel vers:', fullUrl);
-            window.location.href = fullUrl;
-        }
-
-        // Helper pour récupérer un paramètre d'URL
-        function getUrlParam(name) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(name);
-        }
-
-        // Gestion des sous-menus
-        function toggleSubmenu(menuId) {
-            const submenu = document.getElementById(menuId);
-            const parent = document.querySelector(`[onclick="toggleSubmenu('${menuId}')"]`);
-
-            if (submenu.style.display === 'none' || !submenu.style.display) {
-                submenu.style.display = 'block';
-                parent.classList.add('active');
-            } else {
-                submenu.style.display = 'none';
-                parent.classList.remove('active');
-            }
-        }
-
-        // Gestion de la sidebar mobile
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        }
-
-        document.getElementById('overlay').addEventListener('click', toggleSidebar);
-
-        // Logout
-        function logout() {
-            if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/logout';
-            }
-        }
-
-        // Au chargement
-        function checkMobile() {
-            const mobileBtn = document.querySelector('.mobile-menu-btn');
-            if (window.innerWidth <= 768) {
-                mobileBtn.style.display = 'block';
-            } else {
-                mobileBtn.style.display = 'none';
-            }
-        }
-
-        window.addEventListener('resize', checkMobile);
-        checkMobile();
-
-        // Ajouter le token à la page actuelle si présent dans l'URL
-        const urlToken = getUrlParam('api_token');
-        if (urlToken) {
-            localStorage.setItem('token', urlToken);
-        }
-
-        // Actualiser les données
-        function refreshData() {
-            const button = event.currentTarget;
-            const originalHtml = button.innerHTML;
-
-            button.innerHTML = '<i data-lucide="loader" style="width: 16px; height: 16px; animation: spin 1s linear infinite;"></i> Actualisation...';
-            button.disabled = true;
-
-            setTimeout(() => {
-                window.location.reload();
-            }, 500);
-        }
-
-        // Ajouter l'animation de spin pour le loader
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes spin {
-                from { transform: rotate(0deg); }
-                to { transform: rotate(360deg); }
-            }
-        `;
-        document.head.appendChild(style);
-    </script>
-
-    <script>
-    // Initialiser les icônes
-    lucide.createIcons();
-
-    // Navigation vers React (8080)
-    function goToReact(path) {
-        const token = localStorage.getItem('token') || getUrlParam('api_token');
-
-        if (!token) {
-            alert('Session expirée, veuillez vous reconnecter');
-            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-            return;
-        }
-
-        const baseUrl = 'http://localhost:8080';
-        let fullUrl = baseUrl + path;
-
-        const separator = fullUrl.includes('?') ? '&' : '?';
-        fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-        console.log('Navigation React vers:', fullUrl);
-        window.location.href = fullUrl;
+<style>
+    /* Styles pour la pagination */
+    .pagination {
+        display: flex;
+        gap: 0.5rem;
+        list-style: none;
+        padding: 0;
     }
 
-    // Navigation vers Laravel (8000)
-    function navigateTo(path) {
-        const token = localStorage.getItem('token') || getUrlParam('api_token');
-
-        if (!token) {
-            alert('Session expirée, veuillez vous reconnecter');
-            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-            return;
-        }
-
-        const baseUrl = 'https://wheat-skunk-120710.hostingersite.com';
-        let fullUrl = baseUrl + path;
-
-        const separator = fullUrl.includes('?') ? '&' : '?';
-        fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-        console.log('Navigation Laravel vers:', fullUrl);
-        window.location.href = fullUrl;
+    .pagination li {
+        display: inline-block;
     }
 
     .pagination li a, .pagination li span {
@@ -537,6 +378,11 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser les icônes Lucide si disponible
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+
     // Hover effect for create button
     const createBtn = document.querySelector('.btn-create');
     if (createBtn) {
@@ -552,79 +398,28 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Logout
-    function logout() {
-        if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/logout';
-        }
-    }
-
-    // Au chargement
-    function checkMobile() {
-        const mobileBtn = document.querySelector('.mobile-menu-btn');
-        if (window.innerWidth <= 768) {
-            mobileBtn.style.display = 'block';
-        } else {
-            mobileBtn.style.display = 'none';
-        }
-    }
-
-    window.addEventListener('resize', checkMobile);
-    checkMobile();
-
-    // Ajouter le token à la page actuelle si présent dans l'URL
-    const urlToken = getUrlParam('api_token');
-    if (urlToken) {
-        localStorage.setItem('token', urlToken);
-    }
-
-    // Marquer le menu actif en fonction de la page courante
-    document.addEventListener('DOMContentLoaded', function() {
-        const currentPath = window.location.pathname;
-
-        // Définir quel sous-menu doit être ouvert par défaut
-        const menuConfig = {
-            '/coproprietaire/tenants': 'locative-menu',
-            '/coproprietaire/tenants/create': 'locative-menu',
-            '/coproprietaire/assign-property/create': 'locative-menu',
-            '/coproprietaire/leases': 'locative-menu',
-            '/coproprietaire/quittances': 'locative-menu',
-            '/coproprietaire/notices': 'locative-menu',
-            '/coproprietaire/maintenance': 'locative-menu',
-            '/coproprietaire/biens': 'biens-menu',
-            '/coproprietaire/delegations': 'biens-menu',
-            '/coproprietaire/documents': 'documents-menu',
-            '/coproprietaire/finances': 'documents-menu',
-            '/coproprietaire/profile': 'profile-menu',
-            '/coproprietaire/parametres': 'profile-menu',
-            '/coproprietaire/audit': 'profile-menu',
-            '/coproprietaire/mes-delegations': 'delegations-menu',
-            '/coproprietaire/demandes-delegation': 'delegations-menu',
-            '/coproprietaire/inviter-proprietaire': 'delegations-menu',
-            '/coproprietaire/emettre-paiement': 'finances-menu',
-            '/coproprietaire/retrait-methode': 'finances-menu',
-            '/admin/statistiques': 'admin-menu',
-            '/admin/logs': 'admin-menu'
-        };
-
-        // Ouvrir le sous-menu approprié
-        for (const [path, menuId] of Object.entries(menuConfig)) {
-            if (currentPath.includes(path)) {
-                setTimeout(() => toggleSubmenu(menuId), 100);
-                break;
-            }
-        }
-
-        // Marquer l'élément actif
-        document.querySelectorAll('.submenu-item').forEach(item => {
-            const itemPath = item.getAttribute('onclick');
-            if (itemPath && itemPath.includes(currentPath)) {
-                item.classList.add('active');
-            }
+    // Hover effect for filter buttons
+    const filterBtns = document.querySelectorAll('.filter-btn:not(.active)');
+    filterBtns.forEach(btn => {
+        btn.addEventListener('mouseover', function() {
+            this.style.background = '#D1D5DB';
+            this.style.transform = 'translateY(-1px)';
+        });
+        btn.addEventListener('mouseout', function() {
+            this.style.background = '#E5E7EB';
+            this.style.transform = 'translateY(0)';
         });
     });
+
+    // Animation de spin pour le loader (si besoin)
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    `;
+    document.head.appendChild(style);
 });
 </script>
 @endsection

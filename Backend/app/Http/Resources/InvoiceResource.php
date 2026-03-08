@@ -56,6 +56,7 @@ class InvoiceResource extends JsonResource
 
                     $property = $this->clean([
                         'id' => $p->id,
+                        'name' => $p->name,
                         'address' => $p->address,
                         'city' => $p->city,
                         'zip_code' => $p->zip_code,

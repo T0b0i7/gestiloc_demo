@@ -20,7 +20,7 @@
 
             <a href="{{ route('co-owner.notices.create') }}"
                class="btn-create"
-               style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: #70AE48; color: white; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 0.9rem; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3); transition: all 0.2s;">
+               style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: #70AE48; color: white; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 0.9rem; box-shadow: 0 2px 4px rgba(112, 174, 72, 0.3); transition: all 0.2s;">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
                     <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -62,7 +62,7 @@
                 <div style="color: #9CA3AF; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem;">
                     BAUX ACTIFS
                 </div>
-                <div style="font-size: 2rem; font-weight: 700; color: #3B82F6;">
+                <div style="font-size: 2rem; font-weight: 700; color: #70AE48;">
                     {{ $activeLeases }}
                 </div>
             </div>
@@ -155,14 +155,14 @@
         </form>
 
         @if(session('success'))
-            <div style="background: #DBEAFE; border: 1px solid #3B82F6; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 2rem; display: flex; align-items: start; gap: 12px;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;">
+            <div style="background: #F0F9F0; border: 1px solid #70AE48; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 2rem; display: flex; align-items: start; gap: 12px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#70AE48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 2px;">
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                     <polyline points="22 4 12 14.01 9 11.01"></polyline>
                 </svg>
                 <div>
-                    <strong style="color: #1E40AF; font-weight: 600; display: block; margin-bottom: 4px;">Succès !</strong>
-                    <p style="color: #1D4ED8; margin: 0; font-size: 0.9rem;">{{ session('success') }}</p>
+                    <strong style="color: #2D6A4F; font-weight: 600; display: block; margin-bottom: 4px;">Succès !</strong>
+                    <p style="color: #70AE48; margin: 0; font-size: 0.9rem;">{{ session('success') }}</p>
                 </div>
             </div>
         @endif
@@ -199,7 +199,7 @@
                 </p>
                 @if(!$searchTerm && !$propertyFilter && $statusFilter === 'all' && !$typeFilter)
                     <a href="{{ route('co-owner.notices.create') }}"
-                       style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: #3B82F6; color: white; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 0.9rem;">
+                       style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: #70AE48; color: white; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 0.9rem;">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
                             <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -217,8 +217,8 @@
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
                 @foreach($notices as $notice)
                     <div style="background: white; border-radius: 12px; padding: 1.5rem; border: 1px solid #E5E7EB; transition: all 0.2s; cursor: pointer;"
-                         onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'"
-                         onmouseout="this.style.boxShadow='none'">
+                         onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'; this.style.borderColor='#70AE48'"
+                         onmouseout="this.style.boxShadow='none'; this.style.borderColor='#E5E7EB'">
 
                         <!-- Header de la carte -->
                         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 1rem;">
@@ -337,8 +337,8 @@
                         <div style="display: flex; gap: 0.5rem;">
                             <a href="{{ route('co-owner.notices.show', $notice) }}"
                                style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; background: white; color: #6B7280; border: 1px solid #E5E7EB; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;"
-                               onmouseover="this.style.background='#F9FAFB'"
-                               onmouseout="this.style.background='white'">
+                               onmouseover="this.style.background='#F9FAFB'; this.style.borderColor='#70AE48'"
+                               onmouseout="this.style.background='white'; this.style.borderColor='#E5E7EB'">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                     <circle cx="12" cy="12" r="3"></circle>
@@ -347,8 +347,8 @@
                             </a>
 
                             <a href="{{ route('co-owner.notices.edit', $notice) }}"
-                               style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; background: white; color: #3B82F6; border: 1px solid #BFDBFE; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;"
-                               onmouseover="this.style.background='#EFF6FF'"
+                               style="flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; background: white; color: #70AE48; border: 1px solid #70AE48; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;"
+                               onmouseover="this.style.background='#F0F9F0'"
                                onmouseout="this.style.background='white'">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -362,8 +362,8 @@
                                 @method('DELETE')
                                 <button type="submit"
                                         style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; background: white; color: #EF4444; border: 1px solid #FCA5A5; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;"
-                                        onmouseover="this.style.background='#FEF2F2'"
-                                        onmouseout="this.style.background='white'">
+                                        onmouseover="this.style.background='#FEF2F2'; this.style.borderColor='#EF4444'"
+                                        onmouseout="this.style.background='white'; this.style.borderColor='#FCA5A5'">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M3 6h18"></path>
                                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -392,291 +392,36 @@
     </div>
 </div>
 
-    <script>
-        // Initialiser les icônes
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser les icônes Lucide si disponible
+    if (typeof lucide !== 'undefined') {
         lucide.createIcons();
-
-        // Fonction UNIFIÉE - React sur 8080, Laravel sur 8000
-        function goToReact(path) {
-            const token = localStorage.getItem('token') || getUrlParam('api_token');
-
-            if (!token) {
-                alert('Session expirée, veuillez vous reconnecter');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-                return;
-            }
-
-            // Déterminer si c'est une route React ou Laravel
-            const isLaravelRoute = path.includes('/tenants') ||
-                                  path.includes('/assign-property') ||
-                                  path.includes('/leases') ||
-                                  path.includes('/notices') ||
-                                  path.includes('/test-laravel');
-
-            let baseUrl = 'http://localhost:';
-
-            if (isLaravelRoute) {
-                baseUrl += '8000'; // Laravel
-            } else {
-                baseUrl += '8080'; // React
-            }
-
-            let fullUrl = baseUrl + path;
-
-            const separator = fullUrl.includes('?') ? '&' : '?';
-            fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-            console.log('Navigation vers:', fullUrl);
-            window.location.href = fullUrl;
-        }
-
-        // Pour les routes Laravel
-        function navigateTo(path) {
-            const token = localStorage.getItem('token') || getUrlParam('api_token');
-
-            if (!token) {
-                alert('Session expirée, veuillez vous reconnecter');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-                return;
-            }
-
-            const baseUrl = 'https://wheat-skunk-120710.hostingersite.com';
-            let fullUrl = baseUrl + path;
-
-            const separator = fullUrl.includes('?') ? '&' : '?';
-            fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-            console.log('Navigation Laravel vers:', fullUrl);
-            window.location.href = fullUrl;
-        }
-
-        // Helper pour récupérer un paramètre d'URL
-        function getUrlParam(name) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(name);
-        }
-
-        // Gestion des sous-menus
-        function toggleSubmenu(menuId) {
-            const submenu = document.getElementById(menuId);
-            const parent = document.querySelector(`[onclick="toggleSubmenu('${menuId}')"]`);
-
-            if (submenu.style.display === 'none' || !submenu.style.display) {
-                submenu.style.display = 'block';
-                parent.classList.add('active');
-            } else {
-                submenu.style.display = 'none';
-                parent.classList.remove('active');
-            }
-        }
-
-        // Gestion de la sidebar mobile
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        }
-
-        document.getElementById('overlay').addEventListener('click', toggleSidebar);
-
-        // Logout
-        function logout() {
-            if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/logout';
-            }
-        }
-
-        // Au chargement
-        function checkMobile() {
-            const mobileBtn = document.querySelector('.mobile-menu-btn');
-            if (window.innerWidth <= 768) {
-                mobileBtn.style.display = 'block';
-            } else {
-                mobileBtn.style.display = 'none';
-            }
-        }
-
-        window.addEventListener('resize', checkMobile);
-        checkMobile();
-
-        // Ajouter le token à la page actuelle si présent dans l'URL
-        const urlToken = getUrlParam('api_token');
-        if (urlToken) {
-            localStorage.setItem('token', urlToken);
-        }
-
-        // Actualiser les données
-        function refreshData() {
-            const button = event.currentTarget;
-            const originalHtml = button.innerHTML;
-
-            button.innerHTML = '<i data-lucide="loader" style="width: 16px; height: 16px; animation: spin 1s linear infinite;"></i> Actualisation...';
-            button.disabled = true;
-
-            setTimeout(() => {
-                window.location.reload();
-            }, 500);
-        }
-
-        // Ajouter l'animation de spin pour le loader
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes spin {
-                from { transform: rotate(0deg); }
-                to { transform: rotate(360deg); }
-            }
-        `;
-        document.head.appendChild(style);
-    </script>
-
-    <script>
-    // Initialiser les icônes
-    lucide.createIcons();
-
-    // Navigation vers React (8080)
-    function goToReact(path) {
-        const token = localStorage.getItem('token') || getUrlParam('api_token');
-
-        if (!token) {
-            alert('Session expirée, veuillez vous reconnecter');
-            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-            return;
-        }
-
-        const baseUrl = 'http://localhost:8080';
-        let fullUrl = baseUrl + path;
-
-        const separator = fullUrl.includes('?') ? '&' : '?';
-        fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-        console.log('Navigation React vers:', fullUrl);
-        window.location.href = fullUrl;
     }
 
-    // Navigation vers Laravel (8000)
-    function navigateTo(path) {
-        const token = localStorage.getItem('token') || getUrlParam('api_token');
-
-        if (!token) {
-            alert('Session expirée, veuillez vous reconnecter');
-            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-            return;
-        }
-
-        const baseUrl = 'https://wheat-skunk-120710.hostingersite.com';
-        let fullUrl = baseUrl + path;
-
-        const separator = fullUrl.includes('?') ? '&' : '?';
-        fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-        console.log('Navigation Laravel vers:', fullUrl);
-        window.location.href = fullUrl;
+    // Hover effect for create button
+    const createBtn = document.querySelector('.btn-create');
+    if (createBtn) {
+        createBtn.addEventListener('mouseover', function() {
+            this.style.background = '#5a8f3a';
+            this.style.transform = 'translateY(-1px)';
+            this.style.boxShadow = '0 4px 8px rgba(112, 174, 72, 0.4)';
+        });
+        createBtn.addEventListener('mouseout', function() {
+            this.style.background = '#70AE48';
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '0 2px 4px rgba(112, 174, 72, 0.3)';
+        });
     }
 
-    // Helper pour récupérer un paramètre d'URL
-    function getUrlParam(name) {
-        const urlParams = new URLSearchParams(window.location.search);
-        return urlParams.get(name);
-    }
-
-    // Gestion des sous-menus
-    function toggleSubmenu(menuId) {
-        const submenu = document.getElementById(menuId);
-        const parent = document.querySelector(`[onclick="toggleSubmenu('${menuId}')"]`);
-
-        if (submenu.style.display === 'none' || !submenu.style.display) {
-            submenu.style.display = 'block';
-            parent.classList.add('active');
-        } else {
-            submenu.style.display = 'none';
-            parent.classList.remove('active');
-        }
-    }
-
-    // Gestion de la sidebar mobile
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('overlay');
-
-        sidebar.classList.toggle('active');
-        overlay.classList.toggle('active');
-    }
-
-    // Logout
-    function logout() {
-        if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/logout';
-        }
-    }
-
-    // Au chargement
-    function checkMobile() {
-        const mobileBtn = document.querySelector('.mobile-menu-btn');
-        if (window.innerWidth <= 768) {
-            mobileBtn.style.display = 'block';
-        } else {
-            mobileBtn.style.display = 'none';
-        }
-    }
-
-    window.addEventListener('resize', checkMobile);
-    checkMobile();
-
-    // Ajouter le token à la page actuelle si présent dans l'URL
-    const urlToken = getUrlParam('api_token');
-    if (urlToken) {
-        localStorage.setItem('token', urlToken);
-    }
-
-    // Marquer le menu actif en fonction de la page courante
-    document.addEventListener('DOMContentLoaded', function() {
-        const currentPath = window.location.pathname;
-
-        // Définir quel sous-menu doit être ouvert par défaut
-        const menuConfig = {
-            '/coproprietaire/tenants': 'locative-menu',
-            '/coproprietaire/tenants/create': 'locative-menu',
-            '/coproprietaire/assign-property/create': 'locative-menu',
-            '/coproprietaire/leases': 'locative-menu',
-            '/coproprietaire/quittances': 'locative-menu',
-            '/coproprietaire/notices': 'locative-menu',
-            '/coproprietaire/maintenance': 'locative-menu',
-            '/coproprietaire/biens': 'biens-menu',
-            '/coproprietaire/delegations': 'biens-menu',
-            '/coproprietaire/documents': 'documents-menu',
-            '/coproprietaire/finances': 'documents-menu',
-            '/coproprietaire/profile': 'profile-menu',
-            '/coproprietaire/parametres': 'profile-menu',
-            '/coproprietaire/audit': 'profile-menu',
-            '/coproprietaire/mes-delegations': 'delegations-menu',
-            '/coproprietaire/demandes-delegation': 'delegations-menu',
-            '/coproprietaire/inviter-proprietaire': 'delegations-menu',
-            '/coproprietaire/emettre-paiement': 'finances-menu',
-            '/coproprietaire/retrait-methode': 'finances-menu',
-            '/admin/statistiques': 'admin-menu',
-            '/admin/logs': 'admin-menu'
-        };
-
-        // Ouvrir le sous-menu approprié
-        for (const [path, menuId] of Object.entries(menuConfig)) {
-            if (currentPath.includes(path)) {
-                setTimeout(() => toggleSubmenu(menuId), 100);
-                break;
-            }
-        }
-
-        // Marquer l'élément actif
-        document.querySelectorAll('.submenu-item').forEach(item => {
-            const itemPath = item.getAttribute('onclick');
-            if (itemPath && itemPath.includes(currentPath)) {
-                item.classList.add('active');
-            }
+    // Hover effect for filter buttons
+    const filterBtns = document.querySelectorAll('.filter-btn:not(.active)');
+    filterBtns.forEach(btn => {
+        btn.addEventListener('mouseover', function() {
+            this.style.background = '#D1D5DB';
+        });
+        btn.addEventListener('mouseout', function() {
+            this.style.background = '#E5E7EB';
         });
     });
 });

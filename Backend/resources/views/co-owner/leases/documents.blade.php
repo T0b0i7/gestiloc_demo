@@ -6,8 +6,6 @@
 <div class="content-container">
     <br><br>
     <div class="content-card">
-
-
         <div class="content-body">
             <div class="top-actions">
                 <button onclick="history.back()" class="button button-secondary">
@@ -105,17 +103,7 @@
 
             <!-- Documents existants -->
             <div class="documents-section">
-                <div class="documents-header"
-                    style="
-                        background: #70AE48;
-                        color: #ffffff;
-                        padding: 16px 20px;
-                        border-radius: 14px;
-                        box-shadow: 0 10px 25px rgba(29, 78, 216, 0.25);
-                        display: flex;
-                        align-items: center;
-                        gap: 10px;
-                    ">
+                <div class="documents-header" style="background: #70AE48; color: #ffffff;">
                     <i data-lucide="files" style="width: 22px; height: 22px;"></i>
                     <h2 class="section-title" style="margin: 0; font-weight: 600; color:#ffffff;">
                         Historique des documents
@@ -165,166 +153,40 @@
     </div>
 </div>
 
-    <script>
-        // Initialiser les icônes
-        lucide.createIcons();
-
-        // Fonction UNIFIÉE - React sur 8080, Laravel sur 8000
-        function goToReact(path) {
-            const token = localStorage.getItem('token') || getUrlParam('api_token');
-
-            if (!token) {
-                alert('Session expirée, veuillez vous reconnecter');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-                return;
-            }
-
-            // Déterminer si c'est une route React ou Laravel
-            const isLaravelRoute = path.includes('/tenants') ||
-                path.includes('/assign-property') ||
-                path.includes('/leases') ||
-                path.includes('/test-laravel');
-
-            let baseUrl = 'http://localhost:';
-
-            if (isLaravelRoute) {
-                baseUrl += '8000'; // Laravel
-            } else {
-                baseUrl += '8080'; // React
-            }
-
-            let fullUrl = baseUrl + path;
-
-            const separator = fullUrl.includes('?') ? '&' : '?';
-            fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-            console.log('Navigation vers:', fullUrl);
-            window.location.href = fullUrl;
-        }
-
-        // Pour les routes Laravel
-        function navigateTo(path) {
-            const token = localStorage.getItem('token') || getUrlParam('api_token');
-
-            if (!token) {
-                alert('Session expirée, veuillez vous reconnecter');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-                return;
-            }
-
-            const baseUrl = 'https://wheat-skunk-120710.hostingersite.com';
-            let fullUrl = baseUrl + path;
-
-            const separator = fullUrl.includes('?') ? '&' : '?';
-            fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-            console.log('Navigation Laravel vers:', fullUrl);
-            window.location.href = fullUrl;
-        }
-
-        // Helper pour récupérer un paramètre d'URL
-        function getUrlParam(name) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(name);
-        }
-
-        // Gestion des sous-menus
-        function toggleSubmenu(menuId) {
-            const submenu = document.getElementById(menuId);
-            const parent = document.querySelector(`[onclick="toggleSubmenu('${menuId}')"]`);
-
-            if (submenu.style.display === 'none' || !submenu.style.display) {
-                submenu.style.display = 'block';
-                parent.classList.add('active');
-            } else {
-                submenu.style.display = 'none';
-                parent.classList.remove('active');
-            }
-        }
-
-        // Gestion de la sidebar mobile
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        }
-
-        document.getElementById('overlay').addEventListener('click', toggleSidebar);
-
-        // Logout
-        function logout() {
-            if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/logout';
-            }
-        }
-
-        // Au chargement
-        function checkMobile() {
-            const mobileBtn = document.querySelector('.mobile-menu-btn');
-            if (window.innerWidth <= 768) {
-                mobileBtn.style.display = 'block';
-            } else {
-                mobileBtn.style.display = 'none';
-            }
-        }
-
-        window.addEventListener('resize', checkMobile);
-        checkMobile();
-
-        // Ajouter le token à la page actuelle si présent dans l'URL
-        const urlToken = getUrlParam('api_token');
-        if (urlToken) {
-            localStorage.setItem('token', urlToken);
-        }
-    </script>
-
-
 <script>
-    // Initialiser les icônes
-    lucide.createIcons();
-
-    // Navigation vers React (8080)
-    function goToReact(path) {
-        const token = localStorage.getItem('token') || getUrlParam('api_token');
-
-        if (!token) {
-            alert('Session expirée, veuillez vous reconnecter');
-            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-            return;
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
         }
+    });
+</script>
 
-        const baseUrl = 'http://localhost:8080';
-        let fullUrl = baseUrl + path;
-
-        const separator = fullUrl.includes('?') ? '&' : '?';
-        fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-        console.log('Navigation React vers:', fullUrl);
-        window.location.href = fullUrl;
+<style>
+    :root {
+        --indigo: #6366f1;
+        --violet: #8b5cf6;
+        --ink: #1e293b;
+        --muted: #64748b;
+        --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     }
 
-    // Navigation vers Laravel (8000)
-    function navigateTo(path) {
-        const token = localStorage.getItem('token') || getUrlParam('api_token');
+    .content-container {
+        min-height: 100vh;
+        background: #ffffff;
+        padding: 2rem;
+        position: relative;
+    }
 
-        if (!token) {
-            alert('Session expirée, veuillez vous reconnecter');
-            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-            return;
-        }
-
-        const baseUrl = 'https://wheat-skunk-120710.hostingersite.com';
-        let fullUrl = baseUrl + path;
-
-        const separator = fullUrl.includes('?') ? '&' : '?';
-        fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-        console.log('Navigation Laravel vers:', fullUrl);
-        window.location.href = fullUrl;
+    .content-container::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background:
+            radial-gradient(900px 520px at 12% -8%, rgba(102, 126, 234, .16) 0%, rgba(102, 126, 234, 0) 62%),
+            radial-gradient(900px 520px at 92% 8%, rgba(118, 75, 162, .14) 0%, rgba(118, 75, 162, 0) 64%),
+            radial-gradient(700px 420px at 40% 110%, rgba(16, 185, 129, .10) 0%, rgba(16, 185, 129, 0) 60%);
+        pointer-events: none;
+        z-index: -2;
     }
 
     .content-card {
@@ -337,34 +199,6 @@
         border: 1px solid rgba(102, 126, 234, .18);
         position: relative;
         backdrop-filter: blur(10px);
-    }
-
-    .content-header {
-        background: linear-gradient(135deg, var(--gradA) 0%, var(--gradB) 100%);
-        padding: 2.5rem;
-        color: white;
-        position: relative;
-        overflow: hidden;
-        z-index: 1;
-    }
-
-    .content-header h1 {
-        font-size: 2rem;
-        font-weight: 900;
-        margin: 0 0 0.6rem 0;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        letter-spacing: -0.02em;
-    }
-
-    // Logout
-    function logout() {
-        if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/logout';
-        }
     }
 
     .content-body {
@@ -380,6 +214,12 @@
         margin-bottom: 2rem;
         flex-wrap: wrap;
         gap: 1rem;
+    }
+
+    .top-actions-right {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
     }
 
     .button {
@@ -412,11 +252,11 @@
     .button-secondary {
         background: rgba(255, 255, 255, .92);
         color: #70AE48;
-        border: 2px solid rgba(67, 56, 202, .20);
+        border: 2px solid rgba(112, 174, 72, .20);
     }
 
     .button-secondary:hover {
-        background: rgba(67, 56, 202, .06);
+        background: rgba(112, 174, 72, .06);
     }
 
     .button-success {
@@ -439,12 +279,6 @@
         display: flex;
         align-items: flex-start;
         gap: 10px;
-    }
-
-    .alert-info {
-        background: rgba(239, 246, 255, .92);
-        border-color: rgba(59, 130, 246, .30);
-        color: #1e40af;
     }
 
     .alert-success {
@@ -516,18 +350,18 @@
     }
 
     .documents-header {
+        padding: 16px 20px;
+        border-radius: 14px;
+        box-shadow: 0 10px 25px rgba(112, 174, 72, 0.25);
         display: flex;
-        justify-content: space-between;
         align-items: center;
+        gap: 10px;
         margin-bottom: 1.5rem;
-        flex-wrap: wrap;
-        gap: 1rem;
     }
 
     .section-title {
         font-size: 1.2rem;
         font-weight: 950;
-        color: var(--ink);
         display: flex;
         align-items: center;
         gap: 0.75rem;
@@ -548,8 +382,8 @@
     }
 
     .document-card:hover {
-        border-color: rgba(102, 126, 234, .35);
-        box-shadow: 0 10px 30px rgba(102, 126, 234, .15);
+        border-color: #70AE48;
+        box-shadow: 0 10px 30px rgba(112, 174, 72, 0.15);
         transform: translateY(-2px);
     }
 
@@ -564,11 +398,11 @@
         width: 48px;
         height: 48px;
         border-radius: 12px;
-        background: rgba(59, 130, 246, .15);
+        background: rgba(112, 174, 72, 0.15);
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #1d4ed8;
+        color: #70AE48;
         flex-shrink: 0;
     }
 
@@ -602,16 +436,6 @@
         padding: 0.5rem 0.75rem;
         font-size: 0.85rem;
         border-radius: 10px;
-    }
-
-    .btn-danger {
-        background: rgba(239, 68, 68, .10);
-        color: #dc2626;
-        border: 2px solid rgba(239, 68, 68, .20);
-    }
-
-    .btn-danger:hover {
-        background: rgba(239, 68, 68, .15);
     }
 
     .empty-state {

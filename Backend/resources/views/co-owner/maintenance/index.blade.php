@@ -20,19 +20,19 @@
     <div class="stats-row">
         <div class="stat-box">
             <div class="stat-label">INTERVENTIONS URGENTES</div>
-            <div class="stat-value urgent">{{ $stats['urgent'] }}</div>
+            <div class="stat-value urgent">{{ $stats['urgent'] ?? 0 }}</div>
         </div>
         <div class="stat-box">
             <div class="stat-label">EN COURS</div>
-            <div class="stat-value in-progress">{{ $stats['in_progress'] }}</div>
+            <div class="stat-value in-progress">{{ $stats['in_progress'] ?? 0 }}</div>
         </div>
         <div class="stat-box">
             <div class="stat-label">PLANIFIÉES</div>
-            <div class="stat-value planned">{{ $stats['planned'] }}</div>
+            <div class="stat-value planned">{{ $stats['planned'] ?? 0 }}</div>
         </div>
         <div class="stat-box">
             <div class="stat-label">COÛT TOTAL {{ date('Y') }}</div>
-            <div class="stat-value cost">{{ number_format($stats['total_cost'], 0, ',', ' ') }} FCFA</div>
+            <div class="stat-value cost">{{ number_format($stats['total_cost'] ?? 0, 0, ',', ' ') }} FCFA</div>
         </div>
     </div>
 
@@ -68,11 +68,18 @@
                 <input type="hidden" name="status_filter" value="{{ request('status_filter') }}">
             @endif
 
-            if (!token) {
-                alert('Session expirée, veuillez vous reconnecter');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-                return;
-            }
+            <div class="filters-row">
+                <div class="filter-select-wrapper">
+                    <select name="property_id" class="filter-select" onchange="this.form.submit()">
+                        <option value="all" {{ request('property_id') == 'all' || !request('property_id') ? 'selected' : '' }}>Tous les biens</option>
+                        @foreach($properties as $property)
+                            <option value="{{ $property->id }}" {{ request('property_id') == $property->id ? 'selected' : '' }}>
+                                {{ $property->name ?? $property->address }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <i data-lucide="chevron-down" class="select-icon"></i>
+                </div>
 
                 <div class="filter-select-wrapper">
                     <select name="year" class="filter-select" onchange="this.form.submit()">
@@ -146,14 +153,14 @@
                     {{ $statusLabel }}
                 </div>
 
-            if (!token) {
-                alert('Session expirée, veuillez vous reconnecter');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-                return;
-            }
+                <!-- Titre -->
+                <h3 class="intervention-title">{{ $request->title }}</h3>
 
-            const baseUrl = 'https://wheat-skunk-120710.hostingersite.com';
-            let fullUrl = baseUrl + path;
+                <!-- Localisation -->
+                <div class="intervention-location">
+                    <i data-lucide="map-pin" style="width: 14px; height: 14px;"></i>
+                    <span>{{ $request->property->name ?? 'Bien' }} • {{ $request->property->city ?? 'Ville non spécifiée' }}</span>
+                </div>
 
                 <!-- Détails en grille -->
                 <div class="intervention-details">
@@ -195,7 +202,7 @@
                     @else
                         <div class="detail-item">
                             <span class="detail-label">DEVIS ESTIMÉ</span>
-                            <span class="detail-value cost-value">{{ $request->estimated_cost ? number_format($request->estimated_cost, 0, ',', ' ') . ' €' : '—' }}</span>
+                            <span class="detail-value cost-value">{{ $request->estimated_cost ? number_format($request->estimated_cost, 0, ',', ' ') . ' FCFA' : '—' }}</span>
                         </div>
                     @endif
                 </div>
@@ -204,7 +211,7 @@
                 @if($request->estimated_cost || $request->actual_cost)
                     <div class="intervention-cost">
                         <span class="cost-label">DEVIS {{ $request->status === 'resolved' ? 'FINAL' : 'ACCEPTÉ' }}</span>
-                        <span class="cost-amount">{{ number_format($request->actual_cost ?? $request->estimated_cost, 0, ',', ' ') }} €</span>
+                        <span class="cost-amount">{{ number_format($request->actual_cost ?? $request->estimated_cost, 0, ',', ' ') }} FCFA</span>
                     </div>
                 @endif
 
@@ -252,132 +259,22 @@
     </div>
 </div>
 
-        // Gestion de la sidebar mobile
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('overlay');
-
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        }
-
-        document.getElementById('overlay').addEventListener('click', toggleSidebar);
-
-        // Logout
-        function logout() {
-            if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/logout';
-            }
-        }
-
-        // Au chargement
-        function checkMobile() {
-            const mobileBtn = document.querySelector('.mobile-menu-btn');
-            if (window.innerWidth <= 768) {
-                mobileBtn.style.display = 'block';
-            } else {
-                mobileBtn.style.display = 'none';
-            }
-        }
-
-        window.addEventListener('resize', checkMobile);
-        checkMobile();
-
-        // Ajouter le token à la page actuelle si présent dans l'URL
-        const urlToken = getUrlParam('api_token');
-        if (urlToken) {
-            localStorage.setItem('token', urlToken);
-        }
-
-        // Filtres
-        function filterByStatus(status) {
-            filterItems('status', status);
-        }
-
-        function filterByPriority(priority) {
-            filterItems('priority', priority);
-        }
-
-        function filterByProperty(propertyId) {
-            filterItems('property', propertyId);
-        }
-
-        function filterItems(type, value) {
-            const cards = document.querySelectorAll('.notice-card');
-            cards.forEach(card => {
-                const cardValue = card.getAttribute(`data-${type}`);
-                if (value === 'all' || cardValue === value) {
-                    card.style.display = '';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        }
-
-        function resetFilters() {
-            document.querySelectorAll('.filter-select').forEach(select => {
-                select.value = 'all';
-            });
-            const cards = document.querySelectorAll('.notice-card');
-            cards.forEach(card => {
-                card.style.display = '';
-            });
-        }
-
-        // Ajouter l'animation de spin pour le loader
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes spin {
-                from { transform: rotate(0deg); }
-                to { transform: rotate(360deg); }
-            }
-        `;
-        document.head.appendChild(style);
-    </script>
-    <script>
-    // Initialiser les icônes
-    lucide.createIcons();
-
-    // Navigation vers React (8080)
-    function goToReact(path) {
-        const token = localStorage.getItem('token') || getUrlParam('api_token');
-
-        if (!token) {
-            alert('Session expirée, veuillez vous reconnecter');
-            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-            return;
-        }
-
-        const baseUrl = 'http://localhost:8080';
-        let fullUrl = baseUrl + path;
-
-        const separator = fullUrl.includes('?') ? '&' : '?';
-        fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-        console.log('Navigation React vers:', fullUrl);
-        window.location.href = fullUrl;
+<style>
+    .maintenance-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+        background: #f8fafc;
+        min-height: 100vh;
     }
 
-    // Navigation vers Laravel (8000)
-    function navigateTo(path) {
-        const token = localStorage.getItem('token') || getUrlParam('api_token');
-
-        if (!token) {
-            alert('Session expirée, veuillez vous reconnecter');
-            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
-            return;
-        }
-
-        const baseUrl = 'https://wheat-skunk-120710.hostingersite.com';
-        let fullUrl = baseUrl + path;
-
-        const separator = fullUrl.includes('?') ? '&' : '?';
-        fullUrl += `${separator}api_token=${encodeURIComponent(token)}`;
-
-        console.log('Navigation Laravel vers:', fullUrl);
-        window.location.href = fullUrl;
+    /* Header */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 2rem;
+        gap: 2rem;
     }
 
     .header-content h1 {
@@ -412,9 +309,9 @@
     }
 
     .btn-create:hover {
-        background: #70AE48;
+        background: #5a8f3a;
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(132, 204, 22, 0.3);
+        box-shadow: 0 4px 12px rgba(112, 174, 72, 0.3);
     }
 
     /* Stats Row */
@@ -532,7 +429,7 @@
         width: 100%;
         padding: 0.875rem 1rem;
         padding-right: 2.5rem;
-        border: 1px solid #84cc16;
+        border: 1px solid #70AE48;
         border-radius: 10px;
         font-size: 0.95rem;
         color: #64748b;
@@ -544,8 +441,8 @@
 
     .filter-select:focus {
         outline: none;
-        border-color: #65a30d;
-        box-shadow: 0 0 0 3px rgba(132, 204, 22, 0.1);
+        border-color: #5a8f3a;
+        box-shadow: 0 0 0 3px rgba(112, 174, 72, 0.1);
     }
 
     .select-icon {
@@ -575,13 +472,13 @@
         transform: translateY(-50%);
         width: 20px;
         height: 20px;
-        color: #84cc16;
+        color: #70AE48;
     }
 
     .search-input {
         width: 100%;
         padding: 0.875rem 1rem 0.875rem 2.75rem;
-        border: 1px solid #84cc16;
+        border: 1px solid #70AE48;
         border-radius: 10px;
         font-size: 0.95rem;
         color: #374151;
@@ -590,8 +487,8 @@
 
     .search-input:focus {
         outline: none;
-        border-color: #65a30d;
-        box-shadow: 0 0 0 3px rgba(132, 204, 22, 0.1);
+        border-color: #5a8f3a;
+        box-shadow: 0 0 0 3px rgba(112, 174, 72, 0.1);
     }
 
     .search-input::placeholder {
@@ -620,6 +517,7 @@
     .intervention-card:hover {
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         transform: translateY(-2px);
+        border-color: #70AE48;
     }
 
     .status-badge {
@@ -765,13 +663,13 @@
     }
 
     .action-btn.btn-primary {
-        background: #84cc16;
-        border-color: #84cc16;
+        background: #70AE48;
+        border-color: #70AE48;
         color: white;
     }
 
     .action-btn.btn-primary:hover {
-        background: #65a30d;
+        background: #5a8f3a;
     }
 
     /* Empty State */
@@ -813,12 +711,18 @@
             grid-template-columns: 1fr;
         }
 
-    // Logout
-    function logout() {
-        if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = 'https://wheat-skunk-120710.hostingersite.com/logout';
+        .filters-row {
+            grid-template-columns: 1fr;
+        }
+
+        .interventions-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .status-filters {
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            padding-bottom: 0.5rem;
         }
     }
 </style>

@@ -14,18 +14,19 @@ use Illuminate\Support\Facades\DB;
 
 class PropertyConditionReportController extends Controller
 {
-    public function index(Property $property)
+    public function index()
     {
-        // Autorisation déjà gérée par middleware role:landlord
-        $reports = $property->conditionReports()
-            ->with([
-                'photos',
-                'creator',          // ✅ sans select pour éviter erreurs SQL
-                'lease.tenant',     // ✅ locataire
-                'lease.property',   // (optionnel)
-            ])
-            ->latest('report_date')
-            ->get();
+        // Retourne tous les états des lieux du landlord connecté
+        //Autorisation déjà gérée par middleware role:landlord
+        $reports = PropertyConditionReport::with([
+            'photos',
+            'creator',
+            'lease.tenant',
+            'lease.property',
+            'property'
+        ])
+        ->latest('report_date')
+        ->get();
 
         return response()->json($reports);
     }
