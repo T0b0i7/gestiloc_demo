@@ -9,9 +9,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('tenants', function (Blueprint $table) {
+
             $table->id();
 
-            // Relation
+            // Relation utilisateur
             $table->unsignedBigInteger('user_id')->unique();
 
             // Identité
@@ -20,7 +21,10 @@ return new class extends Migration
             $table->string('email')->nullable();
             $table->string('phone')->nullable();
 
-            // État du locataire
+            // Type de locataire
+            $table->string('tenant_type')->nullable();
+
+            // Statut
             $table->enum('status', [
                 'candidate',
                 'active',
@@ -30,8 +34,6 @@ return new class extends Migration
                 'rejected',
                 'suspended'
             ])->default('candidate')->index();
-
-            $table->string('tenant_type')->nullable();
 
             // Informations personnelles
             $table->date('birth_date')->nullable();
@@ -61,8 +63,8 @@ return new class extends Migration
             $table->string('guarantor_phone')->nullable();
             $table->string('guarantor_email')->nullable();
             $table->string('guarantor_profession')->nullable();
+            $table->decimal('guarantor_income', 12, 2)->nullable();
             $table->decimal('guarantor_monthly_income', 12, 2)->nullable();
-            $table->decimal('guarantor_income', 12, 2)->nullable()->after('guarantor_profession'); // COLONNE AJOUTÉE
             $table->string('guarantor_address')->nullable();
             $table->date('guarantor_birth_date')->nullable();
             $table->string('guarantor_birth_place')->nullable();
@@ -87,6 +89,7 @@ return new class extends Migration
                 ->references('id')
                 ->on('users')
                 ->onDelete('cascade');
+
         });
     }
 
