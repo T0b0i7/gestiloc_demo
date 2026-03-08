@@ -54,7 +54,7 @@ if (typeof document !== "undefined") {
 
 export function Footer() {
   return (
-    <footer className="relative bg-white pt-40 md:pt-48 pb-12 overflow-hidden">
+    <footer className="relative bg-white pt-24 md:pt-32 pb-12 overflow-hidden">
       {/* Fond vert en forme de maison */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 top-12 md:top-16">
         {/* Toit de la maison */}
@@ -132,20 +132,15 @@ export function Footer() {
           </div>
 
           <h2
-            className="text-2xl sm:text-3xl md:text-4xl mb-4 italic"
+            className="text-2xl sm:text-3xl md:text-4xl mb-4"
             style={{ fontFamily: 'Merriweather', fontWeight: 700, fontSize: '24px' }}
           >
             Gérer vos biens en location n'a jamais été aussi facile !
           </h2>
 
-          <p
-            className="text-base sm:text-lg text-slate-700 mb-8 max-w-2xl mx-auto"
-            style={{ fontFamily: 'Manrope', fontSize: '14px', textAlign: 'center' }}
-          >
-            Rejoignez des milliers de propriétaires et agences qui simplifient leur gestion locative avec GestiLoc.
-          </p>
 
-          
+
+
           <div className="px-2">
             <Button
               asChild
@@ -163,7 +158,7 @@ export function Footer() {
             <h3 className="font-bold text-[#529D21] text-lg mb-2" style={{ fontFamily: 'Merriweather' }}>Paiement sécurisé</h3>
             <p className="text-sm text-gray-600">Mobile Money & Carte Bancaire</p>
           </div>
-          
+
           <div className="flex flex-wrap justify-center items-center gap-6 md:gap-8">
             {/* Mobile Money */}
             <div className="flex flex-col items-center gap-2">
@@ -175,7 +170,7 @@ export function Footer() {
                 <img src="/Ressource_gestiloc/wave 1.png" alt="Wave" className="h-8 w-auto object-contain" />
               </div>
             </div>
-            
+
             {/* Carte Bancaire */}
             <div className="flex flex-col items-center gap-2">
               <p className="text-xs text-gray-500 font-medium">Carte Bancaire</p>
@@ -218,7 +213,7 @@ export function Footer() {
                 <Phone className="h-4 w-4 text-green-700" />
                 <a href="tel:+2290156868570">+229 01 56 86 85 70</a>
               </li>
-              <li className="text-xs">Disponible aussi sur WhatsApp pour vos questions</li>
+              <li className="text-xs">Disponible aussi sur WhatsApp </li>
             </ul>
           </div>
         </div>

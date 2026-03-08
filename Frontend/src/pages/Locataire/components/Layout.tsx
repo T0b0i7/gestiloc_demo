@@ -104,7 +104,7 @@ const NavIcons: Record<string, React.FC<{ active?: boolean }>> = {
       <rect x="8" y="8" width="12" height="1.5" rx="0.75" fill="#64748b" />
       <rect x="8" y="12" width="9" height="1.5" rx="0.75" fill="#64748b" />
       <rect x="8" y="16" width="6" height="1.5" rx="0.75" fill="#64748b" />
-      <rect x="5" y="21" width="18" height="4" rx="0 0 2 2" fill="#529D21" opacity="0.3" />
+      <rect x="5" y="21" width="18" height="4" rx="2" fill="#529D21" opacity="0.3" />
     </svg>
   ),
   documents: () => (
@@ -339,18 +339,43 @@ export const Layout: React.FC<LayoutProps> = ({
     }
   };
 
-  const menuItems = [
-    { id: 'home', label: 'Tableau de bord', image: '/Ressource_gestiloc/tb_locataire.png' },
-    { id: 'location', label: 'Ma location', image: '/Ressource_gestiloc/Ma_location.png' },
-    { id: 'landlord', label: 'Mon propriétaire', image: '/Ressource_gestiloc/mon_proprio.png' },
-    { id: 'receipts', label: 'Mes quittances', image: '/Ressource_gestiloc/Mes_quittances.png' },
-    { id: 'documents', label: 'Documents', image: '/Ressource_gestiloc/Document In Folder.png' },
-    { id: 'interventions', label: 'Mes interventions', image: '/Ressource_gestiloc/Tools.png' },
-    { id: 'tasks', label: 'Mes tâches', image: '/Ressource_gestiloc/Nouvelles_taches.png' },
-    { id: 'notes', label: 'Mes notes', image: '/Ressource_gestiloc/Edit Property.png' },
-    { id: 'notice', label: 'Préavis', image: '/Ressource_gestiloc/preavis.png' },
-    { id: 'payments', label: 'Paiements', image: '/Ressource_gestiloc/paiement.png' },
-    { id: 'settings', label: 'Paramètres', image: '/Ressource_gestiloc/parametre_loc.png' },
+  const menuSections = [
+    {
+      label: 'MENU PRINCIPAL',
+      items: [
+        { id: 'home', label: 'Tableau de bord', image: '/Ressource_gestiloc/tb_locataire.png' },
+      ]
+    },
+    {
+      label: 'MA LOCATION',
+      items: [
+        { id: 'location', label: 'Ma location', image: '/Ressource_gestiloc/Ma_location.png' },
+        { id: 'landlord', label: 'Mon propriétaire', image: '/Ressource_gestiloc/mon_proprio.png' },
+        { id: 'payments', label: 'Paiements', image: '/Ressource_gestiloc/paiement.png' },
+        { id: 'notice', label: 'Préavis', image: '/Ressource_gestiloc/preavis.png' },
+      ]
+    },
+    {
+      label: 'DOCUMENTS',
+      items: [
+        { id: 'receipts', label: 'Mes quittances', image: '/Ressource_gestiloc/Mes_quittances.png' },
+        { id: 'documents', label: 'Documents', image: '/Ressource_gestiloc/Document In Folder.png' },
+        { id: 'notes', label: 'Mes notes', image: '/Ressource_gestiloc/Edit Property.png' },
+      ]
+    },
+    {
+      label: 'SERVICES',
+      items: [
+        { id: 'interventions', label: 'Mes interventions', image: '/Ressource_gestiloc/Tools.png' },
+        { id: 'tasks', label: 'Mes tâches', image: '/Ressource_gestiloc/Nouvelles_taches.png' },
+      ]
+    },
+    {
+      label: 'CONFIGURATION',
+      items: [
+        { id: 'settings', label: 'Paramètres', image: '/Ressource_gestiloc/parametre_loc.png' },
+      ]
+    }
   ];
 
   const userInitials = user
@@ -420,13 +445,33 @@ export const Layout: React.FC<LayoutProps> = ({
           .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         `}</style>
 
-        {menuItems.map((item) => (
-          <NavItem
-            key={item.id}
-            item={item}
-            isActive={activeTab === item.id}
-            onNavigate={handleNavigate}
-          />
+        {menuSections.map((section) => (
+          <div key={section.label} className="mb-4">
+            <div style={{
+              fontSize: '0.62rem',
+              fontWeight: 800,
+              letterSpacing: '0.12em',
+              color: '#BDBDBD',
+              padding: '1.2rem 1.4rem 0.6rem',
+              textAlign: 'left',
+              fontFamily: "'Merriweather', serif",
+              lineHeight: '100%',
+              verticalAlign: 'middle',
+              textTransform: 'uppercase'
+            }}>
+              {section.label}
+            </div>
+            <div className="space-y-0.5">
+              {section.items.map((item) => (
+                <NavItem
+                  key={item.id}
+                  item={item}
+                  isActive={activeTab === item.id}
+                  onNavigate={handleNavigate}
+                />
+              ))}
+            </div>
+          </div>
         ))}
 
         <div className="border-t border-gray-100 my-4 mx-2" />

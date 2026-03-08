@@ -50,7 +50,7 @@ export default function HeroSection() {
               textShadow: "0 2px 10px rgba(0,0,0,0.2)"
             }}
           >
-            GestiLoc est le meilleur logiciel de gestion locative immobilière en ligne. Suivi des loyers et charges, comptabilité, aide à la déclaration des revenus fonciers… Toutes les étapes de la vie du contrat de location sont couvertes par notre plateforme.
+            Tout votre immobilier au même endroit. GestiLoc est le meilleur logiciel de gestion locative immobilière en ligne. Suivi des loyers et charges, comptabilité… Toutes les étapes de la vie du contrat de location sont couvertes par notre plateforme.
           </motion.p>
 
           {/* CTA Buttons - Améliorés */}
@@ -78,7 +78,7 @@ export default function HeroSection() {
                 (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#D4FF8C";
               }}
             >
-              Ouvrir un compte gratuit
+              Je crée un compte
             </motion.button>
             <motion.button
               onClick={() => navigate("/login")}

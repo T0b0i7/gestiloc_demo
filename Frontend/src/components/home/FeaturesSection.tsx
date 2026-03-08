@@ -18,7 +18,7 @@ export default function FeaturesSection() {
   return (
     <section id="features" className="bg-white">
       {/* Section Header and Steps */}
-      <div className="py-8 md:py-10 lg:py-14">
+      <div className="pt-48 pb-24 md:pt-64 md:pb-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header - Animation améliorée */}
           <motion.div
@@ -28,7 +28,7 @@ export default function FeaturesSection() {
             viewport={{ once: true }}
             transition={{ duration: 0.7, ease: "easeOut" }}
           >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 md:mb-6 leading-tight">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 mb-6 leading-[1.1]" style={{ fontFamily: "Merriweather" }}>
               GestiLoc vous assiste avec votre gestion locative au Bénin
             </h2>
             <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed px-2">
@@ -39,7 +39,8 @@ export default function FeaturesSection() {
           {/* Comment ça marche ? Section */}
           <div className="mb-12 md:mb-20">
             <motion.h3
-              className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 text-center mb-8 md:mb-12 italic"
+              className="text-3xl md:text-4xl font-black text-gray-900 text-center mb-12 italic"
+              style={{ fontFamily: "Merriweather" }}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -86,31 +87,12 @@ export default function FeaturesSection() {
         </div>
       </div>
 
-      {/* Gestion locative automatisée */}
-      <div className="w-full py-12 md:py-20 bg-gradient-to-b from-white to-green-50/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h3 className="mb-4 text-3xl font-bold text-gray-900">
-            Gestion locative <span style={{ color: "#529D21" }}>automatisée</span>
-          </motion.h3>
-          <p className="text-gray-600 mb-12">Conforme à la législation béninoise</p>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {['Quittances', 'Contrats', 'Loyers', 'Rappels'].map((item, i) => (
-              <motion.div key={i} className="flex flex-col items-center hover:scale-110 transition-transform" whileHover={{ y: -5 }}>
-                <img src={`/Ressource_gestiloc/${item.toLowerCase()}.png`} alt={item} className="w-20 h-20 mb-3 rounded-xl object-contain shadow-sm" />
-                <p className="font-semibold text-gray-800">{item}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </div>
-
       {/* Pourquoi choisir GestiLoc Section - Image 2 Style */}
-      <div className="py-20 md:py-32 bg-white">
+      <div className="py-24 md:py-32 bg-white border-t border-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16 md:mb-24">
-            <h3 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6" style={{ fontFamily: "Manrope" }}>Pourquoi choisir GestiLoc ?</h3>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">Nous sommes accessibles, modernes et pensées pour les propriétaires béninois.</p>
+            <h3 className="text-4xl md:text-5xl font-black text-gray-900 mb-6" style={{ fontFamily: "Merriweather", lineHeight: "1.1" }}>Pourquoi choisir GestiLoc ?</h3>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">Nous sommes innovants, modernes et adaptés aux réalités africaines</p>
           </div>
 
           {(() => {
@@ -178,49 +160,213 @@ export default function FeaturesSection() {
         </div>
       </div>
 
-      {/* Testimonials Section - Precise Image 1 Recreation */}
-      <div className="w-full py-24 md:py-32 bg-[#F3F4F6] overflow-hidden">
+      {/* Testimonials Section - Responsive & Animated Version */}
+      <div className="w-full py-24 md:py-32 bg-white border-t border-gray-50 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div className="text-center mb-24" initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-gray-900 mb-8" style={{ fontFamily: "Manrope", lineHeight: "1.1" }}>
-              Nous aidons les bailleurs à gérer sereinement leurs locations
+          <motion.div
+            className="text-center mb-16 md:mb-24"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 mb-8" style={{ fontFamily: "Merriweather", lineHeight: "1.1" }}>
+              Nous aidons les bailleurs à gérer sereinement leurs biens
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto" style={{ fontFamily: "Manrope" }}>
-              Nous sommes accessibles, modernes et pensées pour les propriétaires béninois.
+              Nous sommes innovants, modernes et adaptés aux réalités africaines
             </p>
           </motion.div>
 
-          <div className="relative min-h-[1000px] md:min-h-[900px]">
-            {/* Card 1: 97% */}
-            <motion.div className="md:absolute top-[5%] left-[0%] bg-[#D7F28B] p-12 rounded-[40px] shadow-lg w-full md:w-[450px]" whileHover={{ scale: 1.05, rotate: 1, zIndex: 10 }} animate={{ y: [0, -20, 0], rotate: [-1, 1, -1] }} transition={{ duration: 5, repeat: Infinity }}>
-              <div className="text-7xl font-black text-gray-900 mb-4" style={{ fontFamily: "Manrope" }}>97%</div>
-              <p className="text-xl font-bold text-gray-800">de nos clients affirment gagner en efficacité et en productivité.</p>
-            </motion.div>
+          {(() => {
+            const CARDS = [
+              {
+                type: "stat",
+                num: "97%",
+                descText: "de nos clients affirment gagner en efficacité et en productivité.",
+                descBold: "gagner en efficacité et en productivité",
+                bg: "#c8e6a0", color: "#2d6a0a",
+                width: 520, top: 100, left: -80, rotate: 8,
+                fromX: -100, fromY: -50, delay: 0,
+              },
+              {
+                type: "stat",
+                num: "83%",
+                descText: "de nos clients affirment que GestiLoc les aide à apprendre et à mieux gérer.",
+                descBold: "aide à apprendre et à mieux gérer",
+                bg: "#c9a8e8", color: "#4a1a7a",
+                width: 520, top: 340, left: 740, rotate: 4,
+                fromX: 100, fromY: 50, delay: 450,
+              },
+              {
+                type: "stat",
+                num: "67%",
+                descText: "de nos clients recommandent GestiLoc à leur entourage !",
+                descBold: "recommandent GestiLoc à leur entourage",
+                bg: "#4a7a3a", color: "#d4f0b8",
+                width: 520, top: 740, left: 340, rotate: 3,
+                fromX: 70, fromY: 70, delay: 750,
+              },
+              {
+                type: "quote",
+                quote: '"Je tiens a vous dire un grand merci pour votre site et félicitations car j\'y ai appris énormément de choses. Bravo!"',
+                authorName: "Francine", authorPlace: "Paris, France",
+                bg: "#eef5eb", border: "1px solid #b0d9a0",
+                width: 520, top: 280, left: -60, rotate: -2,
+                fromX: -100, fromY: 50, delay: 300,
+              },
+              {
+                type: "quote",
+                quote: '"Ce site est un vrai bonheur pour les particuliers bailleurs et m\'aide énormément ! A recommander!!"',
+                authorName: "Pierre", authorPlace: "Nîmes, France",
+                bg: "#eef5eb", border: "1px solid #b0d9a0",
+                width: 520, top: 80, left: 780, rotate: -10,
+                fromX: 100, fromY: -50, delay: 150,
+              },
+              {
+                type: "quote",
+                quote: '"GestiLoc c\'est génial je fais de la pub à tout mon entourage. Merci à toute votre équipe !"',
+                authorName: "Luc", authorPlace: "Abomey-Calavi, Bénin",
+                bg: "#eef5eb", border: "1px solid #b0d9a0",
+                width: 520, top: 540, left: 380, rotate: -7,
+                fromX: -70, fromY: 70, delay: 600,
+              },
+            ];
 
-            {/* Card 2: Pierre */}
-            <motion.div className="md:absolute top-[10%] right-[0%] bg-[#F0FDF9] p-12 rounded-[50px] shadow-md border border-white/50 w-full md:w-[550px]" whileHover={{ scale: 1.05, rotate: -1, zIndex: 10 }} animate={{ y: [0, 25, 0], rotate: [1, -1, 1] }} transition={{ duration: 6, repeat: Infinity, delay: 0.5 }}>
-              <p className="text-gray-800 text-xl mb-10 leading-relaxed italic">"Ce site est un vrai bonheur pour les particuliers bailleurs et m'aide énormément ! À recommander !!"</p>
-              <div className="text-gray-900 font-black text-lg">— Pierre, <span className="font-normal text-gray-500">Cotonou, Bénin</span></div>
-            </motion.div>
+            const MOBILE_ROTATES = [4, -5, -2, 3, -4, 2];
 
-            {/* Card 3: Francine */}
-            <motion.div className="md:absolute top-[40%] left-[3%] bg-[#F0FDF9] p-12 rounded-[50px] shadow-md border border-white/50 w-full md:w-[550px]" whileHover={{ scale: 1.05, rotate: 1, zIndex: 10 }} animate={{ y: [0, -30, 0], rotate: [-1, 1, -1] }} transition={{ duration: 7, repeat: Infinity, delay: 1 }}>
-              <p className="text-gray-800 text-xl mb-10 leading-relaxed italic">"Je tiens à vous dire un grand merci pour votre site. J'y ai appris énormément de choses. Bravo !"</p>
-              <div className="text-gray-900 font-black text-lg">— Francine, <span className="font-normal text-gray-500">Porto-Novo, Bénin</span></div>
-            </motion.div>
+            const [show, setShow] = useState(false);
+            const [isMobile, setIsMobile] = useState(false);
+            const wrapRef = useRef<HTMLDivElement>(null);
 
-            {/* Card 4: 83% */}
-            <motion.div className="md:absolute top-[50%] right-[3%] bg-[#A855F7] p-12 rounded-[40px] shadow-2xl w-full md:w-[450px] text-white" whileHover={{ scale: 1.05, rotate: -2, zIndex: 10 }} animate={{ y: [0, 20, 0], scale: [1, 1.02, 1] }} transition={{ duration: 4, repeat: Infinity, delay: 1.5 }}>
-              <div className="text-7xl font-black mb-4" style={{ fontFamily: "Manrope" }}>83%</div>
-              <p className="text-xl font-bold leading-tight">de nos clients affirment que GestiLoc les aide à mieux suivre loyers, charges et quittances.</p>
-            </motion.div>
+            useEffect(() => {
+              const check = () => setIsMobile(window.innerWidth < 768);
+              check();
+              window.addEventListener("resize", check);
+              return () => window.removeEventListener("resize", check);
+            }, []);
 
-            {/* Card 5: 67% */}
-            <motion.div className="md:absolute bottom-[-8%] left-[50%] md:translate-x-[-50%] bg-[#065F46] p-14 rounded-[55px] shadow-2xl w-full md:w-[550px] text-white" whileHover={{ scale: 1.05, y: -15, zIndex: 10 }} animate={{ y: [0, -10, 0] }} transition={{ duration: 5.5, repeat: Infinity, delay: 2 }}>
-              <div className="text-7xl font-black mb-6" style={{ fontFamily: "Manrope" }}>67%</div>
-              <p className="text-xl font-bold leading-tight text-white/95">de nos clients recommandent GestiLoc à leur entourage.</p>
-            </motion.div>
-          </div>
+            useEffect(() => {
+              const observer = new IntersectionObserver(
+                ([entry]) => { if (entry.isIntersecting) { setShow(true); observer.disconnect(); } },
+                { threshold: 0.05 }
+              );
+              if (wrapRef.current) observer.observe(wrapRef.current);
+              return () => observer.disconnect();
+            }, []);
+
+            function boldify(text: string, bold?: string) {
+              if (!bold) return text;
+              const parts = text.split(bold);
+              if (parts.length < 2) return text;
+              return <>{parts[0]}<span className="font-bold">{bold}</span>{parts[1]}</>;
+            }
+
+            return (
+              <div style={{ background: "#fff", padding: isMobile ? "1rem 0.25rem" : "1rem", width: "100%", fontFamily: "Merriweather, serif" }}>
+                <style>{`
+                  @import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Manrope:wght@400;600;700&display=swap');
+
+                  .wr-wrap-desktop {
+                    position: relative;
+                    width: 100%;
+                    max-width: 1240px;
+                    height: 1020px;
+                    margin: 0 auto;
+                  }
+
+                  .wr-wrap-mobile {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 1.2rem;
+                    width: 100%;
+                    max-width: 420px;
+                    margin: 0 auto;
+                  }
+
+                  .wr-card-mobile {
+                    width: 100% !important;
+                    border-radius: 14px;
+                    padding: 1.2rem;
+                    box-shadow: 0 4px 18px rgba(0,0,0,0.07);
+                  }
+                `}</style>
+
+                {!isMobile ? (
+                  <div className="wr-wrap-desktop" ref={wrapRef}>
+                    {CARDS.map((card, i) => {
+                      const rot = `rotate(${card.rotate}deg)`;
+                      const style = {
+                        position: "absolute" as const,
+                        borderRadius: 14,
+                        padding: "1.6rem 2rem",
+                        width: card.width,
+                        top: card.top,
+                        left: card.left,
+                        background: card.bg,
+                        border: card.border || "none",
+                        opacity: show ? 1 : 0,
+                        transform: show
+                          ? rot
+                          : `rotate(${card.rotate}deg) translate(${card.fromX}px, ${card.fromY}px)`,
+                        transition: show
+                          ? `transform 0.8s cubic-bezier(0.22,1,0.36,1) ${card.delay}ms, opacity 0.65s ease ${card.delay}ms`
+                          : "none",
+                        boxShadow: "0 6px 25px rgba(0,0,0,0.08)",
+                      };
+
+                      if (card.type === "stat") return (
+                        <div key={i} style={{ ...style, display: "flex", gap: "1.5rem", alignItems: "flex-start" }}>
+                          <div style={{ fontSize: "4.5rem", fontWeight: 900, lineHeight: 1.1, flexShrink: 0, color: card.color }}>{card.num}</div>
+                          <div style={{ fontSize: "0.95rem", fontWeight: 700, lineHeight: 1.5, fontStyle: "italic", paddingTop: "0.8rem", color: card.color }}>
+                            {boldify(card.descText || "", card.descBold)}
+                          </div>
+                        </div>
+                      );
+
+                      return (
+                        <div key={i} style={style}>
+                          <p style={{ fontStyle: "italic", fontSize: "1.1rem", lineHeight: 1.6, color: "#1c1c1c", margin: "0 0 1.2rem" }}>{card.quote}</p>
+                          <p style={{ fontSize: "0.9rem", color: "#444" }}>- <span className="font-bold">{card.authorName}</span>, {card.authorPlace}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="wr-wrap-mobile" ref={wrapRef}>
+                    {CARDS.map((card, i) => {
+                      const rot = MOBILE_ROTATES[i];
+                      const mobileStyle = {
+                        background: card.bg,
+                        border: card.border || "none",
+                        transform: show ? `rotate(${rot}deg)` : `rotate(${rot}deg) translateY(40px)`,
+                        opacity: show ? 1 : 0,
+                        transition: show
+                          ? `transform 0.75s cubic-bezier(0.22,1,0.36,1) ${card.delay}ms, opacity 0.6s ease ${card.delay}ms`
+                          : "none",
+                      };
+
+                      if (card.type === "stat") return (
+                        <div key={i} className="wr-card-mobile" style={{ ...mobileStyle, display: "flex", gap: "1rem", alignItems: "flex-start" }}>
+                          <div style={{ fontSize: "3rem", fontWeight: 900, lineHeight: 1, flexShrink: 0, color: card.color }}>{card.num}</div>
+                          <div style={{ fontSize: "0.85rem", fontWeight: 700, lineHeight: 1.45, fontStyle: "italic", paddingTop: "0.4rem", color: card.color }}>
+                            {boldify(card.descText || "", card.descBold)}
+                          </div>
+                        </div>
+                      );
+
+                      return (
+                        <div key={i} className="wr-card-mobile" style={mobileStyle}>
+                          <p style={{ fontStyle: "italic", fontSize: "0.95rem", lineHeight: 1.55, color: "#1c1c1c", margin: "0 0 0.9rem" }}>{card.quote}</p>
+                          <p style={{ fontSize: "0.82rem", color: "#444" }}>- <span className="font-bold">{card.authorName}</span>, {card.authorPlace}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </div>
     </section>

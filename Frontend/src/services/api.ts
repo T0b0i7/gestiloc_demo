@@ -165,8 +165,8 @@ export interface PaginatedResponse<T> {
   total: number;
 }
 
-// 🔹 baseURL = http://localhost:8000/api
-const API_URL = 'http://localhost:8000/api';
+// 🔹 baseURL
+const API_URL = import.meta.env.VITE_API_URL || 'https://wheat-skunk-120710.hostingersite.com/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -186,10 +186,10 @@ const getCsrfToken = async () => {
     console.log('Mode standalone : CSRF token simulation (pas d\'appel backend)');
     return true;
   }
-  
+
   // Mode backend : appel réel au serveur Laravel
   try {
-    await axios.get('http://localhost:8000/sanctum/csrf-cookie', {
+    await axios.get(`${API_URL.replace('/api', '')}/sanctum/csrf-cookie`, {
       withCredentials: true,
       headers: {
         Accept: 'application/json',
@@ -316,29 +316,29 @@ export const authService = {
 
       // Déterminer le bon endpoint selon le rôle
       const role = userData.role || 'proprietaire';
-      const endpoint = role === 'agence' 
-        ? '/auth/register/co-owner' 
+      const endpoint = role === 'agence'
+        ? '/auth/register/co-owner'
         : '/auth/register/landlord';
 
       // Prepare request data based on role
-      const requestData = role === 'agence' 
+      const requestData = role === 'agence'
         ? {
-            email: userData.email || '',
-            phone: userData.phone || '',
-            password: userData.password || '',
-            password_confirmation: userData.password_confirmation || '',
-            first_name: userData.first_name || '',
-            last_name: userData.last_name || '',
-            is_professional: true,
-          }
+          email: userData.email || '',
+          phone: userData.phone || '',
+          password: userData.password || '',
+          password_confirmation: userData.password_confirmation || '',
+          first_name: userData.first_name || '',
+          last_name: userData.last_name || '',
+          is_professional: true,
+        }
         : {
-            first_name: userData.first_name || '',
-            last_name: userData.last_name || '',
-            email: userData.email || '',
-            phone: userData.phone || '',
-            password: userData.password || '',
-            password_confirmation: userData.password_confirmation || '',
-          };
+          first_name: userData.first_name || '',
+          last_name: userData.last_name || '',
+          email: userData.email || '',
+          phone: userData.phone || '',
+          password: userData.password || '',
+          password_confirmation: userData.password_confirmation || '',
+        };
 
       console.log('📤 Register request data:', requestData);
       console.log('📤 Register endpoint:', endpoint);
@@ -348,14 +348,14 @@ export const authService = {
         requestData
       );
 
-    const responseData = response.data;
+      const responseData = response.data;
 
-    // ✅ stock token/user si présent (2 formats possibles)
-    const token = responseData.token || responseData.data?.token;
-    const user = responseData.user || responseData.data?.user;
+      // ✅ stock token/user si présent (2 formats possibles)
+      const token = responseData.token || responseData.data?.token;
+      const user = responseData.user || responseData.data?.user;
 
-    if (token) localStorage.setItem('token', token);
-    if (user) localStorage.setItem('user', JSON.stringify(user));
+      if (token) localStorage.setItem('token', token);
+      if (user) localStorage.setItem('user', JSON.stringify(user));
 
       return responseData;
     } catch (error) {
@@ -390,15 +390,15 @@ export const authService = {
         throw statusError;
       }
 
-    throw error;
-  }
-},
+      throw error;
+    }
+  },
 
   logout: async () => {
     // Déconnexion immédiate côté client
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    
+
     // Appel API en arrière-plan (non bloquant)
     api.post(
       '/auth/logout',
@@ -412,7 +412,7 @@ export const authService = {
     ).catch(error => {
       console.error('Erreur lors de la déconnexion côté serveur:', error);
     });
-    
+
     return Promise.resolve();
   },
 
@@ -677,6 +677,26 @@ export const tenantService = {
       if (apiError.response?.data) {
         throw apiError.response.data;
       }
+      throw error;
+    }
+  },
+
+  archiveTenant: async (id: number | string): Promise<void> => {
+    try {
+      await initializeCsrfToken();
+      await api.post(`/tenants/${id}/archive`);
+    } catch (error) {
+      console.error('Erreur API archiveTenant:', error);
+      throw error;
+    }
+  },
+
+  deleteTenant: async (id: number | string): Promise<void> => {
+    try {
+      await initializeCsrfToken();
+      await api.delete(`/tenants/${id}`);
+    } catch (error) {
+      console.error('Erreur API deleteTenant:', error);
       throw error;
     }
   },

@@ -423,6 +423,9 @@ export const Layout: React.FC<LayoutProps> = ({
           >
             <Bell size={18} fill="#FFC107" stroke="#FFC107" />
             <span className="hidden sm:inline">Notifications</span>
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-400 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-[#8CCC63]">
+              2
+            </span>
           </button>
 
           <button

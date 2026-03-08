@@ -191,8 +191,8 @@ function FloatingCard({ children, side, delay, style }: FloatingCardProps) {
         visible
           ? "opacity-100 translate-x-0"
           : side === "left"
-          ? "opacity-0 -translate-x-8"
-          : "opacity-0 translate-x-8",
+            ? "opacity-0 -translate-x-8"
+            : "opacity-0 translate-x-8",
       ].join(" ")}
     >
       {children}
@@ -212,11 +212,10 @@ export function Stats() {
           </div>
 
           <h2 className="text-3xl md:text-4xl font-bold">
-            Nous aidons les bailleurs à gérer sereinement leurs locations
+            Nous aidons les bailleurs à gérer sereinement leurs biens
           </h2>
           <p className="text-base md:text-lg text-muted-foreground">
-            Nous sommes accessibles, modernes et pensés pour les propriétaires
-            béninois.
+            Nous sommes innovants, modernes et adaptés aux réalités africaines
           </p>
         </div>
 
@@ -294,7 +293,7 @@ function MobileStatsCarousel({ cards }: { cards: WhyCard[] }) {
   const carouselRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
-  
+
   // Regrouper les cartes en binômes (2 par slide)
   const binomes: WhyCard[][] = [];
   for (let i = 0; i < cards.length; i += 2) {
@@ -307,7 +306,7 @@ function MobileStatsCarousel({ cards }: { cards: WhyCard[] }) {
     const interval = setInterval(() => {
       if (carouselRef.current) {
         let nextIndex = currentIndex + direction;
-        
+
         // Changement de direction aux extrémités
         if (nextIndex >= totalSlides - 1) {
           nextIndex = totalSlides - 1;
@@ -316,7 +315,7 @@ function MobileStatsCarousel({ cards }: { cards: WhyCard[] }) {
           nextIndex = 0;
           setDirection(1);
         }
-        
+
         const scrollAmount = carouselRef.current.offsetWidth;
         carouselRef.current.scrollTo({
           left: nextIndex * scrollAmount,
@@ -367,11 +366,11 @@ function MobileStatsCarousel({ cards }: { cards: WhyCard[] }) {
           </p>
           {card.author && (
             <div className="flex items-center gap-2 mt-auto">
-              <div 
+              <div
                 className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
-                style={{ 
+                style={{
                   backgroundColor: card.textColor === '#FFFFFF' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
-                  color: card.textColor 
+                  color: card.textColor
                 }}
               >
                 {card.author.charAt(0)}
@@ -392,7 +391,7 @@ function MobileStatsCarousel({ cards }: { cards: WhyCard[] }) {
   return (
     <div className="md:hidden">
       {/* Carousel container avec binômes */}
-      <div 
+      <div
         ref={carouselRef}
         onScroll={handleScroll}
         className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-4 gap-4 px-4"
@@ -422,11 +421,10 @@ function MobileStatsCarousel({ cards }: { cards: WhyCard[] }) {
                 setCurrentIndex(index);
               }
             }}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              currentIndex === index 
-                ? 'bg-violet-500 w-8' 
-                : 'bg-gray-300 w-2'
-            }`}
+            className={`h-2 rounded-full transition-all duration-300 ${currentIndex === index
+              ? 'bg-violet-500 w-8'
+              : 'bg-gray-300 w-2'
+              }`}
             aria-label={`Voir binôme ${index + 1}`}
           />
         ))}

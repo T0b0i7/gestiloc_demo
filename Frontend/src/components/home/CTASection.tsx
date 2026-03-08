@@ -7,7 +7,7 @@ const benefits = [
   "Sans engagement",
   "Gratuit pour commencer",
   "Assistance incluse",
-   "Aucune carte bancaire requise",
+  "Aucune carte bancaire requise",
 ];
 
 export function CTASection() {
@@ -33,7 +33,7 @@ export function CTASection() {
           viewport={{ once: true }}
           transition={{ duration: 0.4, delay: 0.2 }}
         >
-          Gérer vos biens en location n'a jamais été aussi facile !
+          Gérer vos biens n’a jamais été aussi facile
         </motion.h2>
         <motion.p
           className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto"
@@ -42,9 +42,8 @@ export function CTASection() {
           viewport={{ once: true }}
           transition={{ duration: 0.4, delay: 0.3 }}
         >
-          Rejoignez des milliers de propriétaires qui simplifient leur gestion locative avec GestiLoc
         </motion.p>
-        
+
         <motion.div
           className="flex flex-wrap justify-center gap-6 mb-8 text-base"
           initial="hidden"

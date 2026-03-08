@@ -10,7 +10,7 @@ import {
   CreditCard,
   Building,
   Zap,
-  Handshake,
+  Handshake as HandshakeIcon,
 } from "lucide-react";
 import { Card } from "../../Proprietaire/components/ui/Card";
 import { Button } from "../../Proprietaire/components/ui/Button";
@@ -261,7 +261,7 @@ export const CoOwnerDashboard: React.FC<CoOwnerDashboardProps> = ({ onNavigate, 
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {[
-            { id: 1, title: 'Accepter Délégation', desc: 'Rejoignez la gestion d\'un bien avec un lien d\'invitation', icon: <Handshake /> },
+            { id: 1, title: 'Accepter Délégation', desc: 'Rejoignez la gestion d\'un bien avec un lien d\'invitation', icon: <HandshakeIcon /> },
             { id: 2, title: 'Vérifier vos contrats', desc: 'Consultez les baux délégués pour vérifier les montants', icon: <FileText /> },
             { id: 3, title: 'Émettre Paiements', desc: 'Suivez et collectez les revenus générés par les biens', icon: <CreditCard /> }
           ].map((step) => (
@@ -270,7 +270,7 @@ export const CoOwnerDashboard: React.FC<CoOwnerDashboardProps> = ({ onNavigate, 
               className="group cursor-pointer rounded-3xl border border-gray-100 bg-gray-50/50 p-6 flex flex-col gap-4 transition-all hover:bg-white hover:border-green-200 hover:shadow-2xl hover:shadow-green-900/10"
             >
               <div className="w-14 h-14 rounded-2xl bg-green-600 flex items-center justify-center text-white shadow-xl shadow-green-600/30 group-hover:scale-110 transition-transform">
-                <span className="text-xl font-black font-merriweather">{step.id}</span>
+                {step.icon}
               </div>
               <div>
                 <h4 className="text-lg font-black text-gray-900 font-manrope uppercase tracking-tight group-hover:text-green-600 transition-colors">

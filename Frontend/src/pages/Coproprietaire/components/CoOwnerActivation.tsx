@@ -21,7 +21,7 @@ const PRIMARY_COLOR = "#70AE48";
 export const CoOwnerActivation: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  
+
   const [formData, setFormData] = useState({
     password: '',
     password_confirmation: ''
@@ -59,25 +59,25 @@ export const CoOwnerActivation: React.FC = () => {
       setError('Le mot de passe est requis');
       return false;
     }
-    
+
     if (formData.password.length < 8) {
       setError('Le mot de passe doit contenir au moins 8 caractères');
       return false;
     }
-    
+
     if (formData.password !== formData.password_confirmation) {
       setError('Les mots de passe ne correspondent pas');
       return false;
     }
-    
+
     return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setLoading(true);
     setError('');
 
@@ -97,12 +97,12 @@ export const CoOwnerActivation: React.FC = () => {
 
       // Vérifier si la réponse est OK avant d'essayer de parser le JSON
       const text = await response.text();
-      
+
       if (!text) {
         if (response.ok) {
           // Si la réponse est vide mais OK, on considère que c'est un succès
           setSuccess(true);
-          
+
           // Rediriger vers le dashboard co-propriétaire après 2 secondes
           setTimeout(() => {
             navigate('/coproprietaire/dashboard');
@@ -132,7 +132,7 @@ export const CoOwnerActivation: React.FC = () => {
 
       if (response.ok) {
         setSuccess(true);
-        
+
         // Stocker le token et les infos utilisateur si présents
         if (data.token) {
           localStorage.setItem('token', data.token);
@@ -140,7 +140,7 @@ export const CoOwnerActivation: React.FC = () => {
         if (data.user) {
           localStorage.setItem('user', JSON.stringify(data.user));
         }
-        
+
         // Rediriger vers le dashboard co-propriétaire après 2 secondes
         setTimeout(() => {
           navigate('/coproprietaire/dashboard');
@@ -198,7 +198,7 @@ export const CoOwnerActivation: React.FC = () => {
             >
               <AlertCircle className="w-10 h-10 text-red-600" />
             </motion.div>
-            
+
             <motion.h1
               initial={{ y: -10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -207,7 +207,7 @@ export const CoOwnerActivation: React.FC = () => {
             >
               Lien invalide
             </motion.h1>
-            
+
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -216,7 +216,7 @@ export const CoOwnerActivation: React.FC = () => {
             >
               {error || 'Ce lien d\'activation n\'est pas valide ou a expiré.'}
             </motion.p>
-            
+
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -253,7 +253,7 @@ export const CoOwnerActivation: React.FC = () => {
             >
               <CheckCircle className="w-10 h-10 text-green-600" />
             </motion.div>
-            
+
             <motion.h1
               initial={{ y: -10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -262,17 +262,17 @@ export const CoOwnerActivation: React.FC = () => {
             >
               Compte activé !
             </motion.h1>
-            
+
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
               className="text-slate-600 mb-6"
             >
-              Votre compte co-propriétaire a été créé avec succès. 
+              Votre compte co-propriétaire a été créé avec succès.
               Vous allez être redirigé vers votre tableau de bord...
             </motion.p>
-            
+
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -291,7 +291,7 @@ export const CoOwnerActivation: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-white p-4">
       <div className="w-full max-w-md">
         {/* Logo centré - identique à la page auth */}
-        <motion.div 
+        <motion.div
           className="text-center mb-6"
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -301,7 +301,7 @@ export const CoOwnerActivation: React.FC = () => {
             Gestiloc
           </h1>
           <p className="text-sm text-slate-600 max-w-xs mx-auto">
-            Créer de meilleures relations entre les propriétaires et les locataires !
+            Tout votre immobilier au même endroit
           </p>
         </motion.div>
 
@@ -326,14 +326,14 @@ export const CoOwnerActivation: React.FC = () => {
             >
               <Users className="w-8 h-8" style={{ color: PRIMARY_COLOR }} />
             </motion.div>
-            
+
             <h1 className="text-2xl font-bold text-slate-800 mb-2">
               Activation du compte
             </h1>
             <p className="text-slate-600">
               Créez votre mot de passe pour activer votre compte co-propriétaire
             </p>
-            
+
             {email && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -380,7 +380,7 @@ export const CoOwnerActivation: React.FC = () => {
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
                   className="w-full pl-10 pr-10 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 transition-all"
-                  style={{ 
+                  style={{
                     borderColor: formData.password ? PRIMARY_COLOR : undefined,
                     '--tw-ring-color': `${PRIMARY_COLOR}20`,
                   } as React.CSSProperties}
@@ -416,7 +416,7 @@ export const CoOwnerActivation: React.FC = () => {
                   value={formData.password_confirmation}
                   onChange={(e) => handleInputChange('password_confirmation', e.target.value)}
                   className="w-full pl-10 pr-10 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 transition-all"
-                  style={{ 
+                  style={{
                     borderColor: formData.password_confirmation ? PRIMARY_COLOR : undefined,
                     '--tw-ring-color': `${PRIMARY_COLOR}20`,
                   } as React.CSSProperties}
