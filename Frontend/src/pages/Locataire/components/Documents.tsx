@@ -1,13 +1,13 @@
 // src/pages/Locataire/components/Documents.tsx
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Plus, 
-  Trash2, 
-  ChevronDown, 
-  Search, 
-  ArrowLeft, 
-  FileText, 
+import {
+  Plus,
+  Trash2,
+  ChevronDown,
+  Search,
+  ArrowLeft,
+  FileText,
   Calendar,
   Home,
   User,
@@ -58,7 +58,7 @@ interface Document {
   file_size_formatted: string;
   file_type: string;
   is_shared: boolean;
-  shared_with_users: Array<{id: number, name: string, email: string}>;
+  shared_with_users: Array<{ id: number, name: string, email: string }>;
   shared_with_emails?: string[];
   status: 'actif' | 'archive';
   document_date: string | null;
@@ -112,7 +112,7 @@ interface Dossier {
   is_shared: boolean;
   shared_with: number[];
   shared_with_emails: string[];
-  shared_with_users: Array<{id: number, name: string, email: string}>;
+  shared_with_users: Array<{ id: number, name: string, email: string }>;
   status: 'brouillon' | 'publie' | 'archive';
   share_url: string | null;
   shareable_url?: string;
@@ -121,7 +121,7 @@ interface Dossier {
 }
 
 interface FilterOptions {
-  properties: Array<{id: number, name: string}>;
+  properties: Array<{ id: number, name: string }>;
   types: string[];
   periodes: string[];
 }
@@ -150,7 +150,7 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, shareUrl, titl
     const encodedUrl = encodeURIComponent(shareUrl);
     const encodedTitle = encodeURIComponent(title);
 
-    switch(platform) {
+    switch (platform) {
       case 'facebook':
         url = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
         break;
@@ -236,7 +236,7 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, shareUrl, titl
                 className="flex flex-col items-center gap-2 p-3 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors"
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19.077 4.928C17.191 3.041 14.683 2 12.006 2 6.798 2 2.548 6.193 2.54 11.393c-.003 1.747.456 3.457 1.328 4.987L2.5 21.5l5.216-1.359c1.477.807 3.136 1.235 4.856 1.236h.004c5.19 0 9.465-4.194 9.473-9.396.004-2.528-.98-4.908-2.872-6.813zM12.02 19.734h-.004c-1.51 0-2.991-.405-4.283-1.166l-.307-.184-3.097.807.828-3.007-.2-.317c-.738-1.17-1.129-2.521-1.126-3.908.006-4.34 3.54-7.87 7.897-7.87 2.114 0 4.099.825 5.593 2.322 1.49 1.492 2.312 3.472 2.308 5.584-.005 4.346-3.537 7.874-7.873 7.874z"/>
+                  <path d="M19.077 4.928C17.191 3.041 14.683 2 12.006 2 6.798 2 2.548 6.193 2.54 11.393c-.003 1.747.456 3.457 1.328 4.987L2.5 21.5l5.216-1.359c1.477.807 3.136 1.235 4.856 1.236h.004c5.19 0 9.465-4.194 9.473-9.396.004-2.528-.98-4.908-2.872-6.813zM12.02 19.734h-.004c-1.51 0-2.991-.405-4.283-1.166l-.307-.184-3.097.807.828-3.007-.2-.317c-.738-1.17-1.129-2.521-1.126-3.908.006-4.34 3.54-7.87 7.897-7.87 2.114 0 4.099.825 5.593 2.322 1.49 1.492 2.312 3.472 2.308 5.584-.005 4.346-3.537 7.874-7.873 7.874z" />
                 </svg>
                 <span className="text-xs">WhatsApp</span>
               </button>
@@ -245,7 +245,7 @@ const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, shareUrl, titl
                 className="flex flex-col items-center gap-2 p-3 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.12.02-1.97 1.25-5.58 3.68-.53.36-1.01.54-1.44.53-.47-.01-1.38-.27-2.06-.49-.83-.27-1.49-.42-1.43-.89.03-.24.27-.48.74-.74 2.86-1.25 4.77-2.07 5.72-2.48 2.72-1.16 3.29-1.36 3.66-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.08-.03.2-.03.32z"/>
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.12.02-1.97 1.25-5.58 3.68-.53.36-1.01.54-1.44.53-.47-.01-1.38-.27-2.06-.49-.83-.27-1.49-.42-1.43-.89.03-.24.27-.48.74-.74 2.86-1.25 4.77-2.07 5.72-2.48 2.72-1.16 3.29-1.36 3.66-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.08-.03.2-.03.32z" />
                 </svg>
                 <span className="text-xs">Telegram</span>
               </button>
@@ -394,7 +394,7 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ isOpen, onClo
             >
               Fermer
             </button>
-           
+
           </div>
         </div>
       </div>
@@ -409,7 +409,7 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<'documents' | 'dossier'>('documents');
   const [activeFilter, setActiveFilter] = useState<'actifs' | 'archives' | 'templates'>('actifs');
-  
+
   // États pour les données
   const [documents, setDocuments] = useState<Document[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -420,12 +420,12 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
     types: [],
     periodes: ['Toutes']
   });
-  
+
   // États pour les compteurs
   const [actifsCount, setActifsCount] = useState(0);
   const [archivesCount, setArchivesCount] = useState(0);
   const [templatesCount, setTemplatesCount] = useState(0);
-  
+
   // États pour les modals
   const [showAddModal, setShowAddModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -433,7 +433,7 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [shareUrl, setShareUrl] = useState('');
   const [shareTitle, setShareTitle] = useState('');
-  
+
   // États pour les filtres
   const [itemsPerPage, setItemsPerPage] = useState('10');
   const [showItemsDropdown, setShowItemsDropdown] = useState(false);
@@ -550,15 +550,14 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
       });
 
       const response = await api.get(`/tenant/documents?${params}`);
-      
+
       if (response.data.success) {
         setDocuments(response.data.data.data || []);
         setActifsCount(response.data.actifs_count || 0);
         setArchivesCount(response.data.archives_count || 0);
       }
     } catch (error) {
-      console.error('Erreur chargement documents:', error);
-      notify?.('Erreur lors du chargement des documents', 'error');
+      console.warn('Silent fail for documents - backend might be offline');
     } finally {
       setLoading(false);
     }
@@ -637,7 +636,7 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
 
   const handleConfirmDelete = async () => {
     if (!docToDelete) return;
-    
+
     setDeleting(true);
     try {
       const response = await api.delete(`/tenant/documents/${docToDelete}`);
@@ -692,19 +691,19 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
       const response = await api.get(`/tenant/documents/${doc.id}/download`, {
         responseType: 'blob'
       });
-      
+
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', doc.name);
       document.body.appendChild(link);
       link.click();
-      
+
       setTimeout(() => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
       }, 100);
-      
+
       notify?.('Téléchargement réussi', 'success');
     } catch (error) {
       console.error('Erreur téléchargement:', error);
@@ -717,19 +716,19 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
       const response = await api.get(`/tenant/documents/${doc.id}/pdf`, {
         responseType: 'blob'
       });
-      
+
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `document_${doc.id}_informations.pdf`);
       document.body.appendChild(link);
       link.click();
-      
+
       setTimeout(() => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
       }, 100);
-      
+
       notify?.('PDF des informations téléchargé avec succès', 'success');
     } catch (error) {
       console.error('Erreur téléchargement PDF:', error);
@@ -742,19 +741,19 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
       const response = await api.get('/tenant/dossier/download', {
         responseType: 'blob'
       });
-      
+
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `dossier_${dossierForm.nom}_${dossierForm.prenoms}.pdf`);
       document.body.appendChild(link);
       link.click();
-      
+
       setTimeout(() => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
       }, 100);
-      
+
       notify?.('Dossier téléchargé avec succès', 'success');
     } catch (error) {
       console.error('Erreur téléchargement dossier:', error);
@@ -793,13 +792,13 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
       formData.append('name', newDocument.name || selectedFile.name);
       formData.append('type', newDocument.type);
       formData.append('file', selectedFile);
-      
+
       if (newDocument.bien) formData.append('bien', newDocument.bien);
       if (newDocument.description) formData.append('description', newDocument.description);
       if (newDocument.property_id) formData.append('property_id', newDocument.property_id.toString());
-      
+
       formData.append('is_shared', newDocument.is_shared ? '1' : '0');
-      
+
       if (newDocument.is_shared && newDocument.shared_with && newDocument.shared_with.length > 0) {
         newDocument.shared_with.forEach(id => {
           formData.append('shared_with[]', id.toString());
@@ -880,7 +879,7 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
   };
 
   const getContactTypeColor = (type: string) => {
-    switch(type) {
+    switch (type) {
       case 'creator': return 'bg-purple-100 text-purple-700 border-purple-200';
       case 'landlord': return 'bg-blue-100 text-blue-700 border-blue-200';
       case 'co_owner': return 'bg-green-100 text-green-700 border-green-200';
@@ -901,8 +900,8 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
       if (typeFilter) return doc.type === typeFilter;
       return true;
     })
-    .filter(doc => 
-      searchQuery === '' || 
+    .filter(doc =>
+      searchQuery === '' ||
       doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.bien?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -911,31 +910,17 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
 
   const paginatedDocuments = filteredDocuments.slice(0, parseInt(itemsPerPage));
 
-  if (loading && activeTab === 'documents' && activeFilter !== 'templates') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative">
-            <Loader2 className="w-16 h-16 animate-spin mx-auto mb-4" style={{ color: PRIMARY_COLOR }} />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <FileText size={24} className="text-gray-400" />
-            </div>
-          </div>
-          <p className="text-gray-600 font-medium">Chargement de vos documents...</p>
-        </div>
-      </div>
-    );
-  }
+  // Removed blank loading state as requested by user
 
   return (
     <>
       {/* Modal de confirmation de suppression */}
       {showDeleteConfirm && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fadeIn"
           onClick={handleCancelDelete}
         >
-          <div 
+          <div
             className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all animate-slideUp"
             onClick={(e) => e.stopPropagation()}
           >
@@ -1062,9 +1047,9 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Bien concerné</label>
                 <select
                   value={newDocument.property_id || ''}
-                  onChange={(e) => setNewDocument({ 
-                    ...newDocument, 
-                    property_id: e.target.value ? Number(e.target.value) : undefined 
+                  onChange={(e) => setNewDocument({
+                    ...newDocument,
+                    property_id: e.target.value ? Number(e.target.value) : undefined
                   })}
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-opacity-20"
                   style={{ borderColor: `${PRIMARY_COLOR}80` }}
@@ -1093,15 +1078,15 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
               {/* Options de partage */}
               <div className="border-t border-gray-200 pt-4">
                 <h4 className="text-base font-semibold text-gray-900 mb-3">Partage</h4>
-                
+
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={newDocument.is_shared}
-                        onChange={(e) => setNewDocument({ 
-                          ...newDocument, 
+                        onChange={(e) => setNewDocument({
+                          ...newDocument,
                           is_shared: e.target.checked,
                           shared_with: e.target.checked ? [] : undefined
                         })}
@@ -1119,7 +1104,7 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Partager avec
                       </label>
-                      
+
                       {contacts.length === 0 ? (
                         <p className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
                           Aucun contact disponible pour ce bien
@@ -1223,21 +1208,19 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
         <div className="flex mb-6 max-w-4xl mx-auto">
           <button
             onClick={() => setActiveTab('documents')}
-            className={`flex-1 py-3 px-6 text-sm font-medium rounded-l-lg transition-colors ${
-              activeTab === 'documents' 
-                ? 'bg-[#FFB74D] text-white' 
-                : 'bg-[#FFF3E0] text-gray-700 hover:bg-[#FFE0B2]'
-            }`}
+            className={`flex-1 py-3 px-6 text-sm font-medium rounded-l-lg transition-colors ${activeTab === 'documents'
+              ? 'bg-[#FFB74D] text-white'
+              : 'bg-[#FFF3E0] text-gray-700 hover:bg-[#FFE0B2]'
+              }`}
           >
             MES DOCUMENTS
           </button>
           <button
             onClick={() => setActiveTab('dossier')}
-            className={`flex-1 py-3 px-6 text-sm font-medium rounded-r-lg transition-colors ${
-              activeTab === 'dossier' 
-                ? 'bg-[#FFB74D] text-white' 
-                : 'bg-[#FFF3E0] text-gray-700 hover:bg-[#FFE0B2]'
-            }`}
+            className={`flex-1 py-3 px-6 text-sm font-medium rounded-r-lg transition-colors ${activeTab === 'dossier'
+              ? 'bg-[#FFB74D] text-white'
+              : 'bg-[#FFF3E0] text-gray-700 hover:bg-[#FFE0B2]'
+              }`}
           >
             MON DOSSIER
           </button>
@@ -1304,7 +1287,7 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
                 <User size={20} className="text-[#70AE48]" />
                 Informations personnelles
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
@@ -1364,7 +1347,7 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
                 <Mail size={20} className="text-[#70AE48]" />
                 Informations de contact
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -1416,7 +1399,7 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
                 <MapPin size={20} className="text-[#70AE48]" />
                 Adresse
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Adresse</label>
@@ -1477,7 +1460,7 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
                 <Briefcase size={20} className="text-[#70AE48]" />
                 Situation professionnelle
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Type d'activité</label>
@@ -1529,7 +1512,7 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
                 <Users size={20} className="text-[#70AE48]" />
                 Garants
               </h3>
-              
+
               <div className="flex items-center justify-center gap-4 mb-4">
                 <span className="text-sm text-gray-600">J'ai un garant</span>
                 <button
@@ -1537,7 +1520,7 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
                   className="relative w-20 h-8 rounded-full transition-colors"
                   style={{ backgroundColor: dossierForm.has_garant ? '#70AE48' : '#EF4444' }}
                 >
-                  <div 
+                  <div
                     className="absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-transform"
                     style={{ transform: dossierForm.has_garant ? 'translateX(46px)' : 'translateX(4px)' }}
                   />
@@ -1585,7 +1568,7 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
                 <Users size={20} className="text-[#70AE48]" />
                 Options de partage
               </h3>
-              
+
               <div className="flex items-center justify-center gap-4 mb-4">
                 <span className="text-sm text-gray-600">Visible au public</span>
                 <button
@@ -1593,7 +1576,7 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
                   className="relative w-16 h-8 rounded-full transition-colors"
                   style={{ backgroundColor: dossierForm.is_shared ? '#70AE48' : '#E5E7EB' }}
                 >
-                  <div 
+                  <div
                     className="absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-transform"
                     style={{ transform: dossierForm.is_shared ? 'translateX(34px)' : 'translateX(4px)' }}
                   />
@@ -1719,29 +1702,26 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setActiveFilter('actifs')}
-                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                    activeFilter === 'actifs' ? 'text-[#70AE48]' : 'text-gray-500 hover:text-gray-700'
-                  }`}
+                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${activeFilter === 'actifs' ? 'text-[#70AE48]' : 'text-gray-500 hover:text-gray-700'
+                    }`}
                 >
-                  <CheckCircle size={16} className={activeFilter === 'actifs' ? 'text-[#70AE48]' : 'text-gray-400'}/>
+                  <CheckCircle size={16} className={activeFilter === 'actifs' ? 'text-[#70AE48]' : 'text-gray-400'} />
                   Actifs <span className="bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded-full">{actifsCount}</span>
                 </button>
                 <button
                   onClick={() => setActiveFilter('archives')}
-                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                    activeFilter === 'archives' ? 'text-[#70AE48]' : 'text-gray-500 hover:text-gray-700'
-                  }`}
+                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${activeFilter === 'archives' ? 'text-[#70AE48]' : 'text-gray-500 hover:text-gray-700'
+                    }`}
                 >
-                  <Archive size={16} className={activeFilter === 'archives' ? 'text-[#70AE48]' : 'text-gray-400'}/>
+                  <Archive size={16} className={activeFilter === 'archives' ? 'text-[#70AE48]' : 'text-gray-400'} />
                   Archives <span className="bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded-full">{archivesCount}</span>
                 </button>
                 <button
                   onClick={() => setActiveFilter('templates')}
-                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                    activeFilter === 'templates' ? 'text-[#70AE48]' : 'text-gray-500 hover:text-gray-700'
-                  }`}
+                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${activeFilter === 'templates' ? 'text-[#70AE48]' : 'text-gray-500 hover:text-gray-700'
+                    }`}
                 >
-                  <FileText size={16} className={activeFilter === 'templates' ? 'text-[#70AE48]' : 'text-gray-400'}/>
+                  <FileText size={16} className={activeFilter === 'templates' ? 'text-[#70AE48]' : 'text-gray-400'} />
                   Templates <span className="bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded-full">{templatesCount}</span>
                 </button>
               </div>
@@ -1750,7 +1730,7 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
             {/* Filter Card */}
             <Card className="p-4">
               <h3 className="text-sm font-medium text-gray-900 mb-3">Filtrer les documents</h3>
-              
+
               <div className="flex flex-col md:flex-row gap-3">
                 {/* Lignes par page */}
                 <div className="relative md:w-36">
@@ -1829,7 +1809,7 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
                     placeholder="Rechercher un document..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-opacity-20 bg-white text-gray-900"
+                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-opacity-20 bg-white text-[#70AE48]"
                     style={{ borderColor: `${PRIMARY_COLOR}80` }}
                   />
                 </div>
@@ -1887,8 +1867,8 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
                 </Card>
               ) : (
                 paginatedDocuments.map((doc) => (
-                  <Card 
-                    key={doc.id} 
+                  <Card
+                    key={doc.id}
                     className="p-4 hover:shadow-md transition-all duration-300"
                   >
                     <div className="flex items-start justify-between gap-3">

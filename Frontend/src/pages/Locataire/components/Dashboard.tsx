@@ -162,10 +162,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
         }
 
       } catch (err: any) {
-        console.error('[DASH] Error fetching dashboard data:', err);
-        if (!cancelled) {
-          setError(err.message || 'Erreur lors du chargement des données');
-        }
+        console.warn('[DASH] Error fetching dashboard data:', err);
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -261,8 +258,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
     [notices]
   );
 
-  const hasAnyError = error !== null;
-
   // Afficher le contenu selon l'onglet actif
   const renderContent = () => {
     const activeLease = lease;
@@ -273,7 +268,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
         return (
           <>
             {/* Welcome Card - Exact comme la maquette Figma */}
-            <div className="bg-gradient-to-r from-[#529D21] to-[#7CB342] rounded-2xl shadow-lg p-6 mb-6 relative overflow-hidden">
+            <div className="rounded-2xl shadow-lg p-6 mb-8 relative overflow-hidden"
+              style={{ background: 'linear-gradient(94.5deg, #8CCC63 5.47%, rgba(82, 157, 33, 0.87) 91.93%)' }}>
               <div className="flex justify-between items-start md:items-center gap-6">
                 <div className="z-10 flex-1">
                   <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">
@@ -293,130 +289,130 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
               </div>
             </div>
 
-            {/* Quick Actions - Cards Layout */}
-            <div className="grid grid-cols-5 gap-4 mb-8">
-              <button onClick={() => onNavigate?.('receipts')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-lg" style={{ width: '193px', height: '168px', borderRadius: '20px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 6.8px 0px rgba(131, 199, 87, 1)' }}>
-                <img src="/Ressource_gestiloc/Mes_quittances.png" alt="Mes quittances" className="w-12 h-12 object-contain mb-2" />
-                <span className="text-sm font-medium text-gray-900 text-center px-2">Mes quittances</span>
+            {/* Quick Actions - Cards Layout - Enlarged for Desktop */}
+            <div className="flex flex-wrap items-center justify-start gap-12 mb-12">
+              <button onClick={() => onNavigate?.('receipts')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1" style={{ width: '220px', height: '180px', borderRadius: '24px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 10px 0px rgba(131, 199, 87, 0.4)' }}>
+                <img src="/Ressource_gestiloc/Mes_quittances.png" alt="Mes quittances" className="w-14 h-14 object-contain mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-base font-semibold text-gray-900 text-center px-2">Mes quittances</span>
               </button>
 
-              <button onClick={() => onNavigate?.('interventions')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-lg" style={{ width: '193px', height: '168px', borderRadius: '20px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 6.8px 0px rgba(131, 199, 87, 1)' }}>
-                <img src="/Ressource_gestiloc/Tools.png" alt="Nouvelle intervention" className="w-12 h-12 object-contain mb-2" />
-                <span className="text-sm font-medium text-gray-900 text-center px-2">Nouvelle intervention</span>
+              <button onClick={() => onNavigate?.('interventions')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1" style={{ width: '220px', height: '180px', borderRadius: '24px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 10px 0px rgba(131, 199, 87, 0.4)' }}>
+                <img src="/Ressource_gestiloc/Tools.png" alt="Nouvelle intervention" className="w-14 h-14 object-contain mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-base font-semibold text-gray-900 text-center px-2">Nouvelle intervention</span>
               </button>
 
-              <button onClick={() => onNavigate?.('tasks')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-lg" style={{ width: '193px', height: '168px', borderRadius: '20px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 6.8px 0px rgba(131, 199, 87, 1)' }}>
-                <img src="/Ressource_gestiloc/Nouvelles_taches.png" alt="Nouvelle tâche" className="w-12 h-12 object-contain mb-2" />
-                <span className="text-sm font-medium text-gray-900 text-center px-2">Nouvelle tâche</span>
+              <button onClick={() => onNavigate?.('tasks')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1" style={{ width: '220px', height: '180px', borderRadius: '24px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 10px 0px rgba(131, 199, 87, 0.4)' }}>
+                <img src="/Ressource_gestiloc/Nouvelles_taches.png" alt="Nouvelle tâche" className="w-14 h-14 object-contain mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-base font-semibold text-gray-900 text-center px-2">Nouvelle tâche</span>
               </button>
 
-              <button onClick={() => onNavigate?.('notes')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-lg" style={{ width: '193px', height: '168px', borderRadius: '20px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 6.8px 0px rgba(131, 199, 87, 1)' }}>
-                <img src="/Ressource_gestiloc/Edit Property.png" alt="Nouvelle note" className="w-12 h-12 object-contain mb-2" />
-                <span className="text-sm font-medium text-gray-900 text-center px-2">Nouvelle note</span>
+              <button onClick={() => onNavigate?.('notes')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1" style={{ width: '220px', height: '180px', borderRadius: '24px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 10px 0px rgba(131, 199, 87, 0.4)' }}>
+                <img src="/Ressource_gestiloc/Edit Property.png" alt="Nouvelle note" className="w-14 h-14 object-contain mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-base font-semibold text-gray-900 text-center px-2">Nouvelle note</span>
               </button>
 
-              <button onClick={() => onNavigate?.('documents')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-lg" style={{ width: '193px', height: '168px', borderRadius: '20px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 6.8px 0px rgba(131, 199, 87, 1)' }}>
-                <img src="/Ressource_gestiloc/Document In Folder.png" alt="Nouveau document" className="w-12 h-12 object-contain mb-2" />
-                <span className="text-sm font-medium text-gray-900 text-center px-2">Nouveau document</span>
+              <button onClick={() => onNavigate?.('documents')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1" style={{ width: '220px', height: '180px', borderRadius: '24px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 10px 0px rgba(131, 199, 87, 0.4)' }}>
+                <img src="/Ressource_gestiloc/Document In Folder.png" alt="Nouveau document" className="w-14 h-14 object-contain mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-base font-semibold text-gray-900 text-center px-2">Nouveau document</span>
               </button>
             </div>
 
-            {/* Stats Grid - 2x2 layout comme Figma */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Stats Grid - MATCHING IMAGE 3 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-8 mb-12">
               {/* Locations Card */}
-              <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-[#FFB84D] hover:shadow-xl transition-all duration-300">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold text-gray-900">Locations</h3>
-                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Paramètres" className="w-6 h-6 object-contain" />
+              <div className="bg-[#F8F9FD] rounded-2xl border border-blue-100 p-8 flex flex-col h-[320px] relative">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xl font-bold text-gray-900">Locations</h3>
+                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Settings" className="w-6 h-6 opacity-40 hover:opacity-100 cursor-pointer" />
                 </div>
-                <div className="flex items-end gap-6">
-                  <img src="/Ressource_gestiloc/Key Security.png" alt="Locations" className="w-16 h-16 object-contain" />
-                  <div>
-                    <p className="text-5xl font-bold text-gray-900">1</p>
-                    <p className="text-sm text-gray-600 mt-1">Location</p>
+                <div className="flex-1 flex flex-col items-center justify-center -mt-4">
+                  <div className="flex items-center gap-12">
+                    <img src="/Ressource_gestiloc/Key Security.png" alt="Key" className="w-32 h-32 object-contain" />
+                    <div className="text-center">
+                      <p className="text-8xl font-black text-gray-900 leading-none">1</p>
+                      <p className="text-lg text-gray-500 font-medium mt-4">Location</p>
+                    </div>
                   </div>
                 </div>
-                <div className="mt-6 text-right">
-                  <button onClick={() => onNavigate?.('location')} className="text-xs font-medium text-[#6F00FF] hover:text-[#5500DD] transition-colors duration-200 cursor-pointer">
-                    Tout afficher
-                  </button>
-                </div>
+                <button onClick={() => onNavigate?.('location')} className="absolute bottom-6 right-8 text-sm font-bold text-[#6366F1] hover:underline">
+                  Tout afficher →
+                </button>
               </div>
 
               {/* Loyers en retard Card */}
-              <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-[#FFB84D] hover:shadow-xl transition-all duration-300">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold text-gray-900">Loyers en retard</h3>
-                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Paramètres" className="w-6 h-6 object-contain" />
+              <div className="bg-[#F8F9FD] rounded-2xl border border-blue-100 p-8 flex flex-col h-[320px] relative">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xl font-bold text-gray-900">Loyers en retard</h3>
+                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Settings" className="w-6 h-6 opacity-40 hover:opacity-100 cursor-pointer" />
                 </div>
-                <div className="flex items-end gap-6">
-                  <img src="/Ressource_gestiloc/Dollar Bag.png" alt="Loyers" className="w-16 h-16 object-contain" />
-                  <div>
-                    <p className="text-5xl font-bold text-gray-900">0</p>
-                    <p className="text-sm text-gray-600 mt-1">Loyers en retard</p>
+                <div className="flex-1 flex flex-col items-center justify-center -mt-4">
+                  <div className="flex items-center gap-12">
+                    <img src="/Ressource_gestiloc/Dollar Bag.png" alt="Money" className="w-32 h-32 object-contain" />
+                    <div className="text-center">
+                      <p className="text-8xl font-black text-gray-900 leading-none">0</p>
+                      <p className="text-lg text-gray-500 font-medium mt-4">Loyers en retard</p>
+                    </div>
                   </div>
                 </div>
-                <div className="mt-6 text-right">
-                  <button onClick={() => onNavigate?.('payments')} className="text-xs font-medium text-[#6F00FF] hover:text-[#5500DD] transition-colors duration-200 cursor-pointer">
-                    Tout afficher
-                  </button>
-                </div>
+                <button onClick={() => onNavigate?.('payments')} className="absolute bottom-6 right-8 text-sm font-bold text-[#6366F1] hover:underline">
+                  Tout afficher →
+                </button>
               </div>
 
               {/* Interventions Card */}
-              <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-[#FFB84D] hover:shadow-xl transition-all duration-300">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold text-gray-900">Interventions</h3>
-                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Paramètres" className="w-6 h-6 object-contain" />
+              <div className="bg-[#F8F9FD] rounded-2xl border border-blue-100 p-8 flex flex-col h-[320px] relative">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xl font-bold text-gray-900">Interventions</h3>
+                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Settings" className="w-6 h-6 opacity-40 hover:opacity-100 cursor-pointer" />
                 </div>
-                <div className="flex items-end gap-4">
-                  <img src="/Ressource_gestiloc/Tools.png" alt="Interventions" className="w-16 h-16 object-contain" />
-                  <div className="flex gap-8">
-                    <div className="flex flex-col items-center">
-                      <p className="text-4xl font-bold text-gray-900">{openIncidents}</p>
-                      <p className="text-xs text-gray-600 mt-1">Querelle</p>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <p className="text-4xl font-bold text-gray-900">0</p>
-                      <p className="text-xs text-gray-600 mt-1">En retard</p>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <p className="text-4xl font-bold text-gray-900">0</p>
-                      <p className="text-xs text-gray-600 mt-1">En cours</p>
+                <div className="flex-1 flex flex-col items-center justify-center -mt-4">
+                  <div className="flex items-center gap-8 w-full px-4">
+                    <img src="/Ressource_gestiloc/Tools.png" alt="Tools" className="w-24 h-24 object-contain" />
+                    <div className="flex flex-1 justify-around">
+                      <div className="text-center">
+                        <p className="text-6xl font-black text-gray-900 leading-none">0</p>
+                        <p className="text-sm text-gray-500 font-bold mt-3">Ouverte</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-6xl font-black text-gray-900 leading-none">0</p>
+                        <p className="text-sm text-gray-500 font-bold mt-3">En retard</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-6xl font-black text-gray-900 leading-none">0</p>
+                        <p className="text-sm text-gray-500 font-bold mt-3">En cours</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div className="mt-6 text-right">
-                  <button onClick={() => onNavigate?.('interventions')} className="text-xs font-medium text-[#6F00FF] hover:text-[#5500DD] transition-colors duration-200 cursor-pointer">
-                    Tout afficher
-                  </button>
-                </div>
+                <button onClick={() => onNavigate?.('interventions')} className="absolute bottom-6 right-8 text-sm font-bold text-[#6366F1] hover:underline">
+                  Tout afficher →
+                </button>
               </div>
 
               {/* Tâches Card */}
-              <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-[#FFB84D] hover:shadow-xl transition-all duration-300">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold text-gray-900">Tâches</h3>
-                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Paramètres" className="w-6 h-6 object-contain" />
+              <div className="bg-[#F8F9FD] rounded-2xl border border-blue-100 p-8 flex flex-col h-[320px] relative">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-xl font-bold text-gray-900">Tâches</h3>
+                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Settings" className="w-6 h-6 opacity-40 hover:opacity-100 cursor-pointer" />
                 </div>
-                <div className="flex items-end gap-4">
-                  <img src="/Ressource_gestiloc/Inspection.png" alt="Tâches" className="w-16 h-16 object-contain" />
-                  <div className="flex gap-8">
-                    <div className="flex flex-col items-center">
-                      <p className="text-4xl font-bold text-gray-900">0</p>
-                      <p className="text-xs text-gray-600 mt-1">Querelle</p>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <p className="text-4xl font-bold text-gray-900">0</p>
-                      <p className="text-xs text-gray-600 mt-1">En retard</p>
+                <div className="flex-1 flex flex-col items-center justify-center -mt-4">
+                  <div className="flex items-center gap-12 w-full px-8">
+                    <img src="/Ressource_gestiloc/Inspection.png" alt="Tasks" className="w-24 h-24 object-contain" />
+                    <div className="flex flex-1 justify-around gap-8">
+                      <div className="text-center">
+                        <p className="text-6xl font-black text-gray-900 leading-none">0</p>
+                        <p className="text-sm text-gray-500 font-bold mt-3">Ouverte</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-6xl font-black text-gray-900 leading-none">0</p>
+                        <p className="text-sm text-gray-500 font-bold mt-3">En retard</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-                <div className="mt-6 text-right">
-                  <button onClick={() => onNavigate?.('tasks')} className="text-xs font-medium text-[#6F00FF] hover:text-[#5500DD] transition-colors duration-200 cursor-pointer">
-                    Tout afficher
-                  </button>
-                </div>
+                <button onClick={() => onNavigate?.('tasks')} className="absolute bottom-6 right-8 text-sm font-bold text-[#6366F1] hover:underline">
+                  Tout afficher →
+                </button>
               </div>
             </div>
           </>
@@ -902,36 +898,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
   }, [activeTab]);
 
   // ---------- UI ----------
-  if (loading && activeTab !== 'home') {
-    return (
-      <div className="space-y-8 animate-fade-in">
-        <div className="flex flex-col md:flex-row justify-between items-end gap-4">
-          <div className="space-y-2">
-            <Skeleton className="h-10 w-64 rounded-xl" />
-            <Skeleton className="h-4 w-48 rounded-lg" />
-          </div>
-          <div className="flex gap-3">
-            <Skeleton className="h-12 w-32 rounded-xl" />
-            <Skeleton className="h-12 w-32 rounded-xl" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-56 w-full rounded-3xl" />
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <Skeleton className="h-56 w-full rounded-3xl" />
-            <Skeleton className="h-40 w-full rounded-3xl" />
-          </div>
-          <Skeleton className="h-96 w-full rounded-3xl" />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -942,16 +908,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
         notify={notify}
       />
 
-      {hasAnyError ? (
-        <div className="mt-20 mb-6 rounded-3xl border border-rose-200 bg-rose-50 p-5 text-rose-800 font-bold relative z-0">
-          Certaines données n'ont pas pu être chargées (le dashboard reste utilisable).
-          <div className="mt-2 text-sm font-semibold">
-            <div>• Erreur: {error}</div>
-          </div>
-        </div>
-      ) : null}
 
-      {renderContent()}
+
+      <div>
+        {renderContent()}
+      </div>
     </>
   );
 };

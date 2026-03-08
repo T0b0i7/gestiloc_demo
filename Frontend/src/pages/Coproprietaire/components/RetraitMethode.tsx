@@ -39,15 +39,15 @@ function Modal({
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="absolute inset-0 overflow-y-auto p-4">
         <div className="mx-auto w-full max-w-3xl">
-          <div className="rounded-3xl border border-blue-200 bg-white shadow-2xl overflow-hidden max-h-[calc(100vh-2rem)]">
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-blue-100 bg-white px-6 py-5">
+          <div className="rounded-[2.5rem] border border-green-200 bg-white shadow-2xl overflow-hidden max-h-[calc(100vh-2rem)]">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-green-100 bg-white px-6 py-5">
               <div className="flex items-center gap-2">
-                <Wallet className="text-blue-700" size={18} />
+                <Wallet className="text-green-700" size={18} />
                 <h2 className="text-lg font-extrabold text-gray-900">{title}</h2>
               </div>
               <button
                 onClick={onClose}
-                className="rounded-2xl p-2 text-gray-600 hover:bg-blue-50 transition"
+                className="rounded-2xl p-2 text-gray-600 hover:bg-green-50 transition"
                 type="button"
                 aria-label="Fermer"
               >
@@ -150,12 +150,14 @@ function Input({
   placeholder,
   disabled,
   type = "text",
+  maxLength,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   disabled?: boolean;
   type?: string;
+  maxLength?: number;
 }) {
   return (
     <input
@@ -164,14 +166,15 @@ function Input({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       type={type}
+      maxLength={maxLength}
       className="
         w-full rounded-2xl bg-white text-gray-900
-        border border-blue-200
+        border border-gray-100
         px-4 py-3
         text-sm font-semibold
         placeholder:text-gray-400
         outline-none
-        focus:ring-4 focus:ring-blue-200/60 focus:border-blue-400
+        focus:ring-4 focus:ring-green-500/10 focus:border-green-400
         disabled:opacity-60 disabled:cursor-not-allowed
         transition
       "
@@ -199,11 +202,11 @@ function Select({
         className="
           w-full appearance-none rounded-2xl
           bg-white text-gray-900
-          border border-blue-200
+          border border-gray-100
           px-4 py-3 pr-10
           text-sm font-semibold
           outline-none
-          focus:ring-4 focus:ring-blue-200/60 focus:border-blue-400
+          focus:ring-4 focus:ring-green-500/10 focus:border-green-400
           disabled:opacity-60 disabled:cursor-not-allowed
           transition
         "
@@ -293,7 +296,7 @@ function extractCurrentMethod(p: CoOwnerFedapayProfile | null): CurrentMethod {
   const bc = typeof meta === "object" ? meta : {};
 
   return {
-    payout_type: safeString(bc.payout_type),
+    payout_type: safeString(bc.payout_type) as PayoutType,
     account_name: safeString(bc.account_name),
     account_number: safeString(bc.account_number),
     bank_name: safeString(bc.bank_name),
@@ -389,7 +392,6 @@ export const RetraitMethode: React.FC<Props> = ({ onNavigate, notify }) => {
 
     try {
       const p = await coOwnerApi.getWithdrawalMethods();
-      
       // internal ref for POST (stable)
       const anyP: any = p as any;
       const already = safeString(anyP?.fedapay_subaccount_id || anyP?.subaccount_reference || "");
@@ -448,7 +450,7 @@ export const RetraitMethode: React.FC<Props> = ({ onNavigate, notify }) => {
   const buildPayload = (): UpsertSubaccountPayload => {
     const base: UpsertSubaccountPayload = {
       subaccount_reference: subaccountReference,
-      payout_type: payoutType,
+      payout_type: (payoutType || null) as PayoutType | null,
       country,
       currency,
       account_name: accountName,
@@ -538,107 +540,122 @@ export const RetraitMethode: React.FC<Props> = ({ onNavigate, notify }) => {
   }, [isConfigured, current.payout_type, current.subaccount_reference]);
 
   const methodIcon = useMemo(() => {
-    if (!isConfigured) return <Wallet size={18} className="text-blue-700" />;
-    if (current.payout_type === "mobile_money") return <Smartphone size={18} className="text-blue-700" />;
-    if (current.payout_type === "bank") return <Building2 size={18} className="text-blue-700" />;
-    if (current.payout_type === "bank_card") return <CreditCard size={18} className="text-blue-700" />;
-    return <Wallet size={18} className="text-blue-700" />;
+    if (!isConfigured) return <Wallet size={18} className="text-green-700" />;
+    if (current.payout_type === "mobile_money") return <Smartphone size={18} className="text-green-700" />;
+    if (current.payout_type === "bank") return <Building2 size={18} className="text-green-700" />;
+    if (current.payout_type === "bank_card") return <CreditCard size={18} className="text-green-700" />;
+    return <Wallet size={18} className="text-green-700" />;
   }, [isConfigured, current.payout_type]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="py-8">
+    <div className="py-4 space-y-8" style={{ fontFamily: "'Merriweather', serif" }}>
       {/* Header */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-extrabold text-blue-700">
+      <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-green-700">
             <CreditCard size={14} />
-            Méthodes de retrait
+            Moyens de paiement
           </div>
-          <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-gray-900">Méthodes de retrait</h1>
-          <p className="mt-1 text-sm font-semibold text-gray-600">
-            Gère tes méthodes de retrait pour recevoir tes paiements.
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-gray-900">Retrait des fonds</h1>
+          <p className="text-gray-400 font-manrope font-medium text-lg max-w-2xl">
+            Configurez vos coordonnées bancaires ou mobiles pour recevoir vos revenus locatifs en toute sécurité.
           </p>
         </div>
-        <div className="flex items-center gap-2 mt-4 md:mt-0">
+        <div>
           <button
             onClick={() => setOpenEditor(true)}
             className="
-              inline-flex items-center justify-center gap-2
-              rounded-2xl bg-blue-600 px-4 py-3
-              text-sm font-extrabold text-white
-              hover:bg-blue-700
-              transition
+              flex items-center justify-start gap-3
+              rounded-[1.5rem] bg-green-600 px-8 py-5
+              text-xs font-black text-white uppercase tracking-widest
+              shadow-xl shadow-green-600/20
+              hover:bg-green-700
+              transition-all active:scale-95
             "
             type="button"
           >
             <Plus size={18} />
-            Ajouter une méthode
+            Nouvelle méthode
           </button>
         </div>
       </div>
 
       {/* Current Method Summary */}
-      <div className="mt-6 rounded-3xl border border-blue-200 bg-white shadow-sm p-5 md:p-6">
-        <h2 className="text-lg font-extrabold text-gray-900 mb-4">{methodTitle}</h2>
-        {isConfigured ? (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between py-3 px-4 bg-emerald-50 rounded-xl border border-emerald-200">
-              <div className="flex items-center gap-3">
-                <div className={cx("w-10 h-10 rounded-full flex items-center justify-center", methodIcon)}>
-                  {methodIcon}
+      <div className="rounded-[3rem] bg-white shadow-2xl shadow-green-900/5 p-8 md:p-12 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-green-50 rounded-full -mr-32 -mt-32 blur-3xl opacity-50 group-hover:opacity-100 transition-opacity" />
+
+        <div className="relative z-10">
+          <h2 className="text-2xl font-black text-gray-900 mb-8 font-merriweather">{methodTitle}</h2>
+
+          {isConfigured ? (
+            <div className="space-y-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-8 bg-gray-50/50 rounded-[2.5rem] border border-gray-100 group/item">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 rounded-[1.5rem] bg-white shadow-lg shadow-gray-200/50 flex items-center justify-center border border-gray-50 flex-shrink-0">
+                    {methodIcon}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-lg font-black text-gray-900 font-manrope truncate uppercase tracking-tight">
+                      {current.payout_type === "mobile_money" && current.provider && `${MOBILE_MONEY_PROVIDERS.find(p => p.id === current.provider)?.label} - `}
+                      {current.account_name}
+                    </div>
+                    <div className="text-xs font-bold text-gray-400 font-manrope mt-1 uppercase tracking-widest break-all">
+                      {current.payout_type === "mobile_money" && current.phone && `Tél: ${current.phone}`}
+                      {current.payout_type === "bank" && current.bank_name && `Bank: ${current.bank_name}`}
+                      {current.payout_type === "bank" && current.account_number && `Compte: ****${current.account_number.slice(-4)}`}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <div className="font-semibold text-gray-900">
-                    {current.payout_type === "mobile_money" && current.provider && `${MOBILE_MONEY_PROVIDERS.find(p => p.id === current.provider)?.label} - `}
-                    {current.account_name}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    {current.payout_type === "mobile_money" && current.phone && `Phone: ${current.phone}`}
-                    {current.payout_type === "bank" && current.bank_name && `Bank: ${current.bank_name}`}
-                    {current.payout_type === "bank" && current.iban && `IBAN: ${current.iban}`}
-                    {current.payout_type === "bank" && current.account_number && `Account: ****${current.account_number.slice(-4)}`}
-                  </div>
+
+                <div className="flex items-center gap-4">
+                  {current.is_ready === true ? (
+                    <div className="flex items-center gap-2 px-6 py-3 bg-green-50 rounded-full border border-green-100">
+                      <CheckCircle2 size={16} className="text-green-600" />
+                      <span className="text-[10px] font-black text-green-700 uppercase tracking-widest">Actif & Prêt</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 px-6 py-3 bg-amber-50 rounded-full border border-amber-100">
+                      <AlertTriangle size={16} className="text-amber-600" />
+                      <span className="text-[10px] font-black text-amber-700 uppercase tracking-widest">En attente</span>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => setOpenEditor(true)}
+                    className="w-12 h-12 rounded-full bg-white shadow-md flex items-center justify-center text-green-600 hover:bg-green-600 hover:text-white transition-all transform hover:rotate-12"
+                    title="Modifier"
+                  >
+                    <Pencil size={18} />
+                  </button>
                 </div>
               </div>
-              <div className="flex items-center gap-1 text-emerald-600">
-                {current.is_ready === true ? (
-                  <div className="flex items-center gap-1 text-emerald-600">
-                    <CheckCircle2 size={16} />
-                    <span className="text-sm font-medium">Prêt pour les paiements</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1 text-yellow-600">
-                    <AlertTriangle size={16} />
-                    <span className="text-sm font-medium">En attente de validation</span>
-                  </div>
-                )}
+            </div>
+          ) : (
+            <div className="text-center py-16 px-4 rounded-[2.5rem] border-2 border-dashed border-gray-100 bg-gray-50/30">
+              <div className="w-24 h-24 rounded-full bg-white shadow-xl shadow-gray-200/50 flex items-center justify-center mx-auto mb-6">
+                <Wallet className="w-10 h-10 text-gray-300" />
               </div>
+              <p className="text-xl font-black text-gray-900 font-merriweather">Aucun moyen de retrait</p>
+              <p className="text-gray-400 font-manrope font-medium mt-3 max-w-sm mx-auto">
+                Ajoutez un compte bancaire ou Mobile Money pour que nous puissions vous reverser vos fonds automatiquement.
+              </p>
               <button
                 onClick={() => setOpenEditor(true)}
-                className="p-2 text-blue-600 hover:text-blue-700 transition"
-                title="Modifier"
+                className="mt-8 text-green-600 font-black text-xs uppercase tracking-[0.2em] hover:text-green-700 transition-colors"
               >
-                <Pencil size={16} />
+                + Configurer maintenant
               </button>
             </div>
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <Wallet className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 font-semibold">Aucune méthode de retrait configurée</p>
-            <p className="text-gray-500 text-sm mt-2">
-              Configure une méthode pour pouvoir recevoir tes fonds.
-            </p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Modal */}
@@ -749,7 +766,7 @@ export const RetraitMethode: React.FC<Props> = ({ onNavigate, notify }) => {
                       value={provider}
                       onChange={setProvider}
                       disabled={!!profile}
-                      options={MOBILE_MONEY_PROVIDERS}
+                      options={MOBILE_MONEY_PROVIDERS.map(p => ({ value: p.id, label: p.label }))}
                     />
                   </div>
                 </div>
@@ -890,9 +907,9 @@ export const RetraitMethode: React.FC<Props> = ({ onNavigate, notify }) => {
                 disabled={busy}
                 className="
                   inline-flex items-center justify-center gap-2
-                  rounded-2xl bg-blue-600 px-4 py-3
+                  rounded-2xl bg-green-600 px-4 py-3
                   text-sm font-extrabold text-white
-                  hover:bg-blue-700
+                  hover:bg-green-700
                   disabled:opacity-60 disabled:cursor-not-allowed
                   transition
                 "

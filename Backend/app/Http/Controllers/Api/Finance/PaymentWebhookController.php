@@ -20,7 +20,7 @@ class PaymentWebhookController extends Controller
         Log::channel('payments')->info('Webhook Fedapay reçu', $request->all());
 
         // 2. Vérification de la signature (Sécurité)
-        // Fedapay envoie un header 'X-Fedapay-Signature'. 
+        // Fedapay envoie un header 'X-Fedapay-Signature'.
         // Il faut vérifier que ça correspond à votre clé secrète.
         $signature = $request->header('X-Fedapay-Signature');
         if (!$this->verifySignature($request->getContent(), $signature)) {
@@ -32,12 +32,12 @@ class PaymentWebhookController extends Controller
         $entity = $request->input('entity');
 
         if ($event === 'transaction.approved' && $entity['status'] === 'approved') {
-            
+
             // 3. Récupération de la référence facture
-            // Lors de l'initiation du paiement côté React, vous devez envoyer 
+            // Lors de l'initiation du paiement côté React, vous devez envoyer
             // l'ID de la facture dans 'custom_metadata'
             $invoiceRef = $entity['custom_metadata']['invoice_ref'] ?? null;
-            
+
             if (!$invoiceRef) {
                 Log::channel('payments')->error('Référence facture manquante dans le webhook Fedapay');
                 return response()->json(['status' => 'ignored']);
@@ -61,7 +61,7 @@ class PaymentWebhookController extends Controller
                         'notes' => 'Paiement Mobile via Fedapay',
                         'status' => 'success'
                     ]);
-                    
+
                     Log::channel('payments')->info("Facture $invoiceRef payée via Fedapay");
                 }
             }
@@ -82,13 +82,13 @@ class PaymentWebhookController extends Controller
         $status = $request->input('status'); // 'SUCCESS'
 
         if ($status === 'SUCCESS') {
-             // Avec Kkiapay, il faut souvent revérifier la transaction via leur API 
+             // Avec Kkiapay, il faut souvent revérifier la transaction via leur API
              // pour être sûr du montant et des métadonnées (verifyTransaction)
              // ... Code de vérification API Kkiapay ici ...
 
              // Supposons qu'on récupère les infos :
              $invoiceRef = $request->input('state'); // On passe souvent la ref dans le champ 'state' ou 'partnerId'
-             
+
              $invoice = Invoice::where('invoice_number', $invoiceRef)->first();
 
              if ($invoice) {
@@ -113,6 +113,6 @@ class PaymentWebhookController extends Controller
     {
         // Implémentation réelle selon : https://docs.fedapay.com/
         // Pour l'instant on retourne true pour ne pas bloquer le dev
-        return true; 
+        return true;
     }
 }

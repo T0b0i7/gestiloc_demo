@@ -68,12 +68,13 @@ export function Footer() {
           }}
         />
 
-        {/* Corps de la maison - FIX Zoom : chevauchement de 1px avec top-[199px] */}
+        {/* Corps de la maison - FIX Zoom : chevauchement de 4px pour éviter le trait blanc */}
         <div
-          className="absolute inset-x-0 top-[179px] md:top-[199px] bottom-0 bg-[#D4E4CC]"
+          className="absolute inset-x-0 bottom-0 bg-[#D4E4CC]"
           style={{
             zIndex: 0,
-            backgroundColor: "#D4E4CC"
+            backgroundColor: "#D4E4CC",
+            top: "196px",
           }}
         />
 
@@ -144,17 +145,7 @@ export function Footer() {
             Rejoignez des milliers de propriétaires et agences qui simplifient leur gestion locative avec GestiLoc.
           </p>
 
-          <div className="flex flex-col sm:flex-row justify-center gap-4 md:gap-8 mb-8 text-sm sm:text-base">
-            <div className="flex items-center justify-center gap-2">
-              <Check className="h-5 w-5 text-green-700" />
-              <span className="font-medium text-slate-800">Sans engagement</span>
-            </div>
-            <div className="flex items-center justify-center gap-2">
-              <Check className="h-5 w-5 text-green-700" />
-              <span className="font-medium text-slate-800">Gratuit pour commencer</span>
-            </div>
-          </div>
-
+          
           <div className="px-2">
             <Button
               asChild
@@ -165,6 +156,36 @@ export function Footer() {
             </Button>
           </div>
         </section>
+
+        {/* Section Paiement Sécurisé */}
+        <div className="mb-12 mt-16">
+          <div className="text-center mb-6">
+            <h3 className="font-bold text-[#529D21] text-lg mb-2" style={{ fontFamily: 'Merriweather' }}>Paiement sécurisé</h3>
+            <p className="text-sm text-gray-600">Mobile Money & Carte Bancaire</p>
+          </div>
+          
+          <div className="flex flex-wrap justify-center items-center gap-6 md:gap-8">
+            {/* Mobile Money */}
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-xs text-gray-500 font-medium">Mobile Money</p>
+              <div className="flex gap-3 items-center">
+                <img src="/Ressource_gestiloc/MTN 1.png" alt="MTN" className="h-8 w-auto object-contain" />
+                <img src="/Ressource_gestiloc/Moov 1.png" alt="Moov" className="h-8 w-auto object-contain" />
+                <img src="/Ressource_gestiloc/celtis.png" alt="Celtis" className="h-8 w-auto object-contain" />
+                <img src="/Ressource_gestiloc/wave 1.png" alt="Wave" className="h-8 w-auto object-contain" />
+              </div>
+            </div>
+            
+            {/* Carte Bancaire */}
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-xs text-gray-500 font-medium">Carte Bancaire</p>
+              <div className="flex gap-3 items-center">
+                <img src="/Ressource_gestiloc/master_card.png" alt="MasterCard" className="h-10 w-auto object-contain" />
+                {/* Vous pouvez ajouter Visa ici si vous avez l'image */}
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Liens Footer */}
         <div className="grid gap-8 md:grid-cols-3 mb-12 mt-20">

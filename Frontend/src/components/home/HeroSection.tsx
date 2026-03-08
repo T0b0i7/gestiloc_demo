@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Users, Apple, Play } from "lucide-react";
+import { Apple, Play } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function HeroSection() {
@@ -21,27 +21,13 @@ export default function HeroSection() {
       {/* Content */}
       <div className="relative z-10 w-full max-w-4xl mx-auto px-6 lg:px-8 py-20">
         <div className="space-y-8 text-center">
-          {/* Stats Counter */}
-          <motion.div 
-            className="flex items-center justify-center gap-2 px-6 py-3 rounded-full shadow-md w-fit mx-auto" 
-            style={{ backgroundColor: "#529D2130", color: "#529D21" }}
-            initial={{ opacity: 0, y: -30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <Users size={20} />
-            <p className="font-medium text-base" style={{ fontFamily: "Manrope, sans-serif" }}>
-              1 250 propriétaires béninois inscrits ce mois-ci !
-            </p>
-          </motion.div>
-
           {/* Main Title - Taille augmentée */}
-          <motion.h1 
+          <motion.h1
             className="text-5xl md:text-6xl lg:text-7xl text-white leading-tight"
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-            style={{ 
+            style={{
               fontFamily: "Merriweather, serif",
               fontWeight: 700,
               fontStyle: "italic",
@@ -54,12 +40,12 @@ export default function HeroSection() {
           </motion.h1>
 
           {/* Subtitle - Amélioré */}
-          <motion.p 
+          <motion.p
             className="text-lg md:text-xl text-white/95 leading-relaxed max-w-2xl mx-auto"
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.5, ease: "easeOut" }}
-            style={{ 
+            style={{
               fontFamily: "Manrope, sans-serif",
               textShadow: "0 2px 10px rgba(0,0,0,0.2)"
             }}
@@ -68,7 +54,7 @@ export default function HeroSection() {
           </motion.p>
 
           {/* CTA Buttons - Améliorés */}
-          <motion.div 
+          <motion.div
             className="flex flex-col gap-4 pt-6 w-fit mx-auto items-center"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
@@ -77,7 +63,7 @@ export default function HeroSection() {
             <motion.button
               onClick={() => navigate("/register")}
               className="text-white px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all"
-              style={{ 
+              style={{
                 backgroundColor: "#D4FF8C",
                 color: "#143300",
                 fontFamily: "Manrope, sans-serif",
@@ -106,13 +92,13 @@ export default function HeroSection() {
           </motion.div>
 
           {/* Disponible sur Badge */}
-          <motion.div 
+          <motion.div
             className="flex items-center justify-center gap-4 pt-8"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 1 }}
           >
-            <p 
+            <p
               className="text-white"
               style={{
                 fontFamily: "Lora, serif",
@@ -125,7 +111,6 @@ export default function HeroSection() {
             >
               Disponible sur
             </p>
-            
             <div className="flex gap-3 items-center">
               <motion.a
                 href="https://apps.apple.com"

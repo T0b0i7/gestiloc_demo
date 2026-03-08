@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageCircle, X, Send } from "lucide-react";
+import { MessageCircle, Headphones, X, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -200,9 +200,9 @@ export function ChatWidget() {
         <Button
           size="lg"
           onClick={() => setIsOpen(true)}
-          className="h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 hover:scale-110 transition-transform"
+          className="h-14 w-14 rounded-full shadow-lg bg-green-500 hover:bg-green-600 hover:scale-110 transition-transform"
         >
-          <MessageCircle className="h-6 w-6" />
+          <Headphones className="h-6 w-6" />
         </Button>
       )}
     </div>

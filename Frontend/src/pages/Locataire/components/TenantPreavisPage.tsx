@@ -75,25 +75,25 @@ const MOTIFS_DEPART = [
 
 // ========== COMPOSANTS EXTRAITS POUR ÉVITER LES RE-RENDUS ==========
 
-const CancelConfirmModal = React.memo(({ 
-  show, 
-  onClose, 
-  onConfirm, 
-  cancelling 
-}: { 
-  show: boolean; 
-  onClose: () => void; 
-  onConfirm: () => void; 
+const CancelConfirmModal = React.memo(({
+  show,
+  onClose,
+  onConfirm,
+  cancelling
+}: {
+  show: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
   cancelling: boolean;
 }) => {
   if (!show) return null;
-  
+
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fadeIn"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all animate-slideUp"
         onClick={(e) => e.stopPropagation()}
       >
@@ -142,26 +142,26 @@ const CancelConfirmModal = React.memo(({
 const EmptyStateIllustration = React.memo(({ onCreate }: { onCreate: () => void }) => (
   <div className="flex flex-col items-center justify-center py-12">
     <svg width="200" height="160" viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-4">
-      <circle cx="100" cy="80" r="60" fill="#FFF5F5"/>
-      <circle cx="70" cy="60" r="8" fill="#FFB6B6"/>
-      <circle cx="130" cy="50" r="6" fill="#FFD6D6"/>
-      <circle cx="140" cy="90" r="4" fill="#FFE6E6"/>
-      <rect x="85" y="40" width="30" height="40" rx="4" fill="#7CB342" opacity="0.8"/>
-      <rect x="80" y="50" width="40" height="30" rx="3" fill="#8BC34A"/>
-      <rect x="90" y="45" width="20" height="25" rx="2" fill="#AED581"/>
-      <circle cx="100" cy="100" r="25" fill="#FFCCBC" opacity="0.6"/>
-      <path d="M85 95 Q100 85 115 95" stroke="#8D6E63" strokeWidth="2" fill="none"/>
-      <circle cx="92" cy="90" r="3" fill="#5D4037"/>
-      <circle cx="108" cy="90" r="3" fill="#5D4037"/>
-      <ellipse cx="100" cy="98" rx="4" ry="3" fill="#5D4037"/>
-      <rect x="75" y="110" width="12" height="25" rx="6" fill="#FFCCBC"/>
-      <rect x="113" y="110" width="12" height="25" rx="6" fill="#FFCCBC"/>
-      <rect x="70" y="100" width="15" height="20" rx="7" fill="#FFAB91"/>
-      <rect x="115" y="100" width="15" height="20" rx="7" fill="#FFAB91"/>
-      <path d="M60 70 Q55 60 65 55" stroke="#8BC34A" strokeWidth="2" fill="none"/>
-      <circle cx="65" cy="55" r="3" fill="#8BC34A"/>
-      <path d="M140 75 Q145 65 135 60" stroke="#8BC34A" strokeWidth="2" fill="none"/>
-      <circle cx="135" cy="60" r="3" fill="#8BC34A"/>
+      <circle cx="100" cy="80" r="60" fill="#FFF5F5" />
+      <circle cx="70" cy="60" r="8" fill="#FFB6B6" />
+      <circle cx="130" cy="50" r="6" fill="#FFD6D6" />
+      <circle cx="140" cy="90" r="4" fill="#FFE6E6" />
+      <rect x="85" y="40" width="30" height="40" rx="4" fill="#7CB342" opacity="0.8" />
+      <rect x="80" y="50" width="40" height="30" rx="3" fill="#8BC34A" />
+      <rect x="90" y="45" width="20" height="25" rx="2" fill="#AED581" />
+      <circle cx="100" cy="100" r="25" fill="#FFCCBC" opacity="0.6" />
+      <path d="M85 95 Q100 85 115 95" stroke="#8D6E63" strokeWidth="2" fill="none" />
+      <circle cx="92" cy="90" r="3" fill="#5D4037" />
+      <circle cx="108" cy="90" r="3" fill="#5D4037" />
+      <ellipse cx="100" cy="98" rx="4" ry="3" fill="#5D4037" />
+      <rect x="75" y="110" width="12" height="25" rx="6" fill="#FFCCBC" />
+      <rect x="113" y="110" width="12" height="25" rx="6" fill="#FFCCBC" />
+      <rect x="70" y="100" width="15" height="20" rx="7" fill="#FFAB91" />
+      <rect x="115" y="100" width="15" height="20" rx="7" fill="#FFAB91" />
+      <path d="M60 70 Q55 60 65 55" stroke="#8BC34A" strokeWidth="2" fill="none" />
+      <circle cx="65" cy="55" r="3" fill="#8BC34A" />
+      <path d="M140 75 Q145 65 135 60" stroke="#8BC34A" strokeWidth="2" fill="none" />
+      <circle cx="135" cy="60" r="3" fill="#8BC34A" />
     </svg>
     <button
       onClick={onCreate}
@@ -237,7 +237,6 @@ export default function TenantPreavisPage({
 
   const handleConfirmCancel = useCallback(async () => {
     if (!noticeToCancel) return;
-    
     setCancelling(true);
     try {
       await noticeService.update(noticeToCancel, { status: "cancelled" });
@@ -395,15 +394,15 @@ export default function TenantPreavisPage({
   }, [leaseId, endDate, reason, notes, validate, focusFirstError, notify, fetchAll]);
 
   const handleNewSubmit = useCallback(async () => {
-    if (!formData.motifDepart) { 
-      notify?.("Veuillez sélectionner un motif de départ", "error"); 
-      return; 
+    if (!formData.motifDepart) {
+      notify?.("Veuillez sélectionner un motif de départ", "error");
+      return;
     }
-    if (!formData.dateDepart) { 
-      notify?.("Veuillez sélectionner une date de départ", "error"); 
-      return; 
+    if (!formData.dateDepart) {
+      notify?.("Veuillez sélectionner une date de départ", "error");
+      return;
     }
-    
+
     setBusy(true);
     try {
       await noticeService.create({
@@ -414,13 +413,13 @@ export default function TenantPreavisPage({
       });
       notify?.("Préavis créé avec succès", "success");
       setShowCreateForm(false);
-      setFormData({ 
-        typeLocation: '', 
-        dateDepart: '', 
-        dateEnvoi: '', 
-        commentaires: '', 
-        nouvelleAdresse: '', 
-        motifDepart: '' 
+      setFormData({
+        typeLocation: '',
+        dateDepart: '',
+        dateEnvoi: '',
+        commentaires: '',
+        nouvelleAdresse: '',
+        motifDepart: ''
       });
       await fetchAll();
     } catch (e: any) {
@@ -444,26 +443,26 @@ export default function TenantPreavisPage({
   const EmptyStateIllustration = () => (
     <div className="flex flex-col items-center justify-center py-12">
       <svg width="200" height="160" viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-4">
-        <circle cx="100" cy="80" r="60" fill="#FFF5F5"/>
-        <circle cx="70" cy="60" r="8" fill="#FFB6B6"/>
-        <circle cx="130" cy="50" r="6" fill="#FFD6D6"/>
-        <circle cx="140" cy="90" r="4" fill="#FFE6E6"/>
-        <rect x="85" y="40" width="30" height="40" rx="4" fill="#7CB342" opacity="0.8"/>
-        <rect x="80" y="50" width="40" height="30" rx="3" fill="#8BC34A"/>
-        <rect x="90" y="45" width="20" height="25" rx="2" fill="#AED581"/>
-        <circle cx="100" cy="100" r="25" fill="#FFCCBC" opacity="0.6"/>
-        <path d="M85 95 Q100 85 115 95" stroke="#8D6E63" strokeWidth="2" fill="none"/>
-        <circle cx="92" cy="90" r="3" fill="#5D4037"/>
-        <circle cx="108" cy="90" r="3" fill="#5D4037"/>
-        <ellipse cx="100" cy="98" rx="4" ry="3" fill="#5D4037"/>
-        <rect x="75" y="110" width="12" height="25" rx="6" fill="#FFCCBC"/>
-        <rect x="113" y="110" width="12" height="25" rx="6" fill="#FFCCBC"/>
-        <rect x="70" y="100" width="15" height="20" rx="7" fill="#FFAB91"/>
-        <rect x="115" y="100" width="15" height="20" rx="7" fill="#FFAB91"/>
-        <path d="M60 70 Q55 60 65 55" stroke="#8BC34A" strokeWidth="2" fill="none"/>
-        <circle cx="65" cy="55" r="3" fill="#8BC34A"/>
-        <path d="M140 75 Q145 65 135 60" stroke="#8BC34A" strokeWidth="2" fill="none"/>
-        <circle cx="135" cy="60" r="3" fill="#8BC34A"/>
+        <circle cx="100" cy="80" r="60" fill="#FFF5F5" />
+        <circle cx="70" cy="60" r="8" fill="#FFB6B6" />
+        <circle cx="130" cy="50" r="6" fill="#FFD6D6" />
+        <circle cx="140" cy="90" r="4" fill="#FFE6E6" />
+        <rect x="85" y="40" width="30" height="40" rx="4" fill="#7CB342" opacity="0.8" />
+        <rect x="80" y="50" width="40" height="30" rx="3" fill="#8BC34A" />
+        <rect x="90" y="45" width="20" height="25" rx="2" fill="#AED581" />
+        <circle cx="100" cy="100" r="25" fill="#FFCCBC" opacity="0.6" />
+        <path d="M85 95 Q100 85 115 95" stroke="#8D6E63" strokeWidth="2" fill="none" />
+        <circle cx="92" cy="90" r="3" fill="#5D4037" />
+        <circle cx="108" cy="90" r="3" fill="#5D4037" />
+        <ellipse cx="100" cy="98" rx="4" ry="3" fill="#5D4037" />
+        <rect x="75" y="110" width="12" height="25" rx="6" fill="#FFCCBC" />
+        <rect x="113" y="110" width="12" height="25" rx="6" fill="#FFCCBC" />
+        <rect x="70" y="100" width="15" height="20" rx="7" fill="#FFAB91" />
+        <rect x="115" y="100" width="15" height="20" rx="7" fill="#FFAB91" />
+        <path d="M60 70 Q55 60 65 55" stroke="#8BC34A" strokeWidth="2" fill="none" />
+        <circle cx="65" cy="55" r="3" fill="#8BC34A" />
+        <path d="M140 75 Q145 65 135 60" stroke="#8BC34A" strokeWidth="2" fill="none" />
+        <circle cx="135" cy="60" r="3" fill="#8BC34A" />
       </svg>
       <button
         onClick={() => setShowCreateForm(true)}
@@ -807,7 +806,7 @@ export default function TenantPreavisPage({
               placeholder="Rechercher"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-opacity-20"
+              className="w-full pl-10 pr-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-opacity-20 bg-white text-[#70AE48] placeholder:text-gray-400"
               style={{ borderColor: 'rgba(82, 157, 33, 0.5)' }}
             />
           </div>
@@ -852,14 +851,14 @@ export default function TenantPreavisPage({
                     </td>
                     <td className="px-4 py-3 text-sm">
                       <span className={badge(notice.status)}>
-                        {notice.status === 'pending' ? 'En attente' : 
-                         notice.status === 'confirmed' ? 'Confirmé' : 'Annulé'}
+                        {notice.status === 'pending' ? 'En attente' :
+                          notice.status === 'confirmed' ? 'Confirmé' : 'Annulé'}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center">
                       {notice.status === 'pending' && (
-                        <button 
-                          onClick={() => handleCancelClick(notice.id)} 
+                        <button
+                          onClick={() => handleCancelClick(notice.id)}
                           className="p-1.5 hover:bg-amber-50 rounded-lg transition-colors group"
                           title="Annuler"
                         >
@@ -935,9 +934,9 @@ export default function TenantPreavisPage({
       <Card className="p-4 border-l-4 border-l-orange-300 bg-orange-50">
         <h3 className="text-sm font-medium text-gray-900 mb-2">Informations</h3>
         <p className="text-xs text-gray-600 leading-relaxed">
-          <strong>Délai de préavis légal :</strong><br/>
-          Pour une location vide : 3 mois de préavis.<br/>
-          Pour une location meublée : 1 mois de préavis.<br/>
+          <strong>Délai de préavis légal :</strong><br />
+          Pour une location vide : 3 mois de préavis.<br />
+          Pour une location meublée : 1 mois de préavis.<br />
           Dans certains cas (mutation professionnelle, perte d'emploi, etc.), le délai peut être réduit à 1 mois.
         </p>
       </Card>

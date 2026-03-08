@@ -49,20 +49,18 @@ const AppContent = () => {
   const getActiveTab = useCallback((): Tab => {
     const segments = location.pathname.split('/').filter(segment => segment);
     const locataireIndex = segments.indexOf('locataire');
-    
     // Si pas de 'locataire' dans l'URL ou URL malformée, retourner 'home'
     if (locataireIndex === -1 || locataireIndex >= segments.length - 1) {
       return 'home';
     }
-    
+
     const nextSegment = segments[locataireIndex + 1];
-    
+
     // Ignorer les segments qui sont des routes valides mais pas des onglets
     const ignoredSegments = ['dashboard', 'payer', 'paiement'];
     if (ignoredSegments.includes(nextSegment)) {
       return 'home';
     }
-    
     const validTabs: Tab[] = [
       'home',
       'payments',
@@ -161,7 +159,6 @@ const AppContent = () => {
       // Nettoyage immédiat des tokens
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      
       // Notification et redirection immédiate
       notify('Déconnexion réussie', 'success');
       navigate('/login');
@@ -189,29 +186,29 @@ const AppContent = () => {
       user={user}
       notify={notify}
     >
- <Routes>
-  <Route index element={<Dashboard key={refreshKey} activeTab="home" notify={notify} onNavigate={handleNavigation} />} />
-  <Route path="home" element={<Dashboard key={refreshKey} activeTab="home" notify={notify} onNavigate={handleNavigation} />} />
-  <Route path="payments" element={<Payments notify={notify} />} />
-  <Route path="messages" element={<Messages notify={notify} />} />
-  <Route path="interventions" element={<Interventions notify={notify} />} />
-  <Route path="documents" element={<Documents notify={notify} />} />
-  {/* CORRECTION ICI - Utiliser RentReceiptsPage au lieu de Dashboard */}
-  <Route path="receipts" element={<RentReceiptsPage />} />
-  <Route path="landlord" element={<Landlord notify={notify} />} />
-  <Route path="property" element={<Property notify={notify} />} />
-  <Route path="notice" element={<TenantPreavisPage notify={notify} />} />
-  <Route path="profile" element={<Profile notify={notify} onLogout={handleLogout} />} />
-  <Route path="factures" element={<TenantInvoicesPage />} />
-  <Route path="payer/:invoiceId" element={<PaymentPage />} />
-  <Route path="paiement/retour" element={<PaymentReturnPage />} />
-  <Route path="paiement/confirmation/:invoiceId/:transactionId" element={<PaymentConfirmationPage />} />
-  <Route path="help" element={<Dashboard activeTab="help" notify={notify} />} />
-  <Route path="location" element={<Location notify={notify} />} />
-  <Route path="tasks" element={<Tasks notify={notify} />} />
-  <Route path="notes" element={<Notes notify={notify} />} />
-  <Route path="settings" element={<Settings notify={notify} />} />
-</Routes>
+      <Routes>
+        <Route index element={<Dashboard key={refreshKey} activeTab="home" notify={notify} onNavigate={handleNavigation} />} />
+        <Route path="dashboard" element={<Navigate to="/locataire/home" replace />} />
+        <Route path="home" element={<Dashboard key={refreshKey} activeTab="home" notify={notify} onNavigate={handleNavigation} />} />
+        <Route path="payments" element={<Payments notify={notify} />} />
+        <Route path="messages" element={<Messages notify={notify} />} />
+        <Route path="interventions" element={<Interventions notify={notify} />} />
+        <Route path="documents" element={<Documents notify={notify} />} />
+        <Route path="receipts" element={<RentReceiptsPage />} />
+        <Route path="landlord" element={<Landlord notify={notify} />} />
+        <Route path="property" element={<Property notify={notify} />} />
+        <Route path="notice" element={<TenantPreavisPage notify={notify} />} />
+        <Route path="profile" element={<Profile notify={notify} onLogout={handleLogout} />} />
+        <Route path="factures" element={<TenantInvoicesPage />} />
+        <Route path="payer/:invoiceId" element={<PaymentPage />} />
+        <Route path="paiement/retour" element={<PaymentReturnPage />} />
+        <Route path="paiement/confirmation/:invoiceId/:transactionId" element={<PaymentConfirmationPage />} />
+        <Route path="help" element={<Dashboard activeTab="help" notify={notify} />} />
+        <Route path="location" element={<Location notify={notify} />} />
+        <Route path="tasks" element={<Tasks notify={notify} />} />
+        <Route path="notes" element={<Notes notify={notify} />} />
+        <Route path="settings" element={<Settings notify={notify} />} />
+      </Routes>
 
       {/* Modal de déconnexion */}
       <LogoutModal

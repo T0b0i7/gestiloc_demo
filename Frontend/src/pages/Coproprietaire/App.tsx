@@ -165,7 +165,7 @@ const CoproprietaireApp: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <Routes>
         <Route path="/" element={<Navigate to="dashboard" replace />} />
 

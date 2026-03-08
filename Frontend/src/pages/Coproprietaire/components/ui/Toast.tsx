@@ -15,9 +15,9 @@ export const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
       case 'error':
         return <AlertCircle className="w-5 h-5 text-red-500" />;
       case 'info':
-        return <Info className="w-5 h-5 text-blue-500" />;
+        return <Info className="w-5 h-5 text-emerald-500" />;
       default:
-        return <Info className="w-5 h-5 text-blue-500" />;
+        return <Info className="w-5 h-5 text-emerald-500" />;
     }
   };
 
@@ -28,9 +28,9 @@ export const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
       case 'error':
         return 'bg-red-50 border-red-200';
       case 'info':
-        return 'bg-blue-50 border-blue-200';
+        return 'bg-emerald-50 border-emerald-200';
       default:
-        return 'bg-blue-50 border-blue-200';
+        return 'bg-emerald-50 border-emerald-200';
     }
   };
 
@@ -41,9 +41,9 @@ export const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
       case 'error':
         return 'text-red-800';
       case 'info':
-        return 'text-blue-800';
+        return 'text-emerald-800';
       default:
-        return 'text-blue-800';
+        return 'text-emerald-800';
     }
   };
 
@@ -60,7 +60,7 @@ export const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
       <div className="ml-4 flex-shrink-0">
         <button
           onClick={onClose}
-          className={`inline-flex ${getTextColor()} hover:opacity-75 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded`}
+          className={`inline-flex ${getTextColor()} hover:opacity-75 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 rounded`}
         >
           <X className="w-4 h-4" />
         </button>

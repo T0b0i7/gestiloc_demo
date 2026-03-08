@@ -34,8 +34,8 @@ export const DelegatedProperties: React.FC<DelegatedPropertiesProps> = ({ onNavi
       console.log('Propriétés récupérées:', data);
       setProperties(data);
     } catch (error: any) {
-      console.error('Error fetching properties:', error);
-      notify('Erreur lors du chargement des biens délégués', 'error');
+      console.warn('Error fetching delegated properties (silenced):', error);
+      setProperties([]);
     } finally {
       setLoading(false);
     }
@@ -44,13 +44,12 @@ export const DelegatedProperties: React.FC<DelegatedPropertiesProps> = ({ onNavi
   // Filtre combiné (recherche principale + recherche rapide)
   const filteredProperties = properties.filter(property => {
     const searchLower = (searchTerm || quickSearch).toLowerCase();
-    const matchesSearch = 
+    const matchesSearch =
       property.name.toLowerCase().includes(searchLower) ||
       property.address.toLowerCase().includes(searchLower) ||
       property.city.toLowerCase().includes(searchLower) ||
       property.reference_code?.toLowerCase().includes(searchLower) ||
       property.property_type?.toLowerCase().includes(searchLower);
-    
     const matchesStatus = statusFilter === 'all' || property.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -109,11 +108,11 @@ export const DelegatedProperties: React.FC<DelegatedPropertiesProps> = ({ onNavi
     }
   };
 
-  const formatCurrency = (amount?: string | number) => {
+  const formatCurrency = (amount?: string | number | null) => {
     if (!amount) return '—';
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
-    return new Intl.NumberFormat('fr-FR', { 
-      style: 'currency', 
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
       currency: 'XOF',
       currencyDisplay: 'narrowSymbol'
     }).format(num).replace('CFA', 'FCFA');
@@ -148,14 +147,14 @@ export const DelegatedProperties: React.FC<DelegatedPropertiesProps> = ({ onNavi
   };
 
   const PropertyCard = ({ property }: { property: CoOwnerProperty }) => (
-    <div 
+    <div
       className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
       onClick={() => handleEditProperty(property)}
     >
       {/* Image du bien */}
       <div className="relative h-56">
-        <img 
-          src={getPropertyImage(property)} 
+        <img
+          src={getPropertyImage(property)}
           alt={property.name}
           className="w-full h-full object-cover"
         />
@@ -195,7 +194,6 @@ export const DelegatedProperties: React.FC<DelegatedPropertiesProps> = ({ onNavi
             </p>
             <p className="text-xs text-gray-500">/mois</p>
           </div>
-          
           <div>
             <p className="text-lg font-semibold text-gray-900">
               {property.surface} m²
@@ -209,8 +207,8 @@ export const DelegatedProperties: React.FC<DelegatedPropertiesProps> = ({ onNavi
           <div className="flex items-center text-gray-600">
             <div className="flex -space-x-2 mr-2">
               {[...Array(Math.min(property.photos?.length || 0, 3))].map((_, i) => (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   className="w-8 h-8 rounded-full bg-gradient-to-br from-[#70AE48] to-[#8BC34A] border-2 border-white flex items-center justify-center"
                 >
                   <Home className="w-4 h-4 text-white" />
@@ -221,7 +219,6 @@ export const DelegatedProperties: React.FC<DelegatedPropertiesProps> = ({ onNavi
               {property.photos?.length || 0} Photo{property.photos?.length !== 1 ? 's' : ''}
             </span>
           </div>
-          
           <span className="text-xs text-gray-500">
             Réf. {property.reference_code}
           </span>
@@ -262,7 +259,7 @@ export const DelegatedProperties: React.FC<DelegatedPropertiesProps> = ({ onNavi
       <div className="max-w-7xl mx-auto p-6">
         {/* Bouton Retour */}
         <div className="mb-6">
-          <button 
+          <button
             onClick={() => window.history.back()}
             className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm"
           >
@@ -286,7 +283,6 @@ export const DelegatedProperties: React.FC<DelegatedPropertiesProps> = ({ onNavi
               </p>
             </div>
           </div>
-          
           {/* Barre de recherche rapide à droite */}
           <div className="relative w-full md:w-80">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -312,51 +308,46 @@ export const DelegatedProperties: React.FC<DelegatedPropertiesProps> = ({ onNavi
         <div className="flex items-center space-x-3 mb-8 pb-4 border-b border-gray-200 overflow-x-auto">
           <button
             onClick={() => setStatusFilter('all')}
-            className={`px-6 py-2.5 rounded-xl font-semibold whitespace-nowrap transition-colors ${
-              statusFilter === 'all'
-                ? 'bg-[#70AE48] text-white'
-                : 'bg-white text-gray-700 hover:bg-[#70AE48]/10 border border-gray-200'
-            }`}
+            className={`px-6 py-2.5 rounded-xl font-semibold whitespace-nowrap transition-colors ${statusFilter === 'all'
+              ? 'bg-[#70AE48] text-white'
+              : 'bg-white text-gray-700 hover:bg-[#70AE48]/10 border border-gray-200'
+              }`}
           >
             Tous
           </button>
           <button
             onClick={() => setStatusFilter('rented')}
-            className={`px-6 py-2.5 rounded-xl font-semibold whitespace-nowrap transition-colors ${
-              statusFilter === 'rented'
-                ? 'bg-[#70AE48] text-white'
-                : 'bg-white text-gray-700 hover:bg-[#70AE48]/10 border border-gray-200'
-            }`}
+            className={`px-6 py-2.5 rounded-xl font-semibold whitespace-nowrap transition-colors ${statusFilter === 'rented'
+              ? 'bg-[#70AE48] text-white'
+              : 'bg-white text-gray-700 hover:bg-[#70AE48]/10 border border-gray-200'
+              }`}
           >
             Loué
           </button>
           <button
             onClick={() => setStatusFilter('available')}
-            className={`px-6 py-2.5 rounded-xl font-semibold whitespace-nowrap transition-colors ${
-              statusFilter === 'available'
-                ? 'bg-[#70AE48] text-white'
-                : 'bg-white text-gray-700 hover:bg-[#70AE48]/10 border border-gray-200'
-            }`}
+            className={`px-6 py-2.5 rounded-xl font-semibold whitespace-nowrap transition-colors ${statusFilter === 'available'
+              ? 'bg-[#70AE48] text-white'
+              : 'bg-white text-gray-700 hover:bg-[#70AE48]/10 border border-gray-200'
+              }`}
           >
             Disponible
           </button>
           <button
             onClick={() => setStatusFilter('maintenance')}
-            className={`px-6 py-2.5 rounded-xl font-semibold whitespace-nowrap transition-colors ${
-              statusFilter === 'maintenance'
-                ? 'bg-[#70AE48] text-white'
-                : 'bg-white text-gray-700 hover:bg-[#70AE48]/10 border border-gray-200'
-            }`}
+            className={`px-6 py-2.5 rounded-xl font-semibold whitespace-nowrap transition-colors ${statusFilter === 'maintenance'
+              ? 'bg-[#70AE48] text-white'
+              : 'bg-white text-gray-700 hover:bg-[#70AE48]/10 border border-gray-200'
+              }`}
           >
             En travaux
           </button>
           <button
             onClick={() => setStatusFilter('off_market')}
-            className={`px-6 py-2.5 rounded-xl font-semibold whitespace-nowrap transition-colors ${
-              statusFilter === 'off_market'
-                ? 'bg-[#70AE48] text-white'
-                : 'bg-white text-gray-700 hover:bg-[#70AE48]/10 border border-gray-200'
-            }`}
+            className={`px-6 py-2.5 rounded-xl font-semibold whitespace-nowrap transition-colors ${statusFilter === 'off_market'
+              ? 'bg-[#70AE48] text-white'
+              : 'bg-white text-gray-700 hover:bg-[#70AE48]/10 border border-gray-200'
+              }`}
           >
             Préavis
           </button>
@@ -427,7 +418,7 @@ export const DelegatedProperties: React.FC<DelegatedPropertiesProps> = ({ onNavi
               {quickSearch || statusFilter !== 'all' ? 'Aucun bien trouvé' : 'Aucun bien délégué'}
             </h3>
             <p className="text-gray-600 mb-8 max-w-md mx-auto">
-              {quickSearch || statusFilter !== 'all' 
+              {quickSearch || statusFilter !== 'all'
                 ? 'Essayez de modifier vos critères de recherche'
                 : 'Les biens qui vous seront délégués apparaîtront ici'
               }

@@ -1,4 +1,4 @@
-export type Tab = 
+export type Tab =
   | "dashboard"
   | "biens"
   | "locataires"
@@ -52,20 +52,29 @@ export interface CoOwnerInvitation {
 export interface PropertyDelegation {
   id: number;
   property_id: number;
-  co_owner_id: number;
+  delegated_by: number;
+  delegated_to: number;
+  status: 'pending' | 'active' | 'expired' | 'revoked' | 'accepted' | 'rejected';
+  message?: string;
   permissions: string[];
-  status: 'active' | 'revoked' | 'expired';
+  expires_at: string;
   created_at: string;
-  updated_at: string;
-  expires_at?: string;
+  updated_at?: string;
   property?: {
     id: number;
-    title: string;
+    name: string;
     address: string;
+    city: string;
     type: string;
-    rent_amount?: number;
+    rent_amount?: string;
   };
-  co_owner?: {
+  landlord?: {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+  delegator?: {
     id: number;
     first_name: string;
     last_name: string;

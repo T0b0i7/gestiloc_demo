@@ -26,6 +26,8 @@ import {
   Home as HomeIcon,
   Wrench as WrenchIcon,
   Bell as BellIcon,
+  ChevronRight,
+  User as UserIcon,
   Download,
 } from 'lucide-react';
 import { Tab, Notification, ToastMessage } from '../types';
@@ -160,7 +162,7 @@ const NavIcons: Record<string, React.FC<{ active?: boolean }>> = {
   settings: () => (
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
       <circle cx="14" cy="14" r="4" fill="#64748b" />
-      {[0,45,90,135,180,225,270,315].map((deg, i) => (
+      {[0, 45, 90, 135, 180, 225, 270, 315].map((deg, i) => (
         <rect
           key={i}
           x="13" y="3"
@@ -209,6 +211,14 @@ export const Layout: React.FC<LayoutProps> = ({
   useEffect(() => {
     fetchNotifications();
   }, []);
+
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+  }, [isMobileMenuOpen]);
 
   const handleLogout = async () => {
     if (isLoggingOut) return;
@@ -307,7 +317,7 @@ export const Layout: React.FC<LayoutProps> = ({
 
   const getNotificationIcon = (type: string, iconName?: string) => {
     const iconClass = "w-5 h-5";
-    switch(type) {
+    switch (type) {
       case 'critical': return <AlertTriangle className={`${iconClass} text-red-500`} />;
       case 'important': return <Clock className={`${iconClass} text-orange-500`} />;
       default:
@@ -322,7 +332,7 @@ export const Layout: React.FC<LayoutProps> = ({
 
   const getNotificationBgColor = (type: string, isRead: boolean) => {
     if (isRead) return 'hover:bg-gray-50';
-    switch(type) {
+    switch (type) {
       case 'critical': return 'bg-red-50 hover:bg-red-100 border-l-4 border-red-500';
       case 'important': return 'bg-orange-50 hover:bg-orange-100 border-l-4 border-orange-500';
       default: return 'bg-blue-50 hover:bg-blue-100 border-l-4 border-blue-500';
@@ -353,81 +363,90 @@ export const Layout: React.FC<LayoutProps> = ({
       : user.email
     : 'Utilisateur';
 
-  // ─── SIDEBAR CONTENT (partagé mobile + desktop) ───────────────────────────
+  // ─── COMPOSANTS DU NOUVEAU DESIGN ───────────────────────────
+  const ic = (c: string) => ({ stroke: c, fill: "none", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const });
+
+  const NavItem = ({ item, isActive, onNavigate, isLogout }: any) => {
+    const [hovered, setHovered] = useState(false);
+    const IconComponent = NavIcons[item.id as keyof typeof NavIcons];
+
+    return (
+      <button
+        onClick={() => onNavigate(item.id)}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        className="w-full relative flex items-center gap-3 px-6 py-4 transition-all duration-300 group"
+        style={{
+          background: isActive ? 'linear-gradient(90deg, rgba(255, 213, 124, 0.87) 0%, #FFFFFF 100%)' : 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          borderRadius: '12px',
+          marginBottom: '4px'
+        }}
+      >
+        {/* Yellow indicator for active tab precisely as requested */}
+        {isActive && (
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[5px] h-[30px] bg-[#FFB300] rounded-r-full shadow-[0px_0px_10px_#FFB300]" />
+        )}
+
+        <div className={`transition-all duration-300 ${isActive || hovered ? 'scale-110' : 'scale-100 opacity-70'}`}>
+          {isLogout ? (
+            <LogOut size={20} color={hovered ? "#e53935" : "#666"} />
+          ) : (
+            IconComponent ? <IconComponent active={isActive} /> : <div className="w-5 h-5 bg-gray-200 rounded-full" />
+          )}
+        </div>
+
+        <span className={`text-sm font-bold whitespace-nowrap transition-colors duration-300 ${isActive || hovered ? 'text-[#529D21]' : 'text-gray-500'}`}>
+          {item.label}
+        </span>
+
+        {isActive && (
+          <div className="ml-auto">
+            <ChevronRight size={16} className="text-[#529D21]" />
+          </div>
+        )}
+      </button>
+    );
+  };
+
   const SidebarContent = () => (
-    <>
-      {/* Nav items */}
-      <nav className="flex-1 px-3 py-4 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        <div className="space-y-0.5">
-          {menuItems.map((item) => {
-            const isActive = activeTab === item.id;
-            const IconComponent = NavIcons[item.id];
-            const isFirst = item.id === 'home';
+    <div className="flex flex-col h-full overflow-hidden bg-white rounded-[24px]">
+      <div className="flex-1 overflow-y-auto py-6 px-4 sidebar-scroll scrollbar-hide">
+        <style>{`
+          .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+          .sidebar-scroll::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 10px; }
+          .scrollbar-hide::-webkit-scrollbar { display: none; }
+          .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        `}</style>
 
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleNavigate(item.id as Tab)}
-                className={`
-                  w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-150
-                  ${isActive
-                    ? 'text-[#529D21]'
-                    : isFirst
-                      ? 'text-[#529D21] hover:bg-gray-50'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }
-                `}
-                style={isActive ? {
-                  background: 'linear-gradient(to right, rgba(253,230,138,0.6), rgba(253,230,138,0.05))',
-                } : {}}
-              >
-                {/* Icône SVG illustration */}
-                <span className="flex-shrink-0 w-7 h-7 flex items-center justify-center">
-                  {IconComponent ? <IconComponent active={isActive} /> : null}
-                </span>
-                <span className={`${isActive || isFirst ? 'font-semibold' : 'font-normal'}`}>
-                  {item.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
+        {menuItems.map((item) => (
+          <NavItem
+            key={item.id}
+            item={item}
+            isActive={activeTab === item.id}
+            onNavigate={handleNavigate}
+          />
+        ))}
 
-      {/* User Profile + Déconnexion — toujours en bas */}
-      <div className="p-4 border-t border-gray-100 shrink-0">
-        <div
-          onClick={() => handleNavigate('profile' as Tab)}
-          className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors mb-1"
-        >
-          <div className="w-9 h-9 rounded-full bg-[#529D21] flex items-center justify-center text-white font-bold text-sm shrink-0">
-            {userInitials}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">{userLabel}</p>
-            <p className="text-xs text-gray-400">Locataire</p>
-          </div>
-        </div>
+        <div className="border-t border-gray-100 my-4 mx-2" />
 
-        {/* Bouton de déconnexion modifié pour ouvrir la modale */}
-        <button
-          onClick={() => setShowLogoutConfirm(true)}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
-        >
-          <LogOut size={16} className="shrink-0" />
-          <span>Déconnexion</span>
-        </button>
+        <NavItem
+          item={{ id: 'logout', label: 'Déconnexion' }}
+          isActive={false}
+          onNavigate={() => setShowLogoutConfirm(true)}
+          isLogout
+        />
       </div>
-    </>
+    </div>
   );
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-gray-50 flex flex-col">
+    <div className="h-screen w-screen overflow-hidden bg-[rgba(254,255,253,1)] flex flex-col transition-all duration-300" style={{ fontFamily: "'Merriweather', serif" }}>
       {/* HEADER */}
-      <header className="fixed top-0 left-0 right-0 z-[100] h-[58px] flex items-center justify-between px-4 sm:px-8" style={{
-        background: 'linear-gradient(90deg, #4CAF50 0%, #43a047 60%, #388E3C 100%)',
+      <header className="fixed top-0 left-0 right-0 z-[100] h-[72px] flex items-center justify-between px-6 sm:px-12" style={{
+        background: '#70AE48',
       }}>
-        {/* Left: mobile menu + logo */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsMobileMenuOpen(true)}
@@ -436,42 +455,34 @@ export const Layout: React.FC<LayoutProps> = ({
           >
             <Menu size={24} className="text-white" />
           </button>
-          <h1 className="text-xl sm:text-2xl font-bold text-white">GestiLoc</h1>
+          <span style={{
+            fontFamily: "'Merriweather', serif",
+            fontWeight: 900,
+            fontSize: '1.85rem',
+            color: '#fff',
+            letterSpacing: '-0.01em',
+          }}>
+            Gestiloc
+          </span>
         </div>
 
-        {/* Right: action buttons */}
+        {/* Right: action buttons with pill style as shown in the image */}
         <div className="flex items-center gap-2 sm:gap-4">
           {/* Notifications */}
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="hidden sm:flex items-center gap-2 py-2 px-4 rounded-full text-white text-sm font-semibold transition-all hover:bg-white/30 relative"
+            className="flex items-center gap-2 py-2 px-6 rounded-full text-white text-xs sm:text-sm font-semibold transition-all hover:bg-white/20 relative"
             style={{
-              background: 'rgba(255,255,255,0.18)',
-              border: '1.5px solid rgba(255,255,255,0.45)',
-              backdropFilter: 'blur(4px)',
-              fontFamily: "'Manrope', sans-serif",
-              letterSpacing: '0.01em',
+              background: 'rgba(255, 255, 255, 0.4)',
+              border: 'none',
+              backdropFilter: 'blur(8px)',
             }}
             aria-label="Notifications"
           >
-            <img src="/Ressource_gestiloc/Bell.png" alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />
-            Notifications
+            <Bell size={18} fill="#FFC107" stroke="#FFC107" />
+            <span className="hidden sm:inline">Notifications</span>
             {unreadCount > 0 && (
-              <span className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </button>
-          {/* Notifications mobile */}
-          <button
-            onClick={() => setShowNotifications(!showNotifications)}
-            className="sm:hidden flex items-center justify-center w-9 h-9 rounded-full text-white transition-all hover:bg-white/30 relative"
-            style={{ background: 'rgba(255,255,255,0.18)', border: '1.5px solid rgba(255,255,255,0.45)' }}
-            aria-label="Notifications"
-          >
-            <img src="/Ressource_gestiloc/Bell.png" alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />
-            {unreadCount > 0 && (
-              <span className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-[#70AE48]">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
@@ -480,57 +491,31 @@ export const Layout: React.FC<LayoutProps> = ({
           {/* Aide */}
           <button
             onClick={() => setShowHelp(!showHelp)}
-            className="hidden sm:flex items-center gap-2 py-2 px-4 rounded-full text-white text-sm font-semibold transition-all hover:bg-white/30"
+            className="flex items-center gap-2 py-2 px-6 rounded-full text-white text-xs sm:text-sm font-semibold transition-all hover:bg-white/20"
             style={{
-              background: 'rgba(255,255,255,0.18)',
-              border: '1.5px solid rgba(255,255,255,0.45)',
-              backdropFilter: 'blur(4px)',
-              fontFamily: "'Manrope', sans-serif",
-              letterSpacing: '0.01em',
+              background: 'rgba(255, 255, 255, 0.4)',
+              border: 'none',
+              backdropFilter: 'blur(8px)',
             }}
             aria-label="Aide"
           >
-            <img src="/Ressource_gestiloc/question_mark.png" alt="" style={{ width: 18, height: 18, objectFit: 'contain' }} />
-            Aide
-          </button>
-          {/* Aide mobile */}
-          <button
-            onClick={() => setShowHelp(!showHelp)}
-            className="sm:hidden flex items-center justify-center w-9 h-9 rounded-full text-white transition-all hover:bg-white/30"
-            style={{ background: 'rgba(255,255,255,0.18)', border: '1.5px solid rgba(255,255,255,0.45)' }}
-            aria-label="Aide"
-          >
-            <img src="/Ressource_gestiloc/question_mark.png" alt="" style={{ width: 16, height: 16, objectFit: 'contain' }} />
+            <HelpCircle size={18} className="text-red-400" />
+            <span className="hidden sm:inline">Aide</span>
           </button>
 
           {/* Mon compte */}
           <button
             onClick={() => handlePageChange('profile')}
-            className="hidden sm:flex items-center gap-2 py-2 px-4 rounded-full text-white text-sm font-semibold transition-all hover:bg-white/30"
+            className="flex items-center gap-2 py-2 px-6 rounded-full text-white text-xs sm:text-sm font-semibold transition-all hover:bg-white/20"
             style={{
-              background: 'rgba(255,255,255,0.18)',
-              border: '1.5px solid rgba(255,255,255,0.45)',
-              backdropFilter: 'blur(4px)',
-              fontFamily: "'Manrope', sans-serif",
-              letterSpacing: '0.01em',
+              background: 'rgba(255, 255, 255, 0.4)',
+              border: 'none',
+              backdropFilter: 'blur(8px)',
             }}
             aria-label="Mon compte"
           >
-            <div className="w-5 h-5 rounded-full bg-white/30 flex items-center justify-center text-xs font-bold">
-              {userInitials}
-            </div>
-            Mon compte
-          </button>
-          {/* Mon compte mobile */}
-          <button
-            onClick={() => handlePageChange('profile')}
-            className="sm:hidden flex items-center justify-center w-9 h-9 rounded-full text-white transition-all hover:bg-white/30"
-            style={{ background: 'rgba(255,255,255,0.18)', border: '1.5px solid rgba(255,255,255,0.45)' }}
-            aria-label="Mon compte"
-          >
-            <div className="w-5 h-5 rounded-full bg-white/30 flex items-center justify-center text-xs font-bold">
-              {userInitials}
-            </div>
+            <img src="/Ressource_gestiloc/customer.png" alt="Mon compte" className="w-6 h-6 rounded-full object-cover" />
+            <span className="hidden sm:inline">Mon compte</span>
           </button>
         </div>
       </header>
@@ -538,7 +523,7 @@ export const Layout: React.FC<LayoutProps> = ({
       {/* ── MOBILE BACKDROP ── */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-[90] lg:hidden"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[90] lg:hidden animate-in fade-in duration-300"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
@@ -546,111 +531,66 @@ export const Layout: React.FC<LayoutProps> = ({
       {/* ── SIDEBAR ── */}
       <aside
         className={`
-          fixed top-0 left-0 h-full z-[100]
+          fixed h-auto z-[120]
           bg-white
           flex flex-col
-          transition-transform duration-300 ease-out
-          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0 lg:z-40'}
+          transition-all duration-300 ease-in-out
+          ${isMobileMenuOpen ? 'translate-x-0 bottom-0 top-0 left-0 w-[280px]' : '-translate-x-full lg:translate-x-0 lg:left-[30px] lg:top-[100px] lg:w-[265px]'}
         `}
         style={
-          isMobileMenuOpen ? {
-            width: '343px',
-            height: '857px',
-            borderRadius: '31px',
-            boxShadow: '0px 5px 8.6px 0px rgba(131, 199, 87, 1)',
-          } : {
-            width: '343px',
-            height: 'auto',
-            borderRadius: '31px',
-            boxShadow: '0px 5px 8.6px 0px rgba(131, 199, 87, 1)',
-            top: '80px',
-            left: '50px',
+          !isMobileMenuOpen ? {
+            borderRadius: '24px',
+            boxShadow: '0px 0px 20px rgba(0, 0, 0, 0.05), 0px 5px 25px rgba(112, 174, 72, 0.15)',
             maxHeight: 'calc(100vh - 140px)',
+          } : {
+            boxShadow: '10px 0px 30px rgba(0,0,0,0.1)',
           }
         }
       >
-        {/* Mobile Header with Close */}
-        <div className="lg:hidden flex items-center justify-between p-4 border-b-2 border-[#83C757]" style={{ background: 'rgba(82, 157, 33, 1)' }}>
-          <h2 className="text-lg font-bold text-white">Menu</h2>
-          <button 
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="p-2 rounded-lg hover:bg-white/20 transition-colors"
-            aria-label="Fermer le menu"
-          >
-            <X size={24} className="text-white" />
-          </button>
-        </div>
-
-        {/* Menu Navigation */}
-        <nav className="flex-1 overflow-y-auto">
-          <div className="space-y-0">
-            {menuItems.map((item, index) => {
-              const isActive = activeTab === item.id;
-              const isFirst = index === 0;
-
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavigate(item.id as Tab)}
-                  className={`w-full flex items-center gap-3 px-4 text-sm font-medium transition-all ${
-                    isActive && isFirst
-                      ? 'bg-gradient-to-r from-[rgba(255,213,124,0.87)] to-white text-[#529D21] rounded-t-[31px] rounded-b-none h-[101px] pt-3'
-                      : isActive
-                      ? 'bg-gradient-to-r from-[rgba(255,213,124,0.87)] to-white text-[#529D21] py-3'
-                      : isFirst
-                      ? 'text-gray-900 py-3 rounded-t-[31px] bg-white'
-                      : 'text-gray-700 hover:bg-white/50 py-3'
-                  }`}
-                >
-                  <img 
-                    src={item.image} 
-                    alt={item.label} 
-                    className="w-6 h-6 flex-shrink-0 object-contain"
-                  />
-                  <span className={`truncate ${
-                    isFirst ? 'font-[Merriweather] text-[18px] leading-[100%] tracking-[-0.17px]' : ''
-                  }`}>{item.label}</span>
-                </button>
-              );
-            })}
-            
-            {/* Logout button at end of menu */}
-            <button
-              onClick={onLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-all rounded-b-[31px] bg-white"
-            >
-              <LogOut size={18} />
-              <span className="truncate">Déconnexion</span>
-            </button>
-          </div>
-        </nav>
-
-
+        <SidebarContent />
       </aside>
 
       {/* ── MAIN CONTENT ── */}
-      <div className="flex flex-1 h-[calc(100vh-58px)] relative pt-[58px]">
+      <div className="flex-1 relative pt-[72px] overflow-hidden">
         {/* Toasts */}
-        <div className="fixed bottom-6 right-6 z-[70] flex flex-col gap-3">
+        <div className="fixed bottom-6 right-6 z-[200] flex flex-col gap-3">
           {toasts.map((toast) => (
             <Toast key={toast.id} toast={toast} onClose={removeToast} />
           ))}
         </div>
 
-        {/* MAIN CONTENT */}
-        <main className="flex-1 flex flex-col ml-0 lg:ml-[400px] h-full overflow-hidden z-0 relative">
-          {/* Content */}
-          <div id="app-scroll-container" className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 scroll-smooth">
+        {/* MAIN CONTENT AREA */}
+        <main className="h-full ml-0 lg:ml-[320px] transition-all duration-300">
+          <div id="app-scroll-container" className="h-full overflow-y-auto px-4 sm:px-12 py-8 scroll-smooth scrollbar-hide">
             {activeTab === 'landlord' ? (
-              <Landlord notify={notify} />
+              <div className="animate-fadeIn">
+                <Landlord notify={notify} />
+              </div>
             ) : (
-              <div className="p-4 sm:p-6 pt-6 sm:pt-8 max-w-7xl mx-auto">
+              <div className="max-w-[1400px] mx-auto animate-fadeIn">
                 {children}
               </div>
             )}
           </div>
         </main>
       </div>
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.5s ease-out forwards;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
 
       {/* ── MODALE DE CONFIRMATION DE DÉCONNEXION ── */}
       {showLogoutConfirm && (
@@ -666,7 +606,6 @@ export const Layout: React.FC<LayoutProps> = ({
                   <p className="text-sm text-gray-500">Êtes-vous sûr de vouloir vous déconnecter ?</p>
                 </div>
               </div>
-              
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
                 <p className="text-sm text-amber-800 flex items-start gap-3">
                   <AlertTriangle size={20} className="shrink-0 mt-0.5" />

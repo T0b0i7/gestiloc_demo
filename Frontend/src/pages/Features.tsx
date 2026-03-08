@@ -21,8 +21,8 @@ const Features = () => {
     {
       id: 2,
       title: "Dossier des locataires",
-      color: "border-[#9747FF]",
-      textColor: "text-[#9747FF]",
+      color: "border-[#529D21]",
+      textColor: "text-[#529D21]",
       image: "/Ressource_gestiloc/f2.png",
       description: "Gérez vos locataires et leurs dossiers en conformité avec la réglementation.",
       benefits: [
@@ -35,8 +35,8 @@ const Features = () => {
     {
       id: 3,
       title: "Baux et annexes",
-      color: "border-[#9747FF]",
-      textColor: "text-[#9747FF]",
+      color: "border-[#529D21]",
+      textColor: "text-[#529D21]",
       image: "/Ressource_gestiloc/f3.jpg",
       description: "Créez et suivez facilement vos baux et documents contractuels.",
       benefits: [
@@ -91,8 +91,8 @@ const Features = () => {
     {
       id: 7,
       title: "États des lieux",
-      color: "border-[#9747FF]",
-      textColor: "text-[#9747FF]",
+      color: "border-[#529D21]",
+      textColor: "text-[#529D21]",
       image: "/Ressource_gestiloc/f7.jpg",
       description: "Réalisez des états des lieux directement depuis votre smartphone.",
       benefits: [
@@ -105,8 +105,8 @@ const Features = () => {
     {
       id: 8,
       title: "Interventions et travaux",
-      color: "border-[#9747FF]",
-      textColor: "text-[#9747FF]",
+      color: "border-[#529D21]",
+      textColor: "text-[#529D21]",
       image: "/Ressource_gestiloc/f8.jpg",
       description: "Gérez vos demandes d'intervention et suivez les chantiers.",
       benefits: [
@@ -164,13 +164,13 @@ const Features = () => {
         </motion.h1>
 
         <motion.div
-          className="bg-[#D9EDC9] rounded-[24px] p-6 md:p-10 mb-16 shadow-sm border border-[#C5DDB5] max-w-4xl mx-auto"
+          className="mb-16 max-w-4xl mx-auto text-center"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <p className="text-[#2D4A22] text-base md:text-lg leading-relaxed font-manrope font-medium">
-            La plateforme de GestiLoc s'occupe de vos besoins de gestion locative. Explorez les fonctionnalités détaillées de notre logiciel afin de gérer vos biens et vos locataires en toute sérénité. Elle a été pensée pour faciliter le quotidien de tout le monde.
+          <p className="text-black text-base md:text-lg leading-relaxed font-manrope font-medium text-center">
+            Gestiloc met à votre disposition un outil de gestion locative simple, performant et accessible, conçu pour centraliser l'ensemble de votre activité. En automatisant vos tâches et vos documents, et en facilitant le suivi quotidien, la plateforme rend votre gestion plus fluide, mieux organisée et nettement moins chronophage.
           </p>
         </motion.div>
       </div>
@@ -184,10 +184,10 @@ const Features = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: (index % 3) * 0.1 }}
-            className={`bg-white rounded-[32px] border-[2px] ${feature.color} p-6 md:p-8 flex flex-col items-center text-center shadow-lg hover:shadow-xl transition-all duration-300 group`}
+            className={`bg-white rounded-[20px] border-[2px] ${feature.color} p-4 md:p-6 flex flex-col items-center text-center shadow-lg hover:shadow-xl transition-all duration-300 group`}
           >
             {/* Image Container */}
-            <div className="w-24 h-24 md:w-28 md:h-28 rounded-full border-2 border-[#F1F9EB] bg-[#F1F9EB] mb-6 p-1 overflow-hidden transition-transform duration-300 group-hover:scale-110">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border-2 border-[#F1F9EB] bg-[#F1F9EB] mb-4 p-1 overflow-hidden transition-transform duration-300 group-hover:scale-110">
               <img
                 src={feature.image}
                 alt={feature.title}
@@ -195,22 +195,22 @@ const Features = () => {
               />
             </div>
 
-            <h2 className={`text-xl md:text-2xl font-bold mb-4 ${feature.textColor} font-merriweather`}>
+            <h2 className={`text-lg md:text-xl font-bold mb-3 ${feature.textColor} font-merriweather`}>
               {feature.title}
             </h2>
 
-            <p className="text-gray-900 text-sm md:text-base mb-8 max-w-sm font-manrope font-semibold leading-relaxed">
+            <p className="text-gray-900 text-sm md:text-base mb-6 max-w-sm font-manrope font-semibold leading-relaxed">
               {feature.description}
             </p>
 
-            <div className="w-full space-y-4 px-2">
+            <div className="w-full space-y-2 px-2">
               {feature.benefits.map((benefit, i) => (
-                <div key={i} className="flex items-start gap-4">
+                <div key={i} className="flex items-start gap-3">
                   {/* Solid Green Pastille with Checkmark */}
-                  <div className={`w-6 h-6 rounded-full ${feature.textColor.replace('text-', 'bg-')} flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm`}>
-                    <Check className="w-4 h-4 text-white font-bold" />
+                  <div className={`w-5 h-5 rounded-full ${feature.textColor.replace('text-', 'bg-')} flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm`}>
+                    <Check className="w-3 h-3 text-white font-bold" />
                   </div>
-                  <span className="text-gray-700 text-left text-sm md:text-[15px] font-manrope font-medium">
+                  <span className="text-gray-700 text-left text-xs md:text-sm font-manrope font-medium">
                     {benefit}
                   </span>
                 </div>
