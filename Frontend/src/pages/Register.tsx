@@ -34,6 +34,11 @@ type RegisterFormData = {
   confirmPassword?: string;
   acceptTerms: boolean;
   rememberMe?: boolean;
+  socialReason?: string;
+  ifu?: string;
+  rccm?: string;
+  agencyAddress?: string;
+  personalAddress?: string;
 };
 
 const isNonTenant = (userType: UserType) => userType !== "locataire";
@@ -43,14 +48,8 @@ const registerSchema = z
     userType: z.enum(["proprietaire", "agence", "locataire"], {
       required_error: "Veuillez sélectionner un type d'utilisateur",
     }),
-    firstName: z
-      .string()
-      .min(2, "Le prénom doit contenir au moins 2 caractères")
-      .optional(),
-    lastName: z
-      .string()
-      .min(2, "Le nom doit contenir au moins 2 caractères")
-      .optional(),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
     email: z.string().email("Email invalide").toLowerCase().optional(),
     phone: z.string().min(1, "Le téléphone est requis").optional(),
     city: z.string().optional(),
@@ -63,30 +62,53 @@ const registerSchema = z
       message: "Vous devez accepter les conditions d'utilisation",
     }),
     rememberMe: z.boolean().optional(),
+    socialReason: z.string().optional(),
+    ifu: z.string().optional(),
+    rccm: z.string().optional(),
+    agencyAddress: z.string().optional(),
+    personalAddress: z.string().optional(),
   })
   .refine(
     (data) => {
-      if (isNonTenant(data.userType)) {
-        return data.firstName && data.firstName.length >= 2;
+      if (data.userType === "proprietaire" || data.userType === "agence") {
+        return !!data.firstName && data.firstName.length >= 2;
       }
       return true;
     },
-    {
-      message: "Le prénom est requis",
-      path: ["firstName"],
-    },
+    { message: "Le prénom est requis", path: ["firstName"] }
   )
   .refine(
     (data) => {
-      if (isNonTenant(data.userType)) {
-        return data.password === data.confirmPassword;
+      if (data.userType === "proprietaire" || data.userType === "agence") {
+        return !!data.lastName && data.lastName.length >= 2;
+      }
+      return true;
+    },
+    { message: "Le nom est requis", path: ["lastName"] }
+  )
+  .refine(
+    (data) => {
+      if (data.userType === "agence") {
+        return !!data.socialReason && data.socialReason.length >= 2;
+      }
+      return true;
+    },
+    { message: "La raison sociale est requise", path: ["socialReason"] }
+  )
+  .refine(
+    (data) => {
+      if (data.userType === "proprietaire" || data.userType === "agence") {
+        return (
+          !!data.password &&
+          data.password === data.confirmPassword
+        );
       }
       return true;
     },
     {
       message: "Les mots de passe ne correspondent pas",
       path: ["confirmPassword"],
-    },
+    }
   );
 
 interface UserTypeSelectorProps {
@@ -156,6 +178,7 @@ const UserTypeSelector = ({
 };
 
 interface FormFieldProps {
+  label: string;
   placeholder: string;
   type?: string;
   error?: { message?: string };
@@ -164,12 +187,14 @@ interface FormFieldProps {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   onRightIconClick?: () => void;
+  required?: boolean;
 }
 
 const inputBaseClass =
   "bg-muted/50 border-border rounded-lg focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary h-11 min-h-[44px]";
 
 const FormField = ({
+  label,
   placeholder,
   type = "text",
   error,
@@ -178,8 +203,12 @@ const FormField = ({
   leftIcon,
   rightIcon,
   onRightIconClick,
+  required,
 }: FormFieldProps) => (
-  <div className="space-y-1">
+  <div className="space-y-1.5">
+    <Label className="text-sm font-semibold text-gray-700">
+      {label} {required && <span className="text-red-500">*</span>}
+    </Label>
     <div className="relative flex items-center">
       {leftIcon && (
         <span className="pointer-events-none absolute left-3 text-muted-foreground">
@@ -194,7 +223,7 @@ const FormField = ({
         className={cn(
           inputBaseClass,
           error && "border-destructive focus-visible:ring-destructive",
-          leftIcon && "pl-10",
+          leftIcon && (fieldName === "phone" ? "pl-20" : "pl-10"),
           rightIcon && "pr-10"
         )}
       />
@@ -211,7 +240,7 @@ const FormField = ({
       )}
     </div>
     {error?.message && (
-      <p className="text-sm text-destructive">{error.message}</p>
+      <p className="text-sm text-destructive font-medium">{error.message}</p>
     )}
   </div>
 );
@@ -250,6 +279,11 @@ export default function Register() {
     password_confirmation: data.confirmPassword || "",
     role: data.userType,
     accept_terms: data.acceptTerms,
+    social_reason: data.socialReason || "",
+    ifu: data.ifu || "",
+    rccm: data.rccm || "",
+    agency_address: data.agencyAddress || "",
+    personal_address: data.personalAddress || "",
   });
 
   const getErrorMessage = (error: unknown): string => {
@@ -314,8 +348,7 @@ export default function Register() {
             Créer un compte
           </CardTitle>
           <CardDescription className="text-center">
-            Créer de meilleures relations entre les propriétaires et les
-            locataires !
+            Tout votre immobilier au même endroit
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -339,51 +372,87 @@ export default function Register() {
                 </div>
               )}
 
-              {/* Formulaire pour propriétaires et agences */}
-              {!isTenant && (
+              {/* Formulaire pour Agences */}
+              {userType === "agence" && (
                 <div className="space-y-5 border-t border-border pt-6">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
+                      label="Prénom du représentant"
                       placeholder="Prénom"
                       register={register}
                       fieldName="firstName"
                       error={errors.firstName}
+                      required
                     />
                     <FormField
+                      label="Nom du représentant"
                       placeholder="Nom"
                       register={register}
                       fieldName="lastName"
                       error={errors.lastName}
+                      required
                     />
                   </div>
 
                   <FormField
+                    label="Raison sociale"
+                    placeholder="Nom de l'agence ou entreprise"
+                    register={register}
+                    fieldName="socialReason"
+                    error={errors.socialReason}
+                    required
+                  />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      label="IFU"
+                      placeholder="Numéro IFU"
+                      register={register}
+                      fieldName="ifu"
+                      error={errors.ifu}
+                    />
+                    <FormField
+                      label="RCCM"
+                      placeholder="Numéro RCCM"
+                      register={register}
+                      fieldName="rccm"
+                      error={errors.rccm}
+                    />
+                  </div>
+
+                  <FormField
+                    label="Email professionnel"
                     placeholder="Email"
                     type="email"
                     register={register}
                     fieldName="email"
                     error={errors.email}
                     leftIcon={<AtSign className="h-4 w-4" />}
+                    required
                   />
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      placeholder="Téléphone"
-                      type="tel"
-                      register={register}
-                      fieldName="phone"
-                      error={errors.phone}
-                    />
-                    <FormField
-                      placeholder="Ville"
-                      register={register}
-                      fieldName="city"
-                      error={errors.city}
-                    />
-                  </div>
+                  <FormField
+                    label="Téléphone"
+                    placeholder="00 00 00 00"
+                    type="tel"
+                    register={register}
+                    fieldName="phone"
+                    error={errors.phone}
+                    required
+                    leftIcon={<span className="flex items-center gap-1.5 text-sm font-bold text-gray-600 pl-1">🇧🇯 +229</span>}
+                  />
 
                   <FormField
-                    placeholder="Mot de passe"
+                    label="Adresse de l'agence"
+                    placeholder="Ex: Cotonou, Haie Vive..."
+                    register={register}
+                    fieldName="agencyAddress"
+                    error={errors.agencyAddress}
+                  />
+
+                  <FormField
+                    label="Mot de passe"
+                    placeholder="********"
                     type={showPassword ? "text" : "password"}
                     register={register}
                     fieldName="password"
@@ -397,10 +466,12 @@ export default function Register() {
                       )
                     }
                     onRightIconClick={() => setShowPassword((v) => !v)}
+                    required
                   />
 
                   <FormField
-                    placeholder="Confirmer le mot de passe"
+                    label="Confirmer le mot de passe"
+                    placeholder="********"
                     type={showConfirmPassword ? "text" : "password"}
                     register={register}
                     fieldName="confirmPassword"
@@ -413,6 +484,98 @@ export default function Register() {
                       )
                     }
                     onRightIconClick={() => setShowConfirmPassword((v) => !v)}
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Formulaire pour Propriétaires */}
+              {userType === "proprietaire" && (
+                <div className="space-y-5 border-t border-border pt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      label="Prénom"
+                      placeholder="Prénom"
+                      register={register}
+                      fieldName="firstName"
+                      error={errors.firstName}
+                      required
+                    />
+                    <FormField
+                      label="Nom"
+                      placeholder="Nom"
+                      register={register}
+                      fieldName="lastName"
+                      error={errors.lastName}
+                      required
+                    />
+                  </div>
+
+                  <FormField
+                    label="Email personnel"
+                    placeholder="Email"
+                    type="email"
+                    register={register}
+                    fieldName="email"
+                    error={errors.email}
+                    leftIcon={<AtSign className="h-4 w-4" />}
+                    required
+                  />
+
+                  <FormField
+                    label="Téléphone"
+                    placeholder="00 00 00 00"
+                    type="tel"
+                    register={register}
+                    fieldName="phone"
+                    error={errors.phone}
+                    required
+                    leftIcon={<span className="flex items-center gap-1.5 text-sm font-bold text-gray-600 pl-1">🇧🇯 +229</span>}
+                  />
+
+                  <FormField
+                    label="Adresse personnelle"
+                    placeholder="Ex: Cotonou, Akpakpa..."
+                    register={register}
+                    fieldName="personalAddress"
+                    error={errors.personalAddress}
+                  />
+
+                  <FormField
+                    label="Mot de passe"
+                    placeholder="********"
+                    type={showPassword ? "text" : "password"}
+                    register={register}
+                    fieldName="password"
+                    error={errors.password}
+                    leftIcon={<Lock className="h-4 w-4" />}
+                    rightIcon={
+                      showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )
+                    }
+                    onRightIconClick={() => setShowPassword((v) => !v)}
+                    required
+                  />
+
+                  <FormField
+                    label="Confirmer le mot de passe"
+                    placeholder="********"
+                    type={showConfirmPassword ? "text" : "password"}
+                    register={register}
+                    fieldName="confirmPassword"
+                    error={errors.confirmPassword}
+                    rightIcon={
+                      showConfirmPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )
+                    }
+                    onRightIconClick={() => setShowConfirmPassword((v) => !v)}
+                    required
                   />
                 </div>
               )}
@@ -452,80 +615,64 @@ export default function Register() {
                   </Label>
                 </div>
                 {errors.acceptTerms && (
-                  <p className="text-sm text-destructive">
+                  <p className="text-sm text-destructive font-medium">
                     {errors.acceptTerms.message}
                   </p>
                 )}
 
-                {/* Se souvenir de moi pour non-locataires */}
                 {!isTenant && (
-                  <div className="flex items-start space-x-2">
-                    <Controller
-                      name="rememberMe"
-                      control={control}
-                      render={({ field }) => (
-                        <Checkbox
-                          id="remember"
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      )}
-                    />
-                    <Label
-                      htmlFor="remember"
-                      className="text-sm font-normal leading-relaxed cursor-pointer"
-                    >
-                      Se souvenir de moi
-                    </Label>
-                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full h-12 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all mt-4"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Création du compte..." : "Créer mon compte"}
+                  </Button>
+                )}
+
+                {isTenant && (
+                  <Button
+                    type="submit"
+                    className="w-full h-12 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all mt-4"
+                  >
+                    Comprendre le processus
+                  </Button>
                 )}
               </div>
             </div>
           </CardContent>
 
           <CardFooter className="flex flex-col gap-4 pt-0">
-            <Button
-              type="submit"
-              className=" rounded-lg font-medium shadow-sm"
-              disabled={isLoading}
-            >
-              {isTenant
-                ? "Comprendre le processus"
-                : isLoading
-                  ? "Création..."
-                  : "Créer mon compte"}
-            </Button>
-
-            <p className="text-center text-sm text-muted-foreground">
+            <p className="text-center text-sm text-muted-foreground w-full">
               Déjà un compte ?{" "}
               <Link
                 to="/login"
-                className="font-medium text-primary hover:underline"
+                className="font-bold text-primary hover:underline"
               >
                 Se connecter
               </Link>
             </p>
 
-            <p className="border-t border-border pt-4 text-center text-xs text-muted-foreground">
-              En vous inscrivant, vous reconnaissez avoir lu et accepté les{" "}
-              <Link to="/legal/terms" className="text-primary hover:underline">
-                Conditions d'utilisation
-              </Link>{" "}
-              et la{" "}
-              <Link
-                to="/legal/privacy"
-                className="text-primary hover:underline"
-              >
-                Politique de Confidentialité
+            <div className="pt-6 border-t border-border w-full text-center space-y-4">
+              <p className="text-center text-xs text-muted-foreground px-4">
+                En vous inscrivant, vous reconnaissez avoir lu et accepté les{" "}
+                <Link to="/legal/terms" className="text-primary hover:underline">
+                  Conditions d'utilisation
+                </Link>{" "}
+                et la{" "}
+                <Link
+                  to="/legal/privacy"
+                  className="text-primary hover:underline"
+                >
+                  Politique de Confidentialité
+                </Link>
+                .
+              </p>
+
+              <Link to="/" className="text-gray-500 underline text-xs block pt-2">
+                <ArrowLeft className="h-3 w-3 inline-block mr-1" /> Retour à l'accueil
               </Link>
-              .
-              <br />
-              <br />
-              <Link to="/" className="text-gray-500 underline">
-                <ArrowLeft className="h-4 w-4  inline-block" /> Retour à
-                l'accueil
-              </Link>
-            </p>
+            </div>
           </CardFooter>
         </form>
       </Card>

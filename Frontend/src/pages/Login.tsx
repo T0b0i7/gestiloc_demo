@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff, Mail, Lock, Building, User, Shield, Home } from "lucide-react";
 import { authService } from "@/services/api";
 import { WelcomeModal } from "@/components/WelcomeModal";
-import { AtSign,ArrowLeft, AlertCircle, Building2, Users } from "lucide-react";
+import { AtSign, ArrowLeft, AlertCircle, Building2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -72,14 +72,14 @@ export default function Login() {
 
         const updatedUser = { ...user, role: userRole };
         localStorage.setItem("user", JSON.stringify(updatedUser));
-        
+
         // Afficher la modal de bienvenue
         setWelcomeUserInfo({
           userName: user.first_name || user.email || "Utilisateur",
           userRole: userRole
         });
         setShowWelcomeModal(true);
-        
+
         navigate(redirectPath, { replace: true });
       } else {
         throw new Error("Réponse du serveur invalide");
@@ -181,8 +181,7 @@ export default function Login() {
             Connexion à votre compte
           </CardTitle>
           <CardDescription className="text-center">
-            Créer de meilleures relations entre les propriétaires et les
-            locataires !
+            Tout votre immobilier au même endroit
           </CardDescription>
         </CardHeader>
 
@@ -341,19 +340,21 @@ export default function Login() {
               </div>
             </div>
 
-            <p className="text-center text-sm text-muted-foreground">
+            <p className="text-center text-sm text-muted-foreground mt-2">
               Pas de compte ?{" "}
               <Link
                 to="/register"
-                className="font-medium text-primary hover:underline"
+                className="font-bold text-primary hover:underline"
               >
                 Cliquez ici
               </Link>
-              <br />
-              
-              <Link to="/" className="text-gray-500 underline"><ArrowLeft className="h-4 w-4  inline-block" /> Retour à l'accueil
-              </Link>
             </p>
+
+            <div className="pt-4 border-t border-border w-full text-center">
+              <Link to="/" className="text-gray-500 underline text-xs">
+                <ArrowLeft className="h-3 w-3 inline-block mr-1" /> Retour à l'accueil
+              </Link>
+            </div>
           </CardFooter>
         </form>
       </Card>

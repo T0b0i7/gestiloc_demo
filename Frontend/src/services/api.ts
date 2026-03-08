@@ -680,6 +680,26 @@ export const tenantService = {
       throw error;
     }
   },
+
+  archiveTenant: async (id: number | string): Promise<void> => {
+    try {
+      await initializeCsrfToken();
+      await api.post(`/tenants/${id}/archive`);
+    } catch (error) {
+      console.error('Erreur API archiveTenant:', error);
+      throw error;
+    }
+  },
+
+  deleteTenant: async (id: number | string): Promise<void> => {
+    try {
+      await initializeCsrfToken();
+      await api.delete(`/tenants/${id}`);
+    } catch (error) {
+      console.error('Erreur API deleteTenant:', error);
+      throw error;
+    }
+  },
 };
 
 // ================= LEASES SERVICE =================

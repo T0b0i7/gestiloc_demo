@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Search, Settings, Users, Trash2, Mail, Phone, Clock, RefreshCw, Eye, Edit, UserCheck, UserX, Check } from "lucide-react";
+import { Plus, Search, Settings, Users, Trash2, Mail, Phone, Clock, RefreshCw, Eye, Edit, UserCheck, UserX, Check, Archive } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { tenantService, TenantApi, TenantIndexResponse } from "@/services/api";
 
@@ -11,9 +11,8 @@ interface Locataire {
   telephone: string;
   email: string;
   solde: number;
-  etat: "actif" | "inactif" | "suspendu" | "invited";
+  etat: "Actif" | "Préavis" | "Archivé";
   modeles: string[];
-  is_invited?: boolean;
 }
 
 interface LocatairesProps {
@@ -40,10 +39,9 @@ export const TenantsList: React.FC<LocatairesProps> = ({ notify }) => {
       ? `${tenant.property.name ?? "Bien"} – ${tenant.property.address}${tenant.property.city ? ` (${tenant.property.city})` : ""}`
       : "Aucun bien";
 
-    let etat: Locataire["etat"] = "actif";
-    if (tenant.status === "invited") etat = "invited";
-    else if (tenant.status === "inactive") etat = "inactif";
-    else if (tenant.status === "suspended") etat = "suspendu";
+    let etat: Locataire["etat"] = "Actif";
+    if (tenant.status === "archived") etat = "Archivé";
+    else if (tenant.status === "preavis") etat = "Préavis";
 
     return {
       id: String(tenant.id),
@@ -55,7 +53,6 @@ export const TenantsList: React.FC<LocatairesProps> = ({ notify }) => {
       solde: 0,
       etat,
       modeles: [],
-
     };
   };
 
@@ -86,12 +83,13 @@ export const TenantsList: React.FC<LocatairesProps> = ({ notify }) => {
       l.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
       l.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchBien = filterBien === "Tous les biens" || l.bien.includes(filterBien);
-    const matchTab = activeTab === "actifs" ? true : false;
+    const matchTab = activeTab === "actifs" ? l.etat !== "Archivé" : l.etat === "Archivé";
     return matchSearch && matchBien && matchTab;
   });
 
   const biensUniques = Array.from(new Set(locataires.map((l) => l.bien)));
-  const actifCount = locataires.filter((l) => l.etat === "actif" || l.etat === "invited").length;
+  const actifCount = locataires.filter((l) => l.etat !== "Archivé").length;
+  const archiveCount = locataires.filter((l) => l.etat === "Archivé").length;
 
   /* ─── Actions ─── */
   const handleAdd = () => navigate("/proprietaire/ajouter-locataire");
@@ -312,12 +310,15 @@ export const TenantsList: React.FC<LocatairesProps> = ({ notify }) => {
         }
         .tl-table thead th {
           text-align: left;
-          padding: 12px 14px;
-          font-size: 0.72rem;
-          font-weight: 700;
-          color: #6b7280;
-          border-bottom: 1px solid #e5e7eb;
+          padding: 14px;
+          font-size: 0.75rem;
+          font-family: 'Merriweather', serif;
+          font-weight: 800;
+          color: #fff;
+          background: #529D21;
+          border-right: 1px solid rgba(255,255,255,0.1);
         }
+        .tl-table thead th:last-child { border-right: none; }
         .tl-table tbody td {
           padding: 14px;
           font-size: 0.78rem;
@@ -347,11 +348,27 @@ export const TenantsList: React.FC<LocatairesProps> = ({ notify }) => {
           background: none;
           border: none;
           cursor: pointer;
-          padding: 3px;
-          color: #9ca3af;
-          transition: color 0.15s;
+          padding: 6px;
+          color: #666;
+          transition: all 0.2s;
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
-        .tl-action-btn:hover { color: #374151; }
+        .tl-action-btn:hover { background: #f0f0f0; color: #529D21; }
+        .tl-action-btn.delete:hover { border-color: #ef4444; color: #ef4444; background: #fee2e2; }
+
+        .tl-status-badge {
+          padding: 4px 10px;
+          border-radius: 20px;
+          font-size: 0.7rem;
+          font-weight: 700;
+          text-transform: uppercase;
+        }
+        .tl-status-actif { background: #E8F5E9; color: #2E7D32; }
+        .tl-status-preavis { background: #FFF3E0; color: #EF6C00; }
+        .tl-status-archive { background: #ECEFF1; color: #455A64; }
 
         /* Empty */
         .tl-empty {
@@ -430,7 +447,7 @@ export const TenantsList: React.FC<LocatairesProps> = ({ notify }) => {
           >
             <span className="tl-tab-icon">📁</span>
             Archives
-            <span className="tl-tab-count">0</span>
+            <span className="tl-tab-count">{archiveCount}</span>
           </button>
         </div>
 
@@ -508,28 +525,69 @@ export const TenantsList: React.FC<LocatairesProps> = ({ notify }) => {
               <tbody>
                 {filteredLocataires.map((loc) => (
                   <tr key={loc.id}>
-                    <td style={{ fontWeight: 600 }}>{loc.nom}</td>
+                    <td style={{ fontWeight: 700, color: '#2c3e50' }}>{loc.nom}</td>
                     <td><span className="tl-type-badge">{loc.type}</span></td>
-                    <td>{loc.bien}</td>
+                    <td style={{ maxWidth: '200px', fontSize: '0.75rem' }}>{loc.bien}</td>
                     <td>{loc.telephone}</td>
                     <td>{loc.email}</td>
-                    <td><span className="tl-solde">{loc.solde} FCFA</span></td>
-                    <td>Inconnu</td>
+                    <td><span className="tl-solde">{loc.solde.toLocaleString()} FCFA</span></td>
+                    <td>
+                      <span className={`tl-status-badge tl-status-${loc.etat.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")}`}>
+                        {loc.etat}
+                      </span>
+                    </td>
                     <td><span className="tl-modele">0 Modèle</span></td>
                     <td>
-                      <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                        <button className="tl-action-btn" title="Voir">
+                      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                        <button
+                          className="tl-action-btn"
+                          title="Modifier"
+                          onClick={() => navigate(`/proprietaire/modifier-locataire/${loc.id}`)}
+                        >
+                          <Edit size={14} />
+                        </button>
+                        <button
+                          className="tl-action-btn"
+                          title="Détails"
+                          onClick={() => navigate(`/proprietaire/locataire/${loc.id}`)}
+                        >
                           <Eye size={14} />
                         </button>
-                        <button className="tl-action-btn" title="Plus">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="12" cy="5" r="1" />
-                            <circle cx="12" cy="12" r="1" />
-                            <circle cx="12" cy="19" r="1" />
-                          </svg>
-                        </button>
-                        <button className="tl-action-btn" title="Mail">
-                          <Mail size={14} />
+                        {loc.etat !== "Archivé" && (
+                          <button
+                            className="tl-action-btn"
+                            title="Archiver"
+                            onClick={async () => {
+                              if (confirm("Voulez-vous vraiment archiver ce locataire ?")) {
+                                try {
+                                  await tenantService.archiveTenant(loc.id);
+                                  notify("Locataire archivé avec succès", "success");
+                                  fetchTenants();
+                                } catch (e) {
+                                  notify("Erreur lors de l'archivage", "error");
+                                }
+                              }
+                            }}
+                          >
+                            <Archive size={14} />
+                          </button>
+                        )}
+                        <button
+                          className="tl-action-btn delete"
+                          title="Supprimer"
+                          onClick={async () => {
+                            if (confirm("Voulez-vous vraiment supprimer ce locataire ? Cette action est irréversible.")) {
+                              try {
+                                await tenantService.deleteTenant(loc.id);
+                                notify("Locataire supprimé avec succès", "success");
+                                fetchTenants();
+                              } catch (e) {
+                                notify("Erreur lors de la suppression", "error");
+                              }
+                            }
+                          }}
+                        >
+                          <Trash2 size={14} />
                         </button>
                       </div>
                     </td>

@@ -229,7 +229,7 @@ export default function Auth() {
           localStorage.setItem("rememberMe", "true");
         }
       }
-      
+
       if (user) {
         localStorage.setItem("user", JSON.stringify(user));
         toast.success("Connexion réussie !");
@@ -290,7 +290,7 @@ export default function Auth() {
       // Déterminer le rôle
       const isProfessional = data.userType === "agency";
       let role = "proprietaire";
-      
+
       if (data.userType === "agency") {
         role = "agence";
       }
@@ -362,7 +362,7 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-white">
       <div className="w-full max-w-md">
         {/* Logo centré */}
-        <motion.div 
+        <motion.div
           className="text-center mb-6"
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -372,7 +372,7 @@ export default function Auth() {
             Gestiloc
           </h1>
           <p className="text-sm text-slate-600 max-w-xs mx-auto">
-            Créer de meilleures relations entre les propriétaires et les locataires !
+            Tout votre immobilier au même endroit
           </p>
         </motion.div>
 
@@ -499,8 +499,8 @@ export default function Auth() {
                           Se souvenir de moi
                         </Label>
                       </div>
-                      <a 
-                        href="/forgot-password" 
+                      <a
+                        href="/forgot-password"
                         className="text-sm hover:underline"
                         style={linkStyle}
                       >
@@ -589,7 +589,7 @@ export default function Auth() {
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.3, delay: 0.15 }}
                   >
-                    Créer de meilleures relations entre les propriétaires et les locataires !
+                    Tout votre immobilier au même endroit
                   </motion.p>
 
                   {/* Sélection du type d'utilisateur */}
@@ -613,27 +613,23 @@ export default function Auth() {
                             return (
                               <div
                                 key={type.value}
-                                className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                                  isSelected 
-                                    ? "border-[#70AE48] bg-green-50" 
+                                className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition-all ${isSelected
+                                    ? "border-[#70AE48] bg-green-50"
                                     : "border-slate-200 hover:border-slate-300"
-                                }`}
+                                  }`}
                                 onClick={() => field.onChange(type.value)}
                               >
                                 <div className="flex items-center flex-1">
-                                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mr-3 ${
-                                    isSelected ? "border-[#70AE48]" : "border-slate-400"
-                                  }`}>
+                                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mr-3 ${isSelected ? "border-[#70AE48]" : "border-slate-400"
+                                    }`}>
                                     {isSelected && (
                                       <div className="w-2.5 h-2.5 rounded-full bg-[#70AE48]" />
                                     )}
                                   </div>
-                                  <Icon size={18} className={`mr-2 ${
-                                    isSelected ? "text-[#70AE48]" : "text-slate-500"
-                                  }`} />
-                                  <span className={`text-sm ${
-                                    isSelected ? "text-[#70AE48] font-medium" : "text-slate-700"
-                                  }`}>
+                                  <Icon size={18} className={`mr-2 ${isSelected ? "text-[#70AE48]" : "text-slate-500"
+                                    }`} />
+                                  <span className={`text-sm ${isSelected ? "text-[#70AE48] font-medium" : "text-slate-700"
+                                    }`}>
                                     {type.label}
                                   </span>
                                 </div>

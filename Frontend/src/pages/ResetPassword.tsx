@@ -65,8 +65,7 @@ export default function ResetPassword() {
             Connexion à votre compte
           </CardTitle>
           <CardDescription className="text-center">
-            Créer de meilleures relations entre les propriétaires et les
-            locataires !
+            Tout votre immobilier au même endroit
           </CardDescription>
         </CardHeader>
 
@@ -90,7 +89,7 @@ export default function ResetPassword() {
                   className={cn(
                     inputBaseClass,
                     errors.email &&
-                      "border-destructive focus-visible:ring-destructive",
+                    "border-destructive focus-visible:ring-destructive",
                   )}
                 />
               </div>
