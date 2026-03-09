@@ -172,9 +172,7 @@ export default function FeaturesSection() {
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 mb-8" style={{ fontFamily: "Merriweather", lineHeight: "1.1" }}>
               Nous aidons les bailleurs à gérer sereinement leurs biens
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto" style={{ fontFamily: "Manrope" }}>
-              Nous sommes innovants, modernes et adaptés aux réalités africaines
-            </p>
+            
           </motion.div>
 
           {(() => {
