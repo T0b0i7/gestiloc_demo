@@ -143,16 +143,21 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
   const helperBase = 'text-xs text-gray-500 mt-1';
   const errorText = 'text-xs text-red-600 mt-1';
 
-  // 🔥 Fonction de chargement centralisée
+  // 🔥 Fonction de chargement centralisée avec cache-busting
   const loadData = async () => {
     try {
       setLoading(true);
+      
+      // Ajouter un timestamp pour éviter le cache
+      const timestamp = Date.now();
       
       // Charger les baux et les incidents en parallèle
       const [leasesData, incidentsData] = await Promise.all([
         tenantApi.getLeases(),
         tenantApi.getIncidents()
       ]);
+      
+      console.log('Données chargées:', { leases: leasesData, incidents: incidentsData });
       
       setLeases(leasesData);
       setIncidents(incidentsData);
@@ -188,7 +193,7 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
     return () => {
       cancelled = true;
     };
-  }, []); // Dépendances vides = au montage seulement
+  }, []);
 
   // Options pour le filtre par bien
   const propertyOptions = useMemo(() => {
@@ -254,15 +259,6 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
   };
 
   const removePhoto = (idx: number) => setPhotoFiles((prev) => prev.filter((_, i) => i !== idx));
-
-  const refreshIncidents = async () => {
-    try {
-      const list = await tenantApi.getIncidents();
-      setIncidents(list);
-    } catch (e: any) {
-      console.warn('Erreur refresh incidents:', e);
-    }
-  };
 
   const validate = (): FormErrors => {
     const errs: FormErrors = {};
@@ -366,16 +362,27 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
   const handleConfirmDelete = async () => {
     if (!incidentToDelete) return;
     setDeleting(true);
+    
     try {
+      // Essayer de supprimer l'incident
       await tenantApi.deleteIncident(incidentToDelete);
       notify('Incident supprimé', 'success');
-      
-      // 🔥 Recharger TOUTES les données après suppression
-      await loadData();
-      
     } catch (e: any) {
-      console.error(e);
-      notify('Erreur lors de la suppression', 'error');
+      // Ignorer l'erreur 404 (l'incident n'existe déjà plus)
+      if (e.response?.status === 404) {
+        console.log('Incident déjà supprimé ou inexistant');
+        notify('Incident supprimé', 'success');
+      } else {
+        console.error('Erreur lors de la suppression:', e);
+        notify('Erreur lors de la suppression', 'error');
+      }
+    }
+    
+    try {
+      // 🔥 FORCER le rechargement complet des données
+      await loadData();
+    } catch (e) {
+      console.error('Erreur lors du rechargement:', e);
     } finally {
       setDeleting(false);
       setShowDeleteConfirm(false);
@@ -449,7 +456,6 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
 
             <p className="text-gray-600 mb-8">
               Êtes-vous sûr de vouloir supprimer cette intervention ?
-              Cette action est définitive et ne peut pas être annulée.
             </p>
 
             <div className="flex gap-3">
@@ -512,7 +518,7 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
       {showCreateForm ? (
         // Formulaire de création
         <div className="space-y-6">
-          {/* Bouton Retour avec la couleur #70AE48 et texte blanc */}
+          {/* Bouton Retour */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowCreateForm(false)}
@@ -1014,8 +1020,6 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
 
             {filteredIncidents.length > 0 && (
               <div className="px-4 py-3 border-t border-gray-200 flex items-center gap-2">
-                <input type="checkbox" className="rounded border-gray-300" />
-                <span className="text-sm text-gray-700">Tout sélectionner</span>
                 <span className="text-sm text-gray-500 ml-auto">
                   {filteredIncidents.length} intervention{filteredIncidents.length > 1 ? 's' : ''}
                 </span>
