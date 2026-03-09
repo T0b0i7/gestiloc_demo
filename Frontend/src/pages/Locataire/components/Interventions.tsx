@@ -111,7 +111,9 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [itemsPerPage, setItemsPerPage] = useState('10');
   const [showItemsDropdown, setShowItemsDropdown] = useState(false);
+  const [showPropertyDropdown, setShowPropertyDropdown] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedProperty, setSelectedProperty] = useState<string>('all');
   const [showNoLeaseModal, setShowNoLeaseModal] = useState(false);
   // Confirmation suppression
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -141,42 +143,68 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
   const helperBase = 'text-xs text-gray-500 mt-1';
   const errorText = 'text-xs text-red-600 mt-1';
 
+  // 🔥 Fonction de chargement centralisée
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      
+      // Charger les baux et les incidents en parallèle
+      const [leasesData, incidentsData] = await Promise.all([
+        tenantApi.getLeases(),
+        tenantApi.getIncidents()
+      ]);
+      
+      setLeases(leasesData);
+      setIncidents(incidentsData);
+      setHasActiveLease(leasesData.some(lease => lease.status === 'active'));
+      
+      if (leasesData?.[0]?.property?.id) {
+        setPropertyId(leasesData[0].property.id);
+      }
+      
+    } catch (e: any) {
+      console.error('Erreur chargement:', e);
+      notify('Erreur lors du chargement des données', 'error');
+      setLeases([]);
+      setIncidents([]);
+      setHasActiveLease(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Chargement initial
   useEffect(() => {
     let cancelled = false;
-
+    
     const run = async () => {
-      try {
-        setLoading(true);
-
-        const l = await tenantApi.getLeases();
-        if (cancelled) return;
-        setLeases(l);
-        // Vérifier s'il y a au moins un bail actif
-        const active = l.some(lease => lease.status === 'active');
-        setHasActiveLease(active);
-
-        if (l?.[0]?.property?.id) setPropertyId(l[0].property.id);
-
-        const list = await tenantApi.getIncidents();
-        if (cancelled) return;
-        setIncidents(list);
-      } catch (e: any) {
-        console.error(e);
-        if (!cancelled) {
-          setLeases([]);
-          setHasActiveLease(false);
-          setIncidents([]);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
+      if (!cancelled) {
+        await loadData();
       }
     };
 
     run();
+    
     return () => {
       cancelled = true;
     };
-  }, [notify]);
+  }, []); // Dépendances vides = au montage seulement
+
+  // Options pour le filtre par bien
+  const propertyOptions = useMemo(() => {
+    const options = new Set<string>();
+    options.add('Tous les biens');
+    
+    incidents.forEach(incident => {
+      const lease = leases.find(l => l.property?.id === incident.property_id);
+      const propertyName = (incident.property as any)?.name || lease?.property?.name;
+      if (propertyName) {
+        options.add(propertyName);
+      }
+    });
+    
+    return Array.from(options);
+  }, [incidents, leases]);
 
   const handleNewInterventionClick = () => {
     if (!hasActiveLease) {
@@ -186,19 +214,19 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
     }
   };
 
-  const selectedProperty = useMemo(() => {
+  const selectedPropertyObj = useMemo(() => {
     if (!propertyId) return null;
     const lease = leases.find((x) => x.property?.id === propertyId);
     return lease?.property || null;
   }, [leases, propertyId]);
 
   const selectedMainImage = useMemo(() => {
-    const p = selectedProperty as any;
+    const p = selectedPropertyObj as any;
     const photos: string[] = p?.photos || [];
     const first = photos?.[0];
     if (!first) return null;
     return first.startsWith('http') ? first : `${apiBase}/storage/${first}`;
-  }, [selectedProperty]);
+  }, [selectedPropertyObj]);
 
   const photoPreviews = useMemo(() => photoFiles.map((f) => URL.createObjectURL(f)), [photoFiles]);
   useEffect(() => {
@@ -232,7 +260,7 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
       const list = await tenantApi.getIncidents();
       setIncidents(list);
     } catch (e: any) {
-      console.warn('Silent fail for refresh incidents - backend might be offline');
+      console.warn('Erreur refresh incidents:', e);
     }
   };
 
@@ -298,7 +326,9 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
       setPhotoFiles([]);
       setFormErrors({});
 
-      await refreshIncidents();
+      // 🔥 Recharger TOUTES les données après création
+      await loadData();
+      
     } catch (e: any) {
       console.error(e);
       const status = e?.response?.status;
@@ -339,11 +369,13 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
     try {
       await tenantApi.deleteIncident(incidentToDelete);
       notify('Incident supprimé', 'success');
-      await refreshIncidents();
+      
+      // 🔥 Recharger TOUTES les données après suppression
+      await loadData();
+      
     } catch (e: any) {
       console.error(e);
-      setIncidents((prev) => prev.filter((it) => it.id !== incidentToDelete));
-      notify('Incident supprimé', 'success');
+      notify('Erreur lors de la suppression', 'error');
     } finally {
       setDeleting(false);
       setShowDeleteConfirm(false);
@@ -351,47 +383,47 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
     }
   };
 
-  // Empty state illustration component
-  const EmptyStateIllustration = () => (
-    <div className="flex flex-col items-center justify-center py-12">
-      {/* ... */}
-    </div>
-  );
-
   const filteredIncidents = useMemo(() => {
-    if (!searchQuery.trim()) return incidents;
-    const query = searchQuery.toLowerCase();
-    return incidents.filter(incident =>
-      incident.title.toLowerCase().includes(query) ||
-      incident.description?.toLowerCase().includes(query) ||
-      (incident.property as any)?.name?.toLowerCase().includes(query) ||
-      leases.find(l => l.property?.id === incident.property_id)?.property?.name?.toLowerCase().includes(query)
-    );
-  }, [incidents, searchQuery, leases]);
+    let filtered = incidents;
+    
+    // Filtre par recherche textuelle
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(incident =>
+        incident.title.toLowerCase().includes(query) ||
+        incident.description?.toLowerCase().includes(query) ||
+        (incident.property as any)?.name?.toLowerCase().includes(query) ||
+        leases.find(l => l.property?.id === incident.property_id)?.property?.name?.toLowerCase().includes(query)
+      );
+    }
+
+    // Filtre par bien
+    if (selectedProperty !== 'all') {
+      filtered = filtered.filter(incident => {
+        const lease = leases.find(l => l.property?.id === incident.property_id);
+        const propertyName = (incident.property as any)?.name || lease?.property?.name;
+        return propertyName === selectedProperty;
+      });
+    }
+    
+    return filtered;
+  }, [incidents, searchQuery, leases, selectedProperty]);
 
   const paginatedIncidents = useMemo(() => {
     const limit = parseInt(itemsPerPage) || 10;
     return filteredIncidents.slice(0, limit);
   }, [filteredIncidents, itemsPerPage]);
 
-  // List view component
-  const ListView = () => (
-    <div className="space-y-4">
-      {/* Top button */}
-      <div className="flex justify-end">
-        <button
-          onClick={() => setShowCreateForm(true)}
-          className="flex items-center gap-2 px-4 py-2.5 text-white text-sm font-medium rounded-lg transition-colors hover:opacity-90"
-          style={{ background: 'rgba(82, 157, 33, 1)' }}
-        >
-          <Plus size={18} />
-          Une nouvelle intervention
-        </button>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-4 sm:p-6 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" style={{ color: PRIMARY_COLOR }} />
+          <p className="text-gray-600">Chargement des interventions...</p>
+        </div>
       </div>
-    </div>
-  );
-
-  // Removed blank loading state as requested by user
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
@@ -524,7 +556,7 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
                 </select>
                 {formErrors.propertyId ? <p className={errorText}>{formErrors.propertyId}</p> : null}
 
-                {selectedProperty && (
+                {selectedPropertyObj && (
                   <div className="rounded-2xl border border-gray-200 overflow-hidden bg-white shadow-sm">
                     {selectedMainImage ? (
                       <img src={selectedMainImage} alt="Bien" className="w-full h-48 object-cover" />
@@ -537,20 +569,20 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
 
                     <div className="p-4 border-t border-gray-100">
                       <div className="font-semibold text-gray-900 text-lg">
-                        {(selectedProperty as any)?.name || 'Bien'}
+                        {(selectedPropertyObj as any)?.name || 'Bien'}
                       </div>
                       <div className="text-sm text-gray-600 mt-1">
-                        {selectedProperty?.address}
+                        {selectedPropertyObj?.address}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {selectedProperty?.city}
+                        {selectedPropertyObj?.city}
                       </div>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Incident details - reste identique */}
+              {/* Incident details */}
               <div className="lg:col-span-2 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -820,15 +852,18 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
 
           <Card className="p-4">
             <h3 className="text-sm font-medium text-gray-900 mb-4">Filtrer les interventions</h3>
-            <div className="flex flex-col gap-3">
-              <div className="relative">
+            
+            {/* Tous les filtres sur la même ligne */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Filtre par nombre de lignes */}
+              <div className="relative w-32">
                 <button
                   onClick={() => setShowItemsDropdown(!showItemsDropdown)}
-                  className="w-full flex items-center justify-between px-4 py-2.5 border rounded-lg text-gray-700 bg-white hover:border-gray-400 transition-colors text-sm"
+                  className="w-full flex items-center justify-between px-3 py-2 border rounded-lg text-gray-700 bg-white hover:border-gray-400 transition-colors text-sm"
                   style={{ borderColor: `${PRIMARY_COLOR}80` }}
                 >
-                  <span className="text-gray-400">{itemsPerPage} lignes</span>
-                  <ChevronDown size={16} className="text-gray-500" />
+                  <span>{itemsPerPage} lignes</span>
+                  <ChevronDown size={14} className="text-gray-500" />
                 </button>
                 {showItemsDropdown && (
                   <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-10">
@@ -836,7 +871,7 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
                       <button
                         key={n}
                         onClick={() => { setItemsPerPage(n); setShowItemsDropdown(false); }}
-                        className="w-full px-4 py-2 text-left hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg text-sm"
+                        className="w-full px-3 py-2 text-left hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg text-sm"
                       >
                         {n} lignes
                       </button>
@@ -845,19 +880,59 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
                 )}
               </div>
 
-              <div className="relative">
+              {/* Filtre par bien */}
+              <div className="relative w-48">
+                <button
+                  onClick={() => setShowPropertyDropdown(!showPropertyDropdown)}
+                  className="w-full flex items-center justify-between px-3 py-2 border rounded-lg text-gray-700 bg-white hover:border-gray-400 transition-colors text-sm"
+                  style={{ borderColor: `${PRIMARY_COLOR}80` }}
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    <Home size={14} className="text-[#70AE48] flex-shrink-0" />
+                    <span className="truncate">{selectedProperty === 'all' ? 'Tous les biens' : selectedProperty}</span>
+                  </div>
+                  <ChevronDown size={14} className="text-gray-500 flex-shrink-0" />
+                </button>
+                {showPropertyDropdown && (
+                  <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                    <button
+                      onClick={() => { setSelectedProperty('all'); setShowPropertyDropdown(false); }}
+                      className="w-full px-3 py-2 text-left hover:bg-gray-50 first:rounded-t-lg text-sm"
+                    >
+                      Tous les biens
+                    </button>
+                    {propertyOptions.filter(p => p !== 'Tous les biens').map((prop) => (
+                      <button
+                        key={prop}
+                        onClick={() => { setSelectedProperty(prop); setShowPropertyDropdown(false); }}
+                        className="w-full px-3 py-2 text-left hover:bg-gray-50 last:rounded-b-lg text-sm"
+                      >
+                        {prop}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Barre de recherche */}
+              <div className="flex-1 relative min-w-[200px]">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search size={16} className="text-gray-400" />
+                  <Search size={14} className="text-gray-400" />
                 </div>
                 <input
                   type="text"
                   placeholder="Rechercher une intervention..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-opacity-20 bg-white text-gray-900"
+                  className="w-full pl-9 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-opacity-20 bg-white text-gray-900"
                   style={{ borderColor: `${PRIMARY_COLOR}80` }}
                 />
               </div>
+            </div>
+
+            {/* Indicateur de résultat */}
+            <div className="mt-3 text-xs text-gray-500">
+              {filteredIncidents.length} intervention{filteredIncidents.length > 1 ? 's' : ''} trouvée{filteredIncidents.length > 1 ? 's' : ''}
             </div>
           </Card>
 
@@ -876,14 +951,14 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedIncidents.length === 0 ? (
+                  {filteredIncidents.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
                         Aucune intervention trouvée
                       </td>
                     </tr>
                   ) : (
-                    paginatedIncidents.map((incident) => {
+                    filteredIncidents.map((incident) => {
                       // Récupérer le bail correspondant pour avoir le nom du bien
                       const lease = leases.find(l => l.property?.id === incident.property_id);
                       const propertyName = (incident.property as any)?.name || lease?.property?.name || 'Bien';

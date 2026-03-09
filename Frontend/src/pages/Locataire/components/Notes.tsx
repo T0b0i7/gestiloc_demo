@@ -479,16 +479,7 @@ export const Notes: React.FC<NotesProps> = ({ notify }) => {
     return (
       <div className="space-y-4">
         {/* Top button */}
-        <div className="flex justify-end">
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="flex items-center gap-2 px-4 py-2.5 text-white text-sm font-medium rounded-lg transition-colors hover:opacity-90"
-            style={{ background: 'rgba(82, 157, 33, 1)' }}
-          >
-            <Plus size={18} />
-            Une nouvelle note
-          </button>
-        </div>
+     
 
         {/* Rest of ListView content */}
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6">

@@ -412,24 +412,84 @@ HTML;
         $this->sendHtmlEmail($landlordEmail, $subject, $html);
     }
 
-    public function index(Request $request)
-    {
-        $tenant = $this->tenantOrFail();
+public function index(Request $request)
+{
+    try {
+        $user = auth()->user();
 
-        $q = MaintenanceRequest::query()
+        // Vérifications de sécurité
+        if (!$user) {
+            return response()->json(['message' => 'Non authentifié'], 401);
+        }
+
+        if (!$user->isTenant()) {
+            return response()->json(['message' => 'Accès non autorisé'], 403);
+        }
+
+        $tenant = $user->tenant;
+
+        if (!$tenant) {
+            return response()->json(['message' => 'Profil locataire introuvable'], 404);
+        }
+
+        // Récupérer d'abord les IDs des biens auxquels le locataire a accès
+        $accessiblePropertyIds = $tenant->leases()
+            ->where('status', 'active')
+            ->pluck('property_id')
+            ->toArray();
+
+        // Construction de la requête avec sécurités
+        $query = MaintenanceRequest::query()
             ->where('tenant_id', $tenant->id)
-            ->with(['property.landlord.user'])
-            ->latest();
+            ->whereIn('property_id', $accessiblePropertyIds) // Sécurité supplémentaire
+            ->with([
+                'property' => function($q) {
+                    $q->select('id', 'name', 'address', 'city');
+                }
+            ]);
 
+        // Filtres optionnels
         if ($request->filled('status')) {
-            $q->where('status', $request->string('status'));
-        }
-        if ($request->filled('property_id')) {
-            $q->where('property_id', $request->integer('property_id'));
+            $status = $request->status;
+            if (in_array($status, ['open', 'in_progress', 'resolved', 'cancelled'])) {
+                $query->where('status', $status);
+            }
         }
 
-        return MaintenanceRequestResource::collection($q->paginate(20));
+        if ($request->filled('priority')) {
+            $priority = $request->priority;
+            if (in_array($priority, ['low', 'medium', 'high', 'emergency'])) {
+                $query->where('priority', $priority);
+            }
+        }
+
+        if ($request->filled('property_id')) {
+            $propertyId = $request->property_id;
+            // Vérifier que le bien est dans la liste des biens accessibles
+            if (in_array($propertyId, $accessiblePropertyIds)) {
+                $query->where('property_id', $propertyId);
+            }
+        }
+
+        // Pagination
+        $perPage = $request->input('per_page', 15);
+        $perPage = max(1, min($perPage, 100)); // Entre 1 et 100
+
+        $incidents = $query->orderBy('created_at', 'desc')->paginate($perPage);
+
+        return MaintenanceRequestResource::collection($incidents);
+
+    } catch (\Exception $e) {
+        \Log::error('Erreur incidents', [
+            'message' => $e->getMessage(),
+            'user_id' => auth()->id()
+        ]);
+
+        return response()->json([
+            'message' => 'Erreur lors du chargement des incidents'
+        ], 500);
     }
+}
 
     public function show($id)
     {
