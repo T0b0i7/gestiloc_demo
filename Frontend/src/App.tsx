@@ -176,11 +176,11 @@ const ProtectedRoute = ({
     if (userRole === "admin") {
       defaultPath = "/admin";
     } else if (userRole && ["proprietaire", "landlord"].includes(userRole)) {
-      defaultPath = "/proprietaire";
+      defaultPath = "/proprietaire";  // ← CORRIGÉ : sans /dashboard
     } else if (userRole && ["locataire", "tenant"].includes(userRole)) {
-      defaultPath = "/locataire";
+      defaultPath = "/locataire";  // ← CORRIGÉ : sans /dashboard
     } else if (userRole && ["coproprietaire", "co_owner"].includes(userRole)) {
-      defaultPath = "/coproprietaire/dashboard";
+      defaultPath = "/coproprietaire";  // ← CORRIGÉ : sans /dashboard
     }
 
     console.log("Redirection vers:", defaultPath);

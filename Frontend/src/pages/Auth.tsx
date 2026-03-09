@@ -202,7 +202,6 @@ export default function Auth() {
       setIsLoading(true);
 
       const response = await authService.login(data.email, data.password);
-
       const responseData = (response as any).data;
 
       // Gérer les deux formats possibles de réponse
@@ -210,15 +209,12 @@ export default function Auth() {
       let token: string | null = null;
 
       if (responseData?.access_token && responseData?.user) {
-        // Format : { data: { access_token, user } }
         token = responseData.access_token;
         user = responseData.user;
       } else if (responseData?.access_token) {
-        // Format : { access_token, user } à la racine
         token = responseData.access_token;
         user = responseData.user;
       } else if ((response as any)?.access_token && (response as any)?.user) {
-        // Format : { access_token, user } à la racine
         token = (response as any).access_token;
         user = (response as any).user;
       }
@@ -229,63 +225,64 @@ export default function Auth() {
           localStorage.setItem("rememberMe", "true");
         }
       }
-
+      
       if (user) {
         localStorage.setItem("user", JSON.stringify(user));
         toast.success("Connexion réussie !");
 
         const roles = user.roles || [];
+        
+        // LOG POUR DÉBOGUER
+        console.log("👤 USER ROLES:", roles);
+        console.log("👤 USER OBJECT:", user);
 
         let redirectPath = "/";
         let userRole = "";
 
-        // ADMIN
         if (roles.includes("admin")) {
           redirectPath = "/admin";
           userRole = "admin";
-        } 
-        // PROPRIÉTAIRE
-        else if (roles.includes("landlord") || roles.includes("proprietaire") || user.user_type === "owner") {
-          redirectPath = "/proprietaire/dashboard";
+          console.log("✅ Admin détecté");
+        } else if (roles.includes("landlord") || roles.includes("proprietaire")) {
+          redirectPath = "/proprietaire";
           userRole = "proprietaire";
-        } 
-        // COPROPRIÉTAIRE
-        else if (roles.includes("coproprietaire") || roles.includes("co_owner")) {
-          redirectPath = "/coproprietaire/dashboard";
+          console.log("✅ Propriétaire détecté");
+        } else if (roles.includes("coproprietaire") || roles.includes("co_owner")) {
+          redirectPath = "/coproprietaire";
           userRole = "coproprietaire";
-        } 
-        // LOCATAIRE
-        else if (roles.includes("tenant") || roles.includes("locataire")) {
-          redirectPath = "/locataire/dashboard";
+          console.log("✅ Copropriétaire détecté, redirection vers:", redirectPath);
+        } else if (roles.includes("tenant") || roles.includes("locataire")) {
+          redirectPath = "/locataire";
           userRole = "locataire";
-        } 
-        // AGENCE
-        else if (user.user_type === "agency") {
-          redirectPath = "/agence/dashboard";
+          console.log("✅ Locataire détecté");
+        } else if (user.user_type === "owner") {
+          redirectPath = "/proprietaire";
+          userRole = "proprietaire";
+          console.log("✅ Propriétaire (user_type) détecté");
+        } else if (user.user_type === "agency") {
+          redirectPath = "/agence";
           userRole = "agence";
+          console.log("✅ Agence détectée");
         }
 
-        // Log pour déboguer
-        console.log("🎯 Redirection vers:", redirectPath);
-        console.log("👤 Rôle utilisateur:", userRole);
+        console.log("🎯 REDIRECTION VERS:", redirectPath);
 
         const updatedUser = { ...user, role: userRole };
         localStorage.setItem("user", JSON.stringify(updatedUser));
 
-        navigate(redirectPath, { replace: true });
+        // SOLUTION DE SECOURS : Si la redirection ne fonctionne pas, essayer avec un délai
+        setTimeout(() => {
+          navigate(redirectPath, { replace: true });
+        }, 100);
       } else {
         throw new Error("Réponse du serveur invalide");
       }
     } catch (e: unknown) {
       const err = e as ApiErr;
-
       console.error("Erreur de connexion :", err);
-
       const applied = applyBackendFieldErrors<LoginFormData>(err, loginForm.setError, loginFieldMap);
-
       const msg = normalizeBackendMessage(err, "Email ou mot de passe incorrect.");
       setError(msg);
-
       if (applied) toast.error("Vérifiez vos informations de connexion.");
       else toast.error(msg);
     } finally {
@@ -297,10 +294,9 @@ export default function Auth() {
     try {
       setIsLoading(true);
 
-      // Déterminer le rôle
       const isProfessional = data.userType === "agency";
       let role = "proprietaire";
-
+      
       if (data.userType === "agency") {
         role = "agence";
       }
@@ -338,12 +334,9 @@ export default function Auth() {
       }
     } catch (e: unknown) {
       const err = e as ApiErr;
-
       console.error("Erreur lors de l'inscription :", err);
-
       const applied = applyBackendFieldErrors<RegisterFormData>(err, registerForm.setError, registerFieldMap);
       const msg = normalizeBackendMessage(err, "Une erreur est survenue lors de la création du compte.");
-
       if (applied) toast.error("Certains champs sont invalides. Vérifiez le formulaire.");
       else toast.error(msg);
     } finally {
@@ -353,7 +346,6 @@ export default function Auth() {
 
   const selectedUserType = registerForm.watch("userType");
 
-  // Style pour le bouton avec la couleur verte
   const buttonStyle = {
     backgroundColor: PRIMARY_COLOR,
     color: "white",
@@ -372,7 +364,7 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-white">
       <div className="w-full max-w-md">
         {/* Logo centré */}
-        <motion.div
+        <motion.div 
           className="text-center mb-6"
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -382,7 +374,7 @@ export default function Auth() {
             Gestiloc
           </h1>
           <p className="text-sm text-slate-600 max-w-xs mx-auto">
-            Tout votre immobilier au même endroit
+            Créer de meilleures relations entre les propriétaires et les locataires !
           </p>
         </motion.div>
 
@@ -509,8 +501,8 @@ export default function Auth() {
                           Se souvenir de moi
                         </Label>
                       </div>
-                      <a
-                        href="/forgot-password"
+                      <a 
+                        href="/forgot-password" 
                         className="text-sm hover:underline"
                         style={linkStyle}
                       >
@@ -599,7 +591,7 @@ export default function Auth() {
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.3, delay: 0.15 }}
                   >
-                    Tout votre immobilier au même endroit
+                    Créer de meilleures relations entre les propriétaires et les locataires !
                   </motion.p>
 
                   {/* Sélection du type d'utilisateur */}
@@ -623,23 +615,27 @@ export default function Auth() {
                             return (
                               <div
                                 key={type.value}
-                                className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition-all ${isSelected
-                                    ? "border-[#70AE48] bg-green-50"
+                                className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                  isSelected 
+                                    ? "border-[#70AE48] bg-green-50" 
                                     : "border-slate-200 hover:border-slate-300"
-                                  }`}
+                                }`}
                                 onClick={() => field.onChange(type.value)}
                               >
                                 <div className="flex items-center flex-1">
-                                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mr-3 ${isSelected ? "border-[#70AE48]" : "border-slate-400"
-                                    }`}>
+                                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mr-3 ${
+                                    isSelected ? "border-[#70AE48]" : "border-slate-400"
+                                  }`}>
                                     {isSelected && (
                                       <div className="w-2.5 h-2.5 rounded-full bg-[#70AE48]" />
                                     )}
                                   </div>
-                                  <Icon size={18} className={`mr-2 ${isSelected ? "text-[#70AE48]" : "text-slate-500"
-                                    }`} />
-                                  <span className={`text-sm ${isSelected ? "text-[#70AE48] font-medium" : "text-slate-700"
-                                    }`}>
+                                  <Icon size={18} className={`mr-2 ${
+                                    isSelected ? "text-[#70AE48]" : "text-slate-500"
+                                  }`} />
+                                  <span className={`text-sm ${
+                                    isSelected ? "text-[#70AE48] font-medium" : "text-slate-700"
+                                  }`}>
                                     {type.label}
                                   </span>
                                 </div>

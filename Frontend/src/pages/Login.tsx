@@ -56,6 +56,8 @@ export default function Login() {
         localStorage.setItem("user", JSON.stringify(user));
 
         const roles = user.roles ?? [];
+        console.log("👤 Rôles utilisateur:", roles);
+
         let redirectPath = "/";
         let userRole = "";
 
@@ -65,10 +67,15 @@ export default function Login() {
         } else if (roles.includes("landlord") || roles.includes("proprietaire")) {
           redirectPath = "/proprietaire";
           userRole = "proprietaire";
+        } else if (roles.includes("coproprietaire") || roles.includes("co_owner")) {
+          redirectPath = "/coproprietaire";  // ← AJOUTÉ
+          userRole = "coproprietaire";
         } else if (roles.includes("tenant") || roles.includes("locataire")) {
           redirectPath = "/locataire";
           userRole = "locataire";
         }
+
+        console.log("🎯 Redirection vers:", redirectPath);
 
         const updatedUser = { ...user, role: userRole };
         localStorage.setItem("user", JSON.stringify(updatedUser));
