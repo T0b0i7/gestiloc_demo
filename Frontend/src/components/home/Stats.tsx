@@ -214,9 +214,7 @@ export function Stats() {
           <h2 className="text-3xl md:text-4xl font-bold">
             Nous aidons les bailleurs à gérer sereinement leurs biens
           </h2>
-          <p className="text-base md:text-lg text-muted-foreground">
-            Nous sommes innovants, modernes et adaptés aux réalités africaines
-          </p>
+          
         </div>
 
         {/* VERSION DESKTOP : cartes flottantes inclinées */}

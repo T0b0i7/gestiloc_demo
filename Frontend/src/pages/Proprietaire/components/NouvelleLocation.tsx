@@ -248,20 +248,20 @@ const NouvelleLocation = () => {
       <div style={styles.page} className="animate-fadeInUp">
         {/* Top Action Bar */}
         <div style={styles.topBar} className="animate-slideInLeft">
-          <button 
+          <button
             style={styles.backBtn}
             onClick={() => navigate("/proprietaire/dashboard")}
           >
             ← Retour au tableau de bord
           </button>
           <div style={styles.topActions}>
-            <button 
+            <button
               style={styles.cancelBtn}
               onClick={() => navigate("/proprietaire/biens")}
             >
               ✕ Annuler
             </button>
-            <button 
+            <button
               style={styles.createBtn}
               onClick={() => {
                 // Logique de création du contrat ici
@@ -290,9 +290,9 @@ const NouvelleLocation = () => {
             {/* Bien à louer */}
             <div style={styles.fieldGroup}>
               <label style={styles.label}>Bien à louer</label>
-              <select 
-                style={styles.select} 
-                value={bien} 
+              <select
+                style={styles.select}
+                value={bien}
                 onChange={e => setBien(e.target.value)}
               >
                 <option value="">Sélectionner un bien</option>
@@ -304,9 +304,9 @@ const NouvelleLocation = () => {
             {/* Locataire */}
             <div style={styles.fieldGroup}>
               <label style={styles.label}>Locataire</label>
-              <select 
-                style={styles.select} 
-                value={locataire} 
+              <select
+                style={styles.select}
+                value={locataire}
                 onChange={e => setLocataire(e.target.value)}
               >
                 <option value="">Sélectionner un locataire</option>
@@ -320,24 +320,24 @@ const NouvelleLocation = () => {
               <label style={styles.label}>Type de bail</label>
               <div style={styles.radioGroup}>
                 <label style={styles.radioLabel}>
-                  <input 
-                    type="radio" 
-                    name="typeBail" 
-                    value="nu" 
-                    checked={typeBail === "nu"} 
-                    onChange={() => setTypeBail("nu")} 
-                    style={{ accentColor: "#16a34a" }} 
+                  <input
+                    type="radio"
+                    name="typeBail"
+                    value="nu"
+                    checked={typeBail === "nu"}
+                    onChange={() => setTypeBail("nu")}
+                    style={{ accentColor: "#16a34a" }}
                   />
                   Bail nu
                 </label>
                 <label style={styles.radioLabel}>
-                  <input 
-                    type="radio" 
-                    name="typeBail" 
-                    value="meuble" 
-                    checked={typeBail === "meuble"} 
-                    onChange={() => setTypeBail("meuble")} 
-                    style={{ accentColor: "#16a34a" }} 
+                  <input
+                    type="radio"
+                    name="typeBail"
+                    value="meuble"
+                    checked={typeBail === "meuble"}
+                    onChange={() => setTypeBail("meuble")}
+                    style={{ accentColor: "#16a34a" }}
                   />
                   Bail meublé
                 </label>
@@ -367,47 +367,47 @@ const NouvelleLocation = () => {
             {/* Loyer mensuel */}
             <div style={styles.fieldGroup}>
               <label style={styles.label}>Loyer mensuel (FCFA)</label>
-              <input 
-                type="number" 
-                style={styles.input} 
-                placeholder="40.000" 
-                value={loyer} 
-                onChange={e => setLoyer(e.target.value)} 
+              <input
+                type="number"
+                style={styles.input}
+                placeholder="40.000"
+                value={loyer}
+                onChange={e => setLoyer(e.target.value)}
               />
             </div>
 
             {/* Date de début */}
             <div style={styles.fieldGroup}>
               <label style={styles.label}>Date de début</label>
-              <input 
-                type="date" 
-                style={styles.input} 
-                value={dateDebut} 
-                onChange={e => setDateDebut(e.target.value)} 
+              <input
+                type="date"
+                style={styles.input}
+                value={dateDebut}
+                onChange={e => setDateDebut(e.target.value)}
               />
             </div>
 
             {/* Dépôt de garantie */}
             <div style={styles.fieldGroup}>
               <label style={styles.label}>Dépôt de garantie (FCFA)</label>
-              <input 
-                type="number" 
-                style={styles.input} 
-                placeholder="20.000" 
-                value={depot} 
-                onChange={e => setDepot(e.target.value)} 
+              <input
+                type="number"
+                style={styles.input}
+                placeholder="20.000"
+                value={depot}
+                onChange={e => setDepot(e.target.value)}
               />
             </div>
 
             {/* Durée du bail */}
             <div style={styles.fieldGroup}>
               <label style={styles.label}>Durée du bail</label>
-              <input 
-                type="text" 
-                style={styles.input} 
-                placeholder="Ex: 2 ans" 
-                value={duree} 
-                onChange={e => setDuree(e.target.value)} 
+              <input
+                type="text"
+                style={styles.input}
+                placeholder="Ex: 2 ans"
+                value={duree}
+                onChange={e => setDuree(e.target.value)}
               />
               <div style={styles.checkboxRow}>
                 <input
@@ -426,9 +426,9 @@ const NouvelleLocation = () => {
             {/* Date de paiement */}
             <div style={styles.fieldGroup}>
               <label style={styles.label}>Date de paiement</label>
-              <select 
-                style={styles.select} 
-                value={datePaiement} 
+              <select
+                style={styles.select}
+                value={datePaiement}
                 onChange={e => setDatePaiement(e.target.value)}
               >
                 {Array.from({ length: 28 }, (_, i) => (
@@ -440,9 +440,9 @@ const NouvelleLocation = () => {
             {/* Périodicité */}
             <div style={styles.fieldGroup}>
               <label style={styles.label}>Périodicité</label>
-              <select 
-                style={styles.select} 
-                value={periodicite} 
+              <select
+                style={styles.select}
+                value={periodicite}
                 onChange={e => setPeriodicite(e.target.value)}
               >
                 <option>Mensuel</option>
@@ -454,9 +454,9 @@ const NouvelleLocation = () => {
             {/* Mode de paiement */}
             <div style={{ ...styles.fieldGroup, ...styles.fullWidth }}>
               <label style={styles.label}>Mode de paiement</label>
-              <select 
-                style={styles.select} 
-                value={modePaiement} 
+              <select
+                style={styles.select}
+                value={modePaiement}
                 onChange={e => setModePaiement(e.target.value)}
               >
                 <option>Espèce</option>
@@ -483,13 +483,13 @@ const NouvelleLocation = () => {
 
           {/* Bottom actions */}
           <div style={styles.bottomActions}>
-            <button 
+            <button
               style={styles.cancelBtn}
               onClick={() => navigate("/proprietaire/biens")}
             >
               ✕ Annuler
             </button>
-            <button 
+            <button
               style={styles.createBtn}
               onClick={() => {
                 // Logique de création du contrat ici
