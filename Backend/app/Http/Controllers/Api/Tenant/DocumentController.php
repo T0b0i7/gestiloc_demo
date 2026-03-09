@@ -10,6 +10,7 @@ use App\Models\Property;
 use App\Models\Lease;
 use App\Models\User;
 use App\Models\PropertyDelegation;
+use App\Models\ConditionReport;
 use App\Mail\DocumentSharedMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -21,15 +22,33 @@ use Illuminate\Validation\ValidationException;
 
 class DocumentController extends Controller
 {
+    /**
+     * Récupérer le locataire connecté
+     *
+     * @return Tenant|null
+     */
     private function getTenant()
     {
         $user = auth()->user();
 
         if (!$user || !$user->hasRole('tenant')) {
+            Log::warning('getTenant: Utilisateur non trouvé ou non locataire', [
+                'user_id' => $user ? $user->id : null,
+                'has_role' => $user ? $user->hasRole('tenant') : false
+            ]);
             return null;
         }
 
-        return $user->tenant;
+        // Récupérer le tenant via user_id
+        $tenant = Tenant::where('user_id', $user->id)->first();
+
+        Log::info('getTenant: Tenant trouvé', [
+            'user_id' => $user->id,
+            'tenant_id' => $tenant ? $tenant->id : null,
+            'tenant_name' => $tenant ? trim($tenant->first_name . ' ' . $tenant->last_name) : null
+        ]);
+
+        return $tenant;
     }
 
     /**
@@ -139,6 +158,259 @@ class DocumentController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur lors du chargement des documents'
+            ], 500);
+        }
+    }
+
+    /**
+     * GET /api/tenant/leases - Liste des baux du locataire
+     */
+    public function getLeases(Request $request)
+    {
+        try {
+            $tenant = $this->getTenant();
+
+            Log::info('=== DÉBUT GET LEASES ===', [
+                'tenant_id' => $tenant ? $tenant->id : null
+            ]);
+
+            if (!$tenant) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
+            }
+
+            // 1. Requête SQL directe pour vérifier
+            $sqlLeases = \DB::select("SELECT * FROM leases WHERE tenant_id = ?", [$tenant->id]);
+            Log::info('Résultat requête SQL directe', [
+                'sql_count' => count($sqlLeases),
+                'sql_results' => $sqlLeases
+            ]);
+
+            // 2. Requête Eloquent
+            $query = Lease::where('tenant_id', $tenant->id)
+                ->with(['property']);
+
+            Log::info('SQL de la requête Eloquent', [
+                'sql' => $query->toSql(),
+                'bindings' => $query->getBindings()
+            ]);
+
+            // Filtres
+            if ($request->has('property_id') && !empty($request->property_id)) {
+                $query->where('property_id', $request->property_id);
+            }
+
+            if ($request->has('status') && !empty($request->status)) {
+                $query->where('status', $request->status);
+            }
+
+            // Recherche
+            if ($request->has('search') && !empty($request->search)) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->whereHas('property', function($subQ) use ($search) {
+                        $subQ->where('name', 'like', "%{$search}%")
+                             ->orWhere('address', 'like', "%{$search}%");
+                    });
+                });
+            }
+
+            $leases = $query->orderBy('created_at', 'desc')->get();
+
+            Log::info('Résultat Eloquent', [
+                'count' => $leases->count(),
+                'leases' => $leases->toArray()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $leases,
+                'total' => $leases->count(),
+                'debug' => [
+                    'tenant_id' => $tenant->id,
+                    'sql_count' => count($sqlLeases)
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur getLeases: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du chargement des baux'
+            ], 500);
+        }
+    }
+
+    /**
+     * GET /api/tenant/condition-reports - Liste des états des lieux du locataire
+     */
+    public function getConditionReports(Request $request)
+    {
+        try {
+            $tenant = $this->getTenant();
+
+            if (!$tenant) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
+            }
+
+            $query = ConditionReport::whereHas('lease', function($q) use ($tenant) {
+                    $q->where('tenant_id', $tenant->id);
+                })
+                ->with(['property', 'lease', 'creator']);
+
+            // Filtres
+            if ($request->has('property_id') && !empty($request->property_id)) {
+                $query->where('property_id', $request->property_id);
+            }
+
+            if ($request->has('type') && !empty($request->type) && $request->type !== 'all') {
+                $query->where('type', $request->type);
+            }
+
+            // Recherche
+            if ($request->has('search') && !empty($request->search)) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->whereHas('property', function($subQ) use ($search) {
+                        $subQ->where('name', 'like', "%{$search}%")
+                             ->orWhere('address', 'like', "%{$search}%");
+                    })
+                    ->orWhere('comments', 'like', "%{$search}%");
+                });
+            }
+
+            $reports = $query->orderBy('created_at', 'desc')->get();
+
+            // Ajouter les URLs des photos
+            $reports->each(function($report) {
+                $report->photos = $report->getPhotosWithUrls();
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $reports,
+                'total' => $reports->count()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur getConditionReports: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du chargement des états des lieux'
+            ], 500);
+        }
+    }
+
+    /**
+     * GET /api/tenant/leases/{uuid}/contract - Télécharger le contrat de bail
+     */
+    public function downloadLeaseContract($uuid)
+    {
+        try {
+            $tenant = $this->getTenant();
+
+            if (!$tenant) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
+            }
+
+            $lease = Lease::where('uuid', $uuid)
+                ->where('tenant_id', $tenant->id)
+                ->with(['property', 'tenant'])
+                ->firstOrFail();
+
+            // Vérifier si le bail a un fichier de contrat
+            if ($lease->contract_file_path && Storage::disk('public')->exists($lease->contract_file_path)) {
+                return Storage::disk('public')->download($lease->contract_file_path, 'contrat_bail_' . ($lease->lease_number ?? $lease->uuid) . '.pdf');
+            }
+
+            // Sinon, générer un PDF à partir des données
+            $pdf = Pdf::loadView('pdf.lease-contract', [
+                'lease' => $lease,
+                'tenant' => $tenant,
+                'property' => $lease->property,
+                'date' => now()->format('d/m/Y')
+            ]);
+
+            $pdf->setPaper('A4', 'portrait');
+            $pdf->setOptions([
+                'defaultFont' => 'sans-serif',
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true
+            ]);
+
+            $filename = 'contrat_bail_' . ($lease->property->name ?? 'bien') . '_' . date('Ymd') . '.pdf';
+
+            return $pdf->download($filename);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur téléchargement contrat de bail: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du téléchargement du contrat'
+            ], 500);
+        }
+    }
+
+    /**
+     * GET /api/tenant/condition-reports/{uuid}/download - Télécharger l'état des lieux
+     */
+    public function downloadConditionReport($uuid)
+    {
+        try {
+            $tenant = $this->getTenant();
+
+            if (!$tenant) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
+            }
+
+            $report = ConditionReport::where('uuid', $uuid)
+                ->whereHas('lease', function($q) use ($tenant) {
+                    $q->where('tenant_id', $tenant->id);
+                })
+                ->with(['property', 'lease', 'creator'])
+                ->firstOrFail();
+
+            // Ajouter les URLs des photos
+            $report->photos = $report->getPhotosWithUrls();
+
+            // Générer le PDF de l'état des lieux
+            $pdf = Pdf::loadView('pdf.condition-report', [
+                'report' => $report,
+                'tenant' => $tenant,
+                'property' => $report->property,
+                'date' => now()->format('d/m/Y')
+            ]);
+
+            $pdf->setPaper('A4', 'portrait');
+            $pdf->setOptions([
+                'defaultFont' => 'sans-serif',
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true
+            ]);
+
+            $type = $report->type === 'entry' ? 'entree' : 'sortie';
+            $filename = 'etat_des_lieux_' . $type . '_' . ($report->property->name ?? 'bien') . '_' . date('Ymd') . '.pdf';
+
+            return $pdf->download($filename);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur téléchargement état des lieux: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors du téléchargement de l\'état des lieux'
             ], 500);
         }
     }
@@ -348,7 +620,7 @@ class DocumentController extends Controller
 
             $validated = $request->validate([
                 'name' => 'nullable|string|max:255',
-                'type' => 'required|string|in:acte_vente,bail,quittance,dpe,diagnostic,autre',
+                'type' => 'required|string|in:acte_vente,bail,quittance,dpe,diagnostic,etat_des_lieux,contrat_bail,autre',
                 'bien' => 'nullable|string|max:255',
                 'description' => 'nullable|string',
                 'property_id' => 'nullable|exists:properties,id',
@@ -442,7 +714,7 @@ class DocumentController extends Controller
 
             $validated = $request->validate([
                 'name' => 'sometimes|string|max:255',
-                'type' => 'sometimes|string|in:acte_vente,bail,quittance,dpe,diagnostic,autre',
+                'type' => 'sometimes|string|in:acte_vente,bail,quittance,dpe,diagnostic,etat_des_lieux,contrat_bail,autre',
                 'bien' => 'nullable|string|max:255',
                 'description' => 'nullable|string',
                 'property_id' => 'nullable|exists:properties,id',
@@ -639,57 +911,57 @@ class DocumentController extends Controller
     }
 
     /**
- * GET /api/tenant/documents/{id}/pdf - Télécharger le document en PDF avec ses informations
- */
-public function downloadPdf($id)
-{
-    try {
-        $tenant = $this->getTenant();
+     * GET /api/tenant/documents/{id}/pdf - Télécharger le document en PDF avec ses informations
+     */
+    public function downloadPdf($id)
+    {
+        try {
+            $tenant = $this->getTenant();
 
-        if (!$tenant) {
+            if (!$tenant) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès réservé aux locataires'
+                ], 403);
+            }
+
+            $document = Document::where('tenant_id', $tenant->id)
+                ->with(['property', 'lease'])
+                ->findOrFail($id);
+
+            if (!Storage::disk('public')->exists($document->file_path)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Fichier non trouvé'
+                ], 404);
+            }
+
+            // Charger la vue PDF
+            $pdf = Pdf::loadView('pdf.document', [
+                'document' => $document,
+                'tenant' => $tenant,
+                'date' => now()->format('d/m/Y H:i')
+            ]);
+
+            $pdf->setPaper('A4', 'portrait');
+            $pdf->setOptions([
+                'defaultFont' => 'sans-serif',
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true
+            ]);
+
+            $filename = 'document_' . $document->id . '_' . date('Ymd') . '.pdf';
+
+            return $pdf->download($filename);
+
+        } catch (\Exception $e) {
+            Log::error('Erreur téléchargement PDF document: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Accès réservé aux locataires'
-            ], 403);
+                'message' => 'Erreur lors du téléchargement'
+            ], 500);
         }
-
-        $document = Document::where('tenant_id', $tenant->id)
-            ->with(['property', 'lease'])
-            ->findOrFail($id);
-
-        if (!Storage::disk('public')->exists($document->file_path)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Fichier non trouvé'
-            ], 404);
-        }
-
-        // Charger la vue PDF
-        $pdf = Pdf::loadView('pdf.document', [
-            'document' => $document,
-            'tenant' => $tenant,
-            'date' => now()->format('d/m/Y H:i')
-        ]);
-
-        $pdf->setPaper('A4', 'portrait');
-        $pdf->setOptions([
-            'defaultFont' => 'sans-serif',
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true
-        ]);
-
-        $filename = 'document_' . $document->id . '_' . date('Ymd') . '.pdf';
-
-        return $pdf->download($filename);
-
-    } catch (\Exception $e) {
-        Log::error('Erreur téléchargement PDF document: ' . $e->getMessage());
-        return response()->json([
-            'success' => false,
-            'message' => 'Erreur lors du téléchargement'
-        ], 500);
     }
-}
 
     /**
      * Envoyer les emails de partage
@@ -756,6 +1028,12 @@ public function downloadPdf($id)
                 ->distinct()
                 ->pluck('type');
 
+            // Types de baux
+            $leaseTypes = ['residential', 'commercial', 'professional', 'furnished', 'empty'];
+
+            // Types d'états des lieux
+            $reportTypes = ['entry', 'exit'];
+
             // Générer les options de période (6 derniers mois)
             $periodes = ['Toutes'];
             for ($i = 5; $i >= 0; $i--) {
@@ -769,6 +1047,8 @@ public function downloadPdf($id)
                     'properties' => $properties,
                     'types' => $types,
                     'periodes' => $periodes,
+                    'lease_types' => $leaseTypes,
+                    'report_types' => $reportTypes,
                 ]
             ]);
 

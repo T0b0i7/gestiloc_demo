@@ -1,4 +1,4 @@
-// src/pages/Locataire/components/Documents.tsx
+// src/pages/Locataire/components/Documents.tsx (version complète avec contrats de bail et états des lieux)
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -37,7 +37,15 @@ import {
   Link2,
   Facebook,
   Twitter,
-  Check
+  Check,
+  FileSignature,
+  ClipboardList,
+  Building2,
+  Key,
+  DoorOpen,
+  Camera,
+  Wrench,
+  Zap
 } from 'lucide-react';
 import { Card } from './ui/Card';
 import { DocumentViewer } from './DocumentViewer';
@@ -66,8 +74,63 @@ interface Document {
   icon: string;
   property?: { id: number; name: string; };
   property_id?: number;
-  lease?: { id: number; };
+  lease?: { id: number; uuid: string; };
+  lease_id?: number;
   shared_with?: number[];
+  category?: string;
+}
+
+interface Lease {
+  id: number;
+  uuid: string;
+  property_id: number;
+  property?: {
+    id: number;
+    name: string;
+    address: string;
+  };
+  start_date: string;
+  end_date: string | null;
+  rent_amount: number;
+  deposit: number;
+  type: string;
+  status: string;
+  tenant_id: number;
+  created_at: string;
+}
+
+interface ConditionReport {
+  id: number;
+  uuid: string;
+  property_id: number;
+  lease_id: number;
+  type: 'entry' | 'exit';
+  report_date: string;
+  status: 'draft' | 'finalized' | 'signed';
+  created_by: number;
+  created_by_name: string;
+  signature_tenant: boolean;
+  signature_landlord: boolean;
+  signature_date: string | null;
+  property?: {
+    id: number;
+    name: string;
+    address: string;
+  };
+  lease?: {
+    id: number;
+    uuid: string;
+  };
+  photos: Array<{
+    id: number;
+    url: string;
+    caption: string;
+    room: string;
+  }>;
+  comments: string;
+  file_url?: string;
+  file_size_formatted?: string;
+  file_type?: string;
 }
 
 interface Template {
@@ -124,7 +187,348 @@ interface FilterOptions {
   properties: Array<{ id: number, name: string }>;
   types: string[];
   periodes: string[];
+  lease_types: string[];
+  report_types: string[];
 }
+
+// ==================== COMPOSANT LEASE VIEWER MODAL ====================
+interface LeaseViewerModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  lease: Lease | null;
+  notify?: (message: string, type?: 'success' | 'error' | 'info') => void;
+  onDownloadContract?: (lease: Lease) => void;
+}
+
+const LeaseViewerModal: React.FC<LeaseViewerModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  lease, 
+  notify,
+  onDownloadContract 
+}) => {
+  if (!isOpen || !lease) return null;
+
+  const handleDownload = () => {
+    if (onDownloadContract) {
+      onDownloadContract(lease);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  const formatMoney = (amount: number) => {
+    return new Intl.NumberFormat('fr-FR', { 
+      style: 'currency', 
+      currency: 'XOF',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch(status) {
+      case 'active': return <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Actif</span>;
+      case 'pending': return <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">En attente</span>;
+      case 'terminated': return <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">Résilié</span>;
+      default: return <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">{status}</span>;
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fadeIn">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto transform transition-all animate-slideUp">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white rounded-t-xl">
+          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+            <FileSignature size={20} className="text-[#70AE48]" />
+            Contrat de bail
+          </h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+            <X size={20} className="text-gray-500" />
+          </button>
+        </div>
+
+        <div className="p-6">
+          {/* En-tête du bail */}
+          <div className="bg-gradient-to-r from-[#70AE48]/10 to-[#FFB74D]/10 rounded-lg p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">{lease.property?.name || 'Bien'}</h3>
+                <p className="text-sm text-gray-600 mt-1">{lease.property?.address || ''}</p>
+              </div>
+              <div>
+                {getStatusBadge(lease.status)}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-xs text-gray-500">Début</p>
+                <p className="text-sm font-semibold text-gray-900">{formatDate(lease.start_date)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Fin</p>
+                <p className="text-sm font-semibold text-gray-900">{lease.end_date ? formatDate(lease.end_date) : 'Indéterminée'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Loyer mensuel</p>
+                <p className="text-sm font-semibold text-gray-900">{formatMoney(lease.rent_amount)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Dépôt de garantie</p>
+                <p className="text-sm font-semibold text-gray-900">{formatMoney(lease.deposit)}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Détails du bail */}
+          <div className="space-y-4">
+            <h4 className="font-medium text-gray-900">Détails du contrat</h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-xs text-gray-500 mb-1">Type de bail</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {lease.type === 'residential' && 'Bail d\'habitation'}
+                  {lease.type === 'commercial' && 'Bail commercial'}
+                  {lease.type === 'professional' && 'Bail professionnel'}
+                  {lease.type === 'furnished' && 'Bail meublé'}
+                  {lease.type === 'empty' && 'Bail vide'}
+                </p>
+              </div>
+              
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-xs text-gray-500 mb-1">Référence</p>
+                <p className="text-sm font-medium text-gray-900 font-mono">{lease.uuid}</p>
+              </div>
+              
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-xs text-gray-500 mb-1">Date de création</p>
+                <p className="text-sm font-medium text-gray-900">{formatDate(lease.created_at)}</p>
+              </div>
+              
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-xs text-gray-500 mb-1">Statut</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {lease.status === 'active' && 'Bail en cours'}
+                  {lease.status === 'pending' && 'En attente de validation'}
+                  {lease.status === 'terminated' && 'Bail résilié'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Boutons d'action */}
+          <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Fermer
+            </button>
+            <button
+              onClick={handleDownload}
+              className="px-4 py-2 bg-[#70AE48] text-white rounded-lg hover:bg-[#5a8f3a] transition-colors flex items-center gap-2"
+            >
+              <Download size={18} />
+              Télécharger le contrat
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ==================== COMPOSANT CONDITION REPORT VIEWER MODAL ====================
+interface ConditionReportViewerModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  report: ConditionReport | null;
+  notify?: (message: string, type?: 'success' | 'error' | 'info') => void;
+  onDownloadReport?: (report: ConditionReport) => void;
+}
+
+const ConditionReportViewerModal: React.FC<ConditionReportViewerModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  report, 
+  notify,
+  onDownloadReport 
+}) => {
+  const [selectedPhoto, setSelectedPhoto] = useState<number | null>(null);
+
+  if (!isOpen || !report) return null;
+
+  const handleDownload = () => {
+    if (onDownloadReport) {
+      onDownloadReport(report);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getTypeLabel = (type: string) => {
+    return type === 'entry' ? 'État des lieux d\'entrée' : 'État des lieux de sortie';
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch(status) {
+      case 'draft': return <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">Brouillon</span>;
+      case 'finalized': return <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">Finalisé</span>;
+      case 'signed': return <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Signé</span>;
+      default: return <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">{status}</span>;
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fadeIn">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto transform transition-all animate-slideUp">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white rounded-t-xl">
+          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+            <ClipboardList size={20} className="text-[#70AE48]" />
+            {getTypeLabel(report.type)}
+          </h2>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+            <X size={20} className="text-gray-500" />
+          </button>
+        </div>
+
+        <div className="p-6">
+          {/* En-tête du rapport */}
+          <div className="bg-gradient-to-r from-[#70AE48]/10 to-[#FFB74D]/10 rounded-lg p-6 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">{report.property?.name || 'Bien'}</h3>
+                <p className="text-sm text-gray-600 mt-1">{report.property?.address || ''}</p>
+              </div>
+              <div>
+                {getStatusBadge(report.status)}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div>
+                <p className="text-xs text-gray-500">Date du rapport</p>
+                <p className="text-sm font-semibold text-gray-900">{formatDate(report.report_date)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Créé par</p>
+                <p className="text-sm font-semibold text-gray-900">{report.created_by_name}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Signatures</p>
+                <p className="text-sm font-semibold text-gray-900">
+                  {report.signature_tenant ? '✅ Locataire' : '❌ Locataire'}, 
+                  {report.signature_landlord ? '✅ Propriétaire' : '❌ Propriétaire'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Commentaires */}
+          {report.comments && (
+            <div className="mb-6">
+              <h4 className="font-medium text-gray-900 mb-2">Commentaires</h4>
+              <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-700">
+                {report.comments}
+              </div>
+            </div>
+          )}
+
+          {/* Photos */}
+          {report.photos && report.photos.length > 0 && (
+            <div className="mb-6">
+              <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                <Camera size={18} className="text-gray-500" />
+                Photos ({report.photos.length})
+              </h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {report.photos.map((photo, index) => (
+                  <div 
+                    key={photo.id || index}
+                    className="relative group cursor-pointer"
+                    onClick={() => setSelectedPhoto(index)}
+                  >
+                    <img 
+                      src={photo.url} 
+                      alt={photo.caption || `Photo ${index + 1}`}
+                      className="w-full h-24 object-cover rounded-lg"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                      <Eye size={20} className="text-white" />
+                    </div>
+                    {photo.room && (
+                      <span className="absolute bottom-1 left-1 text-xs bg-black/70 text-white px-1 py-0.5 rounded">
+                        {photo.room}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Modal pour agrandir les photos */}
+              {selectedPhoto !== null && report.photos[selectedPhoto] && (
+                <div 
+                  className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-4"
+                  onClick={() => setSelectedPhoto(null)}
+                >
+                  <div className="relative max-w-4xl max-h-[90vh]">
+                    <img 
+                      src={report.photos[selectedPhoto].url} 
+                      alt={report.photos[selectedPhoto].caption || `Photo ${selectedPhoto + 1}`}
+                      className="max-w-full max-h-[90vh] object-contain"
+                    />
+                    <button 
+                      onClick={() => setSelectedPhoto(null)}
+                      className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full hover:bg-black/70"
+                    >
+                      <X size={24} />
+                    </button>
+                    {report.photos[selectedPhoto].caption && (
+                      <div className="absolute bottom-4 left-4 right-4 bg-black/70 text-white p-2 rounded text-sm">
+                        {report.photos[selectedPhoto].caption}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Boutons d'action */}
+          <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Fermer
+            </button>
+            <button
+              onClick={handleDownload}
+              className="px-4 py-2 bg-[#70AE48] text-white rounded-lg hover:bg-[#5a8f3a] transition-colors flex items-center gap-2"
+            >
+              <Download size={18} />
+              Télécharger le rapport
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // ==================== COMPOSANT SHARE MODAL ====================
 interface ShareModalProps {
@@ -337,6 +741,8 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ isOpen, onClo
                   {document.type === 'quittance' && 'Quittance'}
                   {document.type === 'dpe' && 'DPE'}
                   {document.type === 'diagnostic' && 'Diagnostic'}
+                  {document.type === 'etat_des_lieux' && 'État des lieux'}
+                  {document.type === 'contrat_bail' && 'Contrat de bail'}
                   {document.type === 'autre' && 'Autre'}
                 </span>
               </div>
@@ -394,7 +800,6 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({ isOpen, onClo
             >
               Fermer
             </button>
-
           </div>
         </div>
       </div>
@@ -408,29 +813,39 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<'documents' | 'dossier'>('documents');
-  const [activeFilter, setActiveFilter] = useState<'actifs' | 'archives' | 'templates'>('actifs');
+  const [activeFilter, setActiveFilter] = useState<'actifs' | 'archives' | 'templates' | 'contrats' | 'etats_lieux'>('actifs');
 
   // États pour les données
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [leases, setLeases] = useState<Lease[]>([]);
+  const [conditionReports, setConditionReports] = useState<ConditionReport[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [dossier, setDossier] = useState<Dossier | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     properties: [],
     types: [],
-    periodes: ['Toutes']
+    periodes: ['Toutes'],
+    lease_types: [],
+    report_types: []
   });
 
   // États pour les compteurs
   const [actifsCount, setActifsCount] = useState(0);
   const [archivesCount, setArchivesCount] = useState(0);
   const [templatesCount, setTemplatesCount] = useState(0);
+  const [contratsCount, setContratsCount] = useState(0);
+  const [etatsLieuxCount, setEtatsLieuxCount] = useState(0);
 
   // États pour les modals
   const [showAddModal, setShowAddModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showDocumentViewer, setShowDocumentViewer] = useState(false);
+  const [showLeaseViewer, setShowLeaseViewer] = useState(false);
+  const [showConditionReportViewer, setShowConditionReportViewer] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  const [selectedLease, setSelectedLease] = useState<Lease | null>(null);
+  const [selectedConditionReport, setSelectedConditionReport] = useState<ConditionReport | null>(null);
   const [shareUrl, setShareUrl] = useState('');
   const [shareTitle, setShareTitle] = useState('');
 
@@ -495,6 +910,8 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
     { value: 'quittance', label: 'Quittance' },
     { value: 'dpe', label: 'DPE' },
     { value: 'diagnostic', label: 'Diagnostic' },
+    { value: 'etat_des_lieux', label: 'État des lieux' },
+    { value: 'contrat_bail', label: 'Contrat de bail' },
     { value: 'autre', label: 'Autre' }
   ];
 
@@ -516,6 +933,8 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
   // Charger les données
   useEffect(() => {
     fetchDocuments();
+    fetchLeases();
+    fetchConditionReports();
     fetchTemplates();
     fetchDossier();
     fetchFilterOptions();
@@ -523,8 +942,16 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
 
   // Recharger quand les filtres changent
   useEffect(() => {
-    if (activeTab === 'documents' && activeFilter !== 'templates') {
-      fetchDocuments();
+    if (activeTab === 'documents') {
+      if (activeFilter === 'actifs' || activeFilter === 'archives') {
+        fetchDocuments();
+      } else if (activeFilter === 'contrats') {
+        fetchLeases();
+      } else if (activeFilter === 'etats_lieux') {
+        fetchConditionReports();
+      } else if (activeFilter === 'templates') {
+        // Templates déjà chargés
+      }
     }
   }, [activeFilter, searchQuery, periode, typeFilter, propertyFilter, itemsPerPage]);
 
@@ -558,6 +985,49 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
       }
     } catch (error) {
       console.warn('Silent fail for documents - backend might be offline');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchLeases = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        ...(searchQuery && { search: searchQuery }),
+        ...(propertyFilter && { property_id: propertyFilter }),
+      });
+
+      const response = await api.get(`/tenant/leases?${params}`);
+
+      if (response.data.success) {
+        setLeases(response.data.data || []);
+        setContratsCount(response.data.total || 0);
+      }
+    } catch (error) {
+      console.warn('Silent fail for leases - backend might be offline');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchConditionReports = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        ...(searchQuery && { search: searchQuery }),
+        ...(propertyFilter && { property_id: propertyFilter }),
+        ...(typeFilter && typeFilter !== 'all' && { type: typeFilter }),
+      });
+
+      const response = await api.get(`/tenant/condition-reports?${params}`);
+
+      if (response.data.success) {
+        setConditionReports(response.data.data || []);
+        setEtatsLieuxCount(response.data.total || 0);
+      }
+    } catch (error) {
+      console.warn('Silent fail for condition reports - backend might be offline');
     } finally {
       setLoading(false);
     }
@@ -736,6 +1206,56 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
     }
   };
 
+  const handleDownloadLeaseContract = async (lease: Lease) => {
+    try {
+      const response = await api.get(`/tenant/leases/${lease.uuid}/contract`, {
+        responseType: 'blob'
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `contrat_bail_${lease.property?.name || lease.uuid}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+
+      notify?.('Contrat de bail téléchargé avec succès', 'success');
+    } catch (error) {
+      console.error('Erreur téléchargement contrat:', error);
+      notify?.('Erreur lors du téléchargement du contrat', 'error');
+    }
+  };
+
+  const handleDownloadConditionReport = async (report: ConditionReport) => {
+    try {
+      const response = await api.get(`/tenant/condition-reports/${report.uuid}/download`, {
+        responseType: 'blob'
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `etat_des_lieux_${report.type}_${report.report_date}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+
+      notify?.('État des lieux téléchargé avec succès', 'success');
+    } catch (error) {
+      console.error('Erreur téléchargement état des lieux:', error);
+      notify?.('Erreur lors du téléchargement de l\'état des lieux', 'error');
+    }
+  };
+
   const handleDownloadDossier = async () => {
     try {
       const response = await api.get('/tenant/dossier/download', {
@@ -864,9 +1384,19 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
     }
   };
 
-  const handlePreview = (doc: Document) => {
+  const handlePreviewDocument = (doc: Document) => {
     setSelectedDocument(doc);
     setShowDocumentViewer(true);
+  };
+
+  const handlePreviewLease = (lease: Lease) => {
+    setSelectedLease(lease);
+    setShowLeaseViewer(true);
+  };
+
+  const handlePreviewConditionReport = (report: ConditionReport) => {
+    setSelectedConditionReport(report);
+    setShowConditionReportViewer(true);
   };
 
   const getFileIcon = (fileType: string) => {
@@ -876,6 +1406,23 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
     if (fileType?.includes('excel') || fileType?.includes('sheet')) return <FileText size={20} className="text-green-600" />;
     if (fileType?.includes('presentation') || fileType?.includes('powerpoint')) return <FileText size={20} className="text-orange-600" />;
     return <File size={20} className="text-gray-600" />;
+  };
+
+  const getLeaseIcon = (status: string) => {
+    switch(status) {
+      case 'active': return <FileSignature size={20} className="text-green-600" />;
+      case 'pending': return <FileSignature size={20} className="text-yellow-600" />;
+      case 'terminated': return <FileSignature size={20} className="text-red-600" />;
+      default: return <FileSignature size={20} className="text-gray-600" />;
+    }
+  };
+
+  const getReportIcon = (type: string, status: string) => {
+    if (type === 'entry') {
+      return <DoorOpen size={20} className={status === 'signed' ? 'text-green-600' : 'text-blue-600'} />;
+    } else {
+      return <Key size={20} className={status === 'signed' ? 'text-green-600' : 'text-orange-600'} />;
+    }
   };
 
   const getContactTypeColor = (type: string) => {
@@ -1192,6 +1739,24 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
         onClose={() => setShowDocumentViewer(false)}
         document={selectedDocument}
         notify={notify}
+      />
+
+      {/* Lease Viewer Modal */}
+      <LeaseViewerModal
+        isOpen={showLeaseViewer}
+        onClose={() => setShowLeaseViewer(false)}
+        lease={selectedLease}
+        notify={notify}
+        onDownloadContract={handleDownloadLeaseContract}
+      />
+
+      {/* Condition Report Viewer Modal */}
+      <ConditionReportViewerModal
+        isOpen={showConditionReportViewer}
+        onClose={() => setShowConditionReportViewer(false)}
+        report={selectedConditionReport}
+        notify={notify}
+        onDownloadReport={handleDownloadConditionReport}
       />
 
       {/* Share Modal */}
@@ -1631,7 +2196,7 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Mes documents</h1>
                 <p className="text-sm text-gray-600 mt-1">
-                  Gérez vos documents et fichiers partagés
+                  Gérez vos documents, contrats de bail et états des lieux
                 </p>
               </div>
 
@@ -1644,92 +2209,97 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
               </button>
             </div>
 
-            {/* Statistiques */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center text-white">
-                    <FileText size={20} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-blue-600 font-medium">Total documents</p>
-                    <p className="text-2xl font-bold text-gray-900">{documents.length}</p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-4 bg-gradient-to-br from-green-50 to-green-100/50 border border-green-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center text-white">
-                    <CheckCircle size={20} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-green-600 font-medium">Actifs</p>
-                    <p className="text-2xl font-bold text-gray-900">{actifsCount}</p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-4 bg-gradient-to-br from-orange-50 to-orange-100/50 border border-orange-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center text-white">
-                    <Archive size={20} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-orange-600 font-medium">Archivés</p>
-                    <p className="text-2xl font-bold text-gray-900">{archivesCount}</p>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="p-4 bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-purple-500 flex items-center justify-center text-white">
-                    <Share2 size={20} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-purple-600 font-medium">Partagés</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {documents.filter(d => d.is_shared).length}
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            </div>
-
-            {/* Filtres */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setActiveFilter('actifs')}
-                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${activeFilter === 'actifs' ? 'text-[#70AE48]' : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                  <CheckCircle size={16} className={activeFilter === 'actifs' ? 'text-[#70AE48]' : 'text-gray-400'} />
-                  Actifs <span className="bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded-full">{actifsCount}</span>
-                </button>
-                <button
-                  onClick={() => setActiveFilter('archives')}
-                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${activeFilter === 'archives' ? 'text-[#70AE48]' : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                  <Archive size={16} className={activeFilter === 'archives' ? 'text-[#70AE48]' : 'text-gray-400'} />
-                  Archives <span className="bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded-full">{archivesCount}</span>
-                </button>
-                <button
-                  onClick={() => setActiveFilter('templates')}
-                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${activeFilter === 'templates' ? 'text-[#70AE48]' : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                  <FileText size={16} className={activeFilter === 'templates' ? 'text-[#70AE48]' : 'text-gray-400'} />
-                  Templates <span className="bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded-full">{templatesCount}</span>
-                </button>
-              </div>
+            {/* Filtres par catégorie */}
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <button
+                onClick={() => setActiveFilter('actifs')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeFilter === 'actifs' 
+                    ? 'bg-[#70AE48] text-white' 
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <CheckCircle size={16} />
+                Tous les documents
+                <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${
+                  activeFilter === 'actifs' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
+                }`}>
+                  {actifsCount}
+                </span>
+              </button>
+              
+              <button
+                onClick={() => setActiveFilter('contrats')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeFilter === 'contrats' 
+                    ? 'bg-[#70AE48] text-white' 
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <FileSignature size={16} />
+                Contrats de bail
+                <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${
+                  activeFilter === 'contrats' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
+                }`}>
+                  {contratsCount}
+                </span>
+              </button>
+              
+              <button
+                onClick={() => setActiveFilter('etats_lieux')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeFilter === 'etats_lieux' 
+                    ? 'bg-[#70AE48] text-white' 
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <ClipboardList size={16} />
+                États des lieux
+                <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${
+                  activeFilter === 'etats_lieux' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
+                }`}>
+                  {etatsLieuxCount}
+                </span>
+              </button>
+              
+              <button
+                onClick={() => setActiveFilter('archives')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeFilter === 'archives' 
+                    ? 'bg-[#70AE48] text-white' 
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <Archive size={16} />
+                Archives
+                <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${
+                  activeFilter === 'archives' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
+                }`}>
+                  {archivesCount}
+                </span>
+              </button>
+              
+              <button
+                onClick={() => setActiveFilter('templates')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeFilter === 'templates' 
+                    ? 'bg-[#70AE48] text-white' 
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                <FileText size={16} />
+                Templates
+                <span className={`ml-1 px-1.5 py-0.5 rounded-full text-xs ${
+                  activeFilter === 'templates' ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-700'
+                }`}>
+                  {templatesCount}
+                </span>
+              </button>
             </div>
 
             {/* Filter Card */}
             <Card className="p-4">
-              <h3 className="text-sm font-medium text-gray-900 mb-3">Filtrer les documents</h3>
+              <h3 className="text-sm font-medium text-gray-900 mb-3">Filtrer</h3>
 
               <div className="flex flex-col md:flex-row gap-3">
                 {/* Lignes par page */}
@@ -1756,33 +2326,51 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
                   )}
                 </div>
 
-                {/* Période */}
-                <select
-                  value={periode}
-                  onChange={(e) => setPeriode(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-opacity-20 md:w-40 bg-white text-gray-900"
-                  style={{ borderColor: `${PRIMARY_COLOR}80` }}
-                >
-                  <option value="">Période</option>
-                  {filterOptions.periodes.map(p => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </select>
+                {/* Période - uniquement pour les documents */}
+                {(activeFilter === 'actifs' || activeFilter === 'archives') && (
+                  <select
+                    value={periode}
+                    onChange={(e) => setPeriode(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-opacity-20 md:w-40 bg-white text-gray-900"
+                    style={{ borderColor: `${PRIMARY_COLOR}80` }}
+                  >
+                    <option value="">Période</option>
+                    {filterOptions.periodes.map(p => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                )}
 
-                {/* Type */}
-                <select
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-opacity-20 md:w-40 bg-white text-gray-900"
-                  style={{ borderColor: `${PRIMARY_COLOR}80` }}
-                >
-                  <option value="">Type</option>
-                  {typeOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                {/* Type - pour documents */}
+                {(activeFilter === 'actifs' || activeFilter === 'archives') && (
+                  <select
+                    value={typeFilter}
+                    onChange={(e) => setTypeFilter(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-opacity-20 md:w-40 bg-white text-gray-900"
+                    style={{ borderColor: `${PRIMARY_COLOR}80` }}
+                  >
+                    <option value="">Type</option>
+                    {typeOptions.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                {/* Type d'état des lieux */}
+                {activeFilter === 'etats_lieux' && (
+                  <select
+                    value={typeFilter}
+                    onChange={(e) => setTypeFilter(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-opacity-20 md:w-48 bg-white text-gray-900"
+                    style={{ borderColor: `${PRIMARY_COLOR}80` }}
+                  >
+                    <option value="all">Tous les états des lieux</option>
+                    <option value="entry">État des lieux d'entrée</option>
+                    <option value="exit">État des lieux de sortie</option>
+                  </select>
+                )}
 
                 {/* Bien */}
                 <select
@@ -1806,19 +2394,24 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
                   </div>
                   <input
                     type="text"
-                    placeholder="Rechercher un document..."
+                    placeholder="Rechercher..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-opacity-20 bg-white text-[#70AE48]"
+                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-opacity-20 bg-white text-gray-900"
                     style={{ borderColor: `${PRIMARY_COLOR}80` }}
                   />
                 </div>
               </div>
             </Card>
 
-            {/* Liste des documents */}
+            {/* Liste des éléments */}
             <div className="space-y-3">
-              {activeFilter === 'templates' ? (
+              {loading ? (
+                <Card className="p-12 text-center">
+                  <Loader2 size={32} className="animate-spin text-[#70AE48] mx-auto mb-3" />
+                  <p className="text-gray-500">Chargement...</p>
+                </Card>
+              ) : activeFilter === 'templates' ? (
                 templates.length === 0 ? (
                   <Card className="p-12 text-center">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -1849,156 +2442,325 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
                     </Card>
                   ))
                 )
-              ) : paginatedDocuments.length === 0 ? (
-                <Card className="p-12 text-center">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <FileText size={24} className="text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-1">Aucun document trouvé</h3>
-                  <p className="text-sm text-gray-500 mb-4">Ajoutez votre premier document</p>
-                  <button
-                    onClick={() => setShowAddModal(true)}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 text-white text-sm font-medium rounded-xl transition-all hover:opacity-90"
-                    style={{ backgroundColor: PRIMARY_COLOR }}
-                  >
-                    <Plus size={16} />
-                    Nouveau document
-                  </button>
-                </Card>
-              ) : (
-                paginatedDocuments.map((doc) => (
-                  <Card
-                    key={doc.id}
-                    className="p-4 hover:shadow-md transition-all duration-300"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          {getFileIcon(doc.file_type)}
-                          <h3 className="text-base font-semibold text-gray-900">{doc.name}</h3>
-                          {doc.is_shared && (
-                            <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium flex items-center gap-1">
-                              <Share2 size={10} />
-                              Partagé
+              ) : activeFilter === 'contrats' ? (
+                leases.length === 0 ? (
+                  <Card className="p-12 text-center">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <FileSignature size={24} className="text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">Aucun contrat de bail</h3>
+                    <p className="text-sm text-gray-500">Vous n'avez pas encore de contrat de bail</p>
+                  </Card>
+                ) : (
+                  leases.map((lease) => (
+                    <Card key={lease.id} className="p-4 hover:shadow-md transition-all duration-300 border-l-4" style={{ borderLeftColor: lease.status === 'active' ? '#10b981' : (lease.status === 'pending' ? '#f59e0b' : '#ef4444') }}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            {getLeaseIcon(lease.status)}
+                            <h3 className="text-base font-semibold text-gray-900">
+                              Contrat de bail - {lease.property?.name || 'Bien'}
+                            </h3>
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                              lease.status === 'active' ? 'bg-green-100 text-green-700' :
+                              lease.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-red-100 text-red-700'
+                            }`}>
+                              {lease.status === 'active' ? 'Actif' :
+                               lease.status === 'pending' ? 'En attente' : 'Résilié'}
                             </span>
-                          )}
-                          {doc.status === 'archive' && (
-                            <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs font-medium flex items-center gap-1">
-                              <Archive size={10} />
-                              Archivé
-                            </span>
-                          )}
-                        </div>
-
-                        {doc.description && (
-                          <p className="text-sm text-gray-600 mt-1">
-                            {doc.description.length > 100 ? `${doc.description.substring(0, 100)}...` : doc.description}
-                          </p>
-                        )}
-
-                        <div className="flex flex-wrap items-center gap-3 mt-2">
-                          {doc.property && (
-                            <div className="flex items-center gap-1 text-xs text-gray-500">
-                              <Home size={12} />
-                              <span>{doc.property.name}</span>
-                            </div>
-                          )}
-
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <Calendar size={12} />
-                            <span>{formatDate(doc.created_at)}</span>
                           </div>
 
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <FileText size={12} />
-                            <span>{doc.file_size_formatted}</span>
-                          </div>
-
-                          {doc.shared_with_users && doc.shared_with_users.length > 0 && (
-                            <div className="flex items-center gap-1 text-xs text-gray-500">
-                              <Users size={12} />
-                              <span>
-                                {doc.shared_with_users.length} destinataire{doc.shared_with_users.length > 1 ? 's' : ''}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-
-                        {doc.shared_with_users && doc.shared_with_users.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-1">
-                            {doc.shared_with_users.slice(0, 2).map((user) => (
-                              <div
-                                key={user.id}
-                                className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full text-xs"
-                              >
-                                <Mail size={8} className="text-gray-500" />
-                                <span className="truncate max-w-[100px]">{user.name}</span>
+                          <div className="flex flex-wrap items-center gap-3 mt-2">
+                            {lease.property && (
+                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                                <Home size={12} />
+                                <span>{lease.property.address || lease.property.name}</span>
                               </div>
-                            ))}
-                            {doc.shared_with_users.length > 2 && (
-                              <span className="text-xs text-gray-500">
-                                +{doc.shared_with_users.length - 2}
+                            )}
+
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <Calendar size={12} />
+                              <span>Début: {formatDate(lease.start_date)}</span>
+                            </div>
+
+                            {lease.end_date && (
+                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                                <Calendar size={12} />
+                                <span>Fin: {formatDate(lease.end_date)}</span>
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <DollarSign size={12} />
+                              <span>{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 }).format(lease.rent_amount)}/mois</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handlePreviewLease(lease)}
+                            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors group"
+                            title="Voir le contrat"
+                          >
+                            <Eye size={16} className="text-gray-500 group-hover:text-blue-600" />
+                          </button>
+                          <button
+                            onClick={() => handleDownloadLeaseContract(lease)}
+                            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors group"
+                            title="Télécharger le contrat"
+                          >
+                            <Download size={16} className="text-gray-500 group-hover:text-[#70AE48]" />
+                          </button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))
+                )
+              ) : activeFilter === 'etats_lieux' ? (
+                conditionReports.length === 0 ? (
+                  <Card className="p-12 text-center">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <ClipboardList size={24} className="text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">Aucun état des lieux</h3>
+                    <p className="text-sm text-gray-500">Vous n'avez pas encore d'état des lieux</p>
+                  </Card>
+                ) : (
+                  conditionReports.map((report) => (
+                    <Card key={report.id} className="p-4 hover:shadow-md transition-all duration-300">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            {getReportIcon(report.type, report.status)}
+                            <h3 className="text-base font-semibold text-gray-900">
+                              {report.type === 'entry' ? 'État des lieux d\'entrée' : 'État des lieux de sortie'}
+                              {report.property && ` - ${report.property.name}`}
+                            </h3>
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                              report.status === 'signed' ? 'bg-green-100 text-green-700' :
+                              report.status === 'finalized' ? 'bg-blue-100 text-blue-700' :
+                              'bg-yellow-100 text-yellow-700'
+                            }`}>
+                              {report.status === 'signed' ? 'Signé' :
+                               report.status === 'finalized' ? 'Finalisé' : 'Brouillon'}
+                            </span>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-3 mt-2">
+                            {report.property && (
+                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                                <Home size={12} />
+                                <span>{report.property.address || report.property.name}</span>
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <Calendar size={12} />
+                              <span>{formatDate(report.report_date)}</span>
+                            </div>
+
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <User size={12} />
+                              <span>{report.created_by_name}</span>
+                            </div>
+
+                            {report.photos && (
+                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                                <Camera size={12} />
+                                <span>{report.photos.length} photo{report.photos.length > 1 ? 's' : ''}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Signatures */}
+                          <div className="flex items-center gap-2 mt-2">
+                            {report.signature_tenant && (
+                              <span className="text-xs text-green-600 flex items-center gap-1">
+                                <Check size={12} /> Locataire
+                              </span>
+                            )}
+                            {report.signature_landlord && (
+                              <span className="text-xs text-green-600 flex items-center gap-1">
+                                <Check size={12} /> Propriétaire
                               </span>
                             )}
                           </div>
-                        )}
-                      </div>
+                        </div>
 
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => handlePreview(doc)}
-                          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors group"
-                          title="Voir"
-                        >
-                          <Eye size={16} className="text-gray-500 group-hover:text-blue-600" />
-                        </button>
-                        <button
-                          onClick={() => handleDownload(doc)}
-                          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors group"
-                          title="Télécharger le fichier"
-                        >
-                          <Download size={16} className="text-gray-500 group-hover:text-[#70AE48]" />
-                        </button>
-                        <button
-                          onClick={() => handleDownloadPdf(doc)}
-                          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors group"
-                          title="Télécharger les informations PDF"
-                        >
-                          <FileText size={16} className="text-gray-500 group-hover:text-purple-600" />
-                        </button>
-                        {activeFilter === 'actifs' ? (
+                        <div className="flex items-center gap-1">
                           <button
-                            onClick={() => handleArchive(doc)}
+                            onClick={() => handlePreviewConditionReport(report)}
                             className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors group"
-                            title="Archiver"
+                            title="Voir l'état des lieux"
                           >
-                            <Archive size={16} className="text-gray-500 group-hover:text-orange-600" />
+                            <Eye size={16} className="text-gray-500 group-hover:text-blue-600" />
                           </button>
-                        ) : (
                           <button
-                            onClick={() => handleRestore(doc)}
+                            onClick={() => handleDownloadConditionReport(report)}
                             className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors group"
-                            title="Restaurer"
+                            title="Télécharger l'état des lieux"
                           >
-                            <RefreshCw size={16} className="text-gray-500 group-hover:text-green-600" />
+                            <Download size={16} className="text-gray-500 group-hover:text-[#70AE48]" />
                           </button>
-                        )}
-                        <button
-                          onClick={() => handleDeleteClick(doc.id)}
-                          className="p-1.5 hover:bg-red-50 rounded-lg transition-colors group"
-                          title="Supprimer"
-                        >
-                          <Trash2 size={16} className="text-gray-500 group-hover:text-red-600" />
-                        </button>
+                        </div>
                       </div>
+                    </Card>
+                  ))
+                )
+              ) : (
+                paginatedDocuments.length === 0 ? (
+                  <Card className="p-12 text-center">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <FileText size={24} className="text-gray-400" />
                     </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-1">Aucun document trouvé</h3>
+                    <p className="text-sm text-gray-500 mb-4">Ajoutez votre premier document</p>
+                    <button
+                      onClick={() => setShowAddModal(true)}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 text-white text-sm font-medium rounded-xl transition-all hover:opacity-90"
+                      style={{ backgroundColor: PRIMARY_COLOR }}
+                    >
+                      <Plus size={16} />
+                      Nouveau document
+                    </button>
                   </Card>
-                ))
+                ) : (
+                  paginatedDocuments.map((doc) => (
+                    <Card
+                      key={doc.id}
+                      className="p-4 hover:shadow-md transition-all duration-300"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            {getFileIcon(doc.file_type)}
+                            <h3 className="text-base font-semibold text-gray-900">{doc.name}</h3>
+                            {doc.is_shared && (
+                              <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium flex items-center gap-1">
+                                <Share2 size={10} />
+                                Partagé
+                              </span>
+                            )}
+                            {doc.status === 'archive' && (
+                              <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full text-xs font-medium flex items-center gap-1">
+                                <Archive size={10} />
+                                Archivé
+                              </span>
+                            )}
+                          </div>
+
+                          {doc.description && (
+                            <p className="text-sm text-gray-600 mt-1">
+                              {doc.description.length > 100 ? `${doc.description.substring(0, 100)}...` : doc.description}
+                            </p>
+                          )}
+
+                          <div className="flex flex-wrap items-center gap-3 mt-2">
+                            {doc.property && (
+                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                                <Home size={12} />
+                                <span>{doc.property.name}</span>
+                              </div>
+                            )}
+
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <Calendar size={12} />
+                              <span>{formatDate(doc.created_at)}</span>
+                            </div>
+
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <FileText size={12} />
+                              <span>{doc.file_size_formatted}</span>
+                            </div>
+
+                            {doc.shared_with_users && doc.shared_with_users.length > 0 && (
+                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                                <Users size={12} />
+                                <span>
+                                  {doc.shared_with_users.length} destinataire{doc.shared_with_users.length > 1 ? 's' : ''}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {doc.shared_with_users && doc.shared_with_users.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              {doc.shared_with_users.slice(0, 2).map((user) => (
+                                <div
+                                  key={user.id}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full text-xs"
+                                >
+                                  <Mail size={8} className="text-gray-500" />
+                                  <span className="truncate max-w-[100px]">{user.name}</span>
+                                </div>
+                              ))}
+                              {doc.shared_with_users.length > 2 && (
+                                <span className="text-xs text-gray-500">
+                                  +{doc.shared_with_users.length - 2}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handlePreviewDocument(doc)}
+                            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors group"
+                            title="Voir"
+                          >
+                            <Eye size={16} className="text-gray-500 group-hover:text-blue-600" />
+                          </button>
+                          <button
+                            onClick={() => handleDownload(doc)}
+                            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors group"
+                            title="Télécharger le fichier"
+                          >
+                            <Download size={16} className="text-gray-500 group-hover:text-[#70AE48]" />
+                          </button>
+                          <button
+                            onClick={() => handleDownloadPdf(doc)}
+                            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors group"
+                            title="Télécharger les informations PDF"
+                          >
+                            <FileText size={16} className="text-gray-500 group-hover:text-purple-600" />
+                          </button>
+                          {activeFilter === 'actifs' ? (
+                            <button
+                              onClick={() => handleArchive(doc)}
+                              className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors group"
+                              title="Archiver"
+                            >
+                              <Archive size={16} className="text-gray-500 group-hover:text-orange-600" />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleRestore(doc)}
+                              className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors group"
+                              title="Restaurer"
+                            >
+                              <RefreshCw size={16} className="text-gray-500 group-hover:text-green-600" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDeleteClick(doc.id)}
+                            className="p-1.5 hover:bg-red-50 rounded-lg transition-colors group"
+                            title="Supprimer"
+                          >
+                            <Trash2 size={16} className="text-gray-500 group-hover:text-red-600" />
+                          </button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))
+                )
               )}
             </div>
 
             {/* Pied de page */}
-            {filteredDocuments.length > 0 && (
+            {activeFilter === 'actifs' && filteredDocuments.length > 0 && (
               <div className="flex items-center justify-between text-sm text-gray-500">
                 <span>
                   {filteredDocuments.length} document{filteredDocuments.length > 1 ? 's' : ''}
@@ -2006,6 +2768,18 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
                 <span>
                   Affichage {Math.min(parseInt(itemsPerPage), filteredDocuments.length)} sur {filteredDocuments.length}
                 </span>
+              </div>
+            )}
+            
+            {activeFilter === 'contrats' && leases.length > 0 && (
+              <div className="flex items-center justify-between text-sm text-gray-500">
+                <span>{leases.length} contrat{leases.length > 1 ? 's' : ''} de bail</span>
+              </div>
+            )}
+            
+            {activeFilter === 'etats_lieux' && conditionReports.length > 0 && (
+              <div className="flex items-center justify-between text-sm text-gray-500">
+                <span>{conditionReports.length} état{conditionReports.length > 1 ? 's' : ''} des lieux</span>
               </div>
             )}
           </div>

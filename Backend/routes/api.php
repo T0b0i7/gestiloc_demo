@@ -267,20 +267,28 @@ Route::middleware(['auth:sanctum'])->group(function () {
         });
 
         // Routes pour les documents
-        Route::prefix('documents')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'index']);
-            Route::get('/templates', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'templates']);
-            Route::get('/shareable-contacts', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'getShareableContacts']);
-            Route::get('/filters/options', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'getFilterOptions']);
-            Route::post('/', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'store']);
-            Route::get('/{id}', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'show']);
-            Route::put('/{id}', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'update']);
-            Route::delete('/{id}', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'destroy']);
-            Route::post('/{id}/archive', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'archive']);
-            Route::post('/{id}/restore', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'restore']);
-            Route::get('/{id}/download', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'download']);
-            Route::get('/{id}/pdf', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'downloadPdf']);
-        });
+// Routes pour les documents
+Route::prefix('documents')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'index']);
+    Route::get('/templates', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'templates']);
+    Route::get('/shareable-contacts', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'getShareableContacts']);
+    Route::get('/filters/options', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'getFilterOptions']);
+    Route::post('/', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'store']);
+    Route::get('/{id}', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'show']);
+    Route::put('/{id}', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'update']);
+    Route::delete('/{id}', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'destroy']);
+    Route::post('/{id}/archive', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'archive']);
+    Route::post('/{id}/restore', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'restore']);
+    Route::get('/{id}/download', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'download']);
+    Route::get('/{id}/pdf', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'downloadPdf']);
+    // ⚠️ RETIRER leases et condition-reports d'ici
+});
+
+// ✅ Ces routes HORS du prefix documents → /tenant/leases et /tenant/condition-reports
+Route::get('leases', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'getLeases']);
+Route::get('leases/{uuid}/contract', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'downloadLeaseContract']);
+Route::get('condition-reports', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'getConditionReports']);
+Route::get('condition-reports/{uuid}/download', [\App\Http\Controllers\Api\Tenant\DocumentController::class, 'downloadConditionReport']);
 
         // Routes pour le dossier
         Route::prefix('dossier')->group(function () {
