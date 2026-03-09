@@ -117,260 +117,280 @@ public function index()
     /**
      * Récupère les informations du créateur, propriétaire et copropriétaires du bien
      */
-    public function getLandlordInfo()
-    {
-        try {
-            $user = auth()->user();
+/**
+ * Récupère les informations du créateur, propriétaire et copropriétaires du bien
+ */
+public function getLandlordInfo()
+{
+    try {
+        $user = auth()->user();
 
-            if (!$user || !$user->hasRole('tenant') || !$user->tenant) {
-                return response()->json(['message' => 'Accès réservé aux locataires'], 403);
-            }
+        if (!$user || !$user->hasRole('tenant') || !$user->tenant) {
+            return response()->json(['message' => 'Accès réservé aux locataires'], 403);
+        }
 
-            $tenant = $user->tenant;
-            $tenantId = $tenant->id;
+        $tenant = $user->tenant;
+        $tenantId = $tenant->id;
 
-            Log::info('getLandlordInfo - Début', [
-                'tenant_id' => $tenantId,
-                'user_id' => $user->id
+        Log::info('getLandlordInfo - Début', [
+            'tenant_id' => $tenantId,
+            'user_id' => $user->id
+        ]);
+
+        // 1. Récupérer le bail actif du locataire
+        $activeLease = Lease::where('tenant_id', $tenantId)
+            ->where('status', 'active')
+            ->with(['property'])
+            ->first();
+
+        if (!$activeLease) {
+            Log::warning('Aucun bail actif trouvé', ['tenant_id' => $tenantId]);
+            return response()->json([
+                'success' => true,
+                'creator' => null,
+                'co_owners' => [],
+                'properties' => [], // AJOUT : liste vide des propriétés
+                'message' => 'Aucun bail actif trouvé'
             ]);
+        }
 
-            // 1. Récupérer le bail actif du locataire
-            $activeLease = Lease::where('tenant_id', $tenantId)
-                ->where('status', 'active')
-                ->with(['property'])
-                ->first();
+        $propertyId = $activeLease->property_id;
 
-            if (!$activeLease) {
-                Log::warning('Aucun bail actif trouvé', ['tenant_id' => $tenantId]);
-                return response()->json([
-                    'success' => true,
-                    'creator' => null,
-                    'co_owners' => [],
-                    'message' => 'Aucun bail actif trouvé'
-                ]);
+        // Récupérer la propriété active
+        $property = Property::find($propertyId);
+
+        if (!$property) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Propriété non trouvée'
+            ], 404);
+        }
+
+        Log::info('Bail actif trouvé', [
+            'lease_id' => $activeLease->id,
+            'property_id' => $propertyId,
+            'property_landlord_id' => $property->landlord_id,
+            'property_creator_id' => $property->user_id
+        ]);
+
+        // ============================================
+        // AJOUT : RÉCUPÉRER TOUS LES BIENS DU LOCATAIRE (HISTORIQUE)
+        // ============================================
+        $allLeases = Lease::where('tenant_id', $tenantId)
+            ->with(['property'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $properties = [];
+        foreach ($allLeases as $lease) {
+            if ($lease->property) {
+                $properties[] = [
+                    'id' => $lease->property->id,
+                    'name' => $lease->property->name,
+                    'address' => $lease->property->address,
+                    'is_active' => ($lease->id === $activeLease->id) // Marquer le bien actif
+                ];
             }
+        }
 
-            $propertyId = $activeLease->property_id;
+        // Supprimer les doublons (au cas où un bien apparaît plusieurs fois)
+        $properties = array_values(array_unique($properties, SORT_REGULAR));
 
-            // Récupérer la propriété
-            $property = Property::find($propertyId);
+        $people = [];
+        $processedIds = [];
 
-            if (!$property) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Propriété non trouvée'
-                ], 404);
-            }
+        // ============================================
+        // 1. LE CRÉATEUR DU BIEN (user_id dans properties)
+        // ============================================
+        if ($property->user_id) {
+            $creatorUser = User::with('landlord', 'coOwner')->find($property->user_id);
 
-            Log::info('Bail actif trouvé', [
-                'lease_id' => $activeLease->id,
-                'property_id' => $propertyId,
-                'property_landlord_id' => $property->landlord_id,
-                'property_creator_id' => $property->user_id
-            ]);
+            if ($creatorUser) {
+                $creatorType = null;
+                $creatorDetails = null;
+                $phone = $creatorUser->phone;
+                $email = $creatorUser->email;
+                $avatar = null;
 
-            $people = [];
-            $processedIds = [];
-
-            // ============================================
-            // 1. LE CRÉATEUR DU BIEN (user_id dans properties)
-            // ============================================
-            if ($property->user_id) {
-                $creatorUser = User::with('landlord', 'coOwner')->find($property->user_id);
-
-                if ($creatorUser) {
-                    $creatorType = null;
-                    $creatorDetails = null;
-                    $phone = $creatorUser->phone;
-                    $email = $creatorUser->email;
-                    $avatar = null;
-
-                    if ($creatorUser->isLandlord() && $creatorUser->landlord) {
-                        $creatorType = 'landlord';
-                        $creatorDetails = $creatorUser->landlord;
-                        $firstName = $creatorDetails->first_name ?? $creatorUser->first_name;
-                        $lastName = $creatorDetails->last_name ?? $creatorUser->last_name;
-                        if ($firstName && $lastName) {
-                            $avatar = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
-                        }
-                    } elseif ($creatorUser->isCoOwner() && $creatorUser->coOwner) {
-                        $creatorType = 'co_owner';
-                        $creatorDetails = $creatorUser->coOwner;
-                        $phone = $creatorDetails->phone ?? $creatorUser->phone;
-                        $firstName = $creatorDetails->first_name ?? $creatorUser->first_name;
-                        $lastName = $creatorDetails->last_name ?? $creatorUser->last_name;
-                        if ($firstName && $lastName) {
-                            $avatar = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
-                        }
-                    }
-
-                    $address = null;
-                    $ville = null;
-                    $pays = null;
-
-                    if ($creatorType === 'landlord' && $creatorDetails) {
-                        $address = $creatorDetails->address_billing;
-                    } elseif ($creatorType === 'co_owner' && $creatorDetails) {
-                        $address = $creatorDetails->address_billing;
-                    }
-
-                    if (!empty($address)) {
-                        $addressParts = explode(',', $address);
-                        if (count($addressParts) > 0) {
-                            $address = trim($addressParts[0]);
-                        }
-                        if (count($addressParts) > 1) {
-                            $ville = trim($addressParts[1]);
-                        }
-                        if (count($addressParts) > 2) {
-                            $pays = trim($addressParts[2]);
-                        }
-                    }
-
-                    $people[] = [
-                        'id' => (string) $creatorUser->id,
-                        'nom' => $creatorDetails->last_name ?? $creatorUser->last_name,
-                        'prenom' => $creatorDetails->first_name ?? $creatorUser->first_name,
-                        'telephone' => $phone,
-                        'email' => $email,
-                        'avatar' => $avatar,
-                        'adresse' => $address,
-                        'ville' => $ville,
-                        'codePostal' => $this->extractPostalCode($creatorDetails->address_billing ?? null),
-                        'pays' => $pays,
-                        'type' => $creatorType === 'landlord' ? 'Propriétaire' : ($creatorType === 'co_owner' ? 'Copropriétaire' : null),
-                        'role' => 'Créateur du bien',
-                        'company_name' => $creatorDetails->company_name ?? null,
-                        'is_professional' => $creatorDetails->is_professional ?? null,
-                    ];
-
-                    $processedIds[] = (string) $creatorUser->id;
-                }
-            }
-
-            // ============================================
-            // 2. LES COPROPRIÉTAIRES (délégations actives sur CE bien)
-            // ============================================
-            $delegations = PropertyDelegation::where('property_id', $propertyId)
-                ->where('status', 'active')
-                ->with(['coOwner.user'])
-                ->get();
-
-            foreach ($delegations as $delegation) {
-                $coOwner = $delegation->coOwner;
-                if ($coOwner && $coOwner->user) {
-                    $coOwnerUser = $coOwner->user;
-
-                    // Éviter les doublons avec le créateur
-                    if (in_array((string) $coOwnerUser->id, $processedIds)) {
-                        continue;
-                    }
-
-                    // Vérifier les permissions
-                    $permissions = $delegation->permissions ?? [];
-                    $permissionLabels = [];
-
-                    if (is_array($permissions) || is_string($permissions)) {
-                        $permsArray = is_string($permissions) ? json_decode($permissions, true) ?? [] : $permissions;
-                        if (in_array('view', $permsArray)) $permissionLabels[] = 'Consultation';
-                        if (in_array('edit', $permsArray)) $permissionLabels[] = 'Modification';
-                        if (in_array('manage_lease', $permsArray)) $permissionLabels[] = 'Gestion des baux';
-                        if (in_array('collect_rent', $permsArray)) $permissionLabels[] = 'Collecte des loyers';
-                        if (in_array('manage_maintenance', $permsArray)) $permissionLabels[] = 'Gestion des interventions';
-                    }
-
-                    $address = $coOwner->address_billing;
-                    $ville = null;
-                    $pays = null;
-
-                    if (!empty($address)) {
-                        $addressParts = explode(',', $address);
-                        if (count($addressParts) > 0) {
-                            $address = trim($addressParts[0]);
-                        }
-                        if (count($addressParts) > 1) {
-                            $ville = trim($addressParts[1]);
-                        }
-                        if (count($addressParts) > 2) {
-                            $pays = trim($addressParts[2]);
-                        }
-                    }
-
-                    $firstName = $coOwner->first_name ?? $coOwnerUser->first_name;
-                    $lastName = $coOwner->last_name ?? $coOwnerUser->last_name;
-                    $avatar = null;
+                if ($creatorUser->isLandlord() && $creatorUser->landlord) {
+                    $creatorType = 'landlord';
+                    $creatorDetails = $creatorUser->landlord;
+                    $firstName = $creatorDetails->first_name ?? $creatorUser->first_name;
+                    $lastName = $creatorDetails->last_name ?? $creatorUser->last_name;
                     if ($firstName && $lastName) {
                         $avatar = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
                     }
-
-                    $people[] = [
-                        'id' => (string) $coOwnerUser->id,
-                        'nom' => $coOwner->last_name ?? $coOwnerUser->last_name,
-                        'prenom' => $coOwner->first_name ?? $coOwnerUser->first_name,
-                        'telephone' => $coOwner->phone ?? $coOwnerUser->phone,
-                        'email' => $coOwner->email ?? $coOwnerUser->email,
-                        'avatar' => $avatar,
-                        'adresse' => $address,
-                        'ville' => $ville,
-                        'codePostal' => $this->extractPostalCode($coOwner->address_billing),
-                        'pays' => $pays,
-                        'type' => $delegation->co_owner_type === 'agency' ? 'Agence' : 'Copropriétaire',
-                        'role' => 'Copropriétaire',
-                        'permissions' => $permissionLabels,
-                        'delegation_type' => $delegation->delegation_type,
-                        'delegated_at' => $delegation->delegated_at ? $delegation->delegated_at->toDateTimeString() : null,
-                        'expires_at' => $delegation->expires_at ? $delegation->expires_at->toDateTimeString() : null,
-                        'company_name' => $coOwner->company_name,
-                        'is_professional' => $coOwner->is_professional,
-                    ];
-
-                    $processedIds[] = (string) $coOwnerUser->id;
+                } elseif ($creatorUser->isCoOwner() && $creatorUser->coOwner) {
+                    $creatorType = 'co_owner';
+                    $creatorDetails = $creatorUser->coOwner;
+                    $phone = $creatorDetails->phone ?? $creatorUser->phone;
+                    $firstName = $creatorDetails->first_name ?? $creatorUser->first_name;
+                    $lastName = $creatorDetails->last_name ?? $creatorUser->last_name;
+                    if ($firstName && $lastName) {
+                        $avatar = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
+                    }
                 }
-            }
 
-            Log::info('getLandlordInfo - Succès', [
-                'people_count' => count($people),
-                'creator_id' => $people[0]['id'] ?? null,
-                'people_ids' => array_column($people, 'id')
-            ]);
+                $address = null;
+                $ville = null;
+                $pays = null;
 
-            // Séparer les personnes par rôle pour la réponse
-            $creator = null;
-            $coOwners = [];
-
-            foreach ($people as $person) {
-                if ($person['role'] === 'Créateur du bien') {
-                    $creator = $person;
-                } else {
-                    $coOwners[] = $person;
+                if ($creatorType === 'landlord' && $creatorDetails) {
+                    $address = $creatorDetails->address_billing;
+                } elseif ($creatorType === 'co_owner' && $creatorDetails) {
+                    $address = $creatorDetails->address_billing;
                 }
+
+                if (!empty($address)) {
+                    $addressParts = explode(',', $address);
+                    if (count($addressParts) > 0) {
+                        $address = trim($addressParts[0]);
+                    }
+                    if (count($addressParts) > 1) {
+                        $ville = trim($addressParts[1]);
+                    }
+                    if (count($addressParts) > 2) {
+                        $pays = trim($addressParts[2]);
+                    }
+                }
+
+                $people[] = [
+                    'id' => (string) $creatorUser->id,
+                    'nom' => $creatorDetails->last_name ?? $creatorUser->last_name,
+                    'prenom' => $creatorDetails->first_name ?? $creatorUser->first_name,
+                    'telephone' => $phone,
+                    'email' => $email,
+                    'avatar' => $avatar,
+                    'adresse' => $address,
+                    'ville' => $ville,
+                    'codePostal' => $this->extractPostalCode($creatorDetails->address_billing ?? null),
+                    'pays' => $pays,
+                    'type' => $creatorType === 'landlord' ? 'Propriétaire' : ($creatorType === 'co_owner' ? 'Copropriétaire' : null),
+                    'role' => 'Créateur du bien',
+                    'company_name' => $creatorDetails->company_name ?? null,
+                    'is_professional' => $creatorDetails->is_professional ?? null,
+                    'property_name' => $property->name, // AJOUT : nom du bien
+                    'property_address' => $property->address, // AJOUT : adresse du bien
+                ];
+
+                $processedIds[] = (string) $creatorUser->id;
             }
-
-            return response()->json([
-                'success' => true,
-                'creator' => $creator,
-                'co_owners' => $coOwners,
-                'property' => [
-                    'id' => $property->id,
-                    'name' => $property->name,
-                    'address' => $property->address,
-                ]
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Erreur getLandlordInfo: ' . $e->getMessage(), [
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors du chargement des informations',
-                'error' => $e->getMessage()
-            ], 500);
         }
+
+        // ============================================
+        // 2. LES COPROPRIÉTAIRES (délégations actives sur CE bien)
+        // ============================================
+        $delegations = PropertyDelegation::where('property_id', $propertyId)
+            ->where('status', 'active')
+            ->with(['coOwner.user'])
+            ->get();
+
+        foreach ($delegations as $delegation) {
+            $coOwner = $delegation->coOwner;
+            if ($coOwner && $coOwner->user) {
+                $coOwnerUser = $coOwner->user;
+
+                // Éviter les doublons avec le créateur
+                if (in_array((string) $coOwnerUser->id, $processedIds)) {
+                    continue;
+                }
+
+                $address = $coOwner->address_billing;
+                $ville = null;
+                $pays = null;
+
+                if (!empty($address)) {
+                    $addressParts = explode(',', $address);
+                    if (count($addressParts) > 0) {
+                        $address = trim($addressParts[0]);
+                    }
+                    if (count($addressParts) > 1) {
+                        $ville = trim($addressParts[1]);
+                    }
+                    if (count($addressParts) > 2) {
+                        $pays = trim($addressParts[2]);
+                    }
+                }
+
+                $firstName = $coOwner->first_name ?? $coOwnerUser->first_name;
+                $lastName = $coOwner->last_name ?? $coOwnerUser->last_name;
+                $avatar = null;
+                if ($firstName && $lastName) {
+                    $avatar = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
+                }
+
+                $people[] = [
+                    'id' => (string) $coOwnerUser->id,
+                    'nom' => $coOwner->last_name ?? $coOwnerUser->last_name,
+                    'prenom' => $coOwner->first_name ?? $coOwnerUser->first_name,
+                    'telephone' => $coOwner->phone ?? $coOwnerUser->phone,
+                    'email' => $coOwner->email ?? $coOwnerUser->email,
+                    'avatar' => $avatar,
+                    'adresse' => $address,
+                    'ville' => $ville,
+                    'codePostal' => $this->extractPostalCode($coOwner->address_billing),
+                    'pays' => $pays,
+                    'type' => $delegation->co_owner_type === 'agency' ? 'Agence' : 'Copropriétaire',
+                    'role' => 'Copropriétaire',
+                    'delegation_type' => $delegation->delegation_type,
+                    'delegated_at' => $delegation->delegated_at ? $delegation->delegated_at->toDateTimeString() : null,
+                    'expires_at' => $delegation->expires_at ? $delegation->expires_at->toDateTimeString() : null,
+                    'company_name' => $coOwner->company_name,
+                    'is_professional' => $coOwner->is_professional,
+                    'property_name' => $property->name, // AJOUT : nom du bien
+                    'property_address' => $property->address, // AJOUT : adresse du bien
+                ];
+
+                $processedIds[] = (string) $coOwnerUser->id;
+            }
+        }
+
+        Log::info('getLandlordInfo - Succès', [
+            'people_count' => count($people),
+            'properties_count' => count($properties),
+            'creator_id' => $people[0]['id'] ?? null,
+            'people_ids' => array_column($people, 'id')
+        ]);
+
+        // Séparer les personnes par rôle pour la réponse
+        $creator = null;
+        $coOwners = [];
+
+        foreach ($people as $person) {
+            if ($person['role'] === 'Créateur du bien') {
+                $creator = $person;
+            } else {
+                $coOwners[] = $person;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'creator' => $creator,
+            'co_owners' => $coOwners,
+            'property' => [ // Bien actuel
+                'id' => $property->id,
+                'name' => $property->name,
+                'address' => $property->address,
+                'is_active' => true
+            ],
+            'properties' => $properties, // AJOUT : Tous les biens du locataire
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('Erreur getLandlordInfo: ' . $e->getMessage(), [
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur lors du chargement des informations',
+            'error' => $e->getMessage()
+        ], 500);
     }
+}
 
     /**
      * Récupère les notifications du locataire

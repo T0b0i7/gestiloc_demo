@@ -101,12 +101,15 @@ interface Personne {
   ville: string;
   codePostal: string;
   pays: string;
-  type: string;
+  type: string; // Propriétaire, Copropriétaire, Agence
   sous_type?: string;
   role: string;
   is_creator?: boolean;
   company_name?: string;
   is_professional?: boolean;
+  property_name?: string; // Nom du bien concerné
+  property_address?: string; // Adresse du bien concerné
+  statut: string; // Propriétaire ou Copropriétaire
   permissions?: string[];
   delegation_type?: string;
   delegated_at?: string;
@@ -128,10 +131,13 @@ const mockLandlordData = {
     codePostal: "12500",
     pays: "Sénégal",
     type: "Propriétaire",
+    statut: "Propriétaire",
     role: "Créateur du bien",
     is_creator: true,
     company_name: "Immobilier Dupont & Fils",
     is_professional: true,
+    property_name: "Résidence Les Palmiers",
+    property_address: "123 Avenue de la République, Dakar",
     permissions: ["Consultation", "Gestion des baux", "Collecte des loyers"]
   },
   landlord: {
@@ -146,8 +152,11 @@ const mockLandlordData = {
     codePostal: "12500",
     pays: "Sénégal",
     type: "Propriétaire foncier",
+    statut: "Propriétaire",
     role: "Propriétaire foncier",
     is_professional: false,
+    property_name: "Résidence Les Palmiers",
+    property_address: "123 Avenue de la République, Dakar",
     permissions: ["Consultation", "Modification"]
   },
   co_owners: [
@@ -163,8 +172,11 @@ const mockLandlordData = {
       codePostal: "12500",
       pays: "Sénégal",
       type: "Copropriétaire",
+      statut: "Copropriétaire",
       role: "Copropriétaire",
       is_professional: false,
+      property_name: "Résidence Les Palmiers",
+      property_address: "123 Avenue de la République, Dakar",
       permissions: ["Consultation", "Gestion des interventions"],
       delegation_type: "partial",
       delegated_at: "2025-01-15T10:30:00Z",
@@ -182,19 +194,29 @@ const mockLandlordData = {
       codePostal: "12500",
       pays: "Sénégal",
       type: "Agence immobilière",
+      statut: "Copropriétaire",
       role: "Agence de gestion",
       company_name: "Agence Immobilière du Soleil",
       is_professional: true,
+      property_name: "Résidence Les Palmiers",
+      property_address: "123 Avenue de la République, Dakar",
       permissions: ["Consultation", "Modification", "Gestion des baux", "Collecte des loyers"],
       delegation_type: "full",
       delegated_at: "2025-02-01T09:00:00Z"
     }
   ],
-  property: {
-    id: 1,
-    name: "Résidence Les Palmiers",
-    address: "123 Avenue de la République, Dakar"
-  }
+  properties: [
+    {
+      id: 1,
+      name: "Résidence Les Palmiers",
+      address: "123 Avenue de la République, Dakar"
+    },
+    {
+      id: 2,
+      name: "Villa des Manguiers",
+      address: "45 Rue des Palmiers, Dakar"
+    }
+  ]
 };
 
 export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
@@ -209,6 +231,8 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [propertyInfo, setPropertyInfo] = useState<any>(null);
+  const [properties, setProperties] = useState<any[]>([]);
+  const [selectedProperty, setSelectedProperty] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
 
@@ -226,7 +250,8 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
       setCreator(mockLandlordData.creator || null);
       setLandlord(mockLandlordData.landlord || null);
       setCoOwners(mockLandlordData.co_owners || []);
-      setPropertyInfo(mockLandlordData.property || null);
+      setPropertyInfo(mockLandlordData.properties[0] || null);
+      setProperties(mockLandlordData.properties || []);
       setLoading(false);
     }
   }, []);
@@ -241,6 +266,7 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
         setLandlord(response.data.landlord || null);
         setCoOwners(response.data.co_owners || []);
         setPropertyInfo(response.data.property || null);
+        setProperties(response.data.properties || []);
         
         // Message clair si aucune donnée
         if (!response.data.creator && !response.data.landlord && response.data.co_owners.length === 0) {
@@ -258,7 +284,8 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
         setCreator(mockLandlordData.creator || null);
         setLandlord(mockLandlordData.landlord || null);
         setCoOwners(mockLandlordData.co_owners || []);
-        setPropertyInfo(mockLandlordData.property || null);
+        setPropertyInfo(mockLandlordData.properties[0] || null);
+        setProperties(mockLandlordData.properties || []);
       } else {
         setError(err.response?.data?.message || 'Erreur lors du chargement des données');
       }
@@ -270,32 +297,47 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
   };
 
   const allPeople = [
-    ...(creator ? [{ ...creator, filterType: 'creator' }] : []),
-    ...(landlord ? [{ ...landlord, filterType: 'landlord' }] : []),
-    ...coOwners.map(co => ({ ...co, filterType: 'coowner' }))
+    ...(creator ? [{ ...creator, filterType: 'creator', statut: creator.type === 'Propriétaire' ? 'Propriétaire' : 'Propriétaire' }] : []),
+    ...(landlord ? [{ ...landlord, filterType: 'landlord', statut: landlord.type || 'Propriétaire' }] : []),
+    ...coOwners.map(co => ({ ...co, filterType: 'coowner', statut: co.type === 'Agence' ? 'Agence' : 'Copropriétaire' }))
   ].map(person => ({
     ...person,
     role: person.role || 'Non défini',
     type: person.type || 'Non défini',
+    statut: person.statut || (person.type === 'Agence' ? 'Agence' : (person.is_creator ? 'Propriétaire' : 'Copropriétaire')),
     telephone: person.telephone || 'Non renseigné',
     email: person.email || 'Non renseigné',
     adresse: person.adresse || 'Non renseignée',
     ville: person.ville || 'Non renseignée',
     codePostal: person.codePostal || '',
     pays: person.pays || 'Sénégal',
-    permissions: person.permissions || []
+    property_name: person.property_name || (propertyInfo?.name || 'Non spécifié'),
+    property_address: person.property_address || (propertyInfo?.address || 'Non spécifiée'),
+    permissions: [] // On retire les permissions
   }));
 
+  // Filtrer par propriété sélectionnée
   const getFilteredPeople = () => {
     let filtered = allPeople;
+    
+    // Filtre par recherche
     if (searchTerm) {
       filtered = filtered.filter(p =>
         `${p.prenom} ${p.nom}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (p.email && p.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (p.telephone && p.telephone.includes(searchTerm)) ||
-        (p.company_name && p.company_name.toLowerCase().includes(searchTerm.toLowerCase()))
+        (p.company_name && p.company_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (p.property_name && p.property_name.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
+    
+    // Filtre par propriété
+    if (selectedProperty !== 'all') {
+      filtered = filtered.filter(p => 
+        p.property_name?.toLowerCase().includes(properties.find(prop => prop.id.toString() === selectedProperty)?.name.toLowerCase() || '')
+      );
+    }
+    
     return filtered;
   };
 
@@ -331,26 +373,11 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
     return <User size={14} className="text-green-600" />;
   };
 
-  const getPermissionColor = (permission: string) => {
-    switch(permission) {
-      case 'Consultation': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'Modification': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'Gestion des baux': return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'Collecte des loyers': return 'bg-green-100 text-green-800 border-green-200';
-      case 'Gestion des interventions': return 'bg-orange-100 text-orange-800 border-orange-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getPermissionIcon = (permission: string) => {
-    switch(permission) {
-      case 'Consultation': return <Eye size={12} className="text-blue-600" />;
-      case 'Modification': return <Edit size={12} className="text-yellow-600" />;
-      case 'Gestion des baux': return <FileText size={12} className="text-purple-600" />;
-      case 'Collecte des loyers': return <DollarSign size={12} className="text-green-600" />;
-      case 'Gestion des interventions': return <Wrench size={12} className="text-orange-600" />;
-      default: return <Shield size={12} className="text-gray-600" />;
-    }
+  const getStatutColor = (statut: string) => {
+    if (statut === 'Propriétaire') return 'bg-blue-100 text-blue-800 border-blue-200';
+    if (statut === 'Copropriétaire') return 'bg-green-100 text-green-800 border-green-200';
+    if (statut === 'Agence') return 'bg-orange-100 text-orange-800 border-orange-200';
+    return 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
   if (loading) {
@@ -515,12 +542,10 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
                         {getRoleIcon(selectedPerson.role)}
                         {selectedPerson.role}
                       </span>
-                      {selectedPerson.is_creator && (
-                        <span className="px-3 py-1.5 bg-purple-100 text-purple-800 border border-purple-200 rounded-full text-xs font-medium inline-flex items-center gap-1.5">
-                          <PenTool size={12} />
-                          Créateur du bien
-                        </span>
-                      )}
+                      <span className={`px-3 py-1.5 rounded-full text-xs font-medium inline-flex items-center gap-1.5 border ${getStatutColor(selectedPerson.statut)}`}>
+                        <User size={12} />
+                        {selectedPerson.statut}
+                      </span>
                       {selectedPerson.is_professional && (
                         <span className="px-3 py-1.5 bg-amber-100 text-amber-800 border border-amber-200 rounded-full text-xs font-medium inline-flex items-center gap-1.5">
                           <Briefcase size={12} />
@@ -579,9 +604,10 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
                       <h4 className="font-semibold">Adresse</h4>
                     </div>
                     <div className="space-y-1 text-sm">
-                      <p><span className="text-gray-500">Adresse:</span> <span className="text-gray-700">{selectedPerson.adresse}</span></p>
-                      <p><span className="text-gray-500">Ville:</span> <span className="text-gray-700">{selectedPerson.ville}</span></p>
-                      <p><span className="text-gray-500">Code postal:</span> <span className="text-gray-700">{selectedPerson.codePostal}</span></p>
+                      <p><span className="text-gray-500">Adresse:</span> <span className="text-gray-700">{selectedPerson.adresse || 'Non renseignée'}</span></p>
+                      <p><span className="text-gray-500">Ville:</span> <span className="text-gray-700">{selectedPerson.ville || 'Non renseignée'}</span></p>
+                      <p><span className="text-gray-500">Code postal:</span> <span className="text-gray-700">{selectedPerson.codePostal || 'Non renseigné'}</span></p>
+                      <p><span className="text-gray-500">Pays:</span> <span className="text-gray-700">{selectedPerson.pays || 'Sénégal'}</span></p>
                     </div>
                   </div>
 
@@ -593,23 +619,6 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
                       </div>
                       <p className="font-medium text-gray-900">{selectedPerson.company_name}</p>
                       <p className="text-sm text-gray-500 mt-1">Professionnel</p>
-                    </div>
-                  )}
-
-                  {selectedPerson.permissions && selectedPerson.permissions.length > 0 && (
-                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                      <div className="flex items-center gap-2 mb-3 text-gray-700">
-                        <Shield size={16} className="text-[#529D21]" />
-                        <h4 className="font-semibold">Permissions</h4>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedPerson.permissions.map((perm, index) => (
-                          <span key={index} className={`px-3 py-1.5 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 border ${getPermissionColor(perm)}`}>
-                            {getPermissionIcon(perm)}
-                            {perm}
-                          </span>
-                        ))}
-                      </div>
                     </div>
                   )}
 
@@ -645,7 +654,7 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
                 </div>
 
                 {/* Bien concerné */}
-                {propertyInfo && (
+                {(selectedPerson.property_name || propertyInfo) && (
                   <div className="mt-6 pt-6 border-t border-gray-200">
                     <div className="bg-gradient-to-r from-[#529D21]/5 to-[#F5A623]/5 rounded-xl p-4">
                       <div className="flex items-center gap-2 mb-3">
@@ -654,8 +663,8 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
                       </div>
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium text-gray-900">{propertyInfo.name}</p>
-                          <p className="text-sm text-gray-600">{propertyInfo.address}</p>
+                          <p className="font-medium text-gray-900">{selectedPerson.property_name || propertyInfo?.name}</p>
+                          <p className="text-sm text-gray-600">{selectedPerson.property_address || propertyInfo?.address}</p>
                         </div>
                         <span className="px-3 py-1.5 bg-[#529D21]/10 text-[#529D21] rounded-lg text-xs font-medium">
                           Bien actuel
@@ -684,7 +693,7 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
         </div>
       )}
 
-      {/* Header */}
+      {/* Header avec filtres */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-6 animate-slideDown">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -707,13 +716,32 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
 
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-3">
+            {/* Filtre par bien */}
+            <div className="relative sm:w-64">
+              <select
+                value={selectedProperty}
+                onChange={(e) => {
+                  setSelectedProperty(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#529D21]/20 focus:border-[#529D21] transition-all appearance-none bg-white text-gray-700"
+              >
+                <option value="all">Tous les biens</option>
+                {properties.map((prop) => (
+                  <option key={prop.id} value={prop.id}>{prop.name}</option>
+                ))}
+              </select>
+              <ChevronDown size={16} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+
+            {/* Recherche */}
             <div className="relative flex-1">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search size={18} className="text-gray-400" />
               </div>
               <input
                 type="text"
-                placeholder="Rechercher par nom, email, téléphone ou entreprise..."
+                placeholder="Rechercher par nom, email, téléphone, entreprise ou bien..."
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                 className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#529D21]/20 focus:border-[#529D21] transition-all"
@@ -724,6 +752,8 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
                 </button>
               )}
             </div>
+
+            {/* Nombre de lignes */}
             <div className="relative">
               <button onClick={() => setShowDropdown(!showDropdown)} className="w-full sm:w-44 flex items-center justify-between gap-2 px-4 py-3 border border-gray-200 rounded-xl text-gray-700 hover:border-[#529D21] hover:bg-gray-50 transition-all">
                 <span>{itemsPerPage} lignes</span>
@@ -743,13 +773,15 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
         </div>
       </div>
 
-      {/* Tableau */}
+      {/* Tableau avec les nouvelles colonnes */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden animate-slideUp">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                 <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Personne</th>
+                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Statut</th>
+                <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Bien concerné</th>
                 <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Téléphone</th>
                 <th className="text-left px-6 py-4 text-sm font-semibold text-gray-700">Email</th>
                 <th className="text-center px-6 py-4 text-sm font-semibold text-gray-700">Actions</th>
@@ -763,6 +795,7 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
                   if (person.role.includes('Créateur')) { avatarGradient = 'from-purple-500 to-purple-700'; avatarIcon = <Crown size={20} />; }
                   else if (person.role.includes('foncier')) { avatarGradient = 'from-blue-500 to-blue-700'; avatarIcon = <Building size={20} />; }
                   else if (person.role.includes('Agence')) { avatarGradient = 'from-orange-500 to-orange-700'; avatarIcon = <Briefcase size={20} />; }
+                  
                   return (
                     <tr key={person.id + index} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/80 transition-all duration-200 group">
                       <td className="px-6 py-4">
@@ -778,15 +811,21 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
                             {person.company_name && (
                               <p className="text-xs text-gray-500 flex items-center gap-1 mt-1"><Briefcase size={12} />{person.company_name}</p>
                             )}
-                            {person.permissions && person.permissions.length > 0 && (
-                              <div className="flex gap-1 mt-2">
-                                {person.permissions.slice(0, 2).map((perm, idx) => (
-                                  <span key={idx} className={`px-2 py-0.5 rounded text-[10px] font-medium ${getPermissionColor(perm)}`}>{perm}</span>
-                                ))}
-                                {person.permissions.length > 2 && <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px]">+{person.permissions.length - 2}</span>}
-                              </div>
-                            )}
                           </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 border ${getStatutColor(person.statut)}`}>
+                          {person.statut === 'Propriétaire' ? <Building size={12} /> : 
+                           person.statut === 'Agence' ? <Briefcase size={12} /> : 
+                           <User size={12} />}
+                          {person.statut}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <Home size={14} className="text-[#529D21]" />
+                          <span className="text-sm font-medium text-gray-900 truncate max-w-[150px]">{person.property_name}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -815,13 +854,13 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
                 })
               ) : (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center">
+                  <td colSpan={6} className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center">
                       <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4"><Users size={32} className="text-gray-400" /></div>
                       <p className="text-gray-500 font-medium">Aucune personne trouvée</p>
-                      <p className="text-sm text-gray-400 mt-1">Essayez de modifier votre recherche</p>
-                      <button onClick={() => { setSearchTerm(''); }} className="mt-4 px-4 py-2 bg-[#529D21] text-white rounded-lg hover:bg-[#529D21]/90 transition-colors">
-                        Réinitialiser la recherche
+                      <p className="text-sm text-gray-400 mt-1">Essayez de modifier vos filtres de recherche</p>
+                      <button onClick={() => { setSearchTerm(''); setSelectedProperty('all'); }} className="mt-4 px-4 py-2 bg-[#529D21] text-white rounded-lg hover:bg-[#529D21]/90 transition-colors">
+                        Réinitialiser les filtres
                       </button>
                     </div>
                   </td>

@@ -83,188 +83,183 @@ class CoOwnerAssignPropertyController extends Controller
     /**
      * Assigner un bien à un locataire
      */
-    public function store(Request $request)
-    {
-        // Récupérer l'utilisateur depuis Sanctum
-        $user = $this->getAuthenticatedUser($request);
+public function store(Request $request)
+{
+    // Récupérer l'utilisateur depuis Sanctum
+    $user = $this->getAuthenticatedUser($request);
 
-        if (!$user || !$user->hasRole('co_owner')) {
-            return back()->with('error', 'Non autorisé')->withInput();
+    if (!$user || !$user->hasRole('co_owner')) {
+        return back()->with('error', 'Non autorisé')->withInput();
+    }
+
+    $coOwner = $user->coOwner;
+    if (!$coOwner) {
+        return back()->with('error', 'Profil co-propriétaire non trouvé')->withInput();
+    }
+
+    // Validation - avec les nouveaux champs
+    $validated = $request->validate([
+        'property_id' => [
+            'required',
+            'exists:properties,id',
+            function ($attribute, $value, $fail) use ($coOwner) {
+                // Vérifier que le bien est délégué au co-propriétaire
+                $delegation = PropertyDelegation::where('property_id', $value)
+                    ->where('co_owner_id', $coOwner->id)
+                    ->where('status', 'active')
+                    ->first();
+
+                if (!$delegation) {
+                    $fail('Ce bien ne vous est pas délégué.');
+                }
+
+                // Vérifier que le bien n'est pas déjà loué
+                $property = Property::find($value);
+                if ($property && $property->status === 'rented') {
+                    $fail('Ce bien est déjà loué.');
+                }
+
+                // Vérifier qu'il n'y a pas de bail actif
+                $isRented = Lease::where('property_id', $value)
+                    ->where('status', 'active')
+                    ->exists();
+
+                if ($isRented) {
+                    $fail('Ce bien a déjà un bail actif.');
+                }
+            }
+        ],
+        'tenant_id' => [
+            'required',
+            'exists:tenants,id',
+            function ($attribute, $value, $fail) use ($coOwner) {
+                // Vérifier que le locataire appartient au même landlord
+                $tenant = Tenant::find($value);
+                if (!$tenant || ($tenant->meta['landlord_id'] ?? null) != $coOwner->landlord_id) {
+                    $fail('Ce locataire ne vous est pas associé.');
+                }
+
+                // Vérifier que le locataire n'a pas déjà un bail actif
+                $hasActiveLease = Lease::where('tenant_id', $value)
+                    ->where('status', 'active')
+                    ->exists();
+
+                if ($hasActiveLease) {
+                    $fail('Ce locataire a déjà un bail actif.');
+                }
+            }
+        ],
+        'lease_type' => 'required|in:nu,meuble',
+        'lease_status' => 'required|in:draft,active,pending_signature',
+        'start_date' => 'required|date',
+        'duration_months' => 'required|integer|min:1|max:120',  // ← NOUVEAU champ
+        'end_date' => 'nullable|date',  // ← NOUVEAU champ
+        'rent_amount' => 'required|numeric|min:1',
+        'charges_amount' => 'nullable|numeric|min:0',  // ← AJOUTÉ (charges)
+        'guarantee_amount' => 'nullable|numeric|min:0',
+        'billing_day' => 'required|integer|min:1|max:28',
+        'payment_frequency' => 'required|in:monthly,quarterly,annually',
+        'payment_mode' => 'nullable|string|max:100',
+        'special_conditions' => 'nullable|string|max:5000',
+    ]);
+
+    try {
+        DB::beginTransaction();
+
+        // Vérification finale avant création
+        $property = Property::find($validated['property_id']);
+        if ($property->status === 'rented') {
+            throw new \Exception('Ce bien est déjà loué. Veuillez rafraîchir la page.');
         }
 
-        $coOwner = $user->coOwner;
-        if (!$coOwner) {
-            return back()->with('error', 'Profil co-propriétaire non trouvé')->withInput();
-        }
+        // Générer un numéro de bail unique
+        $leaseNumber = 'BAIL-' . date('Y') . '-' . str_pad(Lease::count() + 1, 4, '0', STR_PAD_LEFT);
 
-        // Validation - avec les types 'nu' et 'meuble'
-        $validated = $request->validate([
-            'property_id' => [
-                'required',
-                'exists:properties,id',
-                function ($attribute, $value, $fail) use ($coOwner) {
-                    // Vérifier que le bien est délégué au co-propriétaire
-                    $delegation = PropertyDelegation::where('property_id', $value)
-                        ->where('co_owner_id', $coOwner->id)
-                        ->where('status', 'active')
-                        ->first();
+        // Utiliser directement la date de fin calculée par le JS
+        $endDate = $validated['end_date'] ?? null;
 
-                    if (!$delegation) {
-                        $fail('Ce bien ne vous est pas délégué.');
-                    }
-
-                    // 🔥 Vérifier que le bien n'est pas déjà loué (double vérification)
-                    $property = Property::find($value);
-                    if ($property && $property->status === 'rented') {
-                        $fail('Ce bien est déjà loué.');
-                    }
-
-                    // Vérifier qu'il n'y a pas de bail actif (sécurité supplémentaire)
-                    $isRented = Lease::where('property_id', $value)
-                        ->where('status', 'active')
-                        ->exists();
-
-                    if ($isRented) {
-                        $fail('Ce bien a déjà un bail actif.');
-                    }
-                }
+        // 1. Créer le bail
+        $lease = Lease::create([
+            'uuid' => Str::uuid(),
+            'property_id' => $validated['property_id'],
+            'tenant_id' => $validated['tenant_id'],
+            'lease_number' => $leaseNumber,
+            'type' => $validated['lease_type'],
+            'start_date' => $validated['start_date'],
+            'end_date' => $endDate,  // ← Maintenant la date est utilisée
+            'tacit_renewal' => true,
+            'rent_amount' => $validated['rent_amount'],
+            'charges_amount' => $validated['charges_amount'] ?? 0,  // ← AJOUTÉ
+            'guarantee_amount' => $validated['guarantee_amount'] ?? 0,
+            'prepaid_rent_months' => 0,
+            'billing_day' => $validated['billing_day'],
+            'payment_frequency' => $validated['payment_frequency'],
+            'penalty_rate' => 0,
+            'status' => $validated['lease_status'],
+            'terms' => [
+                'payment_mode' => $validated['payment_mode'] ?? 'Espèce',
+                'special_conditions' => $validated['special_conditions'] ?? null,
+                'created_by_co_owner' => $coOwner->id,
             ],
-            'tenant_id' => [
-                'required',
-                'exists:tenants,id',
-                function ($attribute, $value, $fail) use ($coOwner) {
-                    // Vérifier que le locataire appartient au même landlord
-                    $tenant = Tenant::find($value);
-                    if (!$tenant || ($tenant->meta['landlord_id'] ?? null) != $coOwner->landlord_id) {
-                        $fail('Ce locataire ne vous est pas associé.');
-                    }
-
-                    // Vérifier que le locataire n'a pas déjà un bail actif
-                    $hasActiveLease = Lease::where('tenant_id', $value)
-                        ->where('status', 'active')
-                        ->exists();
-
-                    if ($hasActiveLease) {
-                        $fail('Ce locataire a déjà un bail actif.');
-                    }
-                }
-            ],
-            'lease_type' => 'required|in:nu,meuble',
-            'lease_status' => 'required|in:draft,active,pending_signature',
-            'start_date' => 'required|date',
-            'duration' => 'nullable|string|max:100',
-            'rent_amount' => 'required|numeric|min:1',
-            'guarantee_amount' => 'nullable|numeric|min:0',
-            'billing_day' => 'required|integer|min:1|max:28',
-            'payment_frequency' => 'required|in:monthly,quarterly,annually',
-            'payment_mode' => 'nullable|string|max:100',
-            'special_conditions' => 'nullable|string|max:5000',
         ]);
 
-        try {
-            DB::beginTransaction();
+        // 2. Assigner la propriété au locataire
+        $tenant = Tenant::find($validated['tenant_id']);
 
-            // Vérification finale avant création
-            $property = Property::find($validated['property_id']);
-            if ($property->status === 'rented') {
-                throw new \Exception('Ce bien est déjà loué. Veuillez rafraîchir la page.');
-            }
+        PropertyUser::create([
+            'property_id' => $validated['property_id'],
+            'user_id' => $tenant->user_id,
+            'tenant_id' => $validated['tenant_id'],
+            'lease_id' => $lease->id,
+            'role' => 'tenant',
+            'share_percentage' => 100,
+            'start_date' => $validated['start_date'],
+            'end_date' => $endDate,
+            'status' => $validated['lease_status'] === 'active' ? 'active' : 'pending',
+        ]);
 
-            // Générer un numéro de bail unique
-            $leaseNumber = 'BAIL-' . date('Y') . '-' . str_pad(Lease::count() + 1, 4, '0', STR_PAD_LEFT);
+        // 3. Mettre à jour le statut du bien si le bail est actif
+        if ($validated['lease_status'] === 'active') {
+            $property->status = 'rented';
+            $property->save();
 
-            // Calculer la date de fin si une durée est spécifiée
-            $endDate = null;
-            if (!empty($validated['duration'])) {
-                // Extraire le nombre d'années de la durée (ex: "2 ans" -> 2)
-                preg_match('/(\d+)/', $validated['duration'], $matches);
-                if (!empty($matches[1])) {
-                    $years = (int) $matches[1];
-                    $endDate = date('Y-m-d', strtotime($validated['start_date'] . ' + ' . $years . ' years'));
-                }
-            }
-
-            // 1. Créer le bail
-            $lease = Lease::create([
-                'uuid' => Str::uuid(),
-                'property_id' => $validated['property_id'],
-                'tenant_id' => $validated['tenant_id'],
-                'lease_number' => $leaseNumber,
-                'type' => $validated['lease_type'],
-                'start_date' => $validated['start_date'],
-                'end_date' => $endDate,
-                'tacit_renewal' => true,
-                'rent_amount' => $validated['rent_amount'],
-                'charges_amount' => 0,
-                'guarantee_amount' => $validated['guarantee_amount'] ?? 0,
-                'prepaid_rent_months' => 0,
-                'billing_day' => $validated['billing_day'],
-                'payment_frequency' => $validated['payment_frequency'],
-                'penalty_rate' => 0,
-                'status' => $validated['lease_status'],
-                'terms' => [
-                    'payment_mode' => $validated['payment_mode'] ?? 'Espèce',
-                    'special_conditions' => $validated['special_conditions'] ?? null,
-                    'created_by_co_owner' => $coOwner->id,
-                ],
-            ]);
-
-            // 2. Assigner la propriété au locataire
-            $tenant = Tenant::find($validated['tenant_id']);
-
-            PropertyUser::create([
-                'property_id' => $validated['property_id'],
-                'user_id' => $tenant->user_id,
-                'tenant_id' => $validated['tenant_id'],
-                'lease_id' => $lease->id,
-                'role' => 'tenant',
-                'share_percentage' => 100,
-                'start_date' => $validated['start_date'],
-                'end_date' => $endDate,
-                'status' => $validated['lease_status'] === 'active' ? 'active' : 'pending',
-            ]);
-
-            // 3. Mettre à jour le statut du bien si le bail est actif
-            if ($validated['lease_status'] === 'active') {
-                $property->status = 'rented';
-                $property->save();
-
-                // 4. Mettre à jour le statut du locataire
-                $tenant->status = 'active';
-                $tenant->save();
-            }
-
-            DB::commit();
-
-            Log::info('=== BAIL CRÉÉ PAR COPRIO ===', [
-                'lease_id' => $lease->id,
-                'lease_number' => $leaseNumber,
-                'property_id' => $validated['property_id'],
-                'tenant_id' => $validated['tenant_id'],
-                'co_owner_id' => $coOwner->id,
-                'rent_amount' => $validated['rent_amount'],
-                'status' => $validated['lease_status'],
-            ]);
-
-            // REDIRECTION VERS LA MÊME PAGE avec message de succès
-            return redirect()
-                ->route('co-owner.assign-property.create')
-                ->with('success', 'Contrat de location créé avec succès ! Numéro de bail: ' . $leaseNumber);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            Log::error('Erreur création bail par co-propriétaire', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'data' => $validated,
-            ]);
-
-            return back()
-                ->with('error', 'Erreur lors de la création du contrat: ' . $e->getMessage())
-                ->withInput();
+            // 4. Mettre à jour le statut du locataire
+            $tenant->status = 'active';
+            $tenant->save();
         }
+
+        DB::commit();
+
+        Log::info('=== BAIL CRÉÉ PAR COPRIO ===', [
+            'lease_id' => $lease->id,
+            'lease_number' => $leaseNumber,
+            'property_id' => $validated['property_id'],
+            'tenant_id' => $validated['tenant_id'],
+            'co_owner_id' => $coOwner->id,
+            'rent_amount' => $validated['rent_amount'],
+            'end_date' => $endDate,
+            'status' => $validated['lease_status'],
+        ]);
+
+        // REDIRECTION VERS LA MÊME PAGE avec message de succès
+        return redirect()
+            ->route('co-owner.assign-property.create')
+            ->with('success', 'Contrat de location créé avec succès ! Numéro de bail: ' . $leaseNumber);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        Log::error('Erreur création bail par co-propriétaire', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'data' => $validated,
+        ]);
+
+        return back()
+            ->with('error', 'Erreur lors de la création du contrat: ' . $e->getMessage())
+            ->withInput();
     }
+}
 
     /**
      * Méthode utilitaire pour récupérer l'utilisateur authentifié

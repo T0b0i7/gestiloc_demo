@@ -202,6 +202,76 @@
             @keyframes spin {
                 to { transform: rotate(360deg); }
             }
+
+            /* Style pour les champs de formulaire */
+            .form-input {
+                width: 100%;
+                padding: 0.65rem 1rem;
+                border: 1px solid #D1D5DB;
+                border-radius: 8px;
+                font-size: 0.9rem;
+                color: #374151;
+                background: white;
+                transition: border-color 0.2s ease;
+            }
+
+            .form-input:focus {
+                outline: none;
+                border-color: #70AE48;
+                box-shadow: 0 0 0 3px rgba(112, 174, 72, 0.1);
+            }
+
+            .form-input.border-red-500 {
+                border-color: #EF4444;
+            }
+
+            .form-label {
+                display: block;
+                font-weight: 500;
+                color: #374151;
+                margin-bottom: 0.5rem;
+                font-size: 0.9rem;
+            }
+
+            .required-star {
+                color: #EF4444;
+                margin-left: 2px;
+            }
+
+            .error-message {
+                color: #EF4444;
+                font-size: 0.8rem;
+                margin-top: 4px;
+            }
+
+            .helper-text {
+                color: #6B7280;
+                font-size: 0.75rem;
+                margin-top: 4px;
+            }
+
+            .grid-2 {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1.5rem;
+            }
+
+            .grid-3 {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 1.5rem;
+            }
+
+            /* Supprimer les flèches des inputs number */
+            input[type=number]::-webkit-inner-spin-button,
+            input[type=number]::-webkit-outer-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
+            input[type=number] {
+                -moz-appearance: textfield;
+                appearance: textfield;
+            }
         </style>
 
         <!-- Corps du formulaire -->
@@ -252,11 +322,11 @@
                         Informations de location
                     </h2>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+                    <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
                         <!-- Bien à louer -->
                         <div>
-                            <label style="display: block; font-weight: 500; color: #374151; margin-bottom: 0.5rem; font-size: 0.9rem;">
-                                Bien à louer
+                            <label class="form-label">
+                                Bien à louer <span class="required-star">*</span>
                             </label>
                             @if ($delegatedProperties->isEmpty())
                                 <div style="background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; padding: 1rem; text-align: center;">
@@ -264,12 +334,15 @@
                                     <p style="color: #92400E; margin: 0; font-size: 0.9rem;">Aucun bien disponible</p>
                                 </div>
                             @else
-                                <select name="property_id" required
-                                        style="width: 100%; padding: 0.65rem 1rem; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 0.9rem; color: #374151; background: white; cursor: pointer;"
-                                        class="@error('property_id') border-red-500 @enderror">
+                                <select name="property_id" id="property_id" required
+                                        class="form-input @error('property_id') border-red-500 @enderror">
                                     <option value="">Sélectionner un bien</option>
                                     @foreach ($delegatedProperties as $property)
-                                        <option value="{{ $property->id }}" {{ old('property_id') == $property->id ? 'selected' : '' }}>
+                                        <option value="{{ $property->id }}"
+                                                data-rent="{{ $property->rent_amount ?? 0 }}"
+                                                data-charges="{{ $property->charges_amount ?? 0 }}"
+                                                data-guarantee="{{ $property->caution ?? 0 }}"
+                                                {{ old('property_id') == $property->id ? 'selected' : '' }}>
                                             {{ $property->name ?? 'Sans nom' }} - {{ $property->address ?? 'Sans adresse' }}
                                             @if ($property->city) - {{ $property->city }} @endif
                                         </option>
@@ -277,14 +350,14 @@
                                 </select>
                             @endif
                             @error('property_id')
-                                <p style="color: #EF4444; font-size: 0.8rem; margin-top: 4px;">{{ $message }}</p>
+                                <p class="error-message">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <!-- Locataire -->
                         <div>
-                            <label style="display: block; font-weight: 500; color: #374151; margin-bottom: 0.5rem; font-size: 0.9rem;">
-                                Locataire
+                            <label class="form-label">
+                                Locataire <span class="required-star">*</span>
                             </label>
                             @if ($tenants->isEmpty())
                                 <div style="background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; padding: 1rem; text-align: center;">
@@ -297,8 +370,7 @@
                                 </div>
                             @else
                                 <select name="tenant_id" required
-                                        style="width: 100%; padding: 0.65rem 1rem; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 0.9rem; color: #374151; background: white; cursor: pointer;"
-                                        class="@error('tenant_id') border-red-500 @enderror">
+                                        class="form-input @error('tenant_id') border-red-500 @enderror">
                                     <option value="">Sélectionner un locataire</option>
                                     @foreach ($tenants as $tenant)
                                         <option value="{{ $tenant->id }}" {{ old('tenant_id') == $tenant->id ? 'selected' : '' }}>
@@ -309,16 +381,16 @@
                                 </select>
                             @endif
                             @error('tenant_id')
-                                <p style="color: #EF4444; font-size: 0.8rem; margin-top: 4px;">{{ $message }}</p>
+                                <p class="error-message">{{ $message }}</p>
                             @enderror
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                         <!-- Type de bail -->
                         <div>
-                            <label style="display: block; font-weight: 500; color: #374151; margin-bottom: 0.5rem; font-size: 0.9rem;">
-                                Type de bail
+                            <label class="form-label">
+                                Type de bail <span class="required-star">*</span>
                             </label>
                             <div style="display: flex; gap: 1rem;">
                                 <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
@@ -338,8 +410,8 @@
 
                         <!-- Statut du bail -->
                         <div>
-                            <label style="display: block; font-weight: 500; color: #374151; margin-bottom: 0.5rem; font-size: 0.9rem;">
-                                Statut du bail
+                            <label class="form-label">
+                                Statut du bail <span class="required-star">*</span>
                             </label>
                             <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
                                 <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
@@ -364,121 +436,155 @@
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+                    <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
                         <!-- Loyer mensuel -->
                         <div>
-                            <label style="display: block; font-weight: 500; color: #374151; margin-bottom: 0.5rem; font-size: 0.9rem;">
-                                Loyer mensuel (FCFA)
+                            <label class="form-label">
+                                Loyer mensuel (FCFA) <span class="required-star">*</span>
                             </label>
-                            <input type="number" name="rent_amount" required min="1" step="0.01"
+                            <input type="number" name="rent_amount" id="rent_amount" required min="1" step="0.01"
                                    value="{{ old('rent_amount') }}" placeholder="40.000"
-                                   style="width: 100%; padding: 0.65rem 1rem; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 0.9rem;"
-                                   class="@error('rent_amount') border-red-500 @enderror">
+                                   class="form-input @error('rent_amount') border-red-500 @enderror">
                             @error('rent_amount')
-                                <p style="color: #EF4444; font-size: 0.8rem; margin-top: 4px;">{{ $message }}</p>
+                                <p class="error-message">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Charges (optionnel) -->
+                        <div>
+                            <label class="form-label">
+                                Charges mensuelles (FCFA)
+                            </label>
+                            <input type="number" name="charges_amount" id="charges_amount" min="0" step="0.01"
+                                   value="{{ old('charges_amount', 0) }}" placeholder="5.000"
+                                   class="form-input @error('charges_amount') border-red-500 @enderror">
+                            @error('charges_amount')
+                                <p class="error-message">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <!-- Dépôt de garantie -->
                         <div>
-                            <label style="display: block; font-weight: 500; color: #374151; margin-bottom: 0.5rem; font-size: 0.9rem;">
+                            <label class="form-label">
                                 Dépôt de garantie (FCFA)
                             </label>
-                            <input type="number" name="guarantee_amount" min="0" step="0.01"
+                            <input type="number" name="guarantee_amount" id="guarantee_amount" min="0" step="0.01"
                                    value="{{ old('guarantee_amount') }}" placeholder="20.000"
-                                   style="width: 100%; padding: 0.65rem 1rem; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 0.9rem;"
-                                   class="@error('guarantee_amount') border-red-500 @enderror">
+                                   class="form-input @error('guarantee_amount') border-red-500 @enderror">
                             @error('guarantee_amount')
-                                <p style="color: #EF4444; font-size: 0.8rem; margin-top: 4px;">{{ $message }}</p>
+                                <p class="error-message">{{ $message }}</p>
                             @enderror
                         </div>
 
-                        <!-- Durée du bail -->
+                        <!-- Date de début du bail -->
                         <div>
-                            <label style="display: block; font-weight: 500; color: #374151; margin-bottom: 0.5rem; font-size: 0.9rem;">
-                                Durée du bail
+                            <label class="form-label">
+                                Date de début du bail <span class="required-star">*</span>
                             </label>
-                            <input type="text" name="duration"
-                                   value="{{ old('duration') }}" placeholder="Ex: 2 ans"
-                                   style="width: 100%; padding: 0.65rem 1rem; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 0.9rem;"
-                                   class="@error('duration') border-red-500 @enderror">
-                            <p style="color: #6B7280; font-size: 0.75rem; margin-top: 4px;">
+                            <input type="date" name="start_date" id="start_date" required
+                                   value="{{ old('start_date', date('Y-m-d')) }}"
+                                   min="{{ date('Y-m-d') }}"
+                                   class="form-input @error('start_date') border-red-500 @enderror">
+                            @error('start_date')
+                                <p class="error-message">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+                        <!-- Durée du bail en mois (entier) -->
+                        <div>
+                            <label class="form-label">
+                                Durée du bail (en mois) <span class="required-star">*</span>
+                            </label>
+                            <input type="number" name="duration_months" id="duration_months" required min="1" max="120" step="1"
+                                   value="{{ old('duration_months', 12) }}" placeholder="12"
+                                   class="form-input @error('duration_months') border-red-500 @enderror">
+                            <p class="helper-text">
                                 <i data-lucide="refresh-cw" style="width: 12px; height: 12px; display: inline; vertical-align: middle;"></i>
                                 Renouvellement par tacite reconduction
                             </p>
-                            @error('duration')
-                                <p style="color: #EF4444; font-size: 0.8rem; margin-top: 4px;">{{ $message }}</p>
+                            @error('duration_months')
+                                <p class="error-message">{{ $message }}</p>
                             @enderror
+                        </div>
+
+                        <!-- Date de fin calculée automatiquement -->
+                        <div>
+                            <label class="form-label">
+                                Date de fin estimée
+                            </label>
+                            <input type="text" id="end_date_display" readonly
+                                   value="{{ old('end_date') ? \Carbon\Carbon::parse(old('end_date'))->format('d/m/Y') : '' }}"
+                                   placeholder="Sélectionnez une durée"
+                                   class="form-input" style="background: #F9FAFB;">
+                            <input type="hidden" name="end_date" id="end_date" value="{{ old('end_date') }}">
                         </div>
 
                         <!-- Date de paiement -->
                         <div>
-                            <label style="display: block; font-weight: 500; color: #374151; margin-bottom: 0.5rem; font-size: 0.9rem;">
-                                Date de paiement
+                            <label class="form-label">
+                                Jour de paiement <span class="required-star">*</span>
                             </label>
                             <select name="billing_day" required
-                                    style="width: 100%; padding: 0.65rem 1rem; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 0.9rem; background: white; cursor: pointer;"
-                                    class="@error('billing_day') border-red-500 @enderror">
+                                    class="form-input @error('billing_day') border-red-500 @enderror">
                                 <option value="">Sélectionner</option>
                                 @for ($i = 1; $i <= 28; $i++)
-                                    <option value="{{ $i }}" {{ old('billing_day', 1) == $i ? 'selected' : '' }}>{{ $i }}</option>
+                                    <option value="{{ $i }}" {{ old('billing_day', 5) == $i ? 'selected' : '' }}>{{ $i }}</option>
                                 @endfor
                             </select>
                             @error('billing_day')
-                                <p style="color: #EF4444; font-size: 0.8rem; margin-top: 4px;">{{ $message }}</p>
+                                <p class="error-message">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <!-- Périodicité -->
                         <div>
-                            <label style="display: block; font-weight: 500; color: #374151; margin-bottom: 0.5rem; font-size: 0.9rem;">
-                                Périodicité
+                            <label class="form-label">
+                                Périodicité <span class="required-star">*</span>
                             </label>
                             <select name="payment_frequency" required
-                                    style="width: 100%; padding: 0.65rem 1rem; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 0.9rem; background: white; cursor: pointer;"
-                                    class="@error('payment_frequency') border-red-500 @enderror">
+                                    class="form-input @error('payment_frequency') border-red-500 @enderror">
                                 <option value="monthly" {{ old('payment_frequency', 'monthly') == 'monthly' ? 'selected' : '' }}>Mensuel</option>
                                 <option value="quarterly" {{ old('payment_frequency') == 'quarterly' ? 'selected' : '' }}>Trimestriel</option>
                                 <option value="annually" {{ old('payment_frequency') == 'annually' ? 'selected' : '' }}>Annuel</option>
                             </select>
                             @error('payment_frequency')
-                                <p style="color: #EF4444; font-size: 0.8rem; margin-top: 4px;">{{ $message }}</p>
+                                <p class="error-message">{{ $message }}</p>
                             @enderror
                         </div>
                     </div>
 
                     <!-- Mode de paiement -->
                     <div style="margin-top: 1.5rem;">
-                        <label style="display: block; font-weight: 500; color: #374151; margin-bottom: 0.5rem; font-size: 0.9rem;">
+                        <label class="form-label">
                             Mode de paiement
                         </label>
-                        <select name="payment_mode"
-                                style="width: 100%; padding: 0.65rem 1rem; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 0.9rem; background: white; cursor: pointer;"
-                                class="@error('payment_mode') border-red-500 @enderror">
+                        <select name="payment_mode" class="form-input @error('payment_mode') border-red-500 @enderror">
                             <option value="Espèce" {{ old('payment_mode', 'Espèce') == 'Espèce' ? 'selected' : '' }}>Espèce</option>
                             <option value="Virement" {{ old('payment_mode') == 'Virement' ? 'selected' : '' }}>Virement</option>
                             <option value="Chèque" {{ old('payment_mode') == 'Chèque' ? 'selected' : '' }}>Chèque</option>
                             <option value="Mobile Money" {{ old('payment_mode') == 'Mobile Money' ? 'selected' : '' }}>Mobile Money</option>
                         </select>
                         @error('payment_mode')
-                            <p style="color: #EF4444; font-size: 0.8rem; margin-top: 4px;">{{ $message }}</p>
+                            <p class="error-message">{{ $message }}</p>
                         @enderror
                     </div>
 
                     <!-- Conditions particulières -->
                     <div style="margin-top: 1.5rem;">
-                        <label style="display: block; font-weight: 500; color: #374151; margin-bottom: 0.5rem; font-size: 0.9rem;">
+                        <label class="form-label">
                             Détails / conditions particulières
                         </label>
                         <textarea name="special_conditions" rows="4"
                                   placeholder="Ex: Charges comprises, interdictions de fumer etc."
-                                  style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 0.9rem; resize: vertical; font-family: inherit;"
-                                  class="@error('special_conditions') border-red-500 @enderror">{{ old('special_conditions') }}</textarea>
-                        <p style="color: #6B7280; font-size: 0.75rem; margin-top: 4px;">
+                                  class="form-input @error('special_conditions') border-red-500 @enderror"
+                                  style="resize: vertical;">{{ old('special_conditions') }}</textarea>
+                        <p class="helper-text">
                             Ces informations seront ajoutées aux conditions générales du bail
                         </p>
                         @error('special_conditions')
-                            <p style="color: #EF4444; font-size: 0.8rem; margin-top: 4px;">{{ $message }}</p>
+                            <p class="error-message">{{ $message }}</p>
                         @enderror
                     </div>
                 </div>
@@ -514,17 +620,82 @@ document.addEventListener('DOMContentLoaded', function() {
         lucide.createIcons();
     }
 
-    // Auto-remplir le dépôt de garantie avec le loyer
-    const rentInput = document.querySelector('input[name="rent_amount"]');
-    const guaranteeInput = document.querySelector('input[name="guarantee_amount"]');
+    // Éléments du formulaire
+    const propertySelect = document.getElementById('property_id');
+    const rentInput = document.getElementById('rent_amount');
+    const chargesInput = document.getElementById('charges_amount');
+    const guaranteeInput = document.getElementById('guarantee_amount');
+    const startDateInput = document.getElementById('start_date');
+    const durationMonthsInput = document.getElementById('duration_months');
+    const endDateInput = document.getElementById('end_date');
+    const endDateDisplay = document.getElementById('end_date_display');
 
-    if (rentInput && guaranteeInput) {
-        rentInput.addEventListener('change', function() {
-            if (this.value && !guaranteeInput.value) {
-                guaranteeInput.value = this.value;
-            }
-        });
+    // Fonction pour formater les nombres en FCFA (pour affichage uniquement)
+    function formatMoney(amount) {
+        return new Intl.NumberFormat('fr-FR', {
+            style: 'currency',
+            currency: 'XOF',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount).replace('XOF', 'FCFA');
     }
+
+    // Fonction pour mettre à jour les informations du bien sélectionné
+    function updatePropertyInfo() {
+        if (propertySelect && propertySelect.value) {
+            const selectedOption = propertySelect.options[propertySelect.selectedIndex];
+            const rent = parseFloat(selectedOption.dataset.rent) || 0;
+            const charges = parseFloat(selectedOption.dataset.charges) || 0;
+            const guarantee = parseFloat(selectedOption.dataset.guarantee) || 0;
+
+            // Mettre à jour les champs
+            if (rentInput) rentInput.value = rent;
+            if (chargesInput) chargesInput.value = charges;
+            if (guaranteeInput) guaranteeInput.value = guarantee;
+        }
+    }
+
+    // Fonction pour calculer la date de fin
+    function calculateEndDate() {
+        if (startDateInput && startDateInput.value && durationMonthsInput && durationMonthsInput.value) {
+            const startDate = new Date(startDateInput.value);
+            const months = parseInt(durationMonthsInput.value) || 0;
+
+            if (months > 0) {
+                const endDate = new Date(startDate);
+                endDate.setMonth(endDate.getMonth() + months);
+
+                // Format pour l'affichage
+                const day = String(endDate.getDate()).padStart(2, '0');
+                const month = String(endDate.getMonth() + 1).padStart(2, '0');
+                const year = endDate.getFullYear();
+
+                endDateDisplay.value = `${day}/${month}/${year}`;
+                endDateInput.value = `${year}-${month}-${day}`;
+            }
+        }
+    }
+
+    // Événement de changement de bien
+    if (propertySelect) {
+        propertySelect.addEventListener('change', updatePropertyInfo);
+        // Appeler une première fois si une valeur est déjà sélectionnée
+        if (propertySelect.value) {
+            updatePropertyInfo();
+        }
+    }
+
+    // Événements pour le calcul de la date de fin
+    if (startDateInput) {
+        startDateInput.addEventListener('change', calculateEndDate);
+    }
+
+    if (durationMonthsInput) {
+        durationMonthsInput.addEventListener('input', calculateEndDate);
+    }
+
+    // Appeler une première fois si des valeurs existent
+    calculateEndDate();
 
     // Effet de chargement sur les boutons submit
     const form = document.getElementById('lease-form');
@@ -537,9 +708,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 submitButtons.forEach(btn => {
                     btn.classList.add('loading');
                     btn.disabled = true;
-
-                    // Sauvegarder le contenu original
-                    const originalContent = btn.innerHTML;
 
                     // Remplacer par un spinner
                     btn.innerHTML = `

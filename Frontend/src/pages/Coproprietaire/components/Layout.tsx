@@ -39,6 +39,13 @@ interface LayoutProps {
   toggleTheme: () => void;
 }
 
+const CONFIG = {
+  LARAVEL_URL: 'http://localhost:8000',
+  REACT_URL:   'http://localhost:8080',
+  LOGIN_URL:   '/login',
+  LOGOUT_URL:  '/logout',
+};
+
 // ─── COMPOSANTS ET CONSTANTES DU DESIGN HARMONISÉ ───────────────────
 const ic = (c: string) => ({ stroke: c, fill: "none", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const });
 
@@ -147,54 +154,96 @@ const ACTIVE_BG = 'linear-gradient(90deg, rgba(140, 204, 99, 0.1) 0%, rgba(255, 
 const TEXT_GREEN = "#529D21";
 const GRADIENT_GREEN = "linear-gradient(94.5deg, #8CCC63 5.47%, rgba(82, 157, 33, 0.87) 91.93%)";
 
+// Menu sections avec les icônes adaptées ET les propriétés de navigation conservées
 const menuSections = [
   {
-    label: "Menu Principal",
+    title: "Menu principal",
     items: [
-      { id: "dashboard", label: "Dashboard", icon: "Dashboard" as keyof typeof Icons, submenu: [] },
-    ],
+      { id: 'dashboard', label: 'Tableau de bord', icon: "Dashboard" as keyof typeof Icons, path: "/coproprietaire/dashboard", isReact: true },
+    ]
   },
   {
-    label: "Délégations",
+    title: "GESTIONS DES BIENS",
     items: [
-      { id: "delegations", label: "Gestion des délégations", icon: "Handshake" as keyof typeof Icons, submenu: [] },
-      { id: "audit", label: "Audit des délégations", icon: "Eye" as keyof typeof Icons, submenu: [] },
-      { id: "inviter-proprietaire", label: "Inviter un propriétaire", icon: "UserPlus" as keyof typeof Icons, submenu: [] },
-    ],
+      { id: "add-property",  label: "Ajouter un bien",  icon: "UserPlus" as keyof typeof Icons, path: "/coproprietaire/biens/create", isLaravel: true },
+      { id: "my-properties", label: "Mes biens",        icon: "House" as keyof typeof Icons, path: "/coproprietaire/biens",        isReact: true  },
+    ]
   },
   {
-    label: "Biens délégués",
+    title: "GESTION LOCATIVE",
     items: [
-      { id: "biens", label: "Mes biens délégués", icon: "House" as keyof typeof Icons, submenu: [] },
-    ],
+      { id: "new-rental",        label: "Nouvelle location",      icon: "Handshake" as keyof typeof Icons, path: "/coproprietaire/assign-property/create", isLaravel: true },
+      { id: "add-tenant",        label: "Ajouter un locataire",   icon: "UserPlus" as keyof typeof Icons, path: "/coproprietaire/tenants/create",          isLaravel: true },
+      { id: "tenant-list",       label: "Liste des locataires",   icon: "People" as keyof typeof Icons, path: "/coproprietaire/tenants",                 isLaravel: true },
+      { id: "payment-management",label: "Gestion des paiements",  icon: "Wallet" as keyof typeof Icons, path: "/coproprietaire/paiements",               isLaravel: true },
+    ]
   },
   {
-    label: "Gestion locative",
+    title: "DOCUMENTS",
     items: [
-      { id: "locataires", label: "Locataires", icon: "People" as keyof typeof Icons, submenu: [] },
-      { id: "baux", label: "Contrats de bails", icon: "File" as keyof typeof Icons, submenu: [] },
-      { id: "quittances", label: "Quittances", icon: "Clipboard" as keyof typeof Icons, submenu: [] },
-    ],
+      { id: "lease-contracts",    label: "Contrats de bail",              icon: "File" as keyof typeof Icons, path: "/coproprietaire/leases",           isLaravel: true },
+      { id: "condition-reports",  label: "Etats de lieux",                icon: "Clipboard" as keyof typeof Icons, path: "/coproprietaire/etats-des-lieux",  isLaravel: true },
+      { id: "due-notices",        label: "Avis d'échéance",               icon: "File" as keyof typeof Icons, path: "/coproprietaire/notices",          isLaravel: true },
+      { id: "rent-receipts",      label: "Quittances de loyers",          icon: "Clipboard" as keyof typeof Icons, path: "/coproprietaire/quittances",       isLaravel: true },
+      { id: "invoices",           label: "Factures et documents divers",  icon: "File" as keyof typeof Icons, path: "/coproprietaire/factures",         isLaravel: true },
+      { id: "document-archiving", label: "Archivage de documents",        icon: "File" as keyof typeof Icons, path: "/coproprietaire/documents",        isReact: true   },
+    ]
   },
   {
-    label: "Documents & Finance",
+    title: "REPARATIONS ET TRAVAUX",
     items: [
-      { id: "documents", label: "Tous les Documents", icon: "File" as keyof typeof Icons, submenu: [] },
-      { id: "finances", label: "Gestion Finances", icon: "Wallet" as keyof typeof Icons, submenu: [] },
-      { id: "emettre-paiement", label: "Émettre un paiement", icon: "TrendingUp" as keyof typeof Icons, submenu: [] },
-      { id: "retrait-methode", label: "Méthodes de retrait", icon: "Calculator" as keyof typeof Icons, submenu: [] },
-    ],
+      { id: "repairs", label: "Réparations et travaux", icon: "Handshake" as keyof typeof Icons, path: "/coproprietaire/maintenance", isLaravel: true },
+    ]
   },
   {
-    label: "Configuration",
+    title: "COMPTABILITE ET STATISTIQUES",
     items: [
-      { id: "parametres", label: "Paramètres", icon: "Settings" as keyof typeof Icons, submenu: [] },
-      { id: "logout", label: "Déconnexion", icon: "LogOut" as keyof typeof Icons, submenu: [], isLogout: true },
-    ],
+      { id: "accounting", label: "Comptabilité et statistiques", icon: "TrendingUp" as keyof typeof Icons, path: "/coproprietaire/comptabilite", isLaravel: true },
+    ]
   },
+  {
+    title: "GESTION DES COPROPRIÉTAIRES",
+    items: [
+      { id: "coowner-list",  label: "Liste des gestionnaires",  icon: "People" as keyof typeof Icons, path: "/coproprietaire/gestionnaires",       isLaravel: true },
+      { id: "invite-coowner",label: "Inviter un gestionnaire",  icon: "UserPlus" as keyof typeof Icons, path: "/coproprietaire/gestionnaires/creer", isLaravel: true },
+    ]
+  },
+  {
+    title: "CONFIGURATION",
+    items: [
+      { id: "settings", label: "Paramètres", icon: "Settings" as keyof typeof Icons, path: "/coproprietaire/parametres", isReact: true },
+      { id: "logout", label: "Déconnexion", icon: "LogOut" as keyof typeof Icons, path: "", isLogout: true },
+    ]
+  }
 ];
 
-// ─── NAV ITEM COMPONENT (HORS LAYOUT POUR LA STABILITÉ) ────────────
+// Fonctions de navigation
+const getToken = () => {
+  let t = localStorage.getItem('token');
+  if (t) return t;
+  t = new URLSearchParams(window.location.search).get('api_token');
+  if (t) { localStorage.setItem('token', t); return t; }
+  return sessionStorage.getItem('token');
+};
+
+const goToLaravel = (path: string) => {
+  const token = getToken();
+  if (!token) { window.location.href = `${CONFIG.LARAVEL_URL}${CONFIG.LOGIN_URL}`; return; }
+  const sep = path.includes('?') ? '&' : '?';
+  window.location.href = `${CONFIG.LARAVEL_URL}${path.startsWith('/') ? path : '/'+path}${sep}api_token=${encodeURIComponent(token)}&_t=${Date.now()}`;
+};
+
+const goToReact = (path: string) => {
+  const token = getToken();
+  if (!token) { 
+    window.location.href = `${CONFIG.LARAVEL_URL}${CONFIG.LOGIN_URL}`; 
+    return; 
+  }
+  const sep = path.includes('?') ? '&' : '?';
+  window.location.href = `${CONFIG.REACT_URL}${path.startsWith('/') ? path : '/'+path}${sep}api_token=${encodeURIComponent(token)}&_t=${Date.now()}`;
+};
+
+// ─── NAV ITEM COMPONENT ────────────
 const NavItem: React.FC<{
   item: any,
   activeTab: Tab,
@@ -211,18 +260,24 @@ const NavItem: React.FC<{
   const isActive = activeTab === item.id || (item.submenu?.some((s: any) => s.id === activeTab));
   const Ico = Icons[item.icon as keyof typeof Icons];
 
+  const handleClick = () => {
+    if (hasSubmenu) {
+      toggleMenu(item.id);
+    } else if (item.isLogout) {
+      onLogout();
+    } else if (item.isLaravel) {
+      goToLaravel(item.path);
+    } else if (item.isReact) {
+      goToReact(item.path);
+    } else {
+      onNavigate(item.id as Tab);
+    }
+  };
+
   return (
     <div className="w-full">
       <button
-        onClick={() => {
-          if (hasSubmenu) {
-            toggleMenu(item.id);
-          } else if (item.isLogout) {
-            onLogout();
-          } else {
-            onNavigate(item.id as Tab);
-          }
-        }}
+        onClick={handleClick}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         className="w-full relative flex items-center gap-3 px-6 py-3 transition-all duration-300 group"
@@ -262,10 +317,19 @@ const NavItem: React.FC<{
           {item.submenu.map((sub: any) => {
             const active = isSubActive(sub.id);
             const SubIco = Icons[sub.icon as keyof typeof Icons];
+            const handleSubClick = () => {
+              if (sub.isLaravel) {
+                goToLaravel(sub.path);
+              } else if (sub.isReact) {
+                goToReact(sub.path);
+              } else {
+                onNavigate(sub.id as Tab);
+              }
+            };
             return (
               <button
                 key={sub.id}
-                onClick={() => onNavigate(sub.id as Tab)}
+                onClick={handleSubClick}
                 onMouseEnter={() => setHoveredSub(sub.id)}
                 onMouseLeave={() => setHoveredSub(null)}
                 className="w-full relative flex items-center gap-3 px-3 py-2 transition-all duration-300"
@@ -294,56 +358,85 @@ const NavItem: React.FC<{
   );
 };
 
-// ─── SIDEBAR COMPONENT (HORS LAYOUT POUR LA STABILITÉ) ────────────
+// ─── SIDEBAR COMPONENT ────────────
 const SidebarContent: React.FC<{
   activeTab: Tab,
   onNavigate: (tab: Tab) => void,
   onLogout: () => void,
   expandedMenus: string[],
-  toggleMenu: (id: string) => void
-}> = ({ activeTab, onNavigate, onLogout, expandedMenus, toggleMenu }) => (
-  <div className="flex flex-col h-full overflow-hidden bg-white">
-    <div className="flex-1 overflow-y-auto py-6 px-3 sidebar-scroll scrollbar-hide">
-      <style>{`
-        .sidebar-scroll::-webkit-scrollbar { width: 4px; }
-        .sidebar-scroll::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 10px; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
-      {menuSections.map((section) => (
-        <div key={section.label} className="mb-4">
-          <div style={{
-            fontSize: '0.62rem',
-            fontWeight: 800,
-            letterSpacing: '0.12em',
-            color: '#BDBDBD',
-            padding: '1.2rem 1.4rem 0.6rem',
-            textAlign: 'left',
-            fontFamily: "'Merriweather', serif",
-            lineHeight: '100%',
-            verticalAlign: 'middle',
-            textTransform: 'uppercase'
-          }}>
-            {section.label}
+  toggleMenu: (id: string) => void,
+  user: UserData | null
+}> = ({ activeTab, onNavigate, onLogout, expandedMenus, toggleMenu, user }) => {
+  const ownerInitials = React.useMemo(() => {
+    if (!user) return "C";
+    const a = (user.first_name?.[0] || user.email?.[0] || "").toUpperCase();
+    const b = (user.last_name?.[0] || "").toUpperCase();
+    return `${a}${b}`.trim() || "C";
+  }, [user]);
+
+  const ownerName = React.useMemo(() => {
+    if (!user) return "Co-propriétaire";
+    const full = `${user.first_name || ""} ${user.last_name || ""}`.trim();
+    return full || user.email || "Co-propriétaire";
+  }, [user]);
+
+  return (
+    <div className="flex flex-col h-full overflow-hidden bg-white">
+      <div className="flex-1 overflow-y-auto py-6 px-3 sidebar-scroll scrollbar-hide">
+        <style>{`
+          .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+          .sidebar-scroll::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 10px; }
+          .scrollbar-hide::-webkit-scrollbar { display: none; }
+          .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        `}</style>
+        {menuSections.map((section) => (
+          <div key={section.title} className="mb-4">
+            <div style={{
+              fontSize: '0.62rem',
+              fontWeight: 800,
+              letterSpacing: '0.12em',
+              color: '#BDBDBD',
+              padding: '1.2rem 1.4rem 0.6rem',
+              textAlign: 'left',
+              fontFamily: "'Merriweather', serif",
+              lineHeight: '100%',
+              verticalAlign: 'middle',
+              textTransform: 'uppercase'
+            }}>
+              {section.title}
+            </div>
+            <div className="space-y-0.5">
+              {section.items.map((item) => (
+                <NavItem
+                  key={item.id}
+                  item={item}
+                  activeTab={activeTab}
+                  onNavigate={onNavigate}
+                  onLogout={onLogout}
+                  isExpanded={expandedMenus.includes(item.id) || activeTab === item.id || (item.submenu?.some((s: any) => s.id === activeTab))}
+                  toggleMenu={toggleMenu}
+                />
+              ))}
+            </div>
           </div>
-          <div className="space-y-0.5">
-            {section.items.map((item) => (
-              <NavItem
-                key={item.id}
-                item={item}
-                activeTab={activeTab}
-                onNavigate={onNavigate}
-                onLogout={onLogout}
-                isExpanded={expandedMenus.includes(item.id) || activeTab === item.id || (item.submenu?.some((s: any) => s.id === activeTab))}
-                toggleMenu={toggleMenu}
-              />
-            ))}
+        ))}
+      </div>
+
+      {/* Footer profil */}
+      <div className="p-4 border-t border-gray-200 flex-shrink-0 bg-white">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#70AE48] to-[#8BC34A] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+            {ownerInitials}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold text-gray-900 truncate">{ownerName}</div>
+            <div className="text-xs text-gray-500">Co-propriétaire</div>
           </div>
         </div>
-      ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const Layout: React.FC<LayoutProps> = ({
   children,
@@ -371,7 +464,16 @@ export const Layout: React.FC<LayoutProps> = ({
   }, []);
 
   const handleNavigate = (tab: Tab) => {
-    onNavigate(tab);
+    // Vérifier si c'est une route React qui nécessite une redirection externe
+    const menuItem = menuSections.flatMap(s => s.items).find(item => item.id === tab);
+    
+    if (menuItem?.isLaravel) {
+      goToLaravel(menuItem.path);
+    } else if (menuItem?.isReact) {
+      goToReact(menuItem.path);
+    } else {
+      onNavigate(tab);
+    }
     setIsMobileMenuOpen(false);
   };
 
@@ -442,7 +544,7 @@ export const Layout: React.FC<LayoutProps> = ({
           </button>
 
           <button
-            onClick={() => handleNavigate('profile')}
+            onClick={() => handleNavigate('settings' as Tab)}
             className="flex items-center gap-2 py-2 px-6 rounded-full text-white text-xs sm:text-sm font-semibold transition-all hover:bg-white/20"
             style={{
               background: 'rgba(255, 255, 255, 0.4)',
@@ -490,6 +592,7 @@ export const Layout: React.FC<LayoutProps> = ({
             onLogout={onLogout}
             expandedMenus={expandedMenus}
             toggleMenu={toggleMenu}
+            user={user}
           />
         </aside>
 
