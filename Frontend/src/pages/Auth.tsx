@@ -239,25 +239,35 @@ export default function Auth() {
         let redirectPath = "/";
         let userRole = "";
 
+        // ADMIN
         if (roles.includes("admin")) {
           redirectPath = "/admin";
           userRole = "admin";
-        } else if (roles.includes("landlord") || roles.includes("proprietaire")) {
-          redirectPath = "/proprietaire";
+        } 
+        // PROPRIÉTAIRE
+        else if (roles.includes("landlord") || roles.includes("proprietaire") || user.user_type === "owner") {
+          redirectPath = "/proprietaire/dashboard";
           userRole = "proprietaire";
-        } else if (roles.includes("coproprietaire") || roles.includes("co_owner")) {
-          redirectPath = "/coproprietaire";
+        } 
+        // COPROPRIÉTAIRE
+        else if (roles.includes("coproprietaire") || roles.includes("co_owner")) {
+          redirectPath = "/coproprietaire/dashboard";
           userRole = "coproprietaire";
-        } else if (roles.includes("tenant") || roles.includes("locataire")) {
-          redirectPath = "/locataire";
+        } 
+        // LOCATAIRE
+        else if (roles.includes("tenant") || roles.includes("locataire")) {
+          redirectPath = "/locataire/dashboard";
           userRole = "locataire";
-        } else if (user.user_type === "owner") {
-          redirectPath = "/proprietaire";
-          userRole = "proprietaire";
-        } else if (user.user_type === "agency") {
-          redirectPath = "/agence";
+        } 
+        // AGENCE
+        else if (user.user_type === "agency") {
+          redirectPath = "/agence/dashboard";
           userRole = "agence";
         }
+
+        // Log pour déboguer
+        console.log("🎯 Redirection vers:", redirectPath);
+        console.log("👤 Rôle utilisateur:", userRole);
 
         const updatedUser = { ...user, role: userRole };
         localStorage.setItem("user", JSON.stringify(updatedUser));

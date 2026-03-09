@@ -42,7 +42,7 @@ const PRIMARY_COLOR = '#70AE48';
 
 const apiBase =
   import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ||
-  'https://wheat-skunk-120710.hostingersite.com';
+  'http://127.0.0.1:8000';
 
 const categoryMeta: Record<IncidentCategory, { label: string; icon: any; hint: string }> = {
   plumbing: { label: 'Plomberie', icon: Droplet, hint: 'Fuite, évier, WC, robinet...' },

@@ -23,7 +23,13 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Mail,
-  Info
+  Info,
+  Phone,
+  Eye,
+  FileText,
+  Key,
+  Shield,
+  Briefcase
 } from 'lucide-react';
 import api from '@/services/api';
 
@@ -54,6 +60,34 @@ interface Location {
   guarantee_deposit?: number;
 }
 
+interface PropertyDetails {
+  id: number;
+  name: string;
+  address: string;
+  city: string;
+  postal_code: string;
+  country: string;
+  type?: string;
+  surface?: number;
+  rooms?: number;
+  floor?: number;
+  description?: string;
+}
+
+interface LandlordDetails {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  address?: string;
+  city?: string;
+  postal_code?: string;
+  country?: string;
+  company_name?: string;
+  is_professional?: boolean;
+}
+
 export const Location: React.FC<LocationProps> = ({ notify }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -62,9 +96,14 @@ export const Location: React.FC<LocationProps> = ({ notify }) => {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [sendingInvite, setSendingInvite] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortField, setSortField] = useState<string>('start_date');
+  const [sortField, setSortField] = useState<string>('end_date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [propertyDetails, setPropertyDetails] = useState<PropertyDetails | null>(null);
+  const [landlordDetails, setLandlordDetails] = useState<LandlordDetails | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
   const [inviteForm, setInviteForm] = useState({
     email: '',
     nom: '',
@@ -88,10 +127,32 @@ Cordialement`
       setLocations(response.data || []);
     } catch (error) {
       console.warn('Silent fail for locations - backend might be offline');
-      // No notify to avoid visual errors
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchLocationDetails = async (locationId: number) => {
+    setLoadingDetails(true);
+    try {
+      // Récupérer les détails du bail
+      const response = await api.get(`/tenant/leases/${locationId}`);
+      if (response.data) {
+        setPropertyDetails(response.data.property || null);
+        setLandlordDetails(response.data.landlord || null);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des détails:', error);
+      notify?.('Erreur lors du chargement des détails', 'error');
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  const handleViewDetails = (location: Location) => {
+    setSelectedLocation(location);
+    setShowDetailsModal(true);
+    fetchLocationDetails(location.id);
   };
 
   const handleSendInvite = async () => {
@@ -156,6 +217,15 @@ Cordialement`
     return `${diffMonths} mois`;
   };
 
+  const formatEndDate = (endDate: string | null) => {
+    if (!endDate) return 'Indéterminée';
+    return new Date(endDate).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
   // Filtrage et tri
   const filteredLocations = locations
     .filter(loc => {
@@ -176,11 +246,11 @@ Cordialement`
       if (sortField === 'property') aValue = a.property.name;
       if (sortField === 'landlord') aValue = a.landlord.name;
       if (sortField === 'rent_amount') aValue = a.rent_amount;
-      if (sortField === 'balance') aValue = a.balance;
+      if (sortField === 'end_date') aValue = a.end_date || '9999-12-31';
       if (sortField === 'property') bValue = b.property.name;
       if (sortField === 'landlord') bValue = b.landlord.name;
       if (sortField === 'rent_amount') bValue = b.rent_amount;
-      if (sortField === 'balance') bValue = b.balance;
+      if (sortField === 'end_date') bValue = b.end_date || '9999-12-31';
       if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
       return 0;
@@ -231,10 +301,262 @@ Cordialement`
     };
   };
 
-  // Removed loading state block to ensure immediate rendering as requested by user
+  if (loading) {
+    return (
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto flex items-center justify-center min-h-[400px]">
+        <div className="text-center animate-pulse">
+          <div className="relative">
+            <Loader className="w-16 h-16 text-[#529D21] animate-spin mx-auto mb-4" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-8 h-8 bg-white rounded-full"></div>
+            </div>
+          </div>
+          <p className="text-gray-600 font-medium">Chargement de vos locations...</p>
+          <p className="text-sm text-gray-400 mt-2">Veuillez patienter</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fadeIn">
+
+      {/* Modal Détails du bien et du propriétaire */}
+      {showDetailsModal && selectedLocation && (
+        <div
+          className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center pt-16 p-4 animate-fadeIn"
+          onClick={() => setShowDetailsModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-slideUp"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* En-tête */}
+            <div className="sticky top-0 bg-gradient-to-r from-[#529D21] to-[#F5A623] text-white px-6 py-4 flex items-center justify-between rounded-t-2xl">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <Building size={20} />
+                Détails de la location
+              </h2>
+              <button
+                onClick={() => setShowDetailsModal(false)}
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Contenu */}
+            <div className="p-6">
+              {loadingDetails ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader className="w-8 h-8 text-[#529D21] animate-spin" />
+                  <span className="ml-3 text-gray-600">Chargement des détails...</span>
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {/* Informations du bien */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                      <Home size={18} className="text-[#529D21]" />
+                      Le bien
+                    </h3>
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Nom du bien</p>
+                          <p className="font-medium text-gray-900">{propertyDetails?.name || selectedLocation.property.name}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Adresse complète</p>
+                          <p className="font-medium text-gray-900">
+                            {propertyDetails?.address || selectedLocation.property.address}
+                            {propertyDetails?.city && `, ${propertyDetails.city}`}
+                            {propertyDetails?.postal_code && ` ${propertyDetails.postal_code}`}
+                            {propertyDetails?.country && `, ${propertyDetails.country}`}
+                          </p>
+                        </div>
+                        {propertyDetails?.type && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Type</p>
+                            <p className="font-medium text-gray-900">{propertyDetails.type}</p>
+                          </div>
+                        )}
+                        {propertyDetails?.surface && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Surface</p>
+                            <p className="font-medium text-gray-900">{propertyDetails.surface} m²</p>
+                          </div>
+                        )}
+                        {propertyDetails?.rooms && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Pièces</p>
+                            <p className="font-medium text-gray-900">{propertyDetails.rooms}</p>
+                          </div>
+                        )}
+                        {propertyDetails?.floor && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1">Étage</p>
+                            <p className="font-medium text-gray-900">{propertyDetails.floor}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Informations du propriétaire */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                      <User size={18} className="text-[#529D21]" />
+                      Le propriétaire
+                    </h3>
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                      <div className="flex items-start gap-4 mb-4">
+                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#529D21] to-[#F5A623] flex items-center justify-center text-white font-bold text-2xl">
+                          {landlordDetails?.first_name?.[0]}{landlordDetails?.last_name?.[0] || selectedLocation.landlord.name[0]}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-xl font-bold text-gray-900">
+                              {landlordDetails ? 
+                                `${landlordDetails.first_name || ''} ${landlordDetails.last_name || ''}`.trim() || selectedLocation.landlord.name
+                                : selectedLocation.landlord.name
+                              }
+                            </h4>
+                            {landlordDetails?.is_professional && (
+                              <span className="px-2 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-medium flex items-center gap-1">
+                                <Briefcase size={12} />
+                                Professionnel
+                              </span>
+                            )}
+                          </div>
+                          {landlordDetails?.company_name && (
+                            <p className="text-sm text-gray-600 mt-1">{landlordDetails.company_name}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-white rounded-lg p-3 border border-gray-100">
+                          <div className="flex items-center gap-2 text-[#529D21] mb-2">
+                            <Mail size={14} />
+                            <span className="text-xs font-medium">Email</span>
+                          </div>
+                          <p className="text-sm text-gray-900 break-all">
+                            {landlordDetails?.email || selectedLocation.landlord.email || '-'}
+                          </p>
+                        </div>
+                        <div className="bg-white rounded-lg p-3 border border-gray-100">
+                          <div className="flex items-center gap-2 text-[#529D21] mb-2">
+                            <Phone size={14} />
+                            <span className="text-xs font-medium">Téléphone</span>
+                          </div>
+                          <p className="text-sm text-gray-900">
+                            {landlordDetails?.phone || selectedLocation.landlord.phone || '-'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {(landlordDetails?.address || landlordDetails?.city) && (
+                        <div className="mt-4 bg-white rounded-lg p-3 border border-gray-100">
+                          <div className="flex items-center gap-2 text-[#529D21] mb-2">
+                            <MapPin size={14} />
+                            <span className="text-xs font-medium">Adresse</span>
+                          </div>
+                          <p className="text-sm text-gray-900">
+                            {landlordDetails?.address || ''}
+                            {landlordDetails?.city && `, ${landlordDetails.city}`}
+                            {landlordDetails?.postal_code && ` ${landlordDetails.postal_code}`}
+                            {landlordDetails?.country && `, ${landlordDetails.country}`}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Informations du bail */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                      <FileText size={18} className="text-[#529D21]" />
+                      Détails du bail
+                    </h3>
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-white rounded-lg p-3 border border-gray-100">
+                          <p className="text-xs text-gray-500 mb-1">Loyer mensuel</p>
+                          <p className="font-bold text-gray-900">{formatMoney(selectedLocation.rent_amount)}</p>
+                          {selectedLocation.charges_amount && selectedLocation.charges_amount > 0 && (
+                            <p className="text-xs text-gray-500 mt-1">dont {formatMoney(selectedLocation.charges_amount)} de charges</p>
+                          )}
+                        </div>
+                        <div className="bg-white rounded-lg p-3 border border-gray-100">
+                          <p className="text-xs text-gray-500 mb-1">Dépôt de garantie</p>
+                          <p className="font-bold text-gray-900">{selectedLocation.guarantee_deposit ? formatMoney(selectedLocation.guarantee_deposit) : '-'}</p>
+                        </div>
+                        <div className="bg-white rounded-lg p-3 border border-gray-100">
+                          <p className="text-xs text-gray-500 mb-1">Solde</p>
+                          <p className={`font-bold ${selectedLocation.balance > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                            {selectedLocation.balance > 0 ? formatMoney(selectedLocation.balance) : 'À jour'}
+                          </p>
+                        </div>
+                        <div className="bg-white rounded-lg p-3 border border-gray-100">
+                          <p className="text-xs text-gray-500 mb-1">Date de début</p>
+                          <p className="font-medium text-gray-900">
+                            {new Date(selectedLocation.start_date).toLocaleDateString('fr-FR', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric'
+                            })}
+                          </p>
+                        </div>
+                        <div className="bg-white rounded-lg p-3 border border-gray-100">
+                          <p className="text-xs text-gray-500 mb-1">Date de fin</p>
+                          <p className="font-medium text-gray-900">
+                            {selectedLocation.end_date 
+                              ? new Date(selectedLocation.end_date).toLocaleDateString('fr-FR', {
+                                  day: 'numeric',
+                                  month: 'long',
+                                  year: 'numeric'
+                                })
+                              : 'Indéterminée'
+                            }
+                          </p>
+                        </div>
+                        <div className="bg-white rounded-lg p-3 border border-gray-100">
+                          <p className="text-xs text-gray-500 mb-1">Statut</p>
+                          <div className="flex items-center gap-2">
+                            {getStatusBadge(selectedLocation.status, selectedLocation.balance).icon}
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(selectedLocation.status, selectedLocation.balance).color}`}>
+                              {getStatusBadge(selectedLocation.status, selectedLocation.balance).label}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Pied */}
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end gap-3 rounded-b-2xl">
+              <button
+                onClick={() => setShowDetailsModal(false)}
+                className="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors font-medium"
+              >
+                Fermer
+              </button>
+              <a
+                href={`mailto:${landlordDetails?.email || selectedLocation.landlord.email}`}
+                className="px-6 py-2.5 bg-gradient-to-r from-[#529D21] to-[#F5A623] text-white rounded-xl hover:shadow-lg transition-all font-medium inline-flex items-center gap-2"
+              >
+                <Mail size={16} />
+                Contacter le propriétaire
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal Invitation */}
       {showInviteModal && (
         <div
@@ -470,7 +792,7 @@ Cordialement`
         </div>
       </div>
 
-      {/* Table Section - Sans bouton Voir */}
+      {/* Table Section - Avec colonnes modifiées */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden animate-slideUp">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -512,22 +834,28 @@ Cordialement`
                     )}
                   </div>
                 </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                  <div className="flex items-center gap-2">
+                    <Shield size={16} className="text-gray-500" />
+                    Statut
+                  </div>
+                </th>
                 <th
                   className="px-6 py-4 text-left text-sm font-semibold text-gray-700 cursor-pointer hover:text-green-600 transition-colors"
-                  onClick={() => handleSort('balance')}
+                  onClick={() => handleSort('end_date')}
                 >
                   <div className="flex items-center gap-2">
-                    <Clock size={16} className="text-gray-500" />
-                    Solde
-                    {sortField === 'balance' && (
+                    <Calendar size={16} className="text-gray-500" />
+                    Date de fin
+                    {sortField === 'end_date' && (
                       <span className="text-green-600">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                     )}
                   </div>
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                  <div className="flex items-center gap-2">
-                    <Calendar size={16} className="text-gray-500" />
-                    Durée
+                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                  <div className="flex items-center justify-center gap-2">
+                    <Eye size={16} className="text-gray-500" />
+                    Actions
                   </div>
                 </th>
               </tr>
@@ -561,7 +889,11 @@ Cordialement`
                           <p className="font-medium text-gray-900">{location.landlord.name}</p>
                           <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
                             <Mail size={10} />
-                            {location.landlord.email}
+                            {location.landlord.email || '-'}
+                          </p>
+                          <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                            <Phone size={10} />
+                            {location.landlord.phone || '-'}
                           </p>
                         </div>
                       </td>
@@ -577,25 +909,28 @@ Cordialement`
                             {status.icon}
                             {status.label}
                           </span>
-                          {location.balance > 0 && (
-                            <span className="text-xs font-medium text-red-600">
-                              {formatMoney(location.balance)}
-                            </span>
-                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-sm text-gray-600">{calculateDuration(location.start_date, location.end_date)}</p>
-                        <p className="text-xs text-gray-400">
-                          {new Date(location.start_date).toLocaleDateString('fr-FR')}
+                        <p className="text-sm font-medium text-gray-900">
+                          {formatEndDate(location.end_date)}
                         </p>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <button
+                          onClick={() => handleViewDetails(location)}
+                          className="p-2.5 bg-gradient-to-r from-[#529D21]/10 to-[#F5A623]/10 rounded-xl hover:from-[#529D21]/20 hover:to-[#F5A623]/20 transition-all group"
+                          title="Voir les détails"
+                        >
+                          <Eye size={18} className="text-gray-600 group-hover:text-[#529D21] transition-colors" />
+                        </button>
                       </td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center">
+                  <td colSpan={6} className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center">
                       <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                         <Building size={32} className="text-gray-400" />

@@ -23,13 +23,308 @@ import { Button } from "./ui/Button";
 import { Skeleton } from "./ui/Skeleton";
 import { Tab } from "../types";
 import { PaymentModal } from "./PaymentModal";
-import api from "@/services/api"; // Service API réel
+import api from "@/services/api";
 
-// Import missing types and mock services
-import { TenantLease, TenantIncident, mockTenantApi } from "@/services/mockTenantApi";
-import { RentReceipt, mockRentReceiptService } from "@/services/mockRentReceiptService";
-import { TenantInvoice, mockInvoiceService } from "@/services/mockInvoiceService";
-import { Notice, mockNoticeService } from "@/services/mockNoticeService";
+// Types pour les données de l'API
+interface Property {
+  id: number;
+  name: string;
+  address: string;
+  city: string;
+  postal_code: string;
+  country: string;
+}
+
+interface Landlord {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+}
+
+interface Lease {
+  id: number;
+  uuid: string;
+  lease_number: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+  rent_amount: number;
+  charges_amount: number;
+  guarantee_amount: number;
+  type: string;
+  property: Property | null;
+  landlord: Landlord | null;
+}
+
+interface Payment {
+  id: number;
+  amount: number;
+  amount_net: number;
+  fee_amount: number;
+  status: string;
+  payment_method: string;
+  paid_at: string;
+  created_at: string;
+  property: {
+    id: number;
+    name: string;
+    address: string;
+  } | null;
+  month: string | null;
+}
+
+interface Receipt {
+  id: number;
+  reference: string;
+  amount: number;
+  paid_month: string;
+  month: number;
+  year: number;
+  issued_date: string;
+  paid_at: string;
+  status: string;
+  type: string;
+  property: {
+    id: number;
+    name: string;
+  } | null;
+  pdf_url: string | null;
+}
+
+interface Incident {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  priority: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  property: {
+    id: number;
+    name: string;
+  } | null;
+  photos: string[];
+}
+
+interface Notice {
+  id: number;
+  notice_number: string;
+  notice_date: string;
+  effective_date: string;
+  status: string;
+  reason: string;
+  created_at: string;
+}
+
+interface Invoice {
+  id: number;
+  invoice_number: string;
+  amount: number;
+  due_date: string;
+  status: string;
+  type: string;
+  description: string;
+}
+
+interface ApiResponse {
+  user: {
+    id: number;
+    email: string;
+    first_name: string;
+    last_name: string;
+    phone: string;
+    roles: string[];
+  };
+  leases: Lease[];
+  active_lease: Lease | null;
+  payments: Payment[];
+  receipts: Receipt[];
+  incidents: Incident[];
+  notices: Notice[];
+  invoices: Invoice[];
+  notifications: any[];
+  notifications_unread_count: number;
+  stats: {
+    total_monthly: number;
+    is_up_to_date: boolean;
+    months_paid_count: number;
+    open_incidents: number;
+    in_progress_incidents: number;
+    pending_notices: number;
+    total_paid_ytd: number;
+  };
+}
+
+// Données fictives pour les utilisateurs non connectés
+const mockDashboardData: ApiResponse = {
+  user: {
+    id: 0,
+    email: "invite@example.com",
+    first_name: "Invité",
+    last_name: "",
+    phone: "",
+    roles: ["guest"]
+  },
+  leases: [
+    {
+      id: 1,
+      uuid: "mock-lease-1",
+      lease_number: "BAIL-2025-001",
+      start_date: "2025-01-01",
+      end_date: "2026-01-01",
+      status: "active",
+      rent_amount: 150000,
+      charges_amount: 25000,
+      guarantee_amount: 150000,
+      type: "nu",
+      property: {
+        id: 1,
+        name: "Appartement Moderne",
+        address: "123 Rue de la Paix",
+        city: "Dakar",
+        postal_code: "12500",
+        country: "Sénégal"
+      },
+      landlord: {
+        id: 1,
+        first_name: "Jean",
+        last_name: "Dupont",
+        email: "jean.dupont@example.com",
+        phone: "+221 77 123 45 67"
+      }
+    }
+  ],
+  active_lease: {
+    id: 1,
+    uuid: "mock-lease-1",
+    lease_number: "BAIL-2025-001",
+    start_date: "2025-01-01",
+    end_date: "2026-01-01",
+    status: "active",
+    rent_amount: 150000,
+    charges_amount: 25000,
+    guarantee_amount: 150000,
+    type: "nu",
+    property: {
+      id: 1,
+      name: "Appartement Moderne",
+      address: "123 Rue de la Paix",
+      city: "Dakar",
+      postal_code: "12500",
+      country: "Sénégal"
+    },
+    landlord: {
+      id: 1,
+      first_name: "Jean",
+      last_name: "Dupont",
+      email: "jean.dupont@example.com",
+      phone: "+221 77 123 45 67"
+    }
+  },
+  payments: [
+    {
+      id: 1,
+      amount: 175000,
+      amount_net: 175000,
+      fee_amount: 0,
+      status: "approved",
+      payment_method: "Carte bancaire",
+      paid_at: "2025-03-15T10:30:00Z",
+      created_at: "2025-03-15T10:30:00Z",
+      property: {
+        id: 1,
+        name: "Appartement Moderne",
+        address: "123 Rue de la Paix"
+      },
+      month: "2025-03"
+    },
+    {
+      id: 2,
+      amount: 175000,
+      amount_net: 175000,
+      fee_amount: 0,
+      status: "approved",
+      payment_method: "Mobile Money",
+      paid_at: "2025-02-14T09:15:00Z",
+      created_at: "2025-02-14T09:15:00Z",
+      property: {
+        id: 1,
+        name: "Appartement Moderne",
+        address: "123 Rue de la Paix"
+      },
+      month: "2025-02"
+    }
+  ],
+  receipts: [
+    {
+      id: 1,
+      reference: "QUIT-2025-03-001",
+      amount: 175000,
+      paid_month: "2025-03",
+      month: 3,
+      year: 2025,
+      issued_date: "2025-03-16",
+      paid_at: "2025-03-15",
+      status: "paid",
+      type: "rent",
+      property: {
+        id: 1,
+        name: "Appartement Moderne"
+      },
+      pdf_url: "/mock/receipt-1.pdf"
+    },
+    {
+      id: 2,
+      reference: "QUIT-2025-02-001",
+      amount: 175000,
+      paid_month: "2025-02",
+      month: 2,
+      year: 2025,
+      issued_date: "2025-02-15",
+      paid_at: "2025-02-14",
+      status: "paid",
+      type: "rent",
+      property: {
+        id: 1,
+        name: "Appartement Moderne"
+      },
+      pdf_url: "/mock/receipt-2.pdf"
+    }
+  ],
+  incidents: [
+    {
+      id: 1,
+      title: "Fuite d'eau dans la cuisine",
+      description: "Fuite sous l'évier qui nécessite une intervention rapide",
+      category: "plomberie",
+      priority: "high",
+      status: "in_progress",
+      created_at: "2025-03-10T08:00:00Z",
+      updated_at: "2025-03-11T14:30:00Z",
+      property: {
+        id: 1,
+        name: "Appartement Moderne"
+      },
+      photos: []
+    }
+  ],
+  notices: [],
+  invoices: [],
+  notifications: [],
+  notifications_unread_count: 0,
+  stats: {
+    total_monthly: 175000,
+    is_up_to_date: true,
+    months_paid_count: 2,
+    open_incidents: 0,
+    in_progress_incidents: 1,
+    pending_notices: 0,
+    total_paid_ytd: 350000
+  }
+};
 
 // ---------- helpers ----------
 const monthKey = (d: Date) =>
@@ -43,11 +338,6 @@ const prevMonthKey = (ym: string) => {
   const d = new Date(y, m - 1, 1);
   d.setMonth(d.getMonth() - 1);
   return monthKey(d);
-};
-
-const money = (v: unknown): number => {
-  const n = typeof v === "string" ? Number(v) : typeof v === "number" ? v : 0;
-  return Number.isFinite(n) ? n : 0;
 };
 
 const fmtMoney = (n: number, currency = "FCFA") =>
@@ -65,51 +355,42 @@ interface DashboardProps {
   onNavigate?: (tab: Tab) => void;
 }
 
-interface UserData {
-  id: number;
-  email: string;
-  first_name: string | null;
-  last_name: string | null;
-  phone: string | null;
-  roles: string[];
-  default_role: string | null;
-}
-
-export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify, onNavigate }) => {
-  // User state
-  const [user, setUser] = useState<UserData | null>(null);
-
+export const Dashboard: React.FC<DashboardProps> = ({ 
+  activeTab = 'home', 
+  notify, 
+  onNavigate 
+}) => {
+  // Auth state
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  
   // Data states
-  const [lease, setLease] = useState<TenantLease | null>(null);
-  const [receipts, setReceipts] = useState<RentReceipt[]>([]);
-  const [invoices, setInvoices] = useState<TenantInvoice[]>([]);
-  const [incidents, setIncidents] = useState<TenantIncident[]>([]);
-  const [notices, setNotices] = useState<Notice[]>([]);
-  const [payments, setPayments] = useState<any[]>([]);
-
-  // UI states
+  const [dashboardData, setDashboardData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
 
   // Derived date keys
   const currentYM = useMemo(() => monthKey(new Date()), []);
-  const ytdStartYM = useMemo(() => `${new Date().getFullYear()}-01`, []);
 
+  // Vérifier l'authentification au chargement
   useEffect(() => {
-    // Récupérer les données utilisateur depuis localStorage
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      try {
-        setUser(JSON.parse(userData));
-      } catch (err) {
-        console.error('Erreur lors de la lecture des données utilisateur:', err);
-      }
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    
+    if (token && user) {
+      setIsAuthenticated(true);
+    } else {
+      setIsAuthenticated(false);
+      // Si non authentifié, utiliser les données fictives
+      setDashboardData(mockDashboardData);
+      setLoading(false);
     }
   }, []);
 
+  // Charger les données depuis l'API Laravel (seulement si authentifié)
   useEffect(() => {
+    if (!isAuthenticated) return;
+    
     let cancelled = false;
 
     const fetchDashboardData = async () => {
@@ -117,52 +398,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
       setError(null);
 
       try {
-        // Lancer toutes les requêtes en parallèle
-        const [leasesRes, receiptsRes, invoicesRes, incidentsRes, noticesRes] = await Promise.allSettled([
-          mockTenantApi.getLeases(),
-          mockRentReceiptService.list({ type: "independent" }),
-          mockInvoiceService.list(),
-          mockTenantApi.getIncidents(),
-          mockNoticeService.list(),
-        ]);
-
+        // Appel à l'API Laravel - endpoint dashboard
+        const response = await api.get('/tenant/dashboard');
+        
         if (cancelled) return;
-
-        // Traiter les résultats
-        if (leasesRes.status === "fulfilled") {
-          const ls = leasesRes.value || [];
-          const activeLease = ls.find((l: TenantLease) => String(l.status).toLowerCase() === "active") || ls[0] || null;
-          setLease(activeLease);
-        } else {
-          console.error("[DASH] leases error", leasesRes.reason);
-        }
-
-        if (receiptsRes.status === "fulfilled") {
-          setReceipts(receiptsRes.value || []);
-        } else {
-          console.error("[DASH] receipts error", receiptsRes.reason);
-        }
-
-        if (invoicesRes.status === "fulfilled") {
-          setInvoices(invoicesRes.value || []);
-        } else {
-          console.error("[DASH] invoices error", invoicesRes.reason);
-        }
-
-        if (incidentsRes.status === "fulfilled") {
-          setIncidents(incidentsRes.value || []);
-        } else {
-          console.error("[DASH] incidents error", incidentsRes.reason);
-        }
-
-        if (noticesRes.status === "fulfilled") {
-          setNotices(noticesRes.value || []);
-        } else {
-          console.error("[DASH] notices error", noticesRes.reason);
-        }
-
+        
+        console.log('Données reçues:', response.data);
+        setDashboardData(response.data);
+        
       } catch (err: any) {
-        console.warn('[DASH] Error fetching dashboard data:', err);
+        console.error('[DASH] Erreur chargement données:', err);
+        if (!cancelled) {
+          // En cas d'erreur d'authentification, utiliser les données fictives
+          if (err.response?.status === 401) {
+            setIsAuthenticated(false);
+            setDashboardData(mockDashboardData);
+          } else {
+            setError(err.response?.data?.message || 'Erreur lors du chargement des données');
+          }
+        }
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -175,15 +429,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isAuthenticated]);
 
   // ---------- derived stats ----------
-  const rentMonthly = useMemo(() => lease?.rent_amount || 0, [lease]);
-  const chargesMonthly = useMemo(() => lease?.charges_amount || 0, [lease]);
+  const activeLease = dashboardData?.active_lease;
+  
+  const rentMonthly = useMemo(() => activeLease?.rent_amount || 0, [activeLease]);
+  const chargesMonthly = useMemo(() => activeLease?.charges_amount || 0, [activeLease]);
   const totalMonthly = useMemo(() => rentMonthly + chargesMonthly, [rentMonthly, chargesMonthly]);
 
+  const receipts = useMemo(() => dashboardData?.receipts || [], [dashboardData]);
+  const incidents = useMemo(() => dashboardData?.incidents || [], [dashboardData]);
+  const notices = useMemo(() => dashboardData?.notices || [], [dashboardData]);
+  const payments = useMemo(() => dashboardData?.payments || [], [dashboardData]);
+  const leases = useMemo(() => dashboardData?.leases || [], [dashboardData]);
+
   const receiptsSorted = useMemo(() => {
-    if (!receipts) return [];
     const arr = [...receipts];
     arr.sort((a, b) => {
       const da = safeDate(a.issued_date || "")?.getTime() ?? 0;
@@ -196,60 +457,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
 
   const lastReceipt = useMemo(() => receiptsSorted[0] || null, [receiptsSorted]);
 
-  const monthsPaidSet = useMemo(() => {
-    const s = new Set<string>();
-    payments?.forEach((p) => {
-      if (p.status === 'approved' && p.paid_at) {
-        const month = new Date(p.paid_at).toISOString().slice(0, 7);
-        s.add(month);
-      }
-    });
-    return s;
-  }, [payments]);
-
-  const isUpToDate = useMemo(() => monthsPaidSet.has(currentYM), [monthsPaidSet, currentYM]);
-
-  const paidStreak = useMemo(() => {
-    if (monthsPaidSet.size === 0) return 0;
-
-    let start = currentYM;
-    if (!monthsPaidSet.has(start)) {
-      const all = Array.from(monthsPaidSet).sort();
-      start = all[all.length - 1];
-    }
-
-    let streak = 0;
-    let cur = start;
-    while (monthsPaidSet.has(cur)) {
-      streak++;
-      cur = prevMonthKey(cur);
-      if (streak > 120) break;
-    }
-    return streak;
-  }, [monthsPaidSet, currentYM]);
-
-  const receiptsYTD = useMemo(() => {
-    const ytdStart = `${new Date().getFullYear()}-01`;
-    return (receipts || []).filter((r) => (r.paid_month || "") >= ytdStart);
-  }, [receipts]);
-
-  const totalPaidYTD = useMemo(() => {
-    return receiptsYTD.reduce((sum, r) => sum + ((r as any).amount || r.amount_paid || 0), 0);
-  }, [receiptsYTD]);
-
-  const avgPaid = useMemo(() => {
-    if (!receipts?.length) return 0;
-    const sum = receipts.reduce((acc, r) => acc + ((r as any).amount || r.amount_paid || 0), 0);
-    return sum / receipts.length;
-  }, [receipts]);
-
+  // Statistiques depuis l'API ou calculées
+  const locationCount = useMemo(() => leases.length || 0, [leases]);
+  
   const openIncidents = useMemo(
-    () => incidents?.filter((i) => i.status === "open").length || 0,
+    () => incidents?.filter((i: Incident) => i.status === "open").length || 0,
     [incidents]
   );
 
   const inProgressIncidents = useMemo(
-    () => incidents?.filter((i) => i.status === "in_progress").length || 0,
+    () => incidents?.filter((i: Incident) => i.status === "in_progress").length || 0,
     [incidents]
   );
 
@@ -258,26 +475,69 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
     [notices]
   );
 
+  const latePayments = useMemo(() => {
+    // Calculer les paiements en retard
+    return payments.filter((p: Payment) => 
+      p.status === 'pending' || p.status === 'initiated'
+    ).length;
+  }, [payments]);
+
   // Afficher le contenu selon l'onglet actif
   const renderContent = () => {
-    const activeLease = lease;
+    if (loading) {
+      return (
+        <div className="space-y-6">
+          <Skeleton className="h-40 w-full" />
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-40 w-full" />)}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[1,2,3,4].map(i => <Skeleton key={i} className="h-64 w-full" />)}
+          </div>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()} variant="outline">
+            Réessayer
+          </Button>
+        </div>
+      );
+    }
 
     switch (activeTab) {
       case 'home':
-        // Contenu du tableau de bord principal - Refait selon le design Figma
         return (
           <>
-            {/* Welcome Card - Exact comme la maquette Figma */}
+            {/* Welcome Card */}
             <div className="rounded-2xl shadow-lg p-6 mb-8 relative overflow-hidden"
               style={{ background: 'linear-gradient(94.5deg, #8CCC63 5.47%, rgba(82, 157, 33, 0.87) 91.93%)' }}>
               <div className="flex justify-between items-start md:items-center gap-6">
                 <div className="z-10 flex-1">
                   <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">
-                    Bienvenue sur Gestiloc !
+                    {!isAuthenticated 
+                      ? 'Bienvenue sur Gestiloc ! (Mode Démo)' 
+                      : dashboardData?.user?.first_name 
+                        ? `Bienvenue ${dashboardData.user.first_name} ${dashboardData.user.last_name || ''} !` 
+                        : 'Bienvenue sur Gestiloc !'}
                   </h1>
                   <p className="text-white/90 text-sm md:text-base max-w-md leading-relaxed">
-                    Retrouvez ici toutes les informations de location. Gérez vos quittances, contactez votre propriétaire et suivez l'état de votre logement en toute simplicité.
+                    {!isAuthenticated 
+                      ? 'Ceci est une version de démonstration. Connectez-vous pour voir vos vraies données.'
+                      : 'Retrouvez ici toutes les informations de location. Gérez vos quittances, contactez votre propriétaire et suivez l\'état de votre logement en toute simplicité.'}
                   </p>
+                  {!isAuthenticated && (
+                    <Button 
+                      onClick={() => window.location.href = '/login'} 
+                      className="mt-4 bg-dark text-green-700 hover:bg-dark-50"
+                    >
+                      Se connecter
+                    </Button>
+                  )}
                 </div>
                 <div className="flex-shrink-0">
                   <img
@@ -289,35 +549,55 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
               </div>
             </div>
 
-            {/* Quick Actions - Cards Layout - Enlarged for Desktop */}
-            <div className="flex flex-wrap items-center justify-start gap-12 mb-12">
-              <button onClick={() => onNavigate?.('receipts')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1" style={{ width: '220px', height: '180px', borderRadius: '24px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 10px 0px rgba(131, 199, 87, 0.4)' }}>
-                <img src="/Ressource_gestiloc/Mes_quittances.png" alt="Mes quittances" className="w-14 h-14 object-contain mb-2 group-hover:scale-110 transition-transform" />
-                <span className="text-base font-semibold text-gray-900 text-center px-2">Mes quittances</span>
+            {/* Quick Actions */}
+            <div className="flex flex-wrap items-center justify-start gap-6 lg:gap-8 xl:gap-12 mb-12">
+              <button 
+                onClick={() => onNavigate?.('receipts')} 
+                className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1" 
+                style={{ width: '200px', height: '160px', borderRadius: '24px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 10px 0px rgba(131, 199, 87, 0.4)' }}
+              >
+                <img src="/Ressource_gestiloc/Mes_quittances.png" alt="Mes quittances" className="w-12 h-12 object-contain mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-semibold text-gray-900 text-center px-2">Mes quittances</span>
               </button>
 
-              <button onClick={() => onNavigate?.('interventions')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1" style={{ width: '220px', height: '180px', borderRadius: '24px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 10px 0px rgba(131, 199, 87, 0.4)' }}>
-                <img src="/Ressource_gestiloc/Tools.png" alt="Nouvelle intervention" className="w-14 h-14 object-contain mb-2 group-hover:scale-110 transition-transform" />
-                <span className="text-base font-semibold text-gray-900 text-center px-2">Nouvelle intervention</span>
+              <button 
+                onClick={() => onNavigate?.('interventions')} 
+                className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1" 
+                style={{ width: '200px', height: '160px', borderRadius: '24px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 10px 0px rgba(131, 199, 87, 0.4)' }}
+              >
+                <img src="/Ressource_gestiloc/Tools.png" alt="Nouvelle intervention" className="w-12 h-12 object-contain mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-semibold text-gray-900 text-center px-2">Nouvelle intervention</span>
               </button>
 
-              <button onClick={() => onNavigate?.('tasks')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1" style={{ width: '220px', height: '180px', borderRadius: '24px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 10px 0px rgba(131, 199, 87, 0.4)' }}>
-                <img src="/Ressource_gestiloc/Nouvelles_taches.png" alt="Nouvelle tâche" className="w-14 h-14 object-contain mb-2 group-hover:scale-110 transition-transform" />
-                <span className="text-base font-semibold text-gray-900 text-center px-2">Nouvelle tâche</span>
+              <button 
+                onClick={() => onNavigate?.('tasks')} 
+                className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1" 
+                style={{ width: '200px', height: '160px', borderRadius: '24px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 10px 0px rgba(131, 199, 87, 0.4)' }}
+              >
+                <img src="/Ressource_gestiloc/Nouvelles_taches.png" alt="Nouvelle tâche" className="w-12 h-12 object-contain mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-semibold text-gray-900 text-center px-2">Nouvelle tâche</span>
               </button>
 
-              <button onClick={() => onNavigate?.('notes')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1" style={{ width: '220px', height: '180px', borderRadius: '24px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 10px 0px rgba(131, 199, 87, 0.4)' }}>
-                <img src="/Ressource_gestiloc/Edit Property.png" alt="Nouvelle note" className="w-14 h-14 object-contain mb-2 group-hover:scale-110 transition-transform" />
-                <span className="text-base font-semibold text-gray-900 text-center px-2">Nouvelle note</span>
+              <button 
+                onClick={() => onNavigate?.('notes')} 
+                className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1" 
+                style={{ width: '200px', height: '160px', borderRadius: '24px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 10px 0px rgba(131, 199, 87, 0.4)' }}
+              >
+                <img src="/Ressource_gestiloc/Edit Property.png" alt="Nouvelle note" className="w-12 h-12 object-contain mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-semibold text-gray-900 text-center px-2">Nouvelle note</span>
               </button>
 
-              <button onClick={() => onNavigate?.('documents')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1" style={{ width: '220px', height: '180px', borderRadius: '24px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 10px 0px rgba(131, 199, 87, 0.4)' }}>
-                <img src="/Ressource_gestiloc/Document In Folder.png" alt="Nouveau document" className="w-14 h-14 object-contain mb-2 group-hover:scale-110 transition-transform" />
-                <span className="text-base font-semibold text-gray-900 text-center px-2">Nouveau document</span>
+              <button 
+                onClick={() => onNavigate?.('documents')} 
+                className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1" 
+                style={{ width: '200px', height: '160px', borderRadius: '24px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 10px 0px rgba(131, 199, 87, 0.4)' }}
+              >
+                <img src="/Ressource_gestiloc/Document In Folder.png" alt="Nouveau document" className="w-12 h-12 object-contain mb-2 group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-semibold text-gray-900 text-center px-2">Nouveau document</span>
               </button>
             </div>
 
-            {/* Stats Grid - MATCHING IMAGE 3 */}
+            {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-8 mb-12">
               {/* Locations Card */}
               <div className="bg-[#F8F9FD] rounded-2xl border border-blue-100 p-8 flex flex-col h-[320px] relative">
@@ -329,12 +609,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
                   <div className="flex items-center gap-12">
                     <img src="/Ressource_gestiloc/Key Security.png" alt="Key" className="w-32 h-32 object-contain" />
                     <div className="text-center">
-                      <p className="text-8xl font-black text-gray-900 leading-none">1</p>
-                      <p className="text-lg text-gray-500 font-medium mt-4">Location</p>
+                      <p className="text-8xl font-black text-gray-900 leading-none">{locationCount}</p>
+                      <p className="text-lg text-gray-500 font-medium mt-4">
+                        {locationCount > 1 ? 'Locations' : 'Location'}
+                      </p>
                     </div>
                   </div>
                 </div>
-                <button onClick={() => onNavigate?.('location')} className="absolute bottom-6 right-8 text-sm font-bold text-[#6366F1] hover:underline">
+                <button 
+                  onClick={() => onNavigate?.('location')} 
+                  className="absolute bottom-6 right-8 text-sm font-bold text-[#6366F1] hover:underline"
+                >
                   Tout afficher →
                 </button>
               </div>
@@ -349,12 +634,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
                   <div className="flex items-center gap-12">
                     <img src="/Ressource_gestiloc/Dollar Bag.png" alt="Money" className="w-32 h-32 object-contain" />
                     <div className="text-center">
-                      <p className="text-8xl font-black text-gray-900 leading-none">0</p>
-                      <p className="text-lg text-gray-500 font-medium mt-4">Loyers en retard</p>
+                      <p className="text-8xl font-black text-gray-900 leading-none">{latePayments}</p>
+                      <p className="text-lg text-gray-500 font-medium mt-4">
+                        {latePayments > 1 ? 'Loyers en retard' : 'Loyer en retard'}
+                      </p>
                     </div>
                   </div>
                 </div>
-                <button onClick={() => onNavigate?.('payments')} className="absolute bottom-6 right-8 text-sm font-bold text-[#6366F1] hover:underline">
+                <button 
+                  onClick={() => onNavigate?.('payments')} 
+                  className="absolute bottom-6 right-8 text-sm font-bold text-[#6366F1] hover:underline"
+                >
                   Tout afficher →
                 </button>
               </div>
@@ -370,21 +660,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
                     <img src="/Ressource_gestiloc/Tools.png" alt="Tools" className="w-24 h-24 object-contain" />
                     <div className="flex flex-1 justify-around">
                       <div className="text-center">
-                        <p className="text-6xl font-black text-gray-900 leading-none">0</p>
-                        <p className="text-sm text-gray-500 font-bold mt-3">Ouverte</p>
+                        <p className="text-6xl font-black text-gray-900 leading-none">{openIncidents}</p>
+                        <p className="text-sm text-gray-500 font-bold mt-3">Ouverte{openIncidents > 1 ? 's' : ''}</p>
                       </div>
                       <div className="text-center">
                         <p className="text-6xl font-black text-gray-900 leading-none">0</p>
                         <p className="text-sm text-gray-500 font-bold mt-3">En retard</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-6xl font-black text-gray-900 leading-none">0</p>
+                        <p className="text-6xl font-black text-gray-900 leading-none">{inProgressIncidents}</p>
                         <p className="text-sm text-gray-500 font-bold mt-3">En cours</p>
                       </div>
                     </div>
                   </div>
                 </div>
-                <button onClick={() => onNavigate?.('interventions')} className="absolute bottom-6 right-8 text-sm font-bold text-[#6366F1] hover:underline">
+                <button 
+                  onClick={() => onNavigate?.('interventions')} 
+                  className="absolute bottom-6 right-8 text-sm font-bold text-[#6366F1] hover:underline"
+                >
                   Tout afficher →
                 </button>
               </div>
@@ -410,7 +703,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
                     </div>
                   </div>
                 </div>
-                <button onClick={() => onNavigate?.('tasks')} className="absolute bottom-6 right-8 text-sm font-bold text-[#6366F1] hover:underline">
+                <button 
+                  onClick={() => onNavigate?.('tasks')} 
+                  className="absolute bottom-6 right-8 text-sm font-bold text-[#6366F1] hover:underline"
+                >
                   Tout afficher →
                 </button>
               </div>
@@ -422,24 +718,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
         return (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold text-gray-900">Ma Location</h2>
-            {lease ? (
+            {activeLease ? (
               <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold mb-4">{lease.property?.name || 'Détails du logement'}</h3>
+                <h3 className="text-lg font-semibold mb-4">{activeLease.property?.name || 'Détails du logement'}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-500">Adresse</p>
                     <p className="font-medium">
-                      {lease.property?.address || 'Non spécifiée'},
-                      {lease.property?.city || ''}
+                      {activeLease.property?.address || 'Non spécifiée'}
+                      {activeLease.property?.city ? `, ${activeLease.property.city}` : ''}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Loyer mensuel</p>
-                    <p className="font-medium">{fmtMoney(lease.rent_amount || 0)}</p>
+                    <p className="font-medium">{fmtMoney(activeLease.rent_amount || 0)}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Charges</p>
-                    <p className="font-medium">{fmtMoney(lease.charges_amount || 0)}</p>
+                    <p className="font-medium">{fmtMoney(activeLease.charges_amount || 0)}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Total mensuel</p>
@@ -447,30 +743,34 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Date de début</p>
-                    <p className="font-medium">{new Date(lease.start_date).toLocaleDateString('fr-FR')}</p>
+                    <p className="font-medium">{new Date(activeLease.start_date).toLocaleDateString('fr-FR')}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Date de fin</p>
                     <p className="font-medium">
-                      {lease.end_date
-                        ? new Date(lease.end_date).toLocaleDateString('fr-FR')
+                      {activeLease.end_date
+                        ? new Date(activeLease.end_date).toLocaleDateString('fr-FR')
                         : 'Non spécifiée'}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Type de bail</p>
                     <p className="font-medium">
-                      {lease.type === 'nu' ? 'Location nue' : 'Location meublée'}
+                      {activeLease.type === 'nu' ? 'Location nue' : 'Location meublée'}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">Numéro de bail</p>
-                    <p className="font-medium">{lease.lease_number}</p>
+                    <p className="font-medium">{activeLease.lease_number}</p>
                   </div>
                 </div>
               </div>
             ) : (
-              <p className="text-gray-500">Aucune location active</p>
+              <div className="bg-white rounded-lg shadow p-8 text-center">
+                <img src="/Ressource_gestiloc/Key Security.png" alt="No lease" className="w-24 h-24 mx-auto mb-4 opacity-50" />
+                <p className="text-gray-500 mb-4">Aucune location active</p>
+                <p className="text-sm text-gray-400">Vous n'avez pas encore de bail actif.</p>
+              </div>
             )}
           </div>
         );
@@ -484,7 +784,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
                 <h3 className="text-lg font-semibold mb-4">Historique des quittances</h3>
                 {receipts && receipts.length > 0 ? (
                   <div className="space-y-3">
-                    {receipts.map((receipt) => (
+                    {receipts.map((receipt: Receipt) => (
                       <div key={receipt.id} className="flex justify-between items-center p-3 border rounded hover:bg-gray-50">
                         <div>
                           <p className="font-medium">Mois: {receipt.paid_month}</p>
@@ -496,7 +796,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold">{fmtMoney((receipt as any).amount || receipt.amount_paid || 0)}</p>
+                          <p className="font-semibold">{fmtMoney(receipt.amount || 0)}</p>
                           <span className={`text-xs px-2 py-1 rounded ${receipt.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                             }`}>
                             {receipt.status === 'paid' ? 'Payé' : 'En attente'}
@@ -516,7 +816,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500">Aucune quittance disponible</p>
+                  <div className="text-center py-8">
+                    <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                    <p className="text-gray-500">Aucune quittance disponible</p>
+                  </div>
                 )}
               </div>
             </div>
@@ -531,7 +834,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
               <h3 className="text-lg font-semibold mb-4">Historique des interventions</h3>
               {incidents && incidents.length > 0 ? (
                 <div className="space-y-3">
-                  {incidents.map((incident) => (
+                  {incidents.map((incident: Incident) => (
                     <div key={incident.id} className="flex justify-between items-center p-3 border rounded hover:bg-gray-50">
                       <div>
                         <p className="font-medium">{incident.title}</p>
@@ -542,20 +845,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
                         </p>
                       </div>
                       <div className="text-right">
-                        <span className={`text-xs px-2 py-1 rounded ${incident.status === 'open' ? 'bg-red-100 text-red-800' :
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          incident.status === 'open' ? 'bg-red-100 text-red-800' :
                           incident.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-green-100 text-green-800'
-                          }`}>
+                          'bg-green-100 text-green-800'
+                        }`}>
                           {incident.status === 'open' ? 'Ouvert' :
-                            incident.status === 'in_progress' ? 'En cours' :
-                              'Résolu'}
+                           incident.status === 'in_progress' ? 'En cours' :
+                           'Résolu'}
                         </span>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500">Aucune intervention en cours</p>
+                <div className="text-center py-8">
+                  <Wrench className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <p className="text-gray-500">Aucune intervention en cours</p>
+                </div>
               )}
             </div>
           </div>
@@ -569,15 +876,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
               <h3 className="text-lg font-semibold mb-4">Historique des paiements</h3>
               {payments && payments.length > 0 ? (
                 <div className="space-y-3">
-                  {payments.map((payment) => (
+                  {payments.map((payment: Payment) => (
                     <div key={payment.id} className="flex justify-between items-center p-3 border rounded hover:bg-gray-50">
                       <div>
                         <p className="font-medium">
                           {payment.payment_method === 'card' ? 'Paiement par carte' :
-                            payment.payment_method === 'mobile_money' ? 'Mobile Money' :
-                              payment.payment_method === 'virement' ? 'Virement' :
-                                payment.payment_method === 'especes' ? 'Espèces' :
-                                  payment.payment_method === 'cheque' ? 'Chèque' : 'Paiement'}
+                           payment.payment_method === 'mobile_money' ? 'Mobile Money' :
+                           payment.payment_method === 'virement' ? 'Virement' :
+                           payment.payment_method === 'especes' ? 'Espèces' :
+                           payment.payment_method === 'cheque' ? 'Chèque' : 'Paiement'}
                         </p>
                         <p className="text-sm text-gray-500">
                           Date: {payment.paid_at ? new Date(payment.paid_at).toLocaleDateString('fr-FR') : 'N/A'}
@@ -588,22 +895,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
                       </div>
                       <div className="text-right">
                         <p className="font-semibold">{fmtMoney(payment.amount)}</p>
-                        <span className={`text-xs px-2 py-1 rounded ${payment.status === 'approved' ? 'bg-green-100 text-green-800' :
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          payment.status === 'approved' ? 'bg-green-100 text-green-800' :
                           payment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
+                          'bg-red-100 text-red-800'
+                        }`}>
                           {payment.status === 'approved' ? 'Approuvé' :
-                            payment.status === 'pending' ? 'En attente' :
-                              payment.status === 'initiated' ? 'Initiatié' :
-                                payment.status === 'cancelled' ? 'Annulé' :
-                                  payment.status === 'failed' ? 'Échoué' : payment.status}
+                           payment.status === 'pending' ? 'En attente' :
+                           payment.status === 'initiated' ? 'Initiatié' :
+                           payment.status === 'cancelled' ? 'Annulé' :
+                           payment.status === 'failed' ? 'Échoué' : payment.status}
                         </span>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500">Aucun paiement enregistré</p>
+                <div className="text-center py-8">
+                  <DollarSign className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <p className="text-gray-500">Aucun paiement enregistré</p>
+                </div>
               )}
             </div>
           </div>
@@ -617,7 +928,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
               <h3 className="text-lg font-semibold mb-4">Gestion du préavis</h3>
               {notices && notices.length > 0 ? (
                 <div className="space-y-3">
-                  {notices.map((notice) => (
+                  {notices.map((notice: Notice) => (
                     <div key={notice.id} className="flex justify-between items-center p-3 border rounded">
                       <div>
                         <p className="font-medium">Préavis de départ #{notice.notice_number}</p>
@@ -631,273 +942,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
                           <p className="text-sm text-gray-500">Motif: {notice.reason}</p>
                         )}
                       </div>
-                      <span className={`text-xs px-2 py-1 rounded ${notice.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
-                        }`}>
+                      <span className={`text-xs px-2 py-1 rounded ${
+                        notice.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
+                      }`}>
                         {notice.status === 'pending' ? 'En attente' : 'Confirmé'}
                       </span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500">Aucun préavis en cours</p>
+                <div className="text-center py-8">
+                  <File className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <p className="text-gray-500">Aucun préavis en cours</p>
+                </div>
               )}
             </div>
           </div>
         );
 
       default:
-        // Par défaut, afficher le tableau de bord - Même contenu que le cas 'home'
         return (
-          <>
-            {/* Welcome Card - Exact comme la maquette Figma */}
-            <div className="bg-gradient-to-r from-[#529D21] to-[#7CB342] rounded-2xl shadow-lg p-6 mb-6 relative overflow-hidden">
-              <div className="flex justify-between items-start md:items-center gap-6">
-                <div className="z-10 flex-1">
-                  <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">
-                    Bienvenue sur Gestiloc !
-                  </h1>
-                  <p className="text-white/90 text-sm md:text-base max-w-md leading-relaxed">
-                    Retrouvez ici toutes les informations de location. Gérez vos quittances, contactez votre propriétaire et suivez l'état de votre logement en toute simplicité.
-                  </p>
-                </div>
-                <div className="flex-shrink-0">
-                  <img
-                    src="/Ressource_gestiloc/hand.png"
-                    alt="Welcome"
-                    className="w-24 h-24 md:w-32 md:h-32 object-contain"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Actions - Reviewed per Figma Spec */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-              <button onClick={() => onNavigate?.('receipts')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-lg" style={{ width: '193px', height: '168px', borderRadius: '20px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 6.8px 0px rgba(131, 199, 87, 1)' }}>
-                <div className="relative flex items-center justify-center" style={{ height: '80px' }}>
-                  <div style={{
-                    width: '74px',
-                    height: '70px',
-                    borderRadius: '50%',
-                    background: 'rgba(255, 251, 244, 1)',
-                    border: '3px solid rgba(255, 177, 51, 1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    zIndex: 1
-                  }}></div>
-                  <img src="/Ressource_gestiloc/Mes_quittances.png" alt="Mes quittances" className="w-12 h-12 object-contain relative z-10" />
-                </div>
-                <span className="text-sm font-medium text-gray-900 text-center px-2">Mes quittances</span>
-              </button>
-
-              <button onClick={() => onNavigate?.('interventions')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-lg" style={{ width: '193px', height: '168px', borderRadius: '20px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 6.8px 0px rgba(131, 199, 87, 1)' }}>
-                <div className="relative flex items-center justify-center" style={{ height: '80px' }}>
-                  <div style={{
-                    width: '74px',
-                    height: '70px',
-                    borderRadius: '50%',
-                    background: 'rgba(255, 251, 244, 1)',
-                    border: '3px solid rgba(255, 177, 51, 1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    zIndex: 1
-                  }}></div>
-                  <img src="/Ressource_gestiloc/Tools.png" alt="Nouvelle intervention" className="w-12 h-12 object-contain relative z-10" />
-                </div>
-                <span className="text-sm font-medium text-gray-900 text-center px-2">Nouvelle intervention</span>
-              </button>
-
-              <button onClick={() => onNavigate?.('tasks')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-lg" style={{ width: '193px', height: '168px', borderRadius: '20px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 6.8px 0px rgba(131, 199, 87, 1)' }}>
-                <div className="relative flex items-center justify-center" style={{ height: '80px' }}>
-                  <div style={{
-                    width: '74px',
-                    height: '70px',
-                    borderRadius: '50%',
-                    background: 'rgba(255, 251, 244, 1)',
-                    border: '3px solid rgba(255, 177, 51, 1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    zIndex: 1
-                  }}></div>
-                  <img src="/Ressource_gestiloc/Nouvelles_taches.png" alt="Nouvelle tâche" className="w-12 h-12 object-contain relative z-10" />
-                </div>
-                <span className="text-sm font-medium text-gray-900 text-center px-2">Nouvelle tâche</span>
-              </button>
-
-              <button onClick={() => onNavigate?.('property')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-lg" style={{ width: '193px', height: '168px', borderRadius: '20px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 6.8px 0px rgba(131, 199, 87, 1)' }}>
-                <div className="relative flex items-center justify-center" style={{ height: '80px' }}>
-                  <div style={{
-                    width: '74px',
-                    height: '70px',
-                    borderRadius: '50%',
-                    background: 'rgba(255, 251, 244, 1)',
-                    border: '3px solid rgba(255, 177, 51, 1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    zIndex: 1
-                  }}></div>
-                  <img src="/Ressource_gestiloc/Edit Property.png" alt="Nouvelle note" className="w-12 h-12 object-contain relative z-10" />
-                </div>
-                <span className="text-sm font-medium text-gray-900 text-center px-2">Nouvelle note</span>
-              </button>
-
-              <button onClick={() => onNavigate?.('documents')} className="flex flex-col items-center justify-center gap-2 group cursor-pointer transition-all hover:shadow-lg" style={{ width: '193px', height: '168px', borderRadius: '20px', background: 'rgba(255, 255, 255, 1)', boxShadow: '0px 0px 6.8px 0px rgba(131, 199, 87, 1)' }}>
-                <div className="relative flex items-center justify-center" style={{ height: '80px' }}>
-                  <div style={{
-                    width: '74px',
-                    height: '70px',
-                    borderRadius: '50%',
-                    background: 'rgba(255, 251, 244, 1)',
-                    border: '3px solid rgba(255, 177, 51, 1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    zIndex: 1
-                  }}></div>
-                  <img src="/Ressource_gestiloc/Document In Folder.png" alt="Nouveau document" className="w-12 h-12 object-contain relative z-10" />
-                </div>
-                <span className="text-sm font-medium text-gray-900 text-center px-2">Nouveau document</span>
-              </button>
-            </div>
-
-            {/* Stats Grid - 2x2 layout comme Figma */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Locations Card */}
-              <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-[#FFB84D] hover:shadow-xl transition-all duration-300">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold text-gray-900">Locations</h3>
-                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Paramètres" className="w-6 h-6 object-contain" />
-                </div>
-                <div className="flex items-end gap-6">
-                  <img src="/Ressource_gestiloc/Key Security.png" alt="Locations" className="w-16 h-16 object-contain" />
-                  <div>
-                    <p className="text-5xl font-bold text-gray-900">1</p>
-                    <p className="text-sm text-gray-600 mt-1">Location</p>
-                  </div>
-                </div>
-                <div className="mt-6 text-right">
-                  <button onClick={() => onNavigate?.('location')} className="text-xs font-medium text-[#6F00FF] hover:text-[#5500DD] transition-colors duration-200 cursor-pointer">
-                    Tout afficher
-                  </button>
-                </div>
-              </div>
-
-              {/* Loyers en retard Card */}
-              <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-[#FFB84D] hover:shadow-xl transition-all duration-300">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold text-gray-900">Loyers en retard</h3>
-                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Paramètres" className="w-6 h-6 object-contain" />
-                </div>
-                <div className="flex items-end gap-6">
-                  <img src="/Ressource_gestiloc/Dollar Bag.png" alt="Loyers" className="w-16 h-16 object-contain" />
-                  <div>
-                    <p className="text-5xl font-bold text-gray-900">0</p>
-                    <p className="text-sm text-gray-600 mt-1">Loyers en retard</p>
-                  </div>
-                </div>
-                <div className="mt-6 text-right">
-                  <button onClick={() => onNavigate?.('payments')} className="text-xs font-medium text-[#6F00FF] hover:text-[#5500DD] transition-colors duration-200 cursor-pointer">
-                    Tout afficher
-                  </button>
-                </div>
-              </div>
-
-              {/* Interventions Card */}
-              <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-[#FFB84D] hover:shadow-xl transition-all duration-300">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold text-gray-900">Interventions</h3>
-                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Paramètres" className="w-6 h-6 object-contain" />
-                </div>
-                <div className="flex items-end gap-4">
-                  <img src="/Ressource_gestiloc/Tools.png" alt="Interventions" className="w-16 h-16 object-contain" />
-                  <div className="flex gap-8">
-                    <div className="flex flex-col items-center">
-                      <p className="text-4xl font-bold text-gray-900">{openIncidents}</p>
-                      <p className="text-xs text-gray-600 mt-1">Querelle</p>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <p className="text-4xl font-bold text-gray-900">0</p>
-                      <p className="text-xs text-gray-600 mt-1">En retard</p>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <p className="text-4xl font-bold text-gray-900">0</p>
-                      <p className="text-xs text-gray-600 mt-1">En cours</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-6 text-right">
-                  <button onClick={() => onNavigate?.('interventions')} className="text-xs font-medium text-[#6F00FF] hover:text-[#5500DD] transition-colors duration-200 cursor-pointer">
-                    Tout afficher
-                  </button>
-                </div>
-              </div>
-
-              {/* Tâches Card */}
-              <div className="bg-white rounded-2xl shadow-lg p-6 border-l-4 border-[#FFB84D] hover:shadow-xl transition-all duration-300">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold text-gray-900">Tâches</h3>
-                  <img src="/Ressource_gestiloc/parametre_loc.png" alt="Paramètres" className="w-6 h-6 object-contain" />
-                </div>
-                <div className="flex items-end gap-4">
-                  <img src="/Ressource_gestiloc/Inspection.png" alt="Tâches" className="w-16 h-16 object-contain" />
-                  <div className="flex gap-8">
-                    <div className="flex flex-col items-center">
-                      <p className="text-4xl font-bold text-gray-900">0</p>
-                      <p className="text-xs text-gray-600 mt-1">Querelle</p>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <p className="text-4xl font-bold text-gray-900">0</p>
-                      <p className="text-xs text-gray-600 mt-1">En retard</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-6 text-right">
-                  <button onClick={() => onNavigate?.('tasks')} className="text-xs font-medium text-[#6F00FF] hover:text-[#5500DD] transition-colors duration-200 cursor-pointer">
-                    Tout afficher
-                  </button>
-                </div>
-              </div>
-            </div>
-          </>
+          <div className="text-center py-12">
+            <p className="text-gray-500">Onglet non trouvé</p>
+          </div>
         );
     }
   };
-
-  // Forcer le rechargement quand l'onglet change
-  React.useEffect(() => {
-    if (activeTab === 'home') {
-      // Forcer le rafraîchissement des données quand on revient au tableau de bord
-      const timer = setTimeout(() => {
-        // Le contenu sera re-rendu automatiquement
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [activeTab]);
-
-  // ---------- UI ----------
 
   return (
     <>
@@ -908,10 +978,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ activeTab = 'home', notify
         notify={notify}
       />
 
-
-
-      <div>
-        {renderContent()}
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {renderContent()}
+        </div>
       </div>
     </>
   );

@@ -48,17 +48,17 @@ export const TenantActivation: React.FC = () => {
       setError('Le mot de passe est requis');
       return false;
     }
-
+    
     if (password.length < 8) {
       setError('Le mot de passe doit contenir au moins 8 caractères');
       return false;
     }
-
+    
     if (password !== passwordConfirmation) {
       setError('Les mots de passe ne correspondent pas');
       return false;
     }
-
+    
     return true;
   };
 
@@ -146,7 +146,7 @@ export const TenantActivation: React.FC = () => {
             >
               <AlertCircle className="w-10 h-10 text-red-600" />
             </motion.div>
-
+            
             <motion.h1
               initial={{ y: -10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -155,7 +155,7 @@ export const TenantActivation: React.FC = () => {
             >
               Lien invalide
             </motion.h1>
-
+            
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -164,7 +164,7 @@ export const TenantActivation: React.FC = () => {
             >
               {error || 'Ce lien d\'activation n\'est pas valide ou a expiré.'}
             </motion.p>
-
+            
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -201,7 +201,7 @@ export const TenantActivation: React.FC = () => {
             >
               <CheckCircle className="w-10 h-10 text-green-600" />
             </motion.div>
-
+            
             <motion.h1
               initial={{ y: -10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -210,17 +210,17 @@ export const TenantActivation: React.FC = () => {
             >
               Compte activé !
             </motion.h1>
-
+            
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
               className="text-slate-600 mb-6"
             >
-              Votre compte locataire a été créé avec succès.
+              Votre compte locataire a été créé avec succès. 
               Vous allez être redirigé vers votre tableau de bord...
             </motion.p>
-
+            
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -239,7 +239,7 @@ export const TenantActivation: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-white p-4">
       <div className="w-full max-w-md">
         {/* Logo centré - identique à la page auth */}
-        <motion.div
+        <motion.div 
           className="text-center mb-6"
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -249,7 +249,7 @@ export const TenantActivation: React.FC = () => {
             Gestiloc
           </h1>
           <p className="text-sm text-slate-600 max-w-xs mx-auto">
-            Tout votre immobilier au même endroit
+            Créer de meilleures relations entre les propriétaires et les locataires !
           </p>
         </motion.div>
 
@@ -274,14 +274,14 @@ export const TenantActivation: React.FC = () => {
             >
               <Home className="w-8 h-8" style={{ color: PRIMARY_COLOR }} />
             </motion.div>
-
+            
             <h1 className="text-2xl font-bold text-slate-800 mb-2">
               Activation du compte
             </h1>
             <p className="text-slate-600">
               Créez votre mot de passe pour activer votre compte locataire
             </p>
-
+            
             {email && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -328,7 +328,7 @@ export const TenantActivation: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-10 pr-10 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 transition-all"
-                  style={{
+                  style={{ 
                     borderColor: password ? PRIMARY_COLOR : undefined,
                     '--tw-ring-color': `${PRIMARY_COLOR}20`,
                   } as React.CSSProperties}
@@ -364,7 +364,7 @@ export const TenantActivation: React.FC = () => {
                   value={passwordConfirmation}
                   onChange={(e) => setPasswordConfirmation(e.target.value)}
                   className="w-full pl-10 pr-10 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 transition-all"
-                  style={{
+                  style={{ 
                     borderColor: passwordConfirmation ? PRIMARY_COLOR : undefined,
                     '--tw-ring-color': `${PRIMARY_COLOR}20`,
                   } as React.CSSProperties}

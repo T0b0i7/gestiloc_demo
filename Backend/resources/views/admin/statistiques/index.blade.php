@@ -1714,7 +1714,7 @@
 
             if (!token) {
                 alert('Session expirée, veuillez vous reconnecter');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
+                window.location.href = 'http://localhost:8080/login';
                 return;
             }
 
@@ -1734,11 +1734,11 @@
 
             if (!token) {
                 alert('Session expirée, veuillez vous reconnecter');
-                window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
+                window.location.href = 'http://localhost:8080/login';
                 return;
             }
 
-            const baseUrl = 'https://wheat-skunk-120710.hostingersite.com';
+            const baseUrl = 'http://localhost:8080';
             let fullUrl = baseUrl + path;
 
             const separator = fullUrl.includes('?') ? '&' : '?';

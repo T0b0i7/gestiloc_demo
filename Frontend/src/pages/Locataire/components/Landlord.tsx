@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Search,
-  MoreVertical,
-  ChevronDown,
-  X,
-  MapPin,
-  CreditCard,
-  FileText,
+import { 
+  Search, 
+  MoreVertical, 
+  ChevronDown, 
+  X, 
+  MapPin, 
+  CreditCard, 
+  FileText, 
   User,
   Building,
   Users,
@@ -113,7 +113,92 @@ interface Personne {
   expires_at?: string;
 }
 
+// Données fictives pour les utilisateurs non connectés
+const mockLandlordData = {
+  success: true,
+  creator: {
+    id: "1",
+    nom: "Dupont",
+    prenom: "Jean",
+    telephone: "+221 77 123 45 67",
+    email: "jean.dupont@example.com",
+    avatar: "JD",
+    adresse: "123 Avenue de la République",
+    ville: "Dakar",
+    codePostal: "12500",
+    pays: "Sénégal",
+    type: "Propriétaire",
+    role: "Créateur du bien",
+    is_creator: true,
+    company_name: "Immobilier Dupont & Fils",
+    is_professional: true,
+    permissions: ["Consultation", "Gestion des baux", "Collecte des loyers"]
+  },
+  landlord: {
+    id: "2",
+    nom: "Martin",
+    prenom: "Sophie",
+    telephone: "+221 78 987 65 43",
+    email: "sophie.martin@example.com",
+    avatar: "SM",
+    adresse: "45 Rue des Palmiers",
+    ville: "Dakar",
+    codePostal: "12500",
+    pays: "Sénégal",
+    type: "Propriétaire foncier",
+    role: "Propriétaire foncier",
+    is_professional: false,
+    permissions: ["Consultation", "Modification"]
+  },
+  co_owners: [
+    {
+      id: "3",
+      nom: "Diallo",
+      prenom: "Amadou",
+      telephone: "+221 76 555 44 33",
+      email: "amadou.diallo@example.com",
+      avatar: "AD",
+      adresse: "78 Rue de la Corniche",
+      ville: "Dakar",
+      codePostal: "12500",
+      pays: "Sénégal",
+      type: "Copropriétaire",
+      role: "Copropriétaire",
+      is_professional: false,
+      permissions: ["Consultation", "Gestion des interventions"],
+      delegation_type: "partial",
+      delegated_at: "2025-01-15T10:30:00Z",
+      expires_at: "2026-01-15T10:30:00Z"
+    },
+    {
+      id: "4",
+      nom: "Ndiaye",
+      prenom: "Fatou",
+      telephone: "+221 70 222 33 44",
+      email: "fatou.ndiaye@example.com",
+      avatar: "FN",
+      adresse: "12 Rue des Manguiers",
+      ville: "Dakar",
+      codePostal: "12500",
+      pays: "Sénégal",
+      type: "Agence immobilière",
+      role: "Agence de gestion",
+      company_name: "Agence Immobilière du Soleil",
+      is_professional: true,
+      permissions: ["Consultation", "Modification", "Gestion des baux", "Collecte des loyers"],
+      delegation_type: "full",
+      delegated_at: "2025-02-01T09:00:00Z"
+    }
+  ],
+  property: {
+    id: 1,
+    name: "Résidence Les Palmiers",
+    address: "123 Avenue de la République, Dakar"
+  }
+};
+
 export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [itemsPerPage, setItemsPerPage] = useState('10');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -127,8 +212,23 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [copiedEmail, setCopiedEmail] = useState<string | null>(null);
 
+  // Vérifier l'authentification au chargement
   useEffect(() => {
-    fetchLandlordInfo();
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    
+    if (token && user) {
+      setIsAuthenticated(true);
+      fetchLandlordInfo();
+    } else {
+      setIsAuthenticated(false);
+      // Utiliser les données fictives
+      setCreator(mockLandlordData.creator || null);
+      setLandlord(mockLandlordData.landlord || null);
+      setCoOwners(mockLandlordData.co_owners || []);
+      setPropertyInfo(mockLandlordData.property || null);
+      setLoading(false);
+    }
   }, []);
 
   const fetchLandlordInfo = async () => {
@@ -141,52 +241,29 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
         setLandlord(response.data.landlord || null);
         setCoOwners(response.data.co_owners || []);
         setPropertyInfo(response.data.property || null);
+        
+        // Message clair si aucune donnée
         if (!response.data.creator && !response.data.landlord && response.data.co_owners.length === 0) {
-          setError('Aucune information trouvée');
+          setError('VOUS N\'AVEZ AUCUN BIEN ASSOCIÉ À VOTRE COMPTE');
         }
       } else {
         setError(response.data.message || 'Erreur lors du chargement');
       }
     } catch (err: any) {
       console.error('Erreur lors du chargement:', err);
-      // Fallback to mock data to ensure the page is functional as requested
-      setCreator({
-        id: 'mock-1',
-        nom: 'ADANHOUNME',
-        prenom: 'Jean',
-        telephone: '+229 01 00 00 01',
-        email: 'jean@gestiloc.bj',
-        avatar: 'J',
-        adresse: 'Cotonou, Bénin',
-        ville: 'Cotonou',
-        codePostal: '00229',
-        pays: 'Bénin',
-        type: 'creator',
-        role: 'Créateur du bien',
-        is_creator: true
-      });
-      setLandlord({
-        id: 'mock-2',
-        nom: 'TOSSA',
-        prenom: 'Marc',
-        telephone: '+229 01 02 03 04',
-        email: 'marc@gestiloc.bj',
-        avatar: 'M',
-        adresse: 'Porto-Novo, Bénin',
-        ville: 'Porto-Novo',
-        codePostal: '00229',
-        pays: 'Bénin',
-        type: 'landlord',
-        role: 'Bailleur foncier'
-      });
-      setCoOwners([]);
-      setPropertyInfo({
-        name: 'Villa Espoir',
-        address: 'Quartier Haie Vive, Cotonou'
-      });
-
-      // Still show a silent log but don't block the UI
-      setError(null);
+      
+      // En cas d'erreur 401, utiliser les données fictives
+      if (err.response?.status === 401) {
+        setIsAuthenticated(false);
+        setCreator(mockLandlordData.creator || null);
+        setLandlord(mockLandlordData.landlord || null);
+        setCoOwners(mockLandlordData.co_owners || []);
+        setPropertyInfo(mockLandlordData.property || null);
+      } else {
+        setError(err.response?.data?.message || 'Erreur lors du chargement des données');
+      }
+      
+      notify('Erreur lors du chargement des informations', 'error');
     } finally {
       setLoading(false);
     }
@@ -255,7 +332,7 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
   };
 
   const getPermissionColor = (permission: string) => {
-    switch (permission) {
+    switch(permission) {
       case 'Consultation': return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'Modification': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'Gestion des baux': return 'bg-purple-100 text-purple-800 border-purple-200';
@@ -266,7 +343,7 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
   };
 
   const getPermissionIcon = (permission: string) => {
-    switch (permission) {
+    switch(permission) {
       case 'Consultation': return <Eye size={12} className="text-blue-600" />;
       case 'Modification': return <Edit size={12} className="text-yellow-600" />;
       case 'Gestion des baux': return <FileText size={12} className="text-purple-600" />;
@@ -276,31 +353,121 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
     }
   };
 
-  // Removed blank loading state as requested by user
+  if (loading) {
+    return (
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto flex items-center justify-center min-h-[400px]">
+        <div className="text-center animate-pulse">
+          <div className="relative">
+            <Loader className="w-16 h-16 text-[#529D21] animate-spin mx-auto mb-4" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-8 h-8 bg-white rounded-full"></div>
+            </div>
+          </div>
+          <p className="text-gray-600 font-medium">Chargement des informations...</p>
+          <p className="text-sm text-gray-400 mt-2">Veuillez patienter</p>
+        </div>
+      </div>
+    );
+  }
 
+  // Message clair quand aucun bien n'est associé
   if (error && allPeople.length === 0) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-2xl p-12 text-center animate-fadeIn">
-        <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <AlertCircle size={40} className="text-red-500" />
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+        <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-12 text-center animate-fadeIn">
+          <div className="w-24 h-24 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertCircle size={48} className="text-amber-600" />
+          </div>
+          <h3 className="text-2xl font-bold text-amber-800 mb-3">
+            {isAuthenticated ? 'VOUS N\'AVEZ AUCUN BIEN ASSOCIÉ' : 'MODE DÉMO'}
+          </h3>
+          <p className="text-amber-700 text-lg mb-4 max-w-lg mx-auto">
+            {isAuthenticated 
+              ? 'Aucun bien n\'est actuellement associé à votre compte locataire.'
+              : 'Vous êtes en mode démonstration. Connectez-vous pour voir vos véritables informations.'}
+          </p>
+          <div className="bg-white/50 rounded-xl p-4 max-w-md mx-auto mb-6">
+            <p className="text-sm text-amber-600 flex items-center justify-center gap-2">
+              <Info size={16} />
+              {isAuthenticated 
+                ? 'Contactez votre propriétaire pour associer un bien à votre compte.'
+                : 'Utilisez les identifiants de test ou créez un compte pour accéder à vos données réelles.'}
+            </p>
+          </div>
+          <div className="flex gap-4 justify-center">
+            {!isAuthenticated && (
+              <button
+                onClick={() => window.location.href = '/login'}
+                className="px-6 py-3 bg-[#529D21] text-white rounded-xl hover:bg-[#529D21]/90 transition-colors inline-flex items-center gap-2 shadow-lg shadow-[#529D21]/20"
+              >
+                <User size={18} />
+                Se connecter
+              </button>
+            )}
+            <button
+              onClick={fetchLandlordInfo}
+              className="px-6 py-3 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors inline-flex items-center gap-2 shadow-lg shadow-amber-200"
+            >
+              <RefreshCw size={18} />
+              Réessayer
+            </button>
+          </div>
         </div>
-        <h3 className="text-xl font-semibold text-red-800 mb-2">Information non disponible</h3>
-        <p className="text-red-600 mb-6">{error}</p>
-        <button
-          onClick={fetchLandlordInfo}
-          className="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors inline-flex items-center gap-2 shadow-lg shadow-red-200"
-        >
-          <RefreshCw size={18} />
-          Réessayer
-        </button>
+      </div>
+    );
+  }
+
+  // Message quand il y a des données mais aucune après filtrage
+  if (allPeople.length === 0 && !error) {
+    return (
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-12 text-center animate-fadeIn">
+          <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Building size={48} className="text-blue-600" />
+          </div>
+          <h3 className="text-2xl font-bold text-blue-800 mb-3">AUCUN INTERVENANT TROUVÉ</h3>
+          <p className="text-blue-700 text-lg mb-4 max-w-lg mx-auto">
+            Aucun propriétaire, copropriétaire ou intervenant n'est actuellement associé à votre bien.
+          </p>
+          <div className="bg-white/50 rounded-xl p-4 max-w-md mx-auto">
+            <p className="text-sm text-blue-600 flex items-center justify-center gap-2">
+              <Info size={16} />
+              Les informations apparaîtront automatiquement dès qu'un intervenant sera associé à votre location.
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="animate-fadeIn">
+    
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto animate-fadeIn"> 
 
-      {/* ===== MODAL — CORRIGÉ : flex column + scroll sur le contenu ===== */}
+      {/* Bannière mode démo si non authentifié */}
+      {!isAuthenticated && (
+        <div className="bg-gradient-to-r from-amber-400 to-amber-500 rounded-xl p-4 mb-6 text-white shadow-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 p-2 rounded-lg">
+                <Info size={20} />
+              </div>
+              <div>
+                <p className="font-medium">Mode Démonstration</p>
+                <p className="text-sm text-white/90">Les données affichées sont fictives. Connectez-vous pour voir vos véritables informations.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => window.location.href = '/login'}
+              className="px-4 py-2 bg-white text-amber-600 rounded-lg hover:bg-amber-50 transition-colors text-sm font-medium"
+            >
+              Se connecter
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ===== MODAL ===== */}
       {selectedPerson && (
         <div
           className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center pt-16 p-4 animate-fadeIn"
@@ -310,8 +477,8 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
             className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full flex flex-col animate-slideUp"
             style={{ maxHeight: '90vh' }}
             onClick={(e) => e.stopPropagation()}
-          >
-            {/* Bandeau header — flex-shrink-0 pour qu'il ne rétrécisse pas */}
+          > 
+            {/* Bandeau header */}
             <div className="relative flex-shrink-0 h-20 bg-gradient-to-r from-[#529D21] to-[#F5A623] rounded-t-2xl">
               <button
                 onClick={closeModal}
@@ -319,21 +486,21 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
               >
                 <X size={20} />
               </button>
-              {/* Avatar qui déborde sur la zone scrollable */}
               <div className="absolute -bottom-12 left-6 z-10">
                 <div className="w-24 h-24 rounded-2xl bg-white shadow-xl flex items-center justify-center border-4 border-white">
-                  <div className={`w-20 h-20 rounded-xl flex items-center justify-center text-white font-bold text-3xl ${selectedPerson.role.includes('Créateur') ? 'bg-gradient-to-br from-purple-500 to-purple-700' :
+                  <div className={`w-20 h-20 rounded-xl flex items-center justify-center text-white font-bold text-3xl ${
+                    selectedPerson.role.includes('Créateur') ? 'bg-gradient-to-br from-purple-500 to-purple-700' :
                     selectedPerson.role.includes('foncier') ? 'bg-gradient-to-br from-blue-500 to-blue-700' :
-                      selectedPerson.role.includes('Agence') ? 'bg-gradient-to-br from-orange-500 to-orange-700' :
-                        'bg-gradient-to-br from-green-500 to-green-700'
-                    }`}>
+                    selectedPerson.role.includes('Agence') ? 'bg-gradient-to-br from-orange-500 to-orange-700' :
+                    'bg-gradient-to-br from-green-500 to-green-700'
+                  }`}>
                     {selectedPerson.avatar || '?'}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Zone scrollable — flex-1 + overflow-y-auto */}
+            {/* Zone scrollable */}
             <div className="flex-1 overflow-y-auto min-h-0">
               <div className="pt-16 px-6 pb-2">
 
@@ -501,7 +668,7 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
               </div>
             </div>
 
-            {/* Footer fixe — flex-shrink-0 */}
+            {/* Footer */}
             <div className="flex-shrink-0 p-6 border-t border-gray-200 bg-gray-50 rounded-b-2xl flex justify-end gap-3">
               <button
                 onClick={closeModal}
@@ -517,7 +684,7 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
         </div>
       )}
 
-      {/* Header simplifié */}
+      {/* Header */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-6 animate-slideDown">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -549,7 +716,7 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
                 placeholder="Rechercher par nom, email, téléphone ou entreprise..."
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#529D21]/20 focus:border-[#529D21] transition-all bg-white text-gray-900"
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#529D21]/20 focus:border-[#529D21] transition-all"
               />
               {searchTerm && (
                 <button onClick={() => setSearchTerm('')} className="absolute inset-y-0 right-0 pr-3 flex items-center">
@@ -576,7 +743,7 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
         </div>
       </div>
 
-      {/* Tableau simplifié - sans colonne Rôle */}
+      {/* Tableau */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden animate-slideUp">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -681,14 +848,6 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
           </div>
         )}
       </div>
-
-      {allPeople.length === 0 && !error && (
-        <div className="mt-6 bg-gradient-to-br from-yellow-50 to-amber-50 border border-yellow-200 rounded-2xl p-12 text-center animate-fadeIn">
-          <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4"><Info size={32} className="text-yellow-600" /></div>
-          <h3 className="text-xl font-semibold text-yellow-800 mb-2">Aucune information disponible</h3>
-          <p className="text-yellow-600 max-w-md mx-auto">Aucun intervenant n'est associé à votre location pour le moment.</p>
-        </div>
-      )}
     </div>
   );
 };

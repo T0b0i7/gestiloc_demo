@@ -22,11 +22,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isO
     if (!token) {
       console.error("Aucun token trouvé pour l'authentification Laravel");
       alert("Session expirée, veuillez vous reconnecter");
-      window.location.href = 'https://wheat-skunk-120710.hostingersite.com/login';
+      window.location.href = 'http://127.0.0.1:8000/login';
       return;
     }
 
-    const laravelBaseUrl = 'https://wheat-skunk-120710.hostingersite.com';
+    const laravelBaseUrl = 'http://127.0.0.1:8000';
     let fullPath = path;
     
     if (fullPath.startsWith('/')) {
@@ -45,7 +45,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, isO
   const handleLogout = () => {
     // Rediriger vers la route de déconnexion Laravel
     // Laravel s'occupera de nettoyer la session et rediriger vers React
-    window.location.href = 'https://wheat-skunk-120710.hostingersite.com/logout';
+    window.location.href = 'http://127.0.0.1:8000/logout';
   };
 
   // ✅ Fonction pour gérer la navigation mixte (React ou Laravel)
