@@ -303,26 +303,30 @@ export const TenantsList: React.FC<LocatairesProps> = ({ notify }) => {
           border: 1.5px solid #d6e4d6;
           border-radius: 14px;
           overflow: hidden;
+          overflow-x: auto; /* Permet le scroll horizontal sur petit écran */
         }
         .tl-table {
           width: 100%;
           border-collapse: collapse;
+          min-width: 1000px; /* Évite l'écrasement des colonnes */
         }
         .tl-table thead th {
           text-align: left;
-          padding: 14px;
-          font-size: 0.75rem;
+          padding: 16px 14px;
+          font-size: 0.8rem;
           font-family: 'Merriweather', serif;
           font-weight: 800;
           color: #fff;
           background: #529D21;
           border-right: 1px solid rgba(255,255,255,0.1);
+          white-space: nowrap;
         }
         .tl-table thead th:last-child { border-right: none; }
         .tl-table tbody td {
-          padding: 14px;
-          font-size: 0.78rem;
-          color: #374151;
+          padding: 16px 14px;
+          font-size: 0.85rem;
+          font-family: 'Manrope', sans-serif;
+          color: #1a1a1a;
           border-bottom: 1px solid #f3f4f6;
           vertical-align: middle;
         }
@@ -345,18 +349,18 @@ export const TenantsList: React.FC<LocatairesProps> = ({ notify }) => {
         }
 
         .tl-action-btn {
-          background: none;
-          border: none;
+          background: #f3f4f6;
+          border: 1px solid #e5e7eb;
           cursor: pointer;
-          padding: 6px;
-          color: #666;
+          padding: 8px;
+          color: #4b5563;
           transition: all 0.2s;
-          border-radius: 6px;
+          border-radius: 8px;
           display: flex;
           align-items: center;
           justify-content: center;
         }
-        .tl-action-btn:hover { background: #f0f0f0; color: #529D21; }
+        .tl-action-btn:hover { background: #f0f0f0; color: #529D21; border-color: #d1d5db; }
         .tl-action-btn.delete:hover { border-color: #ef4444; color: #ef4444; background: #fee2e2; }
 
         .tl-status-badge {
@@ -538,20 +542,20 @@ export const TenantsList: React.FC<LocatairesProps> = ({ notify }) => {
                     </td>
                     <td><span className="tl-modele">0 Modèle</span></td>
                     <td>
-                      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                         <button
                           className="tl-action-btn"
                           title="Modifier"
                           onClick={() => navigate(`/proprietaire/modifier-locataire/${loc.id}`)}
                         >
-                          <Edit size={14} />
+                          <Edit size={18} />
                         </button>
                         <button
                           className="tl-action-btn"
                           title="Détails"
                           onClick={() => navigate(`/proprietaire/locataire/${loc.id}`)}
                         >
-                          <Eye size={14} />
+                          <Eye size={18} />
                         </button>
                         {loc.etat !== "Archivé" && (
                           <button
@@ -569,7 +573,7 @@ export const TenantsList: React.FC<LocatairesProps> = ({ notify }) => {
                               }
                             }}
                           >
-                            <Archive size={14} />
+                            <Archive size={18} />
                           </button>
                         )}
                         <button
@@ -587,7 +591,7 @@ export const TenantsList: React.FC<LocatairesProps> = ({ notify }) => {
                             }
                           }}
                         >
-                          <Trash2 size={14} />
+                          <Trash2 size={18} />
                         </button>
                       </div>
                     </td>
