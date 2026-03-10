@@ -406,6 +406,7 @@ export const Payments: React.FC<PaymentsProps> = ({ notify }) => {
         .pm-table {
           width: 100%;
           border-collapse: collapse;
+          min-width: 1200px; /* Élargissement pour éviter l'entassement */
         }
         .pm-table thead th {
           text-align: left;
@@ -416,9 +417,9 @@ export const Payments: React.FC<PaymentsProps> = ({ notify }) => {
           border-bottom: 1px solid #e5e7eb;
         }
         .pm-table tbody td {
-          padding: 14px;
-          font-size: 0.78rem;
-          color: #374151;
+          padding: 14px 12px;
+          font-size: 0.8rem; /* Taille de texte réduite */
+          color: #1a1a1a;
           border-bottom: 1px solid #f3f4f6;
           vertical-align: middle;
         }
@@ -426,14 +427,18 @@ export const Payments: React.FC<PaymentsProps> = ({ notify }) => {
         .pm-table tbody tr:hover { background: #fafefe; }
 
         .pm-action-icon {
-          background: none;
-          border: none;
+          background: #f3f4f6;
+          border: 1px solid #e5e7eb;
           cursor: pointer;
-          padding: 3px;
-          color: #9ca3af;
-          transition: color 0.15s;
+          padding: 8px; /* Boutons plus grands */
+          color: #4b5563;
+          transition: all 0.2s;
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
-        .pm-action-icon:hover { color: #374151; }
+        .pm-action-icon:hover { background: #f0f0f0; color: #529D21; border-color: #d1d5db; }
 
         @media (max-width: 768px) {
           .pm-stats { grid-template-columns: 1fr 1fr; }
@@ -606,14 +611,14 @@ export const Payments: React.FC<PaymentsProps> = ({ notify }) => {
                     <td>
                       <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
                         <button className="pm-action-icon" title="Plus">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <circle cx="12" cy="5" r="1" />
                             <circle cx="12" cy="12" r="1" />
                             <circle cx="12" cy="19" r="1" />
                           </svg>
                         </button>
                         <button className="pm-action-icon" title="Mail">
-                          <Mail size={14} />
+                          <Mail size={18} />
                         </button>
                       </div>
                     </td>

@@ -662,9 +662,9 @@ export default function EmettrePaiement({ onCreated, notify }: Props) {
                           rel="noreferrer"
                           className="
                             inline-flex items-center justify-center gap-2
-                            rounded-2xl bg-gray-900 px-4 py-3
+                            rounded-2xl bg-emerald-600 px-4 py-3
                             text-xs font-extrabold text-white
-                            hover:bg-gray-800
+                            hover:bg-emerald-700
                             transition
                           "
                         >

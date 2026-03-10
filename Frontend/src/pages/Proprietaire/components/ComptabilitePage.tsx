@@ -137,8 +137,8 @@ const ComptabilitePage: React.FC<ComptaProps> = ({ notify }) => {
                 .cp-header-btns { display: flex; gap: 0.75rem; width: 100%; }
                 @media (min-width: 768px) { .cp-header-btns { width: auto; } }
                 
-                .cp-btn-export, .cp-btn-add { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: none; border-radius: 14px; padding: 12px 24px; font-family: 'Manrope', sans-serif; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
-                .cp-btn-export { background: #fee2e2; color: #ef4444; }
+                .cp-btn-export, .cp-btn-add { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: none; border-radius: 12px; padding: 12px 24px; font-family: 'Manrope', sans-serif; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+                .cp-btn-export { background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; }
                 .cp-btn-export:hover { background: #fecaca; }
                 .cp-btn-add { background: #83C757; color: #fff; box-shadow: 0 4px 12px rgba(131,199,87,0.2); }
                 .cp-btn-add:hover { background: #72b44a; transform: translateY(-1px); }
@@ -179,9 +179,9 @@ const ComptabilitePage: React.FC<ComptaProps> = ({ notify }) => {
                 .cp-select option { background: white; color: #374151; }
                 
                 .cp-table-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 20px; border: 1.5px solid #eef2ee; background: #fff; }
-                .cp-table { width: 100%; border-collapse: collapse; min-width: 850px; }
-                .cp-table th { text-align: left; font-size: 0.65rem; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; padding: 16px; border-bottom: 1px solid #f9fafb; background: #fafbfc; }
-                .cp-table td { padding: 16px; font-size: 0.85rem; border-bottom: 1px solid #f9fafb; color: #4b5563; }
+                .cp-table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+                .cp-table th { text-align: left; font-size: 0.65rem; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.08em; padding: 14px 12px; border-bottom: 1px solid #f9fafb; background: #fafbfc; }
+                .cp-table td { padding: 14px 12px; font-size: 0.8rem; border-bottom: 1px solid #f9fafb; color: #4b5563; }
                 .cp-table tr:hover { background: #fdfdfd; }
                 .cp-type-badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
                 

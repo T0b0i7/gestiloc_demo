@@ -681,6 +681,22 @@ export const tenantService = {
     }
   },
 
+  updateTenant: async (id: number | string, data: {
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    phone?: string;
+  }): Promise<any> => {
+    try {
+      await initializeCsrfToken();
+      const response = await api.put(`/tenants/${id}`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Erreur API updateTenant:', error);
+      throw error;
+    }
+  },
+
   archiveTenant: async (id: number | string): Promise<void> => {
     try {
       await initializeCsrfToken();
