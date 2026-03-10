@@ -60,23 +60,12 @@ const categories = [
 
 export default function Help() {
   return (
-    <div className="min-h-screen pb-16" style={{ background: "rgba(255, 255, 255, 1)" }}>
+    <div
+      className="min-h-screen pb-16"
+      style={{ background: 'linear-gradient(180deg, rgba(225, 255, 206, 0.89) 0%, #FFFFFF 20.19%)' }}
+    >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@1,700&family=Manrope:wght@400;500;600;700&display=swap');
-        
-        .help-title {
-          font-family: 'Lora', serif;
-          font-weight: 700;
-          font-style: italic;
-          font-size: 42px;
-          line-height: 100%;
-          letter-spacing: -0.17px;
-          text-align: center;
-          display: inline-block;
-          vertical-align: middle;
-          margin-bottom: 24px;
-          color: #1a1a1a;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Manrope:wght@400;500;600;700&display=swap');
 
         .category-pill {
           background: white;
@@ -96,24 +85,27 @@ export default function Help() {
         }
       `}</style>
 
-      {/* Search Header */}
-      <div className="text-center mb-10 mt-6 px-4 pt-16">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
+      {/* Header Section - same design as Features page */}
+      <div className="max-w-6xl mx-auto px-6 pt-28 text-center">
+        <motion.h1
+          className="text-3xl md:text-5xl font-bold text-gray-900 mb-6 font-merriweather"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="help-title">Centre d'aide</h1>
-        </motion.div>
+          Centre d'aide
+        </motion.h1>
 
-        <motion.p
-          className="text-gray-600 text-[20px] mb-10 max-w-md mx-auto font-medium"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+        <motion.div
+          className="mb-10 max-w-4xl mx-auto text-center"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
         >
-          Trouvez rapidement des réponses à vos questions
-        </motion.p>
+          <p className="text-black text-base md:text-lg leading-relaxed font-manrope font-medium text-center">
+            Trouvez rapidement des réponses à vos questions
+          </p>
+        </motion.div>
 
         <motion.div
           className="max-w-2xl mx-auto relative mb-16 px-4"
@@ -152,8 +144,8 @@ export default function Help() {
                 <Link to={`/help/${cat.slug}`} className="block">
                   <div className="category-pill rounded-full p-4 flex items-center">
                     <div className="mr-5 text-gray-700 ml-2 w-8 h-8 flex items-center justify-center">
-                      <img 
-                        src={imageUrl} 
+                      <img
+                        src={imageUrl}
                         alt={cat.title}
                         className="w-8 h-8 object-contain"
                         onError={(e) => {
@@ -196,8 +188,8 @@ export default function Help() {
                       className="w-16 h-16 bg-[#F8F9FA] rounded-2xl flex items-center justify-center text-gray-800 mb-6 group-hover:bg-[#A5F364]/20 group-hover:text-[#529D21] transition-colors"
                       whileHover={{ rotate: 10 }}
                     >
-                      <img 
-                        src={imageUrl} 
+                      <img
+                        src={imageUrl}
                         alt={cat.title}
                         className="w-10 h-10 object-contain"
                         onError={(e) => {
@@ -232,8 +224,8 @@ export default function Help() {
         viewport={{ once: true }}
         transition={{ duration: 0.8, ease: "easeOut" }}
       >
-        <motion.h2 
-          className="text-[36px] font-bold mb-5 italic" 
+        <motion.h2
+          className="text-[36px] font-bold mb-5 italic"
           style={{ fontFamily: "'Lora', serif" }}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -242,7 +234,7 @@ export default function Help() {
         >
           Vous ne trouvez pas ce que vous cherchez ?
         </motion.h2>
-        <motion.p 
+        <motion.p
           className="text-gray-500 mb-10 max-w-xs mx-auto font-medium text-lg"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -251,7 +243,7 @@ export default function Help() {
         >
           Notre équipe support est là pour vous aider.
         </motion.p>
-        <motion.div 
+        <motion.div
           className="flex flex-col sm:flex-row justify-center gap-4 max-w-xs sm:max-w-md mx-auto"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}

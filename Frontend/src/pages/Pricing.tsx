@@ -174,52 +174,53 @@ const Pricing = () => {
 
     return (
         <div className="font-sans text-[#1a1a1a]">
-            {/* Container Background with gradient */}
-            <div className="min-h-screen pb-20" style={{ background: 'linear-gradient(180deg, #83C757 3.37%, #83C757 26.92%, #C1E9A2 49.04%, #E4FFBD 69.23%, #FFFFFF 93.27%)' }}>
+            {/* Container Background with gradient - same as Features page */}
+            <div className="min-h-screen pb-20" style={{ background: 'linear-gradient(180deg, rgba(225, 255, 206, 0.89) 0%, #FFFFFF 20.19%)' }}>
 
-                {/* Header Content */}
-                <div className="max-w-4xl mx-auto pt-16 px-6 text-center">
-                    <motion.h1 
+                {/* Header Content - same style as Features */}
+                <div className="max-w-6xl mx-auto px-6 pt-28 text-center">
+                    <motion.h1
+                        className="text-3xl md:text-5xl font-bold text-gray-900 mb-6 font-merriweather"
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6 }}
-                        className="text-5xl md:text-7xl font-extrabold text-white mb-4"
-                        style={{ fontFamily: 'Lora', fontWeight: 700, fontStyle: 'italic' as const, fontSize: '48px', lineHeight: '100%', letterSpacing: '-0.17px', textAlign: 'center', verticalAlign: 'middle' }}
+                        transition={{ duration: 0.5 }}
                     >
                         Tarifs simples et transparents
                     </motion.h1>
-                    <motion.p 
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.1 }}
-                        className="text-white text-lg font-medium max-w-2xl mx-auto mb-20"
-                        style={{ fontFamily: 'Manrope', fontWeight: 500, fontSize: '16px', lineHeight: '100%', letterSpacing: '-0.17px' }}
-                    >
-                        Choisissez le plan qui vous correspond le mieux. Sans engagement, changez quand vous voulez !
-                    </motion.p>
 
-                    {/* Toggle Button */}
-                    <motion.div 
-                        initial={{ opacity: 0, scale: 0.9 }}
+                    <motion.div
+                        className="mb-12 max-w-4xl mx-auto text-center"
+                        initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 0.5, delay: 0.2 }}
+                    >
+                        <p className="text-black text-base md:text-lg leading-relaxed font-manrope font-medium text-center">
+                            Choisissez le plan qui vous correspond le mieux. Sans engagement, changez quand vous voulez !
+                        </p>
+                    </motion.div>
+
+                    {/* Toggle Button */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.5, delay: 0.3 }}
                         className="flex items-center justify-center mb-16"
                     >
-                        <motion.div 
+                        <motion.div
                             whileHover={{ scale: 1.02 }}
-                            className="bg-white p-1 rounded-full shadow-md flex items-center"
+                            className="bg-white p-1 rounded-full shadow-md flex items-center border border-gray-100"
                         >
                             <motion.button
                                 onClick={() => setIsAnnual(false)}
                                 whileTap={{ scale: 0.95 }}
-                                className={`py-3 px-8 rounded-full font-bold transition-all duration-300 ${!isAnnual ? 'bg-[#FFEB3B] text-[#1F3A19]' : 'text-gray-500'}`}
+                                className={`py-3 px-8 rounded-full font-bold transition-all duration-300 ${!isAnnual ? 'bg-[#529D21] text-white' : 'text-gray-500'}`}
                             >
                                 Mensuel
                             </motion.button>
                             <motion.button
                                 onClick={() => setIsAnnual(true)}
                                 whileTap={{ scale: 0.95 }}
-                                className={`py-3 px-8 rounded-full font-bold transition-all duration-300 ${isAnnual ? 'bg-[#FFEB3B] text-[#1F3A19]' : 'text-gray-500'}`}
+                                className={`py-3 px-8 rounded-full font-bold transition-all duration-300 ${isAnnual ? 'bg-[#529D21] text-white' : 'text-gray-500'}`}
                             >
                                 Annuel
                             </motion.button>
@@ -235,14 +236,14 @@ const Pricing = () => {
                             initial={{ opacity: 0, y: 50 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.15, duration: 0.5, type: "spring", stiffness: 100 }}
-                            whileHover={{ 
-                                scale: 1.05, 
+                            whileHover={{
+                                scale: 1.05,
                                 boxShadow: "0 25px 50px -12px rgba(151, 71, 255, 0.35)",
                             }}
                             className={`bg-white rounded-[32px] border-[1px] ${tier.color} p-8 relative flex flex-col items-start text-left shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 h-full ${tier.popular ? 'ring-4 ring-[#9747FF]/20' : ''}`}
                         >
                             {tier.popular && (
-                                <motion.div 
+                                <motion.div
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
                                     transition={{ delay: 0.3, type: "spring" }}
@@ -268,7 +269,7 @@ const Pricing = () => {
 
                             <div className="w-full space-y-4 mb-10 flex-grow text-left">
                                 {tier.features.map((feature, i) => (
-                                    <motion.div 
+                                    <motion.div
                                         key={i}
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
@@ -299,7 +300,7 @@ const Pricing = () => {
                 </div>
 
                 {/* Mini CTA */}
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
@@ -324,7 +325,7 @@ const Pricing = () => {
                 </motion.div>
 
                 {/* Payment Methods */}
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
                     viewport={{ once: true }}
@@ -344,7 +345,7 @@ const Pricing = () => {
                 </motion.div>
 
                 {/* FAQ Section */}
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
                     viewport={{ once: true }}
@@ -360,7 +361,7 @@ const Pricing = () => {
                 </motion.div>
 
                 {/* Offre sur mesure */}
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
