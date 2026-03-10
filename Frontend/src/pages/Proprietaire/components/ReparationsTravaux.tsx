@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Plus, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Search, Loader2, Wrench } from 'lucide-react';
+import { maintenanceService } from '@/services/api';
 
 interface RTProps {
     notify: (msg: string, type: 'success' | 'info' | 'error') => void;
@@ -20,96 +21,88 @@ interface Intervention {
     footerIcons: string[];
 }
 
-const interventions: Intervention[] = [
-    {
-        status: 'URGENT', statusColor: '#dc2626', statusBg: '#fef2f2',
-        title: 'Fuite d\'eau salle de bain',
-        locataire: 'Sophie Bernard', bien: 'Paris 15ème',
-        details: [
-            { label: 'TYPE', value: 'Plomberie' },
-            { label: 'PRIORITÉ', value: 'Urgente' },
-            { label: 'DEMANDÉ LE', value: '05 Fev 2025' },
-            { label: 'PRESTATAIRE', value: 'À affecter' },
-        ],
-        devisLabel: 'DEVIS ESTIMÉ', devisValue: '350 €', devisColor: '#1a1a1a',
-        footerDate: 'Créé le 03 Fev 2025',
-        footerIcons: ['🟢', '📞', '✏️'],
-    },
-    {
-        status: 'EN COURS', statusColor: '#f59e0b', statusBg: '#fffbeb',
-        title: 'Remplacement chaudière',
-        locataire: 'Montée Alba', bien: 'Villeurbanne',
-        details: [
-            { label: 'TYPE', value: 'Chauffage' },
-            { label: 'PRIORITÉ', value: 'Moyenne' },
-            { label: 'DÉBUT TRAVAUX', value: '03 Fev 2025' },
-            { label: 'PRESTATAIRE', value: 'Chauffage Pro' },
-        ],
-        devisLabel: 'DEVIS ACCEPTÉ', devisValue: '2 800 €', devisColor: '#83C757',
-        footerDate: 'En progrès · 10 Fev 2025',
-        footerIcons: ['🟢', '📊', '📂'],
-    },
-    {
-        status: 'PLANIFIÉE', statusColor: '#3b82f6', statusBg: '#eff6ff',
-        title: 'Révision annuelle chaudière',
-        locataire: 'Jean-Pierre Roussel', bien: 'La Rochelle',
-        details: [
-            { label: 'TYPE', value: 'Chauffage' },
-            { label: 'PRIORITÉ', value: 'Faible' },
-            { label: 'DATE PRÉVUE', value: '15 Fev 2025' },
-            { label: 'PRESTATAIRE', value: 'Gaz Service Plus' },
-        ],
-        devisLabel: 'DEVIS', devisValue: '125 €', devisColor: '#1a1a1a',
-        footerDate: 'Planifié le 28 Jan 2025',
-        footerIcons: ['🟢', '📊', '❌'],
-    },
-    {
-        status: 'URGENT', statusColor: '#dc2626', statusBg: '#fef2f2',
-        title: 'Panne électrique cuisine',
-        locataire: 'Martin Dupont', bien: 'Boulogne-Billancourt',
-        details: [
-            { label: 'TYPE', value: 'Electricité' },
-            { label: 'PRIORITÉ', value: 'Urgente' },
-            { label: 'DEMANDÉ LE', value: '06 Fev 2025' },
-            { label: 'PRESTATAIRE', value: 'Electro Express' },
-        ],
-        devisLabel: 'DEVIS EN ATTENTE', devisValue: '—', devisColor: '#9ca3af',
-        footerDate: 'Intervention prévue aujourd\'hui',
-        footerIcons: ['🟢', '📞', '✏️'],
-    },
-    {
-        status: 'EN COURS', statusColor: '#f59e0b', statusBg: '#fffbeb',
-        title: 'Réparation volets roulants',
-        locataire: 'Thomas Moreau', bien: 'Marseille',
-        details: [
-            { label: 'TYPE', value: 'Menuiserie' },
-            { label: 'PRIORITÉ', value: 'Moyenne' },
-            { label: 'DÉBUT TRAVAUX', value: '01 Fev 2025' },
-            { label: 'PRESTATAIRE', value: 'Fermetures Plus' },
-        ],
-        devisLabel: 'DEVIS ACCEPTÉ', devisValue: '580 €', devisColor: '#83C757',
-        footerDate: 'Fin prévue · 08 Fev 2025',
-        footerIcons: ['🟢', '📊', '📂'],
-    },
-    {
-        status: 'TERMINÉE', statusColor: '#16a34a', statusBg: '#f0fdf4',
-        title: 'Changement serrure porte d\'entrée',
-        locataire: 'Marie Lefevre', bien: 'Lyon 6ème',
-        details: [
-            { label: 'TYPE', value: 'Serrurerie' },
-            { label: 'DATE RÉALISATION', value: '30 Jan 2025' },
-            { label: 'PRESTATAIRE', value: 'Serrure Service' },
-            { label: 'FACTURE', value: 'Payée' },
-        ],
-        devisLabel: 'COÛT FINAL', devisValue: '195 €', devisColor: '#1a1a1a',
-        footerDate: 'Terminé le 30 Jan 2025',
-        footerIcons: ['🟢', '📊', '🟠'],
-    },
-];
+// Les données seront chargées depuis l'API
+const STATUS_CONFIG: Record<string, { label: string, color: string, bg: string }> = {
+    'pending': { label: 'EN ATTENTE', color: '#f59e0b', bg: '#fffbeb' },
+    'urgent': { label: 'URGENT', color: '#dc2626', bg: '#fef2f2' },
+    'in_progress': { label: 'EN COURS', color: '#3b82f6', bg: '#eff6ff' },
+    'completed': { label: 'TERMINÉE', color: '#16a34a', bg: '#f0fdf4' },
+    'cancelled': { label: 'ANNULÉE', color: '#6b7280', bg: '#f3f4f6' },
+};
 
 const ReparationsTravaux: React.FC<RTProps> = ({ notify }) => {
     const [activeFilter, setActiveFilter] = useState('Tous');
-    const filters = ['Tous', 'Urgentes', 'En cours', 'Planifiées', 'Terminées'];
+    const [searchTerm, setSearchTerm] = useState('');
+    const [interventionList, setInterventionList] = useState<Intervention[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [kpis, setKpis] = useState({ urgent: 0, inProgress: 0, pending: 0, totalCost: 0 });
+
+    const filters = ['Tous', 'Urgentes', 'En cours', 'Terminées'];
+
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            const data = await maintenanceService.list();
+
+            let urgentCount = 0;
+            let inProgressCount = 0;
+            let pendingCount = 0;
+            let totalCost = 0;
+
+            const mapped = (data || []).map((item: any) => {
+                const config = STATUS_CONFIG[item.status] || { label: item.status?.toUpperCase() || 'INCONNU', color: '#6b7280', bg: '#f3f4f6' };
+
+                if (item.status === 'urgent') urgentCount++;
+                if (item.status === 'in_progress') inProgressCount++;
+                if (item.status === 'pending') pendingCount++;
+
+                const cost = parseFloat(item.estimated_cost || 0);
+                totalCost += cost;
+
+                return {
+                    status: config.label,
+                    statusColor: config.color,
+                    statusBg: config.bg,
+                    title: item.title || 'Intervention sans titre',
+                    locataire: item.lease?.tenant ? `${item.lease.tenant.first_name} ${item.lease.tenant.last_name}` : 'Inconnu',
+                    bien: item.lease?.property?.address || 'Adresse inconnue',
+                    details: [
+                        { label: 'TYPE', value: item.category || 'Maintenance' },
+                        { label: 'PRIORITÉ', value: item.priority || 'Normale' },
+                        { label: 'DEMANDÉ LE', value: new Date(item.created_at).toLocaleDateString('fr-FR') },
+                        { label: 'PRESTATAIRE', value: item.provider_name || 'À affecter' },
+                    ],
+                    devisLabel: item.status === 'completed' ? 'COÛT FINAL' : 'DEVIS ESTIMÉ',
+                    devisValue: `${cost.toLocaleString()} FCFA`,
+                    devisColor: '#1a1a1a',
+                    footerDate: `Créé le ${new Date(item.created_at).toLocaleDateString('fr-FR')}`,
+                    footerIcons: ['🟢', '📞', '✏️'],
+                };
+            });
+
+            setInterventionList(mapped);
+            setKpis({
+                urgent: urgentCount,
+                inProgress: inProgressCount,
+                pending: pendingCount,
+                totalCost: totalCost
+            });
+        } catch (error) {
+            console.error('Erreur interventions:', error);
+            notify('Erreur lors du chargement des interventions', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const filtered = interventionList.filter(item =>
+        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.bien.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
         <>
@@ -219,19 +212,19 @@ const ReparationsTravaux: React.FC<RTProps> = ({ notify }) => {
                 <div className="rt-stats">
                     <div className="rt-stat">
                         <p className="rt-stat-label">INTERVENTIONS URGENTES</p>
-                        <p className="rt-stat-value">3</p>
+                        <p className="rt-stat-value" style={{ color: '#dc2626' }}>{kpis.urgent}</p>
                     </div>
                     <div className="rt-stat">
                         <p className="rt-stat-label">EN COURS</p>
-                        <p className="rt-stat-value">5</p>
+                        <p className="rt-stat-value" style={{ color: '#3b82f6' }}>{kpis.inProgress}</p>
                     </div>
                     <div className="rt-stat">
-                        <p className="rt-stat-label">PLANIFIÉES</p>
-                        <p className="rt-stat-value">8</p>
+                        <p className="rt-stat-label">EN ATTENTE</p>
+                        <p className="rt-stat-value" style={{ color: '#f59e0b' }}>{kpis.pending}</p>
                     </div>
                     <div className="rt-stat">
-                        <p className="rt-stat-label">COÛT TOTAL 2025</p>
-                        <p className="rt-stat-value">12 450 €</p>
+                        <p className="rt-stat-label">COÛT ESTIMÉ TOTAL</p>
+                        <p className="rt-stat-value">{kpis.totalCost.toLocaleString()} FCFA</p>
                     </div>
                 </div>
 
@@ -257,70 +250,87 @@ const ReparationsTravaux: React.FC<RTProps> = ({ notify }) => {
                     </div>
                     <div className="rt-search-wrap">
                         <Search size={16} className="rt-search-icon" />
-                        <input className="rt-search-input" placeholder="Rechercher" />
+                        <input className="rt-search-input" placeholder="Rechercher" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                     </div>
                 </div>
 
                 {/* Cards Grid */}
                 <div className="rt-grid">
-                    {interventions.map((item, idx) => (
-                        <div className="rt-card" key={idx}>
-                            <div className="rt-card-body">
-                                {/* Badge */}
-                                <span className="rt-badge" style={{ background: item.statusBg, color: item.statusColor }}>
-                                    <span className="rt-badge-dot" style={{ background: item.statusColor }}></span>
-                                    {item.status}
-                                </span>
-
-                                {/* Title & Location */}
-                                <p className="rt-card-title">{item.title}</p>
-                                <p className="rt-card-location">
-                                    📍 {item.locataire} · {item.bien}
-                                </p>
-
-                                {/* Details 2x2 */}
-                                <div className="rt-details">
-                                    {item.details.map((d, i) => (
-                                        <div className="rt-detail" key={i}>
-                                            <p className="rt-detail-label">{d.label}</p>
-                                            <p className="rt-detail-value">{d.value}</p>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* Devis */}
-                                <div className="rt-devis">
-                                    <p className="rt-devis-label">{item.devisLabel}</p>
-                                    <p className="rt-devis-value" style={{ color: item.devisColor }}>{item.devisValue}</p>
-                                </div>
-
-                                {/* Progress bar for EN COURS */}
-                                {item.status === 'EN COURS' && (
-                                    <div className="rt-progress-row">
-                                        <p className="rt-progress-label">AVANCEMENT</p>
-                                        <div className="rt-progress-bar">
-                                            <div className="rt-progress-fill" style={{ width: idx === 1 ? '60%' : '85%' }}></div>
-                                        </div>
-                                        <p className="rt-progress-pct">{idx === 1 ? '60%' : '85%'}</p>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Footer */}
-                            <div className="rt-card-footer">
-                                <span className="rt-footer-date">{item.footerDate}</span>
-                                <div className="rt-footer-actions">
-                                    {item.footerIcons.map((icon, i) => (
-                                        <span key={i} className="rt-action-dot" style={{
-                                            background: i === 0 ? '#dcfce7' : i === 1 ? '#eff6ff' : i === 2 ? '#fef3c7' : '#f3f4f6',
-                                        }}>
-                                            {icon}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
+                    {loading ? (
+                        <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '3rem' }}>
+                            <Loader2 className="animate-spin" size={32} color="#83C757" />
+                            <p style={{ marginTop: '1rem', color: '#6b7280', fontWeight: 600 }}>Chargement des interventions...</p>
                         </div>
-                    ))}
+                    ) : filtered.length > 0 ? (
+                        filtered.map((item, idx) => (
+                            <div className="rt-card" key={idx}>
+                                <div className="rt-card-body">
+                                    {/* Badge */}
+                                    <span className="rt-badge" style={{ background: item.statusBg, color: item.statusColor }}>
+                                        <span className="rt-badge-dot" style={{ background: item.statusColor }}></span>
+                                        {item.status}
+                                    </span>
+
+                                    {/* Title & Location */}
+                                    <p className="rt-card-title">{item.title}</p>
+                                    <p className="rt-card-location">
+                                        📍 {item.locataire} · {item.bien}
+                                    </p>
+
+                                    {/* Details 2x2 */}
+                                    <div className="rt-details">
+                                        {item.details.map((d, i) => (
+                                            <div className="rt-detail" key={i}>
+                                                <p className="rt-detail-label">{d.label}</p>
+                                                <p className="rt-detail-value">{d.value}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Devis */}
+                                    <div className="rt-devis">
+                                        <p className="rt-devis-label">{item.devisLabel}</p>
+                                        <p className="rt-devis-value" style={{ color: item.devisColor }}>{item.devisValue}</p>
+                                    </div>
+
+                                    {/* Progress bar for EN COURS */}
+                                    {item.status === 'EN COURS' && (
+                                        <div className="rt-progress-row">
+                                            <p className="rt-progress-label">AVANCEMENT</p>
+                                            <div className="rt-progress-bar">
+                                                <div className="rt-progress-fill" style={{ width: '65%' }}></div>
+                                            </div>
+                                            <p className="rt-progress-pct">65%</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Footer */}
+                                <div className="rt-card-footer">
+                                    <span className="rt-footer-date">{item.footerDate}</span>
+                                    <div className="rt-footer-actions">
+                                        {item.footerIcons.map((icon, i) => (
+                                            <span key={i} className="rt-action-dot" style={{
+                                                background: i === 0 ? '#dcfce7' : i === 1 ? '#eff6ff' : i === 2 ? '#fef3c7' : '#f3f4f6',
+                                            }}>
+                                                {icon}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '4rem 2rem', background: '#fff', borderRadius: '18px', border: '2px dashed #e5e7eb' }}>
+                            <div style={{ width: '64px', height: '64px', background: '#f0f9eb', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+                                <Wrench size={32} color="#83C757" />
+                            </div>
+                            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.5rem' }}>Aucune intervention</h3>
+                            <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>
+                                Vous n'avez pas encore d'interventions ou de réparations enregistrées.
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
         </>

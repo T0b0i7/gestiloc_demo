@@ -86,47 +86,23 @@ interface MesBiensProps {
   };
 }
 
-// Données mockées
-const biens = [
-  {
-    id: 1,
-    statut: "Loué",
-    type: "APPARTEMENT",
-    titre: "Appartement 12 - Agla",
-    adresse: "Boulevard de la marina, Cotonou",
-    loyer: "60.000",
-    surface: "65",
-    photos: 1,
-    ref: "PR-WZ6WHU",
-    image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=80",
-  },
-  {
-    id: 2,
-    statut: "Disponible",
-    type: "MAISON",
-    titre: "Villa moderne - Fidjrossè",
-    adresse: "Rue des Cocotiers, Cotonou",
-    loyer: "150.000",
-    surface: "120",
-    photos: 5,
-    ref: "PR-ABC123",
-    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&q=80",
-  },
-  {
-    id: 3,
-    statut: "Loué",
-    type: "STUDIO",
-    titre: "Studio cosy - Centre-ville",
-    adresse: "Avenue Steinmetz, Cotonou",
-    loyer: "35.000",
-    surface: "28",
-    photos: 3,
-    ref: "PR-XYZ78",
-    image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=80",
-  },
-];
+const filters = ["Tous", "Disponible", "Loué", "En maintenance", "Retiré du marché"];
 
-const filters = ["Tous", "Loué", "Disponible", "En travaux", "Préavis", "Meublé"];
+const STATUS_MAP: Record<string, string> = {
+  available: "Disponible",
+  rented: "Loué",
+  maintenance: "En maintenance",
+  off_market: "Retiré du marché",
+};
+
+const TYPE_MAP: Record<string, string> = {
+  apartment: "APPARTEMENT",
+  house: "MAISON",
+  office: "BUREAU",
+  commercial: "LOCAL COMMERCIAL",
+  parking: "PARKING",
+  other: "AUTRE",
+};
 
 const statutColor: Record<string, string> = {
   Loué: "#3b82f6",
@@ -1919,9 +1895,41 @@ export default function MesBiens({ notify, currentUser }: MesBiensProps) {
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState("Tous");
   const [search, setSearch] = useState("");
-  const [selectedBien, setSelectedBien] = useState<typeof biens[0] | null>(null);
+  const [selectedBien, setSelectedBien] = useState<any | null>(null);
+  const [properties, setProperties] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filtered = biens.filter((b) => {
+  const fetchProperties = async () => {
+    try {
+      setIsLoading(true);
+      const res = await propertyService.listProperties();
+      const mappedResults = (res.data || []).map((p: any) => ({
+        id: p.id,
+        statut: STATUS_MAP[p.status] || p.status,
+        type: (TYPE_MAP[p.type] || p.type).toUpperCase(),
+        titre: p.name || p.title || "Sans titre",
+        adresse: p.address,
+        loyer: p.rent_amount ? parseInt(p.rent_amount).toLocaleString("fr-FR") : "0",
+        surface: p.surface || "0",
+        photos: p.photos ? p.photos.length : 0,
+        ref: p.reference_code || `REF-${p.id}`,
+        image: p.photos && p.photos.length > 0 ? resolvePhotoUrl(p.photos[0]) : "",
+        raw: p // Garder l'objet original pour l'édition si besoin
+      }));
+      setProperties(mappedResults);
+    } catch (error) {
+      console.error("Erreur lors du chargement des biens:", error);
+      notify?.("Impossible de charger vos biens", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProperties();
+  }, []);
+
+  const filtered = properties.filter((b) => {
     const matchFilter = activeFilter === "Tous" || b.statut === activeFilter;
     const matchSearch =
       b.titre.toLowerCase().includes(search.toLowerCase()) ||
@@ -1985,7 +1993,7 @@ export default function MesBiens({ notify, currentUser }: MesBiensProps) {
 
       {/* Filters - Mobile First */}
       <div className="animate-fadeInUp animate-delay-200 flex flex-wrap gap-2 sm:gap-3 mb-8">
-        {["Tous", "Loué", "Disponible", "En travaux", "Préavis", "Meublé"].map((f) => (
+        {filters.map((f) => (
           <button
             key={f}
             onClick={() => setActiveFilter(f)}
@@ -2001,17 +2009,54 @@ export default function MesBiens({ notify, currentUser }: MesBiensProps) {
 
       {/* Grid - Mobile First */}
       <div className="animate-fadeInUp animate-delay-300 grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 xl:gap-12 max-w-[1400px]">
-        {filtered.map((bien) => (
-          <BienCard key={bien.id} bien={bien} onClick={() => setSelectedBien(bien)} />
-        ))}
+        {isLoading ? (
+          <div className="col-span-full flex flex-col items-center justify-center py-20">
+            <Loader2 className="w-10 h-10 text-green-500 animate-spin mb-4" />
+            <p className="text-gray-500 font-medium">Chargement de vos biens...</p>
+          </div>
+        ) : filtered.length > 0 ? (
+          filtered.map((bien) => (
+            <BienCard key={bien.id} bien={bien} onClick={() => setSelectedBien(bien)} />
+          ))
+        ) : (
+          <div className="col-span-full bg-white border-2 border-dashed border-gray-200 rounded-3xl py-20 flex flex-col items-center justify-center">
+            <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mb-6">
+              <Home className="w-10 h-10 text-green-300" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Aucun bien trouvé</h3>
+            <p className="text-gray-500 mb-8 max-w-sm text-center">
+              {search || activeFilter !== "Tous"
+                ? "Aucun bien ne correspond à vos critères de recherche."
+                : "Vous n'avez pas encore ajouté de bien immobilier. Commencez par en ajouter un pour le gérer."}
+            </p>
+            {!search && activeFilter === "Tous" && (
+              <button
+                onClick={() => navigate("/proprietaire/ajouter-bien")}
+                className="bg-[#58a531] text-white rounded-xl px-8 py-3 font-bold hover:bg-[#498828] transition-all transform active:scale-95 shadow-lg flex items-center gap-2"
+              >
+                <Plus size={20} />
+                Ajouter maintenant
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Modal FICHE BIEN */}
+      {/* Modal FICHE BIEN / ÉDITION */}
       {selectedBien && (
-        <FicheBienModal
-          bien={selectedBien}
-          onClose={() => setSelectedBien(null)}
-        />
+        <div className="modal-overlay" onClick={() => setSelectedBien(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl">
+            <EditPropertyModal
+              property={selectedBien.raw}
+              onClose={() => setSelectedBien(null)}
+              onSuccess={() => {
+                setSelectedBien(null);
+                fetchProperties();
+              }}
+              notify={notify}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

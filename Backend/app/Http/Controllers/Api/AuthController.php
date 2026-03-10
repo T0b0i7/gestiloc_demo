@@ -324,7 +324,7 @@ HTML;
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Landlord registered successfully.',
+            'message' => 'Propriétaire enregistré avec succès.',
             'data' => [
                 'user' => $result['user'],
                 'landlord' => $result['landlord']
@@ -342,7 +342,7 @@ HTML;
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Co-owner registered successfully',
+            'message' => 'Copropriétaire enregistré avec succès.',
             'data' => $result
         ], 201);
     }
@@ -354,7 +354,7 @@ HTML;
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Login successful.',
+            'message' => 'Connexion réussie.',
             'data' => $result
         ]);
     }

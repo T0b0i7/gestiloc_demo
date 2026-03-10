@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Plus, Search, Settings, Eye } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Search, Settings, Eye, Loader2, FileText } from 'lucide-react';
+import { rentReceiptService } from '@/services/api';
 
 interface QuittanceData {
     id: string;
@@ -15,50 +16,11 @@ interface QuittanceData {
     creeLe: string;
 }
 
-const mockQuittances: QuittanceData[] = [
-    {
-        id: '1', statutBadge: '✓ ENVOYÉE LE 30 JAN 2025', statutBadgeColor: '#83C757',
-        titre: 'Quittance Février 2025', lieu: 'Jean-Pierre Roussel • La Rochelle',
-        periode: 'Février 2025', paiementRecu: '29 Jan 2025',
-        loyer: '950 €', charges: '110 €', totalPaye: '1 060 €',
-        creeLe: 'Créé le 29 Jan 2025',
-    },
-    {
-        id: '2', statutBadge: '📧 EN ATTENTE D\'ENVOI', statutBadgeColor: '#f59e0b',
-        titre: 'Quittance Février 2025', lieu: 'Montée Alba • Villeurbanne',
-        periode: 'Février 2025', paiementRecu: '05 Fév 2025',
-        loyer: '720 €', charges: '95 €', totalPaye: '815 €',
-        creeLe: 'Créé le 05 Fev 2025',
-    },
-    {
-        id: '3', statutBadge: '✓ ENVOYÉE LE 31 JAN 2025', statutBadgeColor: '#83C757',
-        titre: 'Quittance Janvier 2025', lieu: 'Sophia Bernard • Paris 15ème',
-        periode: 'Janvier 2025', paiementRecu: '28 Jan 2025',
-        loyer: '1 200 €', charges: '180 €', totalPaye: '1 380 €',
-        creeLe: 'Créé le 28 Jan 2025',
-    },
-    {
-        id: '4', statutBadge: '✓ ENVOYÉE LE 02 FÉV 2025', statutBadgeColor: '#83C757',
-        titre: 'Quittance Février 2025', lieu: 'Thomas Moreau • Marseille',
-        periode: 'Février 2025', paiementRecu: '01 Fév 2025',
-        loyer: '1 100 €', charges: '150 €', totalPaye: '1 250 €',
-        creeLe: 'Créé le 01 Fev 2025',
-    },
-    {
-        id: '5', statutBadge: '✓ ENVOYÉE LE 29 JAN 2025', statutBadgeColor: '#83C757',
-        titre: 'Quittance Janvier 2025', lieu: 'Marie Lefevre • Lyon 6ème',
-        periode: 'Janvier 2025', paiementRecu: '27 Jan 2025',
-        loyer: '980 €', charges: '140 €', totalPaye: '1 120 €',
-        creeLe: 'Créé le 27 Jan 2025',
-    },
-    {
-        id: '6', statutBadge: '📧 EN ATTENTE D\'ENVOI', statutBadgeColor: '#f59e0b',
-        titre: 'Quittance Janvier 2025', lieu: 'Antoine Mercier • Bordeaux',
-        periode: 'Janvier 2025', paiementRecu: '04 Fév 2025',
-        loyer: '870 €', charges: '105 €', totalPaye: '975 €',
-        creeLe: 'Créé le 04 Fev 2025',
-    },
-];
+// Les données seront chargées depuis l'API
+const STATUT_CONFIG: Record<string, { label: string, color: string }> = {
+    'issued': { label: '✓ ÉMISE', color: '#83C757' },
+    'draft': { label: '📧 BROUILLON', color: '#f59e0b' },
+};
 
 interface QuittancesLoyersPageProps {
     notify: (msg: string, type: 'success' | 'info' | 'error') => void;
@@ -67,18 +29,81 @@ interface QuittancesLoyersPageProps {
 const QuittancesLoyersPage: React.FC<QuittancesLoyersPageProps> = ({ notify }) => {
     const [activeFilter, setActiveFilter] = useState('Tous');
     const [searchTerm, setSearchTerm] = useState('');
-    const filters = ['Tous', 'A envoyer', 'En attente', 'Par an'];
+    const [quittanceList, setQuittanceList] = useState<QuittanceData[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [kpis, setKpis] = useState({ totalEncaisse: 0, count: 0, cebMonth: 0, waiting: 0 });
 
-    const filtered = mockQuittances.filter(q =>
+    const filters = ['Tous', 'Par an'];
+
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            const data = await rentReceiptService.listIndependent();
+
+            let total = 0;
+            let monthCount = 0;
+            let waitingCount = 0;
+            const now = new Date();
+
+            const mapped = (data || []).map((q: any) => {
+                const config = STATUT_CONFIG[q.status] || { label: q.status.toUpperCase(), color: '#6b7280' };
+                const tenantName = q.tenant ? `${q.tenant.first_name || ''} ${q.tenant.last_name || ''}` : 'Inconnu';
+                const propertyName = q.property?.name || q.property?.address || 'Bien inconnu';
+
+                const amount = parseFloat(q.amount_paid || 0);
+                total += amount;
+
+                const createdAt = new Date(q.created_at);
+                if (createdAt.getMonth() === now.getMonth() && createdAt.getFullYear() === now.getFullYear()) {
+                    monthCount++;
+                }
+
+                if (q.status === 'draft') waitingCount++;
+
+                return {
+                    id: String(q.id),
+                    statutBadge: config.label,
+                    statutBadgeColor: config.color,
+                    titre: `Quittance - ${q.paid_month || '—'}`,
+                    lieu: `${tenantName.trim()} • ${propertyName}`,
+                    periode: q.paid_month || '—',
+                    paiementRecu: q.issued_date ? new Date(q.issued_date).toLocaleDateString('fr-FR') : '—',
+                    loyer: `${amount.toLocaleString()} FCFA`,
+                    charges: 'Inclues',
+                    totalPaye: `${amount.toLocaleString()} FCFA`,
+                    creeLe: `Créé le ${new Date(q.created_at).toLocaleDateString('fr-FR')}`,
+                };
+            });
+
+            setQuittanceList(mapped);
+            setKpis({
+                totalEncaisse: total,
+                count: mapped.length,
+                cebMonth: monthCount,
+                waiting: waitingCount
+            });
+        } catch (error) {
+            console.error('Erreur quittances:', error);
+            notify('Erreur lors du chargement des quittances', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const filtered = quittanceList.filter(q =>
         q.titre.toLowerCase().includes(searchTerm.toLowerCase()) ||
         q.lieu.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const stats = [
-        { label: 'QUITTANCES ÉMISES', value: '142', color: '#1a1a1a' },
-        { label: 'CE MOIS-CI', value: '18', color: '#83C757' },
-        { label: 'EN ATTENTE D\'ENVOI', value: '5', color: '#f59e0b' },
-        { label: 'TOTAL ENCAISSÉ', value: '45 780 €', color: '#83C757' },
+        { label: 'QUITTANCES ÉMISES', value: String(kpis.count), color: '#1a1a1a' },
+        { label: 'CE MOIS-CI', value: String(kpis.cebMonth), color: '#83C757' },
+        { label: 'BROUILLONS', value: String(kpis.waiting), color: '#f59e0b' },
+        { label: 'TOTAL ENCAISSÉ', value: `${kpis.totalEncaisse.toLocaleString()} FCFA`, color: '#83C757' },
     ];
 
     return (
@@ -174,35 +199,52 @@ const QuittancesLoyersPage: React.FC<QuittancesLoyersPageProps> = ({ notify }) =
                 </div>
 
                 <div className="ql-grid">
-                    {filtered.map(q => (
-                        <div className="ql-item" key={q.id}>
-                            <div className="ql-item-top">
-                                <span className="ql-badge" style={{ background: q.statutBadgeColor + '20', color: q.statutBadgeColor }}>{q.statutBadge}</span>
-                                <p className="ql-item-titre">{q.titre}</p>
-                                <p className="ql-item-lieu">📍 {q.lieu}</p>
-                                <div className="ql-detail-row">
-                                    <div><p className="ql-detail-label">Période</p><p className="ql-detail-value">{q.periode}</p></div>
-                                    <div><p className="ql-detail-label">Paiement reçu</p><p className="ql-detail-value">{q.paiementRecu}</p></div>
-                                </div>
-                                <div className="ql-detail-row">
-                                    <div><p className="ql-detail-label">Loyer</p><p className="ql-detail-value" style={{ color: '#83C757' }}>{q.loyer}</p></div>
-                                    <div><p className="ql-detail-label">Charges</p><p className="ql-detail-value">{q.charges}</p></div>
-                                </div>
-                                <div className="ql-total-row">
-                                    <p className="ql-total-label">Total payé</p>
-                                    <p className="ql-total-value">{q.totalPaye}</p>
-                                </div>
-                            </div>
-                            <div className="ql-footer">
-                                <span className="ql-footer-date">{q.creeLe}</span>
-                                <div className="ql-footer-actions">
-                                    <button className="ql-icon-btn">👁️</button>
-                                    <button className="ql-icon-btn green">📥</button>
-                                    <button className="ql-icon-btn orange">📧</button>
-                                </div>
-                            </div>
+                    {loading ? (
+                        <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '3rem' }}>
+                            <Loader2 className="animate-spin" size={32} color="#83C757" />
+                            <p style={{ marginTop: '1rem', color: '#6b7280', fontWeight: 600 }}>Chargement des quittances...</p>
                         </div>
-                    ))}
+                    ) : filtered.length > 0 ? (
+                        filtered.map(q => (
+                            <div className="ql-item" key={q.id}>
+                                <div className="ql-item-top">
+                                    <span className="ql-badge" style={{ background: q.statutBadgeColor + '20', color: q.statutBadgeColor }}>{q.statutBadge}</span>
+                                    <p className="ql-item-titre">{q.titre}</p>
+                                    <p className="ql-item-lieu">📍 {q.lieu}</p>
+                                    <div className="ql-detail-row">
+                                        <div><p className="ql-detail-label">Période</p><p className="ql-detail-value">{q.periode}</p></div>
+                                        <div><p className="ql-detail-label">Paiement reçu</p><p className="ql-detail-value">{q.paiementRecu}</p></div>
+                                    </div>
+                                    <div className="ql-detail-row">
+                                        <div><p className="ql-detail-label">Loyer</p><p className="ql-detail-value" style={{ color: '#83C757' }}>{q.loyer}</p></div>
+                                        <div><p className="ql-detail-label">Charges</p><p className="ql-detail-value">{q.charges}</p></div>
+                                    </div>
+                                    <div className="ql-total-row">
+                                        <p className="ql-total-label">Total payé</p>
+                                        <p className="ql-total-value">{q.totalPaye}</p>
+                                    </div>
+                                </div>
+                                <div className="ql-footer">
+                                    <span className="ql-footer-date">{q.creeLe}</span>
+                                    <div className="ql-footer-actions">
+                                        <button className="ql-icon-btn">👁️</button>
+                                        <button className="ql-icon-btn green">📥</button>
+                                        <button className="ql-icon-btn orange">📧</button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '4rem 2rem', background: '#fff', borderRadius: '18px', border: '2px dashed #e5e7eb' }}>
+                            <div style={{ width: '64px', height: '64px', background: '#f0f9eb', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+                                <FileText size={32} color="#83C757" />
+                            </div>
+                            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.5rem' }}>Aucune quittance de loyer</h3>
+                            <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>
+                                Vous n'avez pas encore émis de quittances de loyer.
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
         </>

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Plus, Search, Settings } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Search, Settings, Loader2, Camera } from 'lucide-react';
+import { conditionReportService } from '@/services/api';
 
 interface EdlData {
     id: string;
@@ -15,36 +16,12 @@ interface EdlData {
     creeLe: string;
 }
 
-const mockEdl: EdlData[] = [
-    {
-        id: '1', typeBadge: 'ÉTAT DES LIEUX D\'ENTRÉE', typeBadgeColor: '#83C757',
-        titre: 'EDL - Monts Athis', bien: 'Appartement 12 - Agla',
-        locataire: 'Monts Athis', date: '28 Déc 2025',
-        etatGeneral: 'Très bon', signe: '✓ Oui', photos: 12,
-        creeLe: 'Créé le 28 Déc 2025',
-    },
-    {
-        id: '2', typeBadge: 'ÉTAT DES LIEUX D\'ENTRÉE', typeBadgeColor: '#83C757',
-        titre: 'EDL - Sophie Bernard', bien: 'Villa moderne - Fidjrossè',
-        locataire: 'Sophie Bernard', date: '15 Fév 2026',
-        etatGeneral: 'Excellent', signe: '✓ Oui', photos: 18,
-        creeLe: 'Créé le 14 Fév 2026',
-    },
-    {
-        id: '3', typeBadge: 'ÉTAT DES LIEUX DE SORTIE', typeBadgeColor: '#ef4444',
-        titre: 'EDL - Martin Dupont', bien: 'Studio cosy - Centre-ville',
-        locataire: 'Martin Dupont', date: '30 Jan 2026',
-        etatGeneral: 'Bon', signe: '✓ Oui', photos: 15,
-        creeLe: 'Créé le 30 Jan 2026',
-    },
-    {
-        id: '4', typeBadge: 'ÉTAT DES LIEUX D\'ENTRÉE', typeBadgeColor: '#83C757',
-        titre: 'EDL - Jean-Pierre Kouassi', bien: 'Appartement 8 - Akpakpa',
-        locataire: 'J-P Kouassi', date: '01 Mar 2026',
-        etatGeneral: 'Très bon', signe: '⏳ En attente', photos: 10,
-        creeLe: 'Créé le 28 Fév 2026',
-    },
-];
+// Les données seront chargées depuis l'API
+const TYPE_CONFIG: Record<string, { label: string, color: string }> = {
+    'entry': { label: 'ÉTAT DES LIEUX D\'ENTRÉE', color: '#83C757' },
+    'exit': { label: 'ÉTAT DES LIEUX DE SORTIE', color: '#ef4444' },
+    'intermediate': { label: 'ÉTAT DES LIEUX INTERMÉDIARE', color: '#3b82f6' },
+};
 
 interface EtatsDesLieuxProps {
     notify: (msg: string, type: 'success' | 'info' | 'error') => void;
@@ -53,9 +30,47 @@ interface EtatsDesLieuxProps {
 const EtatsDesLieux: React.FC<EtatsDesLieuxProps> = ({ notify }) => {
     const [activeFilter, setActiveFilter] = useState('Tous');
     const [searchTerm, setSearchTerm] = useState('');
+    const [edlList, setEdlList] = useState<EdlData[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const filtered = mockEdl.filter(e => {
-        const matchSearch = e.titre.toLowerCase().includes(searchTerm.toLowerCase());
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            const data = await conditionReportService.listAll();
+            const mapped = (data || []).map((e: any) => {
+                const config = TYPE_CONFIG[e.type] || { label: e.type.toUpperCase(), color: '#6b7280' };
+                const tenantName = e.lease?.tenant ? `${e.lease.tenant.first_name || ''} ${e.lease.tenant.last_name || ''}` : 'Sans locataire';
+
+                return {
+                    id: String(e.id),
+                    typeBadge: config.label,
+                    typeBadgeColor: config.color,
+                    titre: `EDL - ${tenantName.trim()}`,
+                    bien: e.property?.name || e.property?.address || 'Bien inconnu',
+                    locataire: tenantName.trim(),
+                    date: new Date(e.report_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
+                    etatGeneral: e.notes ? (e.notes.length > 20 ? e.notes.substring(0, 20) + '...' : e.notes) : 'Non renseigné',
+                    signe: e.signed_at ? '✓ Oui' : '⏳ En attente',
+                    photos: e.photos_count || (e.photos ? e.photos.length : 0),
+                    creeLe: `Créé le ${new Date(e.created_at).toLocaleDateString('fr-FR')}`,
+                };
+            });
+            setEdlList(mapped);
+        } catch (error) {
+            console.error('Erreur EDL:', error);
+            notify('Erreur lors du chargement des états des lieux', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const filtered = edlList.filter(e => {
+        const matchSearch = e.titre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            e.bien.toLowerCase().includes(searchTerm.toLowerCase());
         if (activeFilter === 'Entrée') return matchSearch && e.typeBadge.includes('ENTRÉE');
         if (activeFilter === 'Sortie') return matchSearch && e.typeBadge.includes('SORTIE');
         return matchSearch;
@@ -153,38 +168,55 @@ const EtatsDesLieux: React.FC<EtatsDesLieuxProps> = ({ notify }) => {
                 </div>
 
                 <div className="edl-grid">
-                    {filtered.map(e => {
-                        const isEntree = e.typeBadge.includes('ENTRÉE');
-                        return (
-                            <div className={`edl-item ${isEntree ? 'entree' : 'sortie'}`} key={e.id}>
-                                <div className="edl-item-top">
-                                    <span className="edl-type-badge" style={{ background: e.typeBadgeColor + '20', color: e.typeBadgeColor }}>
-                                        <img src={isEntree ? '/Ressource_gestiloc/entree.png' : '/Ressource_gestiloc/sortie.png'} alt="" className="edl-badge-icon" />
-                                        {e.typeBadge}
-                                    </span>
-                                    <p className="edl-item-titre">{e.titre}</p>
-                                    <p className="edl-item-bien">📍 {e.bien}</p>
-                                    <div className="edl-detail-row">
-                                        <div><p className="edl-detail-label">Locataire</p><p className="edl-detail-value">{e.locataire}</p></div>
-                                        <div><p className="edl-detail-label">Date</p><p className="edl-detail-value">{e.date}</p></div>
+                    {loading ? (
+                        <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '3rem' }}>
+                            <Loader2 className="animate-spin" size={32} color="#83C757" />
+                            <p style={{ marginTop: '1rem', color: '#6b7280', fontWeight: 600 }}>Chargement des états des lieux...</p>
+                        </div>
+                    ) : filtered.length > 0 ? (
+                        filtered.map(e => {
+                            const isEntree = e.typeBadge.includes('ENTRÉE');
+                            return (
+                                <div className={`edl-item ${isEntree ? 'entree' : 'sortie'}`} key={e.id}>
+                                    <div className="edl-item-top">
+                                        <span className="edl-type-badge" style={{ background: e.typeBadgeColor + '20', color: e.typeBadgeColor }}>
+                                            <img src={isEntree ? '/Ressource_gestiloc/entree.png' : '/Ressource_gestiloc/sortie.png'} alt="" className="edl-badge-icon" />
+                                            {e.typeBadge}
+                                        </span>
+                                        <p className="edl-item-titre">{e.titre}</p>
+                                        <p className="edl-item-bien">📍 {e.bien}</p>
+                                        <div className="edl-detail-row">
+                                            <div><p className="edl-detail-label">Locataire</p><p className="edl-detail-value">{e.locataire}</p></div>
+                                            <div><p className="edl-detail-label">Date</p><p className="edl-detail-value">{e.date}</p></div>
+                                        </div>
+                                        <div className="edl-detail-row">
+                                            <div><p className="edl-detail-label">État général</p><p className="edl-detail-value">{e.etatGeneral}</p></div>
+                                            <div><p className="edl-detail-label">Signé</p><p className="edl-detail-value">{e.signe}</p></div>
+                                        </div>
+                                        <div className="edl-photos">📷 {e.photos} photos</div>
                                     </div>
-                                    <div className="edl-detail-row">
-                                        <div><p className="edl-detail-label">État général</p><p className="edl-detail-value">{e.etatGeneral}</p></div>
-                                        <div><p className="edl-detail-label">Signé</p><p className="edl-detail-value">{e.signe}</p></div>
+                                    <div className="edl-footer">
+                                        <span className="edl-footer-date">{e.creeLe}</span>
+                                        <div className="edl-footer-actions">
+                                            <button className="edl-action-btn" title="Télécharger">📥</button>
+                                            <button className="edl-action-btn" title="Modifier">✏️</button>
+                                            <button className="edl-action-dots" title="Plus">⋮</button>
+                                        </div>
                                     </div>
-                                    <div className="edl-photos">📷 {e.photos} photos</div>
                                 </div>
-                                <div className="edl-footer">
-                                    <span className="edl-footer-date">{e.creeLe}</span>
-                                    <div className="edl-footer-actions">
-                                        <button className="edl-action-btn" title="Télécharger">📥</button>
-                                        <button className="edl-action-btn" title="Modifier">✏️</button>
-                                        <button className="edl-action-dots" title="Plus">⋮</button>
-                                    </div>
-                                </div>
+                            );
+                        })
+                    ) : (
+                        <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '4rem 2rem', background: '#fff', borderRadius: '18px', border: '2px dashed #e5e7eb' }}>
+                            <div style={{ width: '64px', height: '64px', background: '#f0f9eb', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+                                <Camera size={32} color="#83C757" />
                             </div>
-                        );
-                    })}
+                            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.5rem' }}>Aucun état des lieux</h3>
+                            <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>
+                                Vous n'avez pas encore d'états des lieux enregistrés.
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
         </>

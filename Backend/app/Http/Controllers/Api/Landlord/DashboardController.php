@@ -104,11 +104,11 @@ class DashboardController extends Controller
         return Invoice::whereHas('lease.property', function ($q) use ($landlordId) {
             $q->where('landlord_id', $landlordId);
         })
-            ->where('status', 'paid')
-            ->where('created_at', '>=', Carbon::now()->subMonths(6))
+            ->where('due_date', '>=', Carbon::now()->subMonths(6))
             ->select(
-                DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"),
-                DB::raw('SUM(amount_paid) as total')
+                DB::raw("DATE_FORMAT(due_date, '%Y-%m') as month"),
+                DB::raw('SUM(amount_paid) as total_paid'),
+                DB::raw('SUM(amount_total) as total_expected')
             )
             ->groupBy('month')
             ->orderBy('month')

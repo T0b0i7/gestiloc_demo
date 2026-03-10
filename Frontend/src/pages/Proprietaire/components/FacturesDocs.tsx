@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Plus, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Search, Loader2, Receipt } from 'lucide-react';
+import { invoiceService } from '@/services/api';
 
 interface FactureData {
     id: string;
@@ -14,116 +15,13 @@ interface FactureData {
     dateBas: string;
 }
 
-const mockFactures: FactureData[] = [
-    {
-        id: '1', typeBadge: 'FACTURE TRAVAUX', typeBadgeColor: '#f59e0b',
-        titre: 'Réparation fuite d\'eau', lieu: 'Thomas Moreau • Marseille',
-        champ1Label: 'PRESTATAIRE', champ1Value: 'Plomberie Express',
-        champ2Label: 'DATE', champ2Value: '15 Jan 2025',
-        champ3Label: 'N° FACTURE', champ3Value: 'PL-2025-0089',
-        champ4Label: 'MONTANT TTC', champ4Value: '245 €',
-        dateBas: 'Ajouté le 15 Jan 2025',
-    },
-    {
-        id: '2', typeBadge: 'DIAGNOSTIC AMIANTE', typeBadgeColor: '#ef4444',
-        titre: 'Diagnostic amiante avant travaux', lieu: 'Marie Lefevre • Lyon 6ème',
-        champ1Label: 'DIAGNOSTIQUEUR', champ1Value: 'Control Habitat',
-        champ2Label: 'DATE VISITE', champ2Value: '05 Jan 2025',
-        champ3Label: 'RÉSULTAT', champ3Value: 'Absence d\'amiante',
-        champ4Label: 'COÛT', champ4Value: '180 €',
-        dateBas: 'Ajouté le 05 Jan 2025',
-    },
-    {
-        id: '3', typeBadge: 'ASSURANCE GLI', typeBadgeColor: '#3b82f6',
-        titre: 'Garantie Loyers Impayés 2025', lieu: 'Martin Dupont • Boulogne-Billancourt',
-        champ1Label: 'COMPAGNIE', champ1Value: 'Garantme',
-        champ2Label: 'VALIDITÉ', champ2Value: '01/01 - 31/12/25',
-        champ3Label: 'N° POLICE', champ3Value: 'GLI-789456123',
-        champ4Label: 'PRIME ANNUELLE', champ4Value: '280 €',
-        dateBas: 'Ajouté le 10 Jan 2025',
-    },
-    {
-        id: '4', typeBadge: 'FACTURE TRAVAUX', typeBadgeColor: '#f59e0b',
-        titre: 'Remise en peinture appartement', lieu: 'Antoine Mercier • Bordeaux',
-        champ1Label: 'PRESTATAIRE', champ1Value: 'Color Pro',
-        champ2Label: 'DATE', champ2Value: '20 Déc 2024',
-        champ3Label: 'N° FACTURE', champ3Value: 'CP-2024-1245',
-        champ4Label: 'MONTANT TTC', champ4Value: '1 850 €',
-        dateBas: 'Payé le 20 Déc 2024',
-    },
-    {
-        id: '5', typeBadge: 'FACTURE EAU', typeBadgeColor: '#0ea5e9',
-        titre: 'Consommation eau Janvier 2025', lieu: 'Jean-Pierre Roussel • La Rochelle',
-        champ1Label: 'FOURNISSEUR', champ1Value: 'Veolia Eau',
-        champ2Label: 'PÉRIODE', champ2Value: 'Jan 2025',
-        champ3Label: 'CONSOMMATION', champ3Value: '12 m³',
-        champ4Label: 'MONTANT TTC', champ4Value: '45 €',
-        dateBas: 'Ajouté le 02 Fev 2025',
-    },
-    {
-        id: '6', typeBadge: 'CERTIFICAT', typeBadgeColor: '#8b5cf6',
-        titre: 'Certificat conformité électrique', lieu: 'Claire Dubois • Nantes',
-        champ1Label: 'ORGANISME', champ1Value: 'Consuel',
-        champ2Label: 'DATE D\'ÉMISSION', champ2Value: '18 Déc 2024',
-        champ3Label: 'N° ATTESTATION', champ3Value: 'CON-2024-89456',
-        champ4Label: '', champ4Value: 'Conforme',
-        dateBas: 'Ajouté le 18 Déc 2024',
-    },
-    {
-        id: '7', typeBadge: 'FACTURE TRAVAUX', typeBadgeColor: '#f59e0b',
-        titre: 'Réparation chaudière', lieu: 'Montée Alba • Villeurbanne',
-        champ1Label: 'PRESTATAIRE', champ1Value: 'Chauffage Pro',
-        champ2Label: 'DATE', champ2Value: '28 Jan 2025',
-        champ3Label: 'N° FACTURE', champ3Value: 'F-2025-0042',
-        champ4Label: 'MONTANT TTC', champ4Value: '385 €',
-        dateBas: 'Ajouté le 28 Jan 2025',
-    },
-    {
-        id: '8', typeBadge: 'ASSURANCE HABITATION', typeBadgeColor: '#22c55e',
-        titre: 'Assurance PNO 2025', lieu: 'Sophia Bernard • Paris 15ème',
-        champ1Label: 'COMPAGNIE', champ1Value: 'AXA Assurances',
-        champ2Label: 'VALIDITÉ', champ2Value: '01/01 - 31/12/25',
-        champ3Label: 'N° CONTRAT', champ3Value: 'AXA-45678912',
-        champ4Label: 'PRIME ANNUELLE', champ4Value: '420 €',
-        dateBas: 'Ajouté le 15 Jan 2025',
-    },
-    {
-        id: '9', typeBadge: 'DIAGNOSTIC DPE', typeBadgeColor: '#06b6d4',
-        titre: 'Diagnostic performance énergétique', lieu: 'Martin Dupont • Boulogne-Billancourt',
-        champ1Label: 'DIAGNOSTIQUEUR', champ1Value: 'Expert Diag',
-        champ2Label: 'DATE VISITE', champ2Value: '10 Jan 2025',
-        champ3Label: 'VALIDITÉ', champ3Value: 'Jusqu\'au 10/01/35',
-        champ4Label: 'CLASSE ÉNERGIE', champ4Value: 'C (120 kWh/m²)',
-        dateBas: 'Ajouté le 10 Jan 2025',
-    },
-    {
-        id: '10', typeBadge: 'TAXE FONCIÈRE', typeBadgeColor: '#dc2626',
-        titre: 'Taxe foncière 2024', lieu: 'Jean-Pierre Roussel • La Rochelle',
-        champ1Label: 'ANNÉE FISCALE', champ1Value: '2024',
-        champ2Label: 'DATE LIMITE', champ2Value: '15 Oct 2024',
-        champ3Label: 'RÉFÉRENCE', champ3Value: 'TF-2024-8945',
-        champ4Label: 'MONTANT', champ4Value: '1 280 €',
-        dateBas: 'Payé le 12 Oct 2024',
-    },
-    {
-        id: '11', typeBadge: 'FACTURE ÉNERGIE', typeBadgeColor: '#eab308',
-        titre: 'Électricité Janvier 2025', lieu: 'Montée Alba • Villeurbanne',
-        champ1Label: 'FOURNISSEUR', champ1Value: 'EDF',
-        champ2Label: 'PÉRIODE', champ2Value: 'Jan 2025',
-        champ3Label: 'N° CLIENT', champ3Value: '1234567890',
-        champ4Label: 'MONTANT TTC', champ4Value: '88 €',
-        dateBas: 'Ajouté le 05 Fev 2025',
-    },
-    {
-        id: '12', typeBadge: 'ATTESTATION', typeBadgeColor: '#a855f7',
-        titre: 'Attestation entretien chaudière', lieu: 'Sophia Bernard • Paris 15ème',
-        champ1Label: 'PRESTATAIRE', champ1Value: 'Gaz Service Plus',
-        champ2Label: 'DATE ENTRETIEN', champ2Value: '20 Déc 2024',
-        champ3Label: 'VALIDITÉ', champ3Value: 'Jusqu\'au 20/12/25',
-        champ4Label: 'COÛT', champ4Value: '125 €',
-        dateBas: 'Ajouté le 20 Déc 2024',
-    },
-];
+// Les données seront chargées depuis l'API
+const TYPE_CONFIG: Record<string, { label: string, color: string }> = {
+    'repair': { label: 'FACTURE TRAVAUX', color: '#f59e0b' },
+    'charge': { label: 'FACTURE CHARGE', color: '#0ea5e9' },
+    'deposit': { label: 'CAUTION', color: '#ef4444' },
+    'rent': { label: 'FACTURE LOYER', color: '#83C757' },
+};
 
 interface FacturesDocsProps {
     notify: (msg: string, type: 'success' | 'info' | 'error') => void;
@@ -132,18 +30,79 @@ interface FacturesDocsProps {
 const FacturesDocs: React.FC<FacturesDocsProps> = ({ notify }) => {
     const [activeFilter, setActiveFilter] = useState('Tous');
     const [searchTerm, setSearchTerm] = useState('');
-    const filters = ['Tous', 'Facture', 'Travaux', 'Assurances', 'Diagnostics', 'Autres'];
+    const [factureList, setFactureList] = useState<FactureData[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [kpis, setKpis] = useState({ totalDoc: 0, countMonth: 0, totalExpenses: 0, toRenew: 0 });
 
-    const filtered = mockFactures.filter(f =>
+    const filters = ['Tous', 'Travaux', 'Charges', 'Cautions', 'Loyers'];
+
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            const data = await invoiceService.listInvoices();
+
+            let totalExpenses = 0;
+            let countMonth = 0;
+            const now = new Date();
+
+            const mapped = (data || []).map((f: any) => {
+                const config = TYPE_CONFIG[f.type] || { label: f.type?.toUpperCase() || 'FACTURE', color: '#6b7280' };
+                const amount = parseFloat(f.amount_total || 0);
+
+                if (f.type !== 'rent') totalExpenses += amount;
+
+                const createdAt = new Date(f.created_at);
+                if (createdAt.getMonth() === now.getMonth() && createdAt.getFullYear() === now.getFullYear()) {
+                    countMonth++;
+                }
+
+                return {
+                    id: String(f.id),
+                    typeBadge: config.label,
+                    typeBadgeColor: config.color,
+                    titre: `${config.label} - #${f.id}`,
+                    lieu: f.lease?.property?.address || 'Bien inconnu',
+                    champ1Label: 'LOCATAIRE',
+                    champ1Value: f.lease?.tenant ? `${f.lease.tenant.first_name} ${f.lease.tenant.last_name}` : 'Inconnu',
+                    champ2Label: 'DATE',
+                    champ2Value: new Date(f.due_date).toLocaleDateString('fr-FR'),
+                    champ3Label: 'STATUT',
+                    champ3Value: f.status?.toUpperCase() || 'SOLDE',
+                    champ4Label: 'MONTANT',
+                    champ4Value: `${amount.toLocaleString()} FCFA`,
+                    dateBas: `Ajouté le ${new Date(f.created_at).toLocaleDateString('fr-FR')}`,
+                };
+            });
+
+            setFactureList(mapped);
+            setKpis({
+                totalDoc: mapped.length,
+                countMonth: countMonth,
+                totalExpenses: totalExpenses,
+                toRenew: 0 // Logique à définir si besoin
+            });
+        } catch (error) {
+            console.error('Erreur factures:', error);
+            notify('Erreur lors du chargement des factures', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const filtered = factureList.filter(f =>
         f.titre.toLowerCase().includes(searchTerm.toLowerCase()) ||
         f.lieu.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const stats = [
-        { label: 'TOTAL DOCUMENTS', value: '87', color: '#1a1a1a' },
-        { label: 'FACTURES CE MOIS', value: '12', color: '#1a1a1a' },
-        { label: 'DÉPENSES 2025', value: '8 450 €', color: '#83C757' },
-        { label: 'À RENOUVELER', value: '3', color: '#f59e0b' },
+        { label: 'TOTAL DOCUMENTS', value: String(kpis.totalDoc), color: '#1a1a1a' },
+        { label: 'FACTURES CE MOIS', value: String(kpis.countMonth), color: '#1a1a1a' },
+        { label: 'DÉPENSES TOTALES', value: `${kpis.totalExpenses.toLocaleString()} FCFA`, color: '#83C757' },
+        { label: 'À RENOUVELER', value: '0', color: '#f59e0b' },
     ];
 
     return (
@@ -246,31 +205,48 @@ const FacturesDocs: React.FC<FacturesDocsProps> = ({ notify }) => {
                 </div>
 
                 <div className="fd-grid">
-                    {filtered.map(f => (
-                        <div className="fd-item" key={f.id}>
-                            <div className="fd-item-top">
-                                <span className="fd-badge" style={{ background: f.typeBadgeColor + '20', color: f.typeBadgeColor }}>{f.typeBadge}</span>
-                                <p className="fd-item-titre">{f.titre}</p>
-                                <p className="fd-item-lieu">📍 {f.lieu}</p>
-                                <div className="fd-detail-row">
-                                    <div><p className="fd-detail-label">{f.champ1Label}</p><p className="fd-detail-value">{f.champ1Value}</p></div>
-                                    <div><p className="fd-detail-label">{f.champ2Label}</p><p className="fd-detail-value">{f.champ2Value}</p></div>
-                                </div>
-                                <div className="fd-detail-row">
-                                    <div><p className="fd-detail-label">{f.champ3Label}</p><p className="fd-detail-value">{f.champ3Value}</p></div>
-                                    {f.champ4Label && <div><p className="fd-detail-label">{f.champ4Label}</p><p className="fd-detail-value" style={{ color: f.champ4Value.includes('€') ? '#83C757' : '#1a1a1a' }}>{f.champ4Value}</p></div>}
-                                </div>
-                            </div>
-                            <div className="fd-footer">
-                                <span className="fd-footer-date">{f.dateBas}</span>
-                                <div className="fd-footer-actions">
-                                    <button className="fd-icon-btn">👁️</button>
-                                    <button className="fd-icon-btn green">📥</button>
-                                    <button className="fd-icon-btn orange">✏️</button>
-                                </div>
-                            </div>
+                    {loading ? (
+                        <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '3rem' }}>
+                            <Loader2 className="animate-spin" size={32} color="#83C757" />
+                            <p style={{ marginTop: '1rem', color: '#6b7280', fontWeight: 600 }}>Chargement des factures...</p>
                         </div>
-                    ))}
+                    ) : filtered.length > 0 ? (
+                        filtered.map(f => (
+                            <div className="fd-item" key={f.id}>
+                                <div className="fd-item-top">
+                                    <span className="fd-badge" style={{ background: f.typeBadgeColor + '20', color: f.typeBadgeColor }}>{f.typeBadge}</span>
+                                    <p className="fd-item-titre">{f.titre}</p>
+                                    <p className="fd-item-lieu">📍 {f.lieu}</p>
+                                    <div className="fd-detail-row">
+                                        <div><p className="fd-detail-label">{f.champ1Label}</p><p className="fd-detail-value">{f.champ1Value}</p></div>
+                                        <div><p className="fd-detail-label">{f.champ2Label}</p><p className="fd-detail-value">{f.champ2Value}</p></div>
+                                    </div>
+                                    <div className="fd-detail-row">
+                                        <div><p className="fd-detail-label">{f.champ3Label}</p><p className="fd-detail-value">{f.champ3Value}</p></div>
+                                        {f.champ4Label && <div><p className="fd-detail-label">{f.champ4Label}</p><p className="fd-detail-value" style={{ color: f.champ4Value.includes('FCFA') ? '#83C757' : '#1a1a1a' }}>{f.champ4Value}</p></div>}
+                                    </div>
+                                </div>
+                                <div className="fd-footer">
+                                    <span className="fd-footer-date">{f.dateBas}</span>
+                                    <div className="fd-footer-actions">
+                                        <button className="fd-icon-btn">👁️</button>
+                                        <button className="fd-icon-btn green">📥</button>
+                                        <button className="fd-icon-btn orange">✏️</button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '4rem 2rem', background: '#fff', borderRadius: '18px', border: '2px dashed #e5e7eb' }}>
+                            <div style={{ width: '64px', height: '64px', background: '#f0f9eb', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+                                <Receipt size={32} color="#83C757" />
+                            </div>
+                            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.5rem' }}>Aucune facture</h3>
+                            <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>
+                                Vous n'avez pas encore de factures ou de documents enregistrés.
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
         </>

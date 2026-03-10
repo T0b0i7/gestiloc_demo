@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Download } from 'lucide-react';
+import { Plus, Download, Loader2, BarChart3 } from 'lucide-react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarController, BarElement, DoughnutController, ArcElement, Tooltip, Legend } from 'chart.js';
+import { accountingService } from '@/services/api';
 
 ChartJS.register(CategoryScale, LinearScale, BarController, BarElement, DoughnutController, ArcElement, Tooltip, Legend);
 
@@ -8,23 +9,14 @@ interface Transaction {
     date: string; type: string; typeColor: string; description: string; bien: string; categorie: string; montant: string; montantColor: string;
 }
 
-const transactions: Transaction[] = [
-    { date: '06 Fev 2025', type: 'REVENU', typeColor: '#83C757', description: 'Loyer Février 2025 - Montée Alba', bien: 'Villeurbanne', categorie: 'Loyer', montant: '+695 €', montantColor: '#83C757' },
-    { date: '05 Fev 2025', type: 'CHARGE', typeColor: '#ef4444', description: 'Réparation chaudière', bien: 'Villeurbanne', categorie: 'Travaux', montant: '-365 €', montantColor: '#ef4444' },
-    { date: '03 Fev 2025', type: 'REVENU', typeColor: '#83C757', description: 'Loyer Février 2025 - Thomas Moreau', bien: 'Marseille', categorie: 'Loyer', montant: '+1 250 €', montantColor: '#83C757' },
-    { date: '02 Fev 2025', type: 'CHARGE', typeColor: '#ef4444', description: 'Assurance PNO 2025', bien: 'Paris 15ème', categorie: 'Assurance', montant: '-420 €', montantColor: '#ef4444' },
-    { date: '01 Fev 2025', type: 'REVENU', typeColor: '#83C757', description: 'Loyer Février 2025 - Sophie Bernard', bien: 'Paris 15ème', categorie: 'Loyer', montant: '+1 380 €', montantColor: '#83C757' },
-    { date: '30 Jan 2025', type: 'REVENU', typeColor: '#83C757', description: 'Loyer Février 2025 - Jean-Pierre Roussel', bien: 'La Rochelle', categorie: 'Loyer', montant: '+1 060 €', montantColor: '#83C757' },
-    { date: '28 Jan 2025', type: 'CHARGE', typeColor: '#ef4444', description: 'Relève électricité Janvier', bien: 'Villeurbanne', categorie: 'Charges', montant: '-88 €', montantColor: '#ef4444' },
-    { date: '25 Jan 2025', type: 'CHARGE', typeColor: '#ef4444', description: 'Réparation gouttière', bien: 'Marseille', categorie: 'Travaux', montant: '-245 €', montantColor: '#ef4444' },
-    { date: '20 Jan 2025', type: 'CHARGE', typeColor: '#ef4444', description: 'Taxe foncière 2024', bien: 'La Rochelle', categorie: 'Taxes', montant: '-1 280 €', montantColor: '#ef4444' },
-    { date: '15 Jan 2025', type: 'CHARGE', typeColor: '#ef4444', description: 'Assurance GLI 2025', bien: 'Boulogne-Bil.', categorie: 'Assurance', montant: '-280 €', montantColor: '#ef4444' },
-    { date: '15 Jan 2025', type: 'CHARGE', typeColor: '#ef4444', description: 'Diagnostic DPE', bien: 'Boulogne-Bil.', categorie: 'Diagnostics', montant: '-85 €', montantColor: '#ef4444' },
-    { date: '05 Jan 2025', type: 'REVENU', typeColor: '#83C757', description: 'Loyer Janvier 2025 - Marie Lefevre', bien: 'Lyon 6ème', categorie: 'Loyer', montant: '+1 120 €', montantColor: '#83C757' },
-    { date: '03 Jan 2025', type: 'REVENU', typeColor: '#83C757', description: 'Loyer Janvier 2025 - Thomas Moreau', bien: 'Marseille', categorie: 'Loyer', montant: '+1 250 €', montantColor: '#83C757' },
-    { date: '02 Jan 2025', type: 'REVENU', typeColor: '#83C757', description: 'Loyer Janvier 2025 - Montée Alba', bien: 'Villeurbanne', categorie: 'Loyer', montant: '+695 €', montantColor: '#83C757' },
-    { date: '01 Jan 2025', type: 'REVENU', typeColor: '#83C757', description: 'Loyer Janvier 2025 - Sophie Bernard', bien: 'Paris 15ème', categorie: 'Loyer', montant: '+1 380 €', montantColor: '#83C757' },
-];
+// Les données seront chargées depuis l'API
+const CATEGORIE_MAP: Record<string, { label: string, color: string }> = {
+    'rent': { label: 'Loyer', color: '#83C757' },
+    'repair': { label: 'Travaux', color: '#ef4444' },
+    'charge': { label: 'Charges', color: '#ef4444' },
+    'insurance': { label: 'Assurance', color: '#ef4444' },
+    'tax': { label: 'Taxes', color: '#ef4444' },
+};
 
 interface ComptaProps { notify: (msg: string, type: 'success' | 'info' | 'error') => void; }
 
@@ -34,55 +26,103 @@ const ComptabilitePage: React.FC<ComptaProps> = ({ notify }) => {
     const barInst = useRef<ChartJS | null>(null);
     const donutInst = useRef<ChartJS | null>(null);
     const [activeFilter, setActiveFilter] = useState('Toutes les transactions');
-    const filters = ['Toutes les transactions', 'Revenus', 'Charges', 'Janvier 2025', 'Février 2025'];
+    const [loading, setLoading] = useState(true);
+    const [transactionList, setTransactionList] = useState<Transaction[]>([]);
+    const [kpis, setKpis] = useState({ net: 0, revenus: 0, charges: 0, rentabilite: 0, propertiesCount: 0 });
+    const [statsData, setStatsData] = useState<any>(null);
+
+    const filters = ['Toutes les transactions', 'Revenus', 'Charges'];
+
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            const [trans, stats] = await Promise.all([
+                accountingService.getTransactions(),
+                accountingService.getStats()
+            ]);
+
+            const mapped = (trans || []).map((t: any) => {
+                const isRevenu = t.type === 'rent';
+                const cat = CATEGORIE_MAP[t.type] || { label: t.type?.toUpperCase() || 'AUTRE', color: '#6b7280' };
+                const amount = parseFloat(t.amount || 0);
+
+                return {
+                    date: new Date(t.payment_date || t.due_date).toLocaleDateString('fr-FR'),
+                    type: isRevenu ? 'REVENU' : 'CHARGE',
+                    typeColor: isRevenu ? '#83C757' : '#ef4444',
+                    description: t.description || `Transaction #${t.id}`,
+                    bien: t.lease?.property?.city || 'Bien inconnu',
+                    categorie: cat.label,
+                    montant: `${isRevenu ? '+' : '-'} ${amount.toLocaleString()} FCFA`,
+                    montantColor: isRevenu ? '#83C757' : '#ef4444'
+                };
+            });
+
+            setTransactionList(mapped);
+            setStatsData(stats);
+            if (stats) {
+                setKpis({
+                    net: stats.net_result || 0,
+                    revenus: stats.total_revenues || 0,
+                    charges: stats.total_charges || 0,
+                    rentabilite: stats.yield || 0,
+                    propertiesCount: stats.properties_count || 0
+                });
+            }
+        } catch (error) {
+            console.error('Erreur compta:', error);
+            notify('Erreur lors du chargement des données comptables', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        if (!barRef.current) return;
+        fetchData();
+    }, []);
+
+    useEffect(() => {
+        if (!barRef.current || !statsData?.charts?.monthly) return;
         if (barInst.current) barInst.current.destroy();
+
+        const labels = statsData.charts.monthly.labels || ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'];
+        const received = statsData.charts.monthly.received || [];
+        const expected = statsData.charts.monthly.expected || [];
+
         barInst.current = new ChartJS(barRef.current, {
             type: 'bar',
             data: {
-                labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'], datasets: [
-                    { label: 'Loyers reçus', data: [4200, 3800, 4500, 4100, 4800, 4600], backgroundColor: '#4CAF50', borderRadius: 3, borderSkipped: false, barPercentage: 0.4, categoryPercentage: 0.8 },
-                    { label: 'Loyers attendus', data: [5000, 5000, 5000, 5000, 5000, 5000], backgroundColor: '#FF9800', borderRadius: 3, borderSkipped: false, barPercentage: 0.4, categoryPercentage: 0.8 }
+                labels, datasets: [
+                    { label: 'Loyers reçus', data: received, backgroundColor: '#4CAF50', borderRadius: 3, borderSkipped: false, barPercentage: 0.4, categoryPercentage: 0.8 },
+                    { label: 'Loyers attendus', data: expected, backgroundColor: '#FF9800', borderRadius: 3, borderSkipped: false, barPercentage: 0.4, categoryPercentage: 0.8 }
                 ]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, border: { display: false } }, y: { beginAtZero: true, max: 6000, grid: { color: '#efefef' }, border: { display: false } } } }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false }, border: { display: false } }, y: { beginAtZero: true, grid: { color: '#efefef' }, border: { display: false } } } }
         });
         return () => { if (barInst.current) barInst.current.destroy(); };
-    }, []);
+    }, [statsData]);
 
     useEffect(() => {
-        if (!donutRef.current) return;
+        if (!donutRef.current || !statsData?.occupancy) return;
         if (donutInst.current) donutInst.current.destroy();
         donutInst.current = new ChartJS(donutRef.current, {
             type: 'doughnut',
-            data: { labels: ['Occupés', 'Vacants'], datasets: [{ data: [12, 3], backgroundColor: ['#4CAF50', '#FF9800'], borderWidth: 0 }] },
+            data: {
+                labels: ['Occupés', 'Vacants'],
+                datasets: [{
+                    data: [statsData.occupancy.occupied || 0, statsData.occupancy.vacant || 0],
+                    backgroundColor: ['#4CAF50', '#FF9800'],
+                    borderWidth: 0
+                }]
+            },
             options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false } } } as any
         });
         return () => { if (donutInst.current) donutInst.current.destroy(); };
-    }, []);
+    }, [statsData]);
 
-    const summaryRevenu = [
-        { label: 'Loyers perçus', value: '45 780 €' },
-        { label: 'Charges récupérées', value: '3 240 €' },
-        { label: 'Autres revenus', value: '450 €' },
-        { label: 'Total revenus', value: '+49 470 €', isTotal: true },
-    ];
-    const summaryCharge = [
-        { label: 'Travaux et réparations', value: '5 960 €' },
-        { label: 'Charges non récupérables', value: '2 450 €' },
-        { label: 'Assurances', value: '1 080 €' },
-        { label: 'Taxe foncière', value: '2 960 €' },
-        { label: 'Total charges', value: '12 450 €', isTotal: true },
-    ];
-    const summaryBien = [
-        { label: 'Paris 15ème', value: '+18 840 €' },
-        { label: 'La Rochelle', value: '+9 780 €' },
-        { label: 'Lyon 6ème', value: '+5 980 €' },
-        { label: 'Autres biens (6)', value: '+17 980 €' },
-        { label: 'Résultat total', value: '+19 355 €', isTotal: true },
-    ];
+    const summaryRevenu = statsData?.categories?.revenues || [];
+    const summaryCharge = statsData?.categories?.charges || [];
+    const summaryBien = statsData?.by_property || [];
 
     return (
         <div className="cp-page">
@@ -166,10 +206,10 @@ const ComptabilitePage: React.FC<ComptaProps> = ({ notify }) => {
             </div>
 
             <div className="cp-stats">
-                <div className="cp-stat" style={{ borderLeftColor: '#83C757' }}><p className="cp-stat-label">RÉSULTAT NET</p><p className="cp-stat-value" style={{ color: '#83C757' }}>+ 33 330 €</p></div>
-                <div className="cp-stat" style={{ borderLeftColor: '#3b82f6' }}><p className="cp-stat-label">REVENUS LOCATIFS</p><p className="cp-stat-value">45 780 €</p><p className="cp-stat-sub">6 biens en location</p></div>
-                <div className="cp-stat" style={{ borderLeftColor: '#ef4444' }}><p className="cp-stat-label">CHARGES TOTALES</p><p className="cp-stat-value" style={{ color: '#ef4444' }}>12 450 €</p><p className="cp-stat-sub">5 catégories</p></div>
-                <div className="cp-stat" style={{ borderLeftColor: '#f59e0b' }}><p className="cp-stat-label">TAUX DE RENTABILITÉ</p><p className="cp-stat-value">5.8%</p><p className="cp-stat-sub">Net annuel</p></div>
+                <div className="cp-stat" style={{ borderLeftColor: '#83C757' }}><p className="cp-stat-label">RÉSULTAT NET</p><p className="cp-stat-value" style={{ color: '#83C757' }}>{kpis.net > 0 ? '+' : ''} {kpis.net.toLocaleString()} FCFA</p></div>
+                <div className="cp-stat" style={{ borderLeftColor: '#3b82f6' }}><p className="cp-stat-label">REVENUS LOCATIFS</p><p className="cp-stat-value">{kpis.revenus.toLocaleString()} FCFA</p><p className="cp-stat-sub">{kpis.propertiesCount} biens concernés</p></div>
+                <div className="cp-stat" style={{ borderLeftColor: '#ef4444' }}><p className="cp-stat-label">CHARGES TOTALES</p><p className="cp-stat-value" style={{ color: '#ef4444' }}>{kpis.charges.toLocaleString()} FCFA</p><p className="cp-stat-sub">Dépenses globales</p></div>
+                <div className="cp-stat" style={{ borderLeftColor: '#f59e0b' }}><p className="cp-stat-label">TAUX DE RENTABILITÉ</p><p className="cp-stat-value">{kpis.rentabilite}%</p><p className="cp-stat-sub">Net annuel estimé</p></div>
             </div>
 
             <div className="cp-charts">
@@ -184,8 +224,8 @@ const ComptabilitePage: React.FC<ComptaProps> = ({ notify }) => {
                     <p className="cp-chart-title" style={{ marginBottom: 16 }}>Taux d'occupation</p>
                     <div className="cp-chart-wrap" style={{ height: 180 }}><canvas ref={donutRef}></canvas></div>
                     <div className="cp-donut-data">
-                        <div className="cp-donut-item"><p className="cp-donut-v" style={{ color: '#4CAF50' }}>12</p><p className="cp-donut-l">Occupés</p></div>
-                        <div className="cp-donut-item"><p className="cp-donut-v" style={{ color: '#FF9800' }}>3</p><p className="cp-donut-l">Vacants</p></div>
+                        <div className="cp-donut-item"><p className="cp-donut-v" style={{ color: '#4CAF50' }}>{statsData?.occupancy?.occupied || 0}</p><p className="cp-donut-l">Occupés</p></div>
+                        <div className="cp-donut-item"><p className="cp-donut-v" style={{ color: '#FF9800' }}>{statsData?.occupancy?.vacant || 0}</p><p className="cp-donut-l">Vacants</p></div>
                     </div>
                 </div>
             </div>
@@ -221,7 +261,7 @@ const ComptabilitePage: React.FC<ComptaProps> = ({ notify }) => {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <input className="cp-search" placeholder="Rechercher une transaction..." />
-                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#6b7280' }}>142 transactions trouvées</span>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#6b7280' }}>{transactionList.length} transactions trouvées</span>
                 </div>
             </div>
 
@@ -230,16 +270,37 @@ const ComptabilitePage: React.FC<ComptaProps> = ({ notify }) => {
                 <table className="cp-table">
                     <thead><tr><th>DATE</th><th>TYPE</th><th>DESCRIPTION</th><th>BIEN</th><th>CATÉGORIE</th><th>MONTANT</th></tr></thead>
                     <tbody>
-                        {transactions.map((t, i) => (
-                            <tr key={i}>
-                                <td>{t.date}</td>
-                                <td><span className="cp-type-badge" style={{ background: t.typeColor + '15', color: t.typeColor }}>{t.type}</span></td>
-                                <td style={{ fontWeight: 700, color: '#111' }}>{t.description}</td>
-                                <td style={{ fontSize: '0.75rem', fontWeight: 600 }}>{t.bien}</td>
-                                <td style={{ fontSize: '0.75rem', fontWeight: 600 }}>{t.categorie}</td>
-                                <td style={{ fontWeight: 850, color: t.montantColor }}>{t.montant}</td>
+                        {loading ? (
+                            <tr>
+                                <td colSpan={6} style={{ textAlign: 'center', padding: '3rem' }}>
+                                    <Loader2 className="animate-spin" size={32} color="#83C757" style={{ margin: '0 auto' }} />
+                                    <p style={{ marginTop: '1rem', color: '#6b7280', fontWeight: 600 }}>Chargement des transactions...</p>
+                                </td>
                             </tr>
-                        ))}
+                        ) : transactionList.length > 0 ? (
+                            transactionList.map((t, i) => (
+                                <tr key={i}>
+                                    <td>{t.date}</td>
+                                    <td><span className="cp-type-badge" style={{ background: t.typeColor + '15', color: t.typeColor }}>{t.type}</span></td>
+                                    <td style={{ fontWeight: 700, color: '#111' }}>{t.description}</td>
+                                    <td style={{ fontSize: '0.75rem', fontWeight: 600 }}>{t.bien}</td>
+                                    <td style={{ fontSize: '0.75rem', fontWeight: 600 }}>{t.categorie}</td>
+                                    <td style={{ fontWeight: 850, color: t.montantColor }}>{t.montant}</td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan={6} style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+                                    <div style={{ width: '64px', height: '64px', background: '#f0f9eb', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+                                        <BarChart3 size={32} color="#83C757" />
+                                    </div>
+                                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.5rem' }}>Aucune transaction</h3>
+                                    <p style={{ color: '#6b7280', fontSize: '0.85rem' }}>
+                                        Votre historique comptable est vide pour le moment.
+                                    </p>
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>

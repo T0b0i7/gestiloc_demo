@@ -79,9 +79,12 @@ class AuthService
     $token = $user->createToken($deviceName)->plainTextToken;
     $roles = $user->getRoleNames()->toArray();
 
-    // Récupérer first_name et last_name depuis landlord ou tenant
-    $firstName = $user->landlord->first_name ?? $user->tenant->first_name ?? null;
-    $lastName = $user->landlord->last_name ?? $user->tenant->last_name ?? null;
+    // Récupérer les infos depuis landlord ou tenant
+    $profile = $user->landlord ?? $user->tenant;
+    $firstName = $profile->first_name ?? null;
+    $lastName = $profile->last_name ?? null;
+    $address = $user->landlord->address_billing ?? null;
+    $companyName = $user->landlord->company_name ?? null;
 
     return [
         'access_token' => $token,
@@ -92,6 +95,8 @@ class AuthService
             'first_name' => $firstName,
             'last_name' => $lastName,
             'phone' => $user->phone,
+            'address' => $address,
+            'company_name' => $companyName,
             'roles' => $roles,
             'default_role' => !empty($roles) ? $roles[0] : null,
         ],
@@ -161,20 +166,20 @@ class AuthService
         $inv = TenantInvitation::where('token', $data['token'])->first();
 
         if (!$inv) {
-            throw ValidationException::withMessages(['token' => ['Token invalid']]);
+            throw ValidationException::withMessages(['token' => ["Jeton d'invitation invalide"]]);
         }
 
         if ($inv->used) {
-            throw ValidationException::withMessages(['token' => ['Invitation already used']]);
+            throw ValidationException::withMessages(['token' => ["L'invitation a déjà été utilisée"]]);
         }
 
         if ($inv->expires_at && Carbon::now()->greaterThan($inv->expires_at)) {
-            throw ValidationException::withMessages(['token' => ['Invitation expired']]);
+            throw ValidationException::withMessages(['token' => ["L'invitation a expiré"]]);
         }
 
         // Optional: enforce password rules here or rely on FormRequest
         if (empty($data['password']) || strlen($data['password']) < 8) {
-            throw ValidationException::withMessages(['password' => ['Password does not meet minimum requirements']]);
+            throw ValidationException::withMessages(['password' => ["Le mot de passe ne respecte pas les critères minimum"]]);
         }
 
         return DB::transaction(function () use ($inv, $data) {
@@ -212,7 +217,7 @@ class AuthService
             $inv->used = true;
             $inv->save();
 
-            return ['message' => 'Password set. You can login now.'];
+            return ['message' => 'Le mot de passe a été défini. Vous pouvez maintenant vous connecter.'];
         });
     }
 
@@ -341,20 +346,20 @@ class AuthService
         $inv = CoOwnerInvitation::where('token', $data['token'])->first();
 
         if (!$inv) {
-            throw ValidationException::withMessages(['token' => ['Token invalid']]);
+            throw ValidationException::withMessages(['token' => ["Jeton d'invitation invalide"]]);
         }
 
         if ($inv->used) {
-            throw ValidationException::withMessages(['token' => ['Invitation already used']]);
+            throw ValidationException::withMessages(['token' => ["L'invitation a déjà été utilisée"]]);
         }
 
         if ($inv->expires_at && Carbon::now()->greaterThan($inv->expires_at)) {
-            throw ValidationException::withMessages(['token' => ['Invitation expired']]);
+            throw ValidationException::withMessages(['token' => ["L'invitation a expiré"]]);
         }
 
         // Optional: enforce password rules here or rely on FormRequest
         if (empty($data['password']) || strlen($data['password']) < 8) {
-            throw ValidationException::withMessages(['password' => ['Password does not meet minimum requirements']]);
+            throw ValidationException::withMessages(['password' => ["Le mot de passe ne respecte pas les critères minimum"]]);
         }
 
         return DB::transaction(function () use ($inv, $data) {
@@ -404,7 +409,7 @@ class AuthService
             $inv->accepted_at = now();
             $inv->save();
 
-            return ['message' => 'Password set. You can login now.'];
+            return ['message' => 'Le mot de passe a été défini. Vous pouvez maintenant vous connecter.'];
         });
     }
 

@@ -852,10 +852,6 @@ export interface CreateConditionReportPayload {
 }
 
 export const conditionReportService = {
-  /**
-   * GET /properties/{property}/condition-reports
-   * Backend renvoie un tableau direct
-   */
   listForProperty: async (
     propertyId: number | string
   ): Promise<PropertyConditionReport[]> => {
@@ -865,6 +861,12 @@ export const conditionReportService = {
       `/properties/${propertyId}/condition-reports`
     );
 
+    return response.data;
+  },
+
+  listAll: async (): Promise<PropertyConditionReport[]> => {
+    await initializeCsrfToken();
+    const response = await api.get<PropertyConditionReport[]>('/condition-reports');
     return response.data;
   },
 
@@ -1296,6 +1298,47 @@ export const invoiceService = {
   },
 };
 
+export const maintenanceService = {
+  list: async (): Promise<any[]> => {
+    const response = await api.get('/incidents');
+    return response.data;
+  },
+  create: async (payload: any): Promise<any> => {
+    const response = await api.post('/incidents', payload);
+    return response.data;
+  },
+  update: async (id: number | string, payload: any): Promise<any> => {
+    const response = await api.put(`/incidents/${id}`, payload);
+    return response.data;
+  }
+};
+
+export const documentArchiveService = {
+  list: async (): Promise<any[]> => {
+    const response = await api.get('/archives');
+    return response.data;
+  },
+  getStats: async (): Promise<any> => {
+    const response = await api.get('/archives/stats');
+    return response.data;
+  }
+};
+
+export const accountingService = {
+  getStats: async (): Promise<any> => {
+    const response = await api.get('/accounting/stats');
+    return response.data;
+  },
+  getTransactions: async (): Promise<any[]> => {
+    const response = await api.get('/accounting/transactions');
+    return response.data;
+  },
+  createTransaction: async (payload: any): Promise<any> => {
+    const response = await api.post('/accounting/transactions', payload);
+    return response.data;
+  }
+};
+
 // Export apiService as an object with all services
 export const apiService = {
   ...authService,
@@ -1308,9 +1351,61 @@ export const apiService = {
   ...noticeService,
   ...rentReceiptService,
   ...invoiceService,
+  ...maintenanceService,
+  ...documentArchiveService,
+  ...accountingService,
   getLeases: leaseService.listLeases,
   createInvoice: invoiceService.createInvoice,
 };
 
 
+// ================= LANDLORD SERVICE =================
+
+export const landlordService = {
+  updateProfile: async (userData: {
+    first_name?: string;
+    last_name?: string;
+    phone?: string;
+    address?: string;
+    company_name?: string;
+  }) => {
+    try {
+      // Le backend est à /api/landlord/settings/profile
+      const response = await api.put('/landlord/settings/profile', userData);
+
+      // Mettre à jour localStorage avec les nouvelles données
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const updatedUser = { ...currentUser, ...response.data.user };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+
+      return response.data;
+    } catch (error) {
+      console.error('Error updating landlord profile:', error);
+      throw error;
+    }
+  },
+
+  getSettings: async () => {
+    try {
+      const response = await api.get('/landlord/settings');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching landlord settings:', error);
+      throw error;
+    }
+  },
+
+  getDashboardStats: async () => {
+    try {
+      const response = await api.get('/dashboard');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      throw error;
+    }
+  }
+};
+
+
 export default api;
+

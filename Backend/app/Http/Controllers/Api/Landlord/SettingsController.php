@@ -51,13 +51,15 @@ class SettingsController extends Controller
                 $user->notification_settings ?? []
             );
 
+            $profile = $user->landlord;
+            
             return response()->json([
                 'user' => [
                     'id' => $user->id,
                     'email' => $user->email,
                     'phone' => $user->phone,
-                    'first_name' => $user->first_name,
-                    'last_name' => $user->last_name,
+                    'first_name' => $profile->first_name ?? null,
+                    'last_name' => $profile->last_name ?? null,
                     'created_at' => $user->created_at,
                 ],
                 'security' => [
@@ -425,17 +427,40 @@ class SettingsController extends Controller
                 'first_name' => 'sometimes|string|max:255',
                 'last_name' => 'sometimes|string|max:255',
                 'phone' => 'sometimes|string|max:20',
+                'address' => 'sometimes|string|max:255',
+                'company_name' => 'sometimes|string|max:255',
             ]);
 
-            $user->update($validated);
-            $user->save();
+            // Mise à jour User
+            if ($request->has('phone')) {
+                $user->phone = $validated['phone'];
+                $user->save();
+            }
+
+            // Mise à jour profil Landlord
+            if ($user->landlord) {
+                $landlordData = [];
+                if (isset($validated['first_name'])) $landlordData['first_name'] = $validated['first_name'];
+                if (isset($validated['last_name'])) $landlordData['last_name'] = $validated['last_name'];
+                if (isset($validated['address'])) $landlordData['address_billing'] = $validated['address'];
+                if (isset($validated['company_name'])) $landlordData['company_name'] = $validated['company_name'];
+                
+                $user->landlord->update($landlordData);
+            }
+
+            // Recharger l'utilisateur avec ses relations pour renvoyer les données complètes
+            $user->load('landlord');
 
             return response()->json([
-                'message' => 'Profil mis à jour',
+                'message' => 'Profil mis à jour avec succès',
                 'user' => [
-                    'first_name' => $user->first_name,
-                    'last_name' => $user->last_name,
+                    'id' => $user->id,
+                    'email' => $user->email,
+                    'first_name' => $user->landlord->first_name ?? null,
+                    'last_name' => $user->landlord->last_name ?? null,
                     'phone' => $user->phone,
+                    'address' => $user->landlord->address_billing ?? null,
+                    'company_name' => $user->landlord->company_name ?? null,
                 ]
             ]);
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Plus,
   Search,
@@ -10,7 +10,10 @@ import {
   Mail,
   Eye,
   BarChart3,
+  Loader2,
+  Wallet,
 } from "lucide-react";
+import { accountingService } from "@/services/api";
 
 /* ─── Types ─── */
 
@@ -32,41 +35,12 @@ interface PaymentsProps {
 
 /* ─── Mock data ─── */
 
-const mockPayments: PaymentRow[] = [
-  {
-    id: "1",
-    locataire: "Jean Dupont",
-    email: "jean@gmail.com",
-    bien: "Appartement 12 - Agla Boulevard de la marina",
-    montant: "60 000 FCFA",
-    echeance: "05 Fév 2026",
-    statut: "paid",
-    datePaiement: "03 Fév 2026",
-    mode: "Virement",
-  },
-  {
-    id: "2",
-    locataire: "sophia Amane",
-    email: "sophia@gmail.com",
-    bien: "Villa moderne - Fidjrossè Rue des Cocotiers",
-    montant: "150 000 FCFA",
-    echeance: "09 Mai 2026",
-    statut: "late",
-    datePaiement: "-",
-    mode: "Virement",
-  },
-  {
-    id: "3",
-    locataire: "Jean Dupont",
-    email: "jean@gmail.com",
-    bien: "Studio cosy - Centre-ville Avenue Steinmetz",
-    montant: "200 000 FCFA",
-    echeance: "05 Juin 2026",
-    statut: "pending",
-    datePaiement: "-",
-    mode: "Virement",
-  },
-];
+// Les données seront chargées depuis l'API
+const STATUT_MAP: Record<string, "paid" | "late" | "pending"> = {
+  'completed': 'paid',
+  'overdue': 'late',
+  'pending': 'pending',
+};
 
 /* ─── Component ─── */
 
@@ -75,8 +49,52 @@ export const Payments: React.FC<PaymentsProps> = ({ notify }) => {
   const [filterBien, setFilterBien] = useState("Tous les biens");
   const [linesPerPage, setLinesPerPage] = useState("100");
   const [searchTerm, setSearchTerm] = useState("");
+  const [paymentList, setPaymentList] = useState<PaymentRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [kpis, setKpis] = useState({ expected: 0, received: 0, late: 0, recoveryRate: 0 });
 
-  const filteredPayments = mockPayments.filter(
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [transactions, stats] = await Promise.all([
+        accountingService.getTransactions(),
+        accountingService.getStats()
+      ]);
+
+      const mapped = (transactions || []).map((t: any) => ({
+        id: String(t.id),
+        locataire: t.lease?.tenant ? `${t.lease.tenant.first_name} ${t.lease.tenant.last_name}` : 'Inconnu',
+        email: t.lease?.tenant?.user?.email || '-',
+        bien: t.lease?.property?.address || 'Bien inconnu',
+        montant: `${parseFloat(t.amount).toLocaleString()} FCFA`,
+        echeance: t.due_date ? new Date(t.due_date).toLocaleDateString('fr-FR') : '-',
+        statut: STATUT_MAP[t.status] || 'pending',
+        datePaiement: t.payment_date ? new Date(t.payment_date).toLocaleDateString('fr-FR') : '-',
+        mode: t.payment_method || 'Virement',
+      }));
+
+      setPaymentList(mapped);
+      if (stats) {
+        setKpis({
+          expected: stats.monthly_expected || 0,
+          received: stats.monthly_received || 0,
+          late: stats.monthly_late || 0,
+          recoveryRate: stats.recovery_rate || 0
+        });
+      }
+    } catch (error) {
+      console.error('Erreur paiements:', error);
+      notify('Erreur lors du chargement des paiements', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const filteredPayments = paymentList.filter(
     (p) =>
       p.locataire.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -437,7 +455,7 @@ export const Payments: React.FC<PaymentsProps> = ({ notify }) => {
             onClick={() => setActiveTab("actifs")}
           >
             <span>✓</span> Actifs
-            <span className="pm-tab-count">{mockPayments.length}</span>
+            <span className="pm-tab-count">{paymentList.length}</span>
           </button>
           <button
             className={`pm-tab ${activeTab === "archives" ? "active" : ""}`}
@@ -495,33 +513,33 @@ export const Payments: React.FC<PaymentsProps> = ({ notify }) => {
             <p className="pm-stat-label">Loyers attendus</p>
             <p className="pm-stat-value">
               <img src="/Ressource_gestiloc/cash.png" alt="cash" />
-              245 000 FCFA
+              {kpis.expected.toLocaleString()} FCFA
             </p>
-            <p className="pm-stat-sub">5 paiements ce mois</p>
+            <p className="pm-stat-sub">Mois en cours</p>
           </div>
           <div className="pm-stat blue">
             <p className="pm-stat-label">Loyers reçus</p>
             <p className="pm-stat-value">
               <img src="/Ressource_gestiloc/checklist.png" alt="checklist" />
-              180 000 FCFA
+              {kpis.received.toLocaleString()} FCFA
             </p>
-            <p className="pm-stat-sub">5 paiements ce mois</p>
+            <p className="pm-stat-sub">Confirmés</p>
           </div>
           <div className="pm-stat red">
             <p className="pm-stat-label">En retard</p>
             <p className="pm-stat-value">
               <img src="/Ressource_gestiloc/Error.png" alt="error" />
-              65 000 FCFA
+              {kpis.late.toLocaleString()} FCFA
             </p>
-            <p className="pm-stat-sub">2 paiements en retard</p>
+            <p className="pm-stat-sub">Impayés</p>
           </div>
           <div className="pm-stat orange">
             <p className="pm-stat-label">Taux de recouvrement</p>
             <p className="pm-stat-value">
               <img src="/Ressource_gestiloc/Bar chart.png" alt="chart" />
-              73%
+              {kpis.recoveryRate}%
             </p>
-            <p className="pm-stat-sub">+5% vs mois dernier</p>
+            <p className="pm-stat-sub">Global</p>
           </div>
         </div>
 
@@ -561,36 +579,59 @@ export const Payments: React.FC<PaymentsProps> = ({ notify }) => {
               </tr>
             </thead>
             <tbody>
-              {filteredPayments.map((p) => (
-                <tr key={p.id}>
-                  <td>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{p.locataire}</div>
-                      <div style={{ fontSize: "0.72rem", color: "#9ca3af" }}>{p.email}</div>
-                    </div>
-                  </td>
-                  <td style={{ maxWidth: 180, fontSize: "0.75rem" }}>{p.bien}</td>
-                  <td style={{ fontWeight: 700 }}>{p.montant}</td>
-                  <td>{p.echeance}</td>
-                  <td>{statutBadge(p.statut)}</td>
-                  <td>{p.datePaiement}</td>
-                  <td>{p.mode}</td>
-                  <td>
-                    <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                      <button className="pm-action-icon" title="Plus">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <circle cx="12" cy="5" r="1" />
-                          <circle cx="12" cy="12" r="1" />
-                          <circle cx="12" cy="19" r="1" />
-                        </svg>
-                      </button>
-                      <button className="pm-action-icon" title="Mail">
-                        <Mail size={14} />
-                      </button>
+              {loading ? (
+                <tr>
+                  <td colSpan={8} style={{ textAlign: "center", padding: "3rem" }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" }}>
+                      <Loader2 className="animate-spin" size={32} color="#83C757" />
+                      <span style={{ fontWeight: 600, color: "#6b7280" }}>Chargement des transactions...</span>
                     </div>
                   </td>
                 </tr>
-              ))}
+              ) : filteredPayments.length > 0 ? (
+                filteredPayments.map((p) => (
+                  <tr key={p.id}>
+                    <td>
+                      <div>
+                        <div style={{ fontWeight: 600 }}>{p.locataire}</div>
+                        <div style={{ fontSize: "0.72rem", color: "#9ca3af" }}>{p.email}</div>
+                      </div>
+                    </td>
+                    <td style={{ maxWidth: 180, fontSize: "0.75rem" }}>{p.bien}</td>
+                    <td style={{ fontWeight: 700 }}>{p.montant}</td>
+                    <td>{p.echeance}</td>
+                    <td>{statutBadge(p.statut)}</td>
+                    <td>{p.datePaiement}</td>
+                    <td>{p.mode}</td>
+                    <td>
+                      <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                        <button className="pm-action-icon" title="Plus">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="5" r="1" />
+                            <circle cx="12" cy="12" r="1" />
+                            <circle cx="12" cy="19" r="1" />
+                          </svg>
+                        </button>
+                        <button className="pm-action-icon" title="Mail">
+                          <Mail size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={8} style={{ textAlign: "center", padding: "4rem 2rem" }}>
+                    <div style={{ width: '64px', height: '64px', background: '#f0f9eb', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+                      <Wallet size={32} color="#83C757" />
+                    </div>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.5rem' }}>Aucune transaction</h3>
+                    <p style={{ color: '#6b7280', fontSize: '0.82rem' }}>
+                      Vous n'avez pas encore de paiements enregistrés ou planifiés.
+                    </p>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

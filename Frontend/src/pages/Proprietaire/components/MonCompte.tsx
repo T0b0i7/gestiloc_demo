@@ -1,14 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { landlordService } from '@/services/api';
 
 interface MonCompteProps {
     notify: (msg: string, type: 'success' | 'info' | 'error') => void;
 }
 
 const MonCompte: React.FC<MonCompteProps> = ({ notify }) => {
-    const [nom, setNom] = useState('Stéphane Dubois');
-    const [email, setEmail] = useState('stephane.dubois@email.com');
-    const [tel, setTel] = useState('+33 6 12 34 56 78');
-    const [adresse, setAdresse] = useState('12 Rue de la Paix, 75002 Paris');
+    // Récupération initiale depuis le localStorage pour un affichage immédiat
+    const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
+
+    const [nom, setNom] = useState(
+        savedUser.first_name || savedUser.last_name
+            ? `${savedUser.first_name || ''} ${savedUser.last_name || ''}`.trim()
+            : ''
+    );
+    const [email, setEmail] = useState(savedUser.email || '');
+    const [tel, setTel] = useState(savedUser.phone || '');
+    const [adresse, setAdresse] = useState(savedUser.address || '');
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Charger les dernières données depuis l'API au montage
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const data = await landlordService.getSettings();
+                if (data.user) {
+                    const u = data.user;
+                    setNom(`${u.first_name || ''} ${u.last_name || ''}`.trim());
+                    setEmail(u.email || '');
+                    setTel(u.phone || '');
+                    // L'adresse peut être dans data.landlord si renvoyé, ou ailleurs
+                    // Pour l'instant on garde ce qu'on a ou on attend une structure précise
+                    setAdresse(u.address || ''); // Assuming address is directly on user
+                }
+            } catch (err) {
+                console.error('Erreur lors du chargement des paramètres:', err);
+                notify('Erreur lors du chargement des paramètres', 'error');
+            }
+        };
+        fetchSettings();
+    }, []);
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            // Séparer le nom en prénom et nom (simpliste)
+            const parts = nom.trim().split(' ');
+            const first_name = parts[0] || '';
+            const last_name = parts.slice(1).join(' ') || '';
+
+            await landlordService.updateProfile({
+                first_name,
+                last_name,
+                phone: tel,
+                address: adresse
+            });
+            notify('Profil mis à jour avec succès', 'success');
+        } catch (error) {
+            notify('Erreur lors de la mise à jour du profil', 'error');
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     return (
         <>
@@ -37,6 +90,7 @@ const MonCompte: React.FC<MonCompteProps> = ({ notify }) => {
         .mc-btn-cancel { background: #fff; border: 1.5px solid #d1d5db; border-radius: 10px; padding: 10px 28px; font-family: 'Manrope', sans-serif; font-size: 0.85rem; font-weight: 700; color: #374151; cursor: pointer; }
         .mc-btn-save { background: #83C757; border: none; border-radius: 10px; padding: 10px 28px; font-family: 'Manrope', sans-serif; font-size: 0.85rem; font-weight: 700; color: #fff; cursor: pointer; }
         .mc-btn-save:hover { background: #72b44a; }
+        .mc-btn-save:disabled { background: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
         @media (max-width: 640px) {
           .mc-photo-row { flex-direction: column; text-align: center; }
           .mc-photo-btns { justify-content: center; }
@@ -56,7 +110,7 @@ const MonCompte: React.FC<MonCompteProps> = ({ notify }) => {
                     <p className="mc-subtitle">Gérez vos informations de profil et vos coordonnées</p>
 
                     <div className="mc-photo-row">
-                        <div className="mc-avatar">S</div>
+                        <div className="mc-avatar">{nom ? nom.charAt(0).toUpperCase() : 'U'}</div>
                         <div className="mc-photo-info">
                             <p className="mc-photo-label">Photo de profil</p>
                             <p className="mc-photo-desc">Format JPG, PNG ou GIF (max 2MB)</p>
@@ -73,7 +127,7 @@ const MonCompte: React.FC<MonCompteProps> = ({ notify }) => {
                     </div>
                     <div className="mc-field">
                         <div className="mc-field-left"><p className="mc-field-label">Adresse email</p><p className="mc-field-desc">Utilisée pour la connexion et les notifications</p></div>
-                        <input className="mc-input" type="email" value={email} onChange={e => setEmail(e.target.value)} />
+                        <input className="mc-input" type="email" value={email} readOnly style={{ backgroundColor: '#f9fafb', cursor: 'not-allowed' }} />
                     </div>
                     <div className="mc-field">
                         <div className="mc-field-left"><p className="mc-field-label">Téléphone</p><p className="mc-field-desc">Pour les notifications importantes</p></div>
@@ -85,8 +139,14 @@ const MonCompte: React.FC<MonCompteProps> = ({ notify }) => {
                     </div>
 
                     <div className="mc-actions">
-                        <button className="mc-btn-cancel">Annuler</button>
-                        <button className="mc-btn-save" onClick={() => notify('Modifications enregistrées', 'success')}>Enregistrer les modifications</button>
+                        <button className="mc-btn-cancel" onClick={() => window.location.reload()}>Annuler</button>
+                        <button
+                            className="mc-btn-save"
+                            onClick={handleSave}
+                            disabled={isSaving}
+                        >
+                            {isSaving ? 'Enregistrement...' : 'Enregistrer les modifications'}
+                        </button>
                     </div>
                 </div>
             </div>

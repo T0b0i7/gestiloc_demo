@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Plus, Search, Settings } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Search, Settings, Loader2, FileText } from 'lucide-react';
+import { leaseService } from '@/services/api';
 
 interface ContratData {
     id: string;
@@ -15,29 +16,11 @@ interface ContratData {
     creeLe: string;
 }
 
-const mockContrats: ContratData[] = [
-    {
-        id: '1', typeBadge: 'BAIL D\'HABITATION NU', typeBadgeColor: '#83C757',
-        titre: 'Contrat - Monts Athis', bien: 'Appartement 12 - Agla',
-        loyerMensuel: '60 000 FCFA', depotGarantie: '120 000 FCFA',
-        dateDebut: '01 Jan 2026', dateFin: '31 Déc 2026',
-        statut: 'actif', creeLe: 'Créé le 28 Déc 2025',
-    },
-    {
-        id: '2', typeBadge: 'BAIL MEUBLÉ', typeBadgeColor: '#f59e0b',
-        titre: 'Contrat - Sophie Bernard', bien: 'Villa moderne - Fidjrossè',
-        loyerMensuel: '150 000 FCFA', depotGarantie: '300 000 FCFA',
-        dateDebut: '15 Fév 2026', dateFin: '14 Fév 2027',
-        statut: 'actif', creeLe: 'Créé le 10 Fev 2026',
-    },
-    {
-        id: '3', typeBadge: 'BAIL D\'HABITATION NU', typeBadgeColor: '#83C757',
-        titre: 'Contrat - Jean-Pierre Kouassi', bien: 'Appartement 8 - Akpakpa',
-        loyerMensuel: '50 000 FCFA', depotGarantie: '100 000 FCFA',
-        dateDebut: '01 Mar 2026', dateFin: '28 Fév 2027',
-        statut: 'attente', creeLe: 'Créé le 04 Fev 2026',
-    },
-];
+// Les données seront chargées depuis l'API
+const TYPE_CONFIG: Record<string, { label: string, color: string }> = {
+    'nu': { label: "BAIL D'HABITATION NU", color: '#83C757' },
+    'meuble': { label: "BAIL MEUBLÉ", color: '#f59e0b' },
+};
 
 interface ContratsBauxProps {
     notify: (msg: string, type: 'success' | 'info' | 'error') => void;
@@ -45,7 +28,45 @@ interface ContratsBauxProps {
 
 const ContratsBaux: React.FC<ContratsBauxProps> = ({ notify }) => {
     const [searchTerm, setSearchTerm] = useState('');
-    const filtered = mockContrats.filter(c =>
+    const [contrats, setContrats] = useState<ContratData[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchLeases = async () => {
+        try {
+            setLoading(true);
+            const data = await leaseService.listLeases();
+            const mapped = (data || []).map((l: any) => {
+                const config = TYPE_CONFIG[l.type] || { label: l.type.toUpperCase(), color: '#6b7280' };
+                const tenantName = l.tenant ? `${l.tenant.first_name || ''} ${l.tenant.last_name || ''}` : 'Sans locataire';
+
+                return {
+                    id: String(l.id),
+                    typeBadge: config.label,
+                    typeBadgeColor: config.color,
+                    titre: `Contrat - ${tenantName.trim()}`,
+                    bien: l.property?.name || l.property?.address || 'Bien inconnu',
+                    loyerMensuel: `${parseInt(l.rent_amount).toLocaleString()} FCFA`,
+                    depotGarantie: l.deposit ? `${parseInt(l.deposit).toLocaleString()} FCFA` : '—',
+                    dateDebut: new Date(l.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
+                    dateFin: l.end_date ? new Date(l.end_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Indéterminée',
+                    statut: (l.status === 'active' ? 'actif' : 'attente') as 'actif' | 'attente',
+                    creeLe: `Créé le ${new Date(l.created_at).toLocaleDateString('fr-FR')}`,
+                };
+            });
+            setContrats(mapped);
+        } catch (error) {
+            console.error('Erreur baux:', error);
+            notify('Erreur lors du chargement des baux', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchLeases();
+    }, []);
+
+    const filtered = contrats.filter(c =>
         c.titre.toLowerCase().includes(searchTerm.toLowerCase()) ||
         c.bien.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -127,35 +148,57 @@ const ContratsBaux: React.FC<ContratsBauxProps> = ({ notify }) => {
                 </div>
 
                 <div className="cb-grid">
-                    {filtered.map(c => (
-                        <div className="cb-contrat" key={c.id}>
-                            <div className="cb-contrat-top">
-                                <span className="cb-type-badge" style={{ background: c.typeBadgeColor + '20', color: c.typeBadgeColor }}>{c.typeBadge}</span>
-                                <p className="cb-contrat-titre">{c.titre}</p>
-                                <p className="cb-contrat-bien">📍 {c.bien}</p>
-                                <div className="cb-detail-row">
-                                    <div><p className="cb-detail-label">Loyer mensuel</p><p className="cb-detail-value">{c.loyerMensuel}</p></div>
-                                    <div><p className="cb-detail-label">Dépôt de garantie</p><p className="cb-detail-value">{c.depotGarantie}</p></div>
-                                </div>
-                                <div className="cb-detail-row">
-                                    <div><p className="cb-detail-label">Date de début</p><p className="cb-detail-value">{c.dateDebut}</p></div>
-                                    <div><p className="cb-detail-label">Date de fin</p><p className="cb-detail-value">{c.dateFin}</p></div>
-                                </div>
-                                {c.statut === 'actif'
-                                    ? <span className="cb-status-actif">✓ Actif</span>
-                                    : <span className="cb-status-attente">⏳ En attente de signature</span>
-                                }
-                            </div>
-                            <div className="cb-contrat-footer">
-                                <span className="cb-footer-date">{c.creeLe}</span>
-                                <div className="cb-footer-actions">
-                                    <button className="cb-icon-btn green" title="Télécharger">📥</button>
-                                    <button className="cb-icon-btn orange" title="Modifier">✏️</button>
-                                    <button className="cb-icon-btn" title="Plus">⋮</button>
-                                </div>
-                            </div>
+                    {loading ? (
+                        <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '3rem' }}>
+                            <Loader2 className="animate-spin" size={32} color="#83C757" />
+                            <p style={{ marginTop: '1rem', color: '#6b7280', fontWeight: 600 }}>Chargement des contrats...</p>
                         </div>
-                    ))}
+                    ) : filtered.length > 0 ? (
+                        filtered.map(c => (
+                            <div className="cb-contrat" key={c.id}>
+                                <div className="cb-contrat-top">
+                                    <span className="cb-type-badge" style={{ background: c.typeBadgeColor + '20', color: c.typeBadgeColor }}>{c.typeBadge}</span>
+                                    <p className="cb-contrat-titre">{c.titre}</p>
+                                    <p className="cb-contrat-bien">📍 {c.bien}</p>
+                                    <div className="cb-detail-row">
+                                        <div><p className="cb-detail-label">Loyer mensuel</p><p className="cb-detail-value">{c.loyerMensuel}</p></div>
+                                        <div><p className="cb-detail-label">Dépôt de garantie</p><p className="cb-detail-value">{c.depotGarantie}</p></div>
+                                    </div>
+                                    <div className="cb-detail-row">
+                                        <div><p className="cb-detail-label">Date de début</p><p className="cb-detail-value">{c.dateDebut}</p></div>
+                                        <div><p className="cb-detail-label">Date de fin</p><p className="cb-detail-value">{c.dateFin}</p></div>
+                                    </div>
+                                    {c.statut === 'actif'
+                                        ? <span className="cb-status-actif">✓ Actif</span>
+                                        : <span className="cb-status-attente">⏳ En attente de signature</span>
+                                    }
+                                </div>
+                                <div className="cb-contrat-footer">
+                                    <span className="cb-footer-date">{c.creeLe}</span>
+                                    <div className="cb-footer-actions">
+                                        <button className="cb-icon-btn green" title="Télécharger">📥</button>
+                                        <button className="cb-icon-btn orange" title="Modifier">✏️</button>
+                                        <button className="cb-icon-btn" title="Plus">⋮</button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '4rem 2rem', background: '#fff', borderRadius: '18px', border: '2px dashed #e5e7eb' }}>
+                            <div style={{ width: '64px', height: '64px', background: '#f0f9eb', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+                                <FileText size={32} color="#83C757" />
+                            </div>
+                            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.5rem' }}>Aucun contrat trouvé</h3>
+                            <p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                                {searchTerm ? "Aucun contrat ne correspond à votre recherche." : "Vous n'avez pas encore créé de contrat de bail."}
+                            </p>
+                            {!searchTerm && (
+                                <button className="cb-add-btn" style={{ margin: '0 auto' }} onClick={() => notify('Action à venir', 'info')}>
+                                    Créer mon premier contrat
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </>

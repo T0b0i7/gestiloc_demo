@@ -56,6 +56,10 @@ const registerSchema = z
     password: z
       .string()
       .min(8, "Le mot de passe doit contenir au moins 8 caractères")
+      .regex(/[a-z]/, "Le mot de passe doit contenir au moins une lettre minuscule")
+      .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une lettre majuscule")
+      .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre")
+      .regex(/[@$!%*?&]/, "Le mot de passe doit contenir au moins un caractère spécial (@$!%*?&)")
       .optional(),
     confirmPassword: z.string().optional(),
     acceptTerms: z.boolean().refine((val) => val === true, {
@@ -240,7 +244,36 @@ const FormField = ({
       )}
     </div>
     {error?.message && (
-      <p className="text-sm text-destructive font-medium">{error.message}</p>
+      <p className="text-sm text-destructive font-bold">{error.message}</p>
+    )}
+    {fieldName === "password" && (
+      <div className="pt-2 p-3 bg-blue-50/50 rounded-xl border border-blue-100 space-y-2">
+        <p className="text-xs text-blue-800 font-extrabold flex items-center gap-1.5">
+          <AtSign size={12} /> Format du mot de passe requis :
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5">
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-blue-400" />
+            <p className="text-[11px] text-blue-900 font-bold">8 caractères min.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-blue-400" />
+            <p className="text-[11px] text-blue-900 font-bold">1 Chiffre (0-9)</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-blue-400" />
+            <p className="text-[11px] text-blue-900 font-bold">1 Majuscule (A-Z)</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-blue-400" />
+            <p className="text-[11px] text-blue-900 font-bold">1 Minuscule (a-z)</p>
+          </div>
+          <div className="flex items-center gap-2 sm:col-span-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-blue-400" />
+            <p className="text-[11px] text-blue-900 font-bold">1 Caractère spécial (@$!%*?&)</p>
+          </div>
+        </div>
+      </div>
     )}
   </div>
 );
@@ -286,6 +319,16 @@ export default function Register() {
     personal_address: data.personalAddress || "",
   });
 
+  const errorTranslations: Record<string, string> = {
+    "The password field format is invalid.": "Le format du mot de passe est invalide. Assurez-vous d'inclure une majuscule, une minuscule, un chiffre et un caractère spécial.",
+    "The email has already been taken.": "Cet e-mail est déjà utilisé.",
+    "The phone has already been taken.": "Ce numéro de téléphone est déjà utilisé.",
+    "The password confirmation does not match.": "La confirmation du mot de passe ne correspond pas.",
+    "These credentials do not match our records.": "Ces identifiants ne correspondent pas à nos enregistrements.",
+    "There is no role named `landlord` for guard `web`.": "Une erreur de configuration serveur est survenue (Rôle manquant). Veuillez contacter le support.",
+    "There is no role named `co_owner` for guard `web`.": "Une erreur de configuration serveur est survenue (Rôle manquant). Veuillez contacter le support.",
+  };
+
   const getErrorMessage = (error: unknown): string => {
     const apiError = error as {
       response?: {
@@ -295,15 +338,16 @@ export default function Register() {
     };
 
     if (apiError.response?.data?.errors) {
-      return Object.values(apiError.response.data.errors).flat().join("\n");
+      const messages = Object.values(apiError.response.data.errors).flat();
+      return messages.map(m => errorTranslations[m] || m).join("\n");
     }
-    if (apiError.response?.data?.message) {
-      return apiError.response.data.message;
+
+    const mainMessage = apiError.response?.data?.message || apiError.message || "";
+    if (mainMessage && errorTranslations[mainMessage]) {
+      return errorTranslations[mainMessage];
     }
-    if (apiError.message) {
-      return apiError.message;
-    }
-    return "Une erreur est survenue lors de l'inscription";
+
+    return mainMessage || "Une erreur est survenue lors de l'inscription";
   };
 
   const onSubmit = async (data: RegisterFormData) => {

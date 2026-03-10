@@ -328,12 +328,12 @@ HTML;
         $user = $request->user();
 
         if (!$user || !$user->isLandlord()) {
-            return response()->json(['message' => 'Forbidden'], 403);
+            return response()->json(['message' => 'Accès interdit'], 403);
         }
 
         $landlord = $user->landlord;
         if (!$landlord) {
-            return response()->json(['message' => 'Landlord profile missing'], 422);
+            return response()->json(['message' => 'Profil bailleur manquant'], 422);
         }
 
         return DB::transaction(function () use ($data, $landlord, $request, $user) {
@@ -345,7 +345,7 @@ HTML;
 
             // Vérifier que le bien appartient au landlord
             if ((int) $property->landlord_id !== (int) $landlord->id) {
-                return response()->json(['message' => 'You do not own this property'], 403);
+                return response()->json(['message' => 'Vous ne possédez pas ce bien'], 403);
             }
 
             // ✅ Vérifier si le bien est déjà loué
@@ -486,7 +486,7 @@ HTML;
             ->firstOrFail();
 
         if ((int) $lease->property?->landlord_id !== $landlordId) {
-            return response()->json(['message' => 'Forbidden'], 403);
+            return response()->json(['message' => 'Accès interdit'], 403);
         }
 
         DB::transaction(function () use ($lease, $endDateYmd, $user) {
@@ -558,11 +558,11 @@ HTML;
 
         $user = $request->user();
         if (!$user || !$user->isLandlord() || !$user->landlord) {
-            return response()->json(['message' => 'Forbidden'], 403);
+            return response()->json(['message' => 'Accès interdit'], 403);
         }
 
         if ((int) $lease->property?->landlord_id !== (int) $user->landlord->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
+            return response()->json(['message' => 'Accès interdit'], 403);
         }
 
         $data = $request->validate([

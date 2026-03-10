@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Plus, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Search, Loader2, FileText } from 'lucide-react';
+import { documentArchiveService } from '@/services/api';
 
 interface ArchiveDoc {
     id: string;
@@ -14,17 +15,13 @@ interface ArchiveDoc {
     dateBas: string;
 }
 
-const mockArchives: ArchiveDoc[] = [
-    { id: '1', typeBadge: 'BAIL TERMINÉ', typeBadgeColor: '#f59e0b', titre: 'Contrat de bail - Paul Martin', bien: 'Appartement Lyon 5ème', champ1Label: 'DÉBUT BAIL', champ1Value: '01 Sep 2021', champ2Label: 'FIN BAIL', champ2Value: '31 Aoû 2024', champ3Label: 'DURÉE', champ3Value: '3 ans', champ4Label: 'LOYER MENSUEL', champ4Value: '850 €', dateBas: 'Archivé le 31 Aoû 2024' },
-    { id: '2', typeBadge: 'EDL SORTIE', typeBadgeColor: '#ef4444', titre: 'État des lieux sortie - Paul Martin', bien: 'Appartement Lyon 5ème', champ1Label: 'DATE VISITE', champ1Value: '30 Aoû 2024', champ2Label: 'TYPE', champ2Value: 'Sortie', champ3Label: 'ÉTAT GÉNÉRAL', champ3Value: 'Bon', champ4Label: 'RETENUE CAUTION', champ4Value: '0 €', dateBas: 'Archivé le 31 Aoû 2024' },
-    { id: '3', typeBadge: 'QUITTANCES 2023', typeBadgeColor: '#83C757', titre: 'Quittances annuelles 2023', bien: 'Jean-Pierre Kouassi • La Rochelle', champ1Label: 'PÉRIODE', champ1Value: 'Année 2023', champ2Label: 'NOMBRE', champ2Value: '12 quittances', champ3Label: 'TOTAL ENCAISSÉ', champ3Value: '12 720 €', champ4Label: '', champ4Value: '', dateBas: 'Archivé le 31 Déc 2023' },
-    { id: '4', typeBadge: 'BAIL TERMINÉ', typeBadgeColor: '#f59e0b', titre: 'Contrat de bail - Sophie Durand', bien: 'Studio Paris 11ème', champ1Label: 'DÉBUT BAIL', champ1Value: '15 Mar 2020', champ2Label: 'FIN BAIL', champ2Value: '14 Mar 2023', champ3Label: 'DURÉE', champ3Value: '3 ans', champ4Label: 'LOYER MENSUEL', champ4Value: '720 €', dateBas: 'Archivé le 14 Mar 2023' },
-    { id: '5', typeBadge: 'EDL ENTRÉE', typeBadgeColor: '#83C757', titre: 'État des lieux entrée - Paul Martin', bien: 'Appartement Lyon 5ème', champ1Label: 'DATE VISITE', champ1Value: '01 Sep 2021', champ2Label: 'TYPE', champ2Value: 'Entrée', champ3Label: 'ÉTAT GÉNÉRAL', champ3Value: 'Neuf', champ4Label: 'DÉPÔT DE GARANTIE', champ4Value: '850 €', dateBas: 'Archivé le 31 Aoû 2024' },
-    { id: '6', typeBadge: 'ASSURANCE 2022', typeBadgeColor: '#3b82f6', titre: 'Dossier assurance PNO 2022', bien: 'Montée Alba • Villeurbanne', champ1Label: 'PÉRIODE', champ1Value: 'Année 2022', champ2Label: 'PARTENAIRE', champ2Value: 'Allianz', champ3Label: 'DOCUMENTS', champ3Value: '4 fichiers', champ4Label: 'PRIME', champ4Value: '380 €', dateBas: 'Archivé le 31 Déc 2022' },
-    { id: '7', typeBadge: 'EDL SORTIE', typeBadgeColor: '#ef4444', titre: 'État des lieux sortie - Sophie Durand', bien: 'Studio Paris 11ème', champ1Label: 'DATE VISITE', champ1Value: '14 Mar 2023', champ2Label: 'TYPE', champ2Value: 'Sortie', champ3Label: 'ÉTAT GÉNÉRAL', champ3Value: 'Satisfaisant', champ4Label: 'RETENUE CAUTION', champ4Value: '150 €', dateBas: 'Archivé le 14 Mar 2023' },
-    { id: '8', typeBadge: 'QUITTANCES 2022', typeBadgeColor: '#83C757', titre: 'Quittances annuelles 2022', bien: 'Sophia Bernard • Paris 15ème', champ1Label: 'PÉRIODE', champ1Value: 'Année 2022', champ2Label: 'NOMBRE', champ2Value: '12 quittances', champ3Label: 'TOTAL ENCAISSÉ', champ3Value: '16 560 €', champ4Label: '', champ4Value: '', dateBas: 'Archivé le 31 Déc 2022' },
-    { id: '9', typeBadge: 'BAIL TERMINÉ', typeBadgeColor: '#f59e0b', titre: 'Contrat de bail - Marc Petit', bien: 'T2 Marseille 8ème', champ1Label: 'DÉBUT BAIL', champ1Value: '01 Avr 2019', champ2Label: 'FIN BAIL', champ2Value: '31 Mar 2022', champ3Label: 'DURÉE', champ3Value: '3 ans', champ4Label: 'LOYER MENSUEL', champ4Value: '680 €', dateBas: 'Archivé le 31 Mar 2022' },
-];
+// Les données seront chargées depuis l'API
+const TYPE_CONFIG: Record<string, { label: string, color: string }> = {
+    'lease': { label: 'BAIL TERMINÉ', color: '#f59e0b' },
+    'condition_report': { label: 'EDL ARCHIVÉ', color: '#ef4444' },
+    'receipt': { label: 'QUITTANCE', color: '#83C757' },
+    'other': { label: 'DOCUMENT', color: '#3b82f6' },
+};
 
 interface ArchiveDocsProps {
     notify: (msg: string, type: 'success' | 'info' | 'error') => void;
@@ -33,14 +30,72 @@ interface ArchiveDocsProps {
 const ArchivageDocs: React.FC<ArchiveDocsProps> = ({ notify }) => {
     const [activeFilter, setActiveFilter] = useState('Tous');
     const [searchTerm, setSearchTerm] = useState('');
+    const [archiveList, setArchiveList] = useState<ArchiveDoc[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [kpis, setKpis] = useState({ totalDoc: 0, bauxTermines: 0, edlArchived: 0, storageUsed: '0 MB' });
+
     const filters = ['Tous', 'Contrat de bails', 'Etats des lieux', 'Quittances', 'Autres documents'];
+
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            const [docs, statsData] = await Promise.all([
+                documentArchiveService.list(),
+                documentArchiveService.getStats()
+            ]);
+
+            const mapped = (docs || []).map((d: any) => {
+                const config = TYPE_CONFIG[d.type] || { label: d.type?.toUpperCase() || 'DOCUMENT', color: '#6b7280' };
+                return {
+                    id: String(d.id),
+                    typeBadge: config.label,
+                    typeBadgeColor: config.color,
+                    titre: d.title || 'Sans titre',
+                    bien: d.property?.name || d.property?.address || 'Bien inconnu',
+                    champ1Label: 'DÉPOSÉ LE',
+                    champ1Value: new Date(d.created_at).toLocaleDateString('fr-FR'),
+                    champ2Label: 'TYPE',
+                    champ2Value: d.category || 'Archive',
+                    champ3Label: 'MÉTA',
+                    champ3Value: d.metadata || '—',
+                    champ4Label: 'TAILLE',
+                    champ4Value: d.file_size ? `${(d.file_size / 1024).toFixed(1)} KB` : '—',
+                    dateBas: `Archivé le ${new Date(d.created_at).toLocaleDateString('fr-FR')}`
+                };
+            });
+
+            setArchiveList(mapped);
+            if (statsData) {
+                setKpis({
+                    totalDoc: statsData.total_count || 0,
+                    bauxTermines: statsData.expired_leases || 0,
+                    edlArchived: statsData.condition_reports || 0,
+                    storageUsed: statsData.storage_human || '0 MB'
+                });
+            }
+        } catch (error) {
+            console.error('Erreur archives:', error);
+            notify('Erreur lors du chargement des archives', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const filtered = archiveList.filter(d =>
+        d.titre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        d.bien.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     const stats = [
-        { label: 'DOCUMENTS ARCHIVÉS', value: '245', color: '#1a1a1a' },
-        { label: 'BAUX TERMINÉS', value: '18', color: '#1a1a1a' },
-        { label: 'EDL ARCHIVÉS', value: '36', color: '#1a1a1a' },
-        { label: 'ESPACE UTILISÉ', value: '2.4 GB', color: '#1a1a1a' },
+        { label: 'DOCUMENTS ARCHIVÉS', value: String(kpis.totalDoc), color: '#1a1a1a' },
+        { label: 'BAUX TERMINÉS', value: String(kpis.bauxTermines), color: '#1a1a1a' },
+        { label: 'EDL ARCHIVÉS', value: String(kpis.edlArchived), color: '#1a1a1a' },
+        { label: 'ESPACE UTILISÉ', value: kpis.storageUsed, color: '#1a1a1a' },
     ];
-    const filtered = mockArchives.filter(d => d.titre.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return (
         <>
@@ -101,18 +156,35 @@ const ArchivageDocs: React.FC<ArchiveDocsProps> = ({ notify }) => {
                     <div className="ar-search-wrap"><Search size={16} className="ar-search-icon" /><input className="ar-search-input" placeholder="Rechercher" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
                 </div>
                 <div className="ar-grid">
-                    {filtered.map(d => (
-                        <div className="ar-item" key={d.id}>
-                            <div className="ar-item-top">
-                                <span className="ar-badge" style={{ background: d.typeBadgeColor + '20', color: d.typeBadgeColor }}>{d.typeBadge}</span>
-                                <p className="ar-item-titre">{d.titre}</p>
-                                <p className="ar-item-bien">📍 {d.bien}</p>
-                                <div className="ar-detail-row"><div><p className="ar-detail-label">{d.champ1Label}</p><p className="ar-detail-value">{d.champ1Value}</p></div><div><p className="ar-detail-label">{d.champ2Label}</p><p className="ar-detail-value">{d.champ2Value}</p></div></div>
-                                <div className="ar-detail-row"><div><p className="ar-detail-label">{d.champ3Label}</p><p className="ar-detail-value">{d.champ3Value}</p></div>{d.champ4Label && <div><p className="ar-detail-label">{d.champ4Label}</p><p className="ar-detail-value">{d.champ4Value}</p></div>}</div>
-                            </div>
-                            <div className="ar-footer"><span className="ar-footer-date">{d.dateBas}</span><div className="ar-footer-actions"><button className="ar-icon-btn">👁️</button><button className="ar-icon-btn" style={{ color: '#83C757' }}>📥</button><button className="ar-icon-btn" style={{ color: '#f59e0b' }}>✏️</button></div></div>
+                    {loading ? (
+                        <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '3rem' }}>
+                            <Loader2 className="animate-spin" size={32} color="#83C757" />
+                            <p style={{ marginTop: '1rem', color: '#6b7280', fontWeight: 600 }}>Chargement des archives...</p>
                         </div>
-                    ))}
+                    ) : filtered.length > 0 ? (
+                        filtered.map(d => (
+                            <div className="ar-item" key={d.id}>
+                                <div className="ar-item-top">
+                                    <span className="ar-badge" style={{ background: d.typeBadgeColor + '20', color: d.typeBadgeColor }}>{d.typeBadge}</span>
+                                    <p className="ar-item-titre">{d.titre}</p>
+                                    <p className="ar-item-bien">📍 {d.bien}</p>
+                                    <div className="ar-detail-row"><div><p className="ar-detail-label">{d.champ1Label}</p><p className="ar-detail-value">{d.champ1Value}</p></div><div><p className="ar-detail-label">{d.champ2Label}</p><p className="ar-detail-value">{d.champ2Value}</p></div></div>
+                                    <div className="ar-detail-row"><div><p className="ar-detail-label">{d.champ3Label}</p><p className="ar-detail-value">{d.champ3Value}</p></div>{d.champ4Label && <div><p className="ar-detail-label">{d.champ4Label}</p><p className="ar-detail-value">{d.champ4Value}</p></div>}</div>
+                                </div>
+                                <div className="ar-footer"><span className="ar-footer-date">{d.dateBas}</span><div className="ar-footer-actions"><button className="ar-icon-btn">👁️</button><button className="ar-icon-btn" style={{ color: '#83C757' }}>📥</button><button className="ar-icon-btn" style={{ color: '#f59e0b' }}>✏️</button></div></div>
+                            </div>
+                        ))
+                    ) : (
+                        <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '4rem 2rem', background: '#fff', borderRadius: '18px', border: '2px dashed #e5e7eb' }}>
+                            <div style={{ width: '64px', height: '64px', background: '#f0f9eb', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+                                <FileText size={32} color="#83C757" />
+                            </div>
+                            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.5rem' }}>Aucun document archivé</h3>
+                            <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>
+                                Votre dossier d'archives est actuellement vide.
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
         </>

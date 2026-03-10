@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
+import { landlordService } from '@/services/api';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -27,23 +28,49 @@ const DashboardComponent: React.FC<DashboardProps> = ({ onNavigate, notify }) =>
   const barChartInstance = useRef<ChartJS | null>(null);
   const donutChartInstance = useRef<ChartJS | null>(null);
 
+  const [stats, setStats] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Charger les données du dashboard
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setIsLoading(true);
+        const data = await landlordService.getDashboardStats();
+        setStats(data);
+      } catch (err) {
+        console.error('Erreur dashboard stats:', err);
+        notify?.('Erreur lors du chargement des statistiques', 'error');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchStats();
+  }, [notify]);
+
   // Chart.js - Bar Chart (Loyers)
   useEffect(() => {
-    if (!barChartRef.current) return;
+    if (!barChartRef.current || !stats) return;
 
     // Destroy previous instance
     if (barChartInstance.current) {
       barChartInstance.current.destroy();
     }
 
+    // Préparation des données du graphique
+    const trend = stats.charts?.revenue_trend || [];
+    const labels = trend.map((t: any) => t.month);
+    const dataPaid = trend.map((t: any) => t.total_paid || 0);
+    const dataExpected = trend.map((t: any) => t.total_expected || 0);
+
     barChartInstance.current = new ChartJS(barChartRef.current, {
       type: 'bar',
       data: {
-        labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
+        labels: labels.length > 0 ? labels : ['Aucune donnée'],
         datasets: [
           {
             label: 'Loyers reçus',
-            data: [4200, 3800, 4500, 4100, 4800, 4600],
+            data: dataPaid.length > 0 ? dataPaid : [0],
             backgroundColor: '#4CAF50',
             borderRadius: 3,
             borderSkipped: false,
@@ -52,7 +79,7 @@ const DashboardComponent: React.FC<DashboardProps> = ({ onNavigate, notify }) =>
           },
           {
             label: 'Loyers attendus',
-            data: [5000, 5000, 5000, 5000, 5000, 5000],
+            data: dataExpected.length > 0 ? dataExpected : [0],
             backgroundColor: '#FF9800',
             borderRadius: 3,
             borderSkipped: false,
@@ -83,11 +110,9 @@ const DashboardComponent: React.FC<DashboardProps> = ({ onNavigate, notify }) =>
           },
           y: {
             beginAtZero: true,
-            max: 6000,
             border: { display: false },
             grid: { color: '#efefef', lineWidth: 1 },
             ticks: {
-              stepSize: 1000,
               font: { family: 'Manrope', size: 10 },
               color: '#777',
             },
@@ -101,22 +126,26 @@ const DashboardComponent: React.FC<DashboardProps> = ({ onNavigate, notify }) =>
         barChartInstance.current.destroy();
       }
     };
-  }, []);
+  }, [stats]);
 
   // Chart.js - Donut Chart (Taux d'occupation)
   useEffect(() => {
-    if (!donutChartRef.current) return;
+    if (!donutChartRef.current || !stats) return;
 
     if (donutChartInstance.current) {
       donutChartInstance.current.destroy();
     }
 
+    const occupied = stats.kpi?.active_tenants || 0;
+    const total = stats.kpi?.total_properties || 0;
+    const vacant = Math.max(0, total - occupied);
+
     donutChartInstance.current = new ChartJS(donutChartRef.current, {
       type: 'doughnut',
       data: {
         datasets: [{
-          data: [12, 3],
-          backgroundColor: ['rgba(129, 194, 88, 1)', 'rgba(253, 234, 91, 1)'],
+          data: total > 0 ? [occupied, vacant] : [0, 1],
+          backgroundColor: ['rgba(129, 194, 88, 1)', 'rgba(238, 238, 238, 1)'],
           borderWidth: 5,
           borderColor: '#ffffff',
           hoverOffset: 5,
@@ -146,28 +175,36 @@ const DashboardComponent: React.FC<DashboardProps> = ({ onNavigate, notify }) =>
         donutChartInstance.current.destroy();
       }
     };
-  }, []);
+  }, [stats]);
 
-  const loyersData = [
-    { month: 'Jan', reçu: 4200, attendu: 5000 },
-    { month: 'Fév', reçu: 3800, attendu: 5000 },
-    { month: 'Mar', reçu: 4500, attendu: 5000 },
-    { month: 'Avr', reçu: 4100, attendu: 5000 },
-    { month: 'Mai', reçu: 4800, attendu: 5000 },
-    { month: 'Juin', reçu: 4600, attendu: 5000 },
+  // Transformation des baux récents en "documents" pour l'instant
+  const lastActivity = stats?.recent_leases?.map((l: any) => ({
+    icon: '/Ressource_gestiloc/Profile.png',
+    name: `Bail ${l.tenant} - ${l.property}`,
+    date: l.date
+  })) || [];
+
+  const documents = lastActivity.length > 0 ? lastActivity : [
+    { icon: '/Ressource_gestiloc/Profile.png', name: 'Aucune activité récente', date: '---' },
   ];
 
-  const documents = [
-    { icon: '/Ressource_gestiloc/Profile.png', name: 'Contrat de bail-Dupont', date: '28 Janvier · 2026' },
-    { icon: '/Ressource_gestiloc/Error.png', name: 'Avis d\'échéance – Février', date: '24 janvier 2026' },
-    { icon: '/Ressource_gestiloc/US Capitol.png', name: 'État des lieux – Apt 12', date: '27 janvier 2026' },
-    { icon: '/Ressource_gestiloc/facture_travaux.png', name: 'Facture travaux – Villa 5', date: '23 janvier 2026' },
-    { icon: '/Ressource_gestiloc/Bell.png', name: 'Quittance – Martin', date: '25 janvier 2026' },
-  ];
-
-  function handleStepClick(arg0: number): void {
-    throw new Error('Function not implemented.');
+  function handleStepClick(id: number): void {
+    if (onNavigate) {
+      if (id === 1) onNavigate('ajouter-bien');
+      if (id === 2) onNavigate('ajouter-locataire');
+      if (id === 3) onNavigate('nouvelle-location');
+    }
   }
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+        <p className="mt-4 text-gray-500 font-manrope">Chargement de votre tableau de bord...</p>
+      </div>
+    );
+  }
+
 
   return (
     <div className="w-full space-y-6 sm:space-y-8 animate-in fade-in duration-700">
@@ -187,11 +224,11 @@ const DashboardComponent: React.FC<DashboardProps> = ({ onNavigate, notify }) =>
         style={{ background: 'linear-gradient(135deg, #8CCC63 0%, #529D21 100%)' }}>
         <div className="z-10 text-center md:text-left max-w-xl">
           <h1 className="text-white text-2xl sm:text-3xl md:text-4xl font-black mb-4 font-merriweather leading-tight">
-            Bienvenue sur Gestiloc !
+            Bienvenue {JSON.parse(localStorage.getItem('user') || '{}').first_name || ''} !
           </h1>
           <p className="text-white/95 text-sm sm:text-base leading-relaxed font-manrope font-medium">
-            Merci de vous être inscrit ! Nous sommes heureux de vous avoir à bord !
-            Dites-nous un peu plus sur vous afin de compléter votre profil et de profiter pleinement de toutes nos fonctionnalités.
+            Merci de vous être inscrit sur Gestiloc ! Nous sommes heureux de vous avoir à bord !
+            Gérez vos biens et vos locataires en toute simplicité depuis votre nouveau tableau de bord.
           </p>
         </div>
         <img
@@ -314,18 +351,24 @@ const DashboardComponent: React.FC<DashboardProps> = ({ onNavigate, notify }) =>
           <div className="relative w-48 h-48 sm:w-56 sm:h-56 mb-8 group transition-transform hover:scale-105 duration-500">
             <canvas ref={donutChartRef}></canvas>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-3xl sm:text-4xl font-black text-green-600 font-merriweather drop-shadow-sm">80%</span>
+              <span className="text-3xl sm:text-4xl font-black text-green-600 font-merriweather drop-shadow-sm">
+                {stats?.kpi?.occupancy_rate ?? 0}%
+              </span>
               <span className="text-[0.65rem] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">Global</span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 w-full border-t border-gray-50 pt-8">
             <div className="text-center px-2">
-              <div className="text-2xl sm:text-3xl font-black text-green-500 font-merriweather">12</div>
+              <div className="text-2xl sm:text-3xl font-black text-green-500 font-merriweather">
+                {stats?.kpi?.active_tenants ?? 0}
+              </div>
               <div className="text-[0.7rem] font-bold text-green-700/40 uppercase tracking-widest mt-2 font-manrope">Occupés</div>
             </div>
             <div className="text-center border-l border-gray-100 px-2">
-              <div className="text-2xl sm:text-3xl font-black text-yellow-500 font-merriweather">3</div>
+              <div className="text-2xl sm:text-3xl font-black text-yellow-500 font-merriweather">
+                {Math.max(0, (stats?.kpi?.total_properties ?? 0) - (stats?.kpi?.active_tenants ?? 0))}
+              </div>
               <div className="text-[0.7rem] font-bold text-yellow-700/40 uppercase tracking-widest mt-2 font-manrope">Vacants</div>
             </div>
           </div>

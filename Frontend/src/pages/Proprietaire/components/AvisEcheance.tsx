@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Plus, Search, Settings } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Search, Settings, Loader2, FileText } from 'lucide-react';
+import { invoiceService } from '@/services/api';
 
 interface AvisData {
     id: string;
@@ -14,50 +15,13 @@ interface AvisData {
     envoyeLe: string;
 }
 
-const mockAvis: AvisData[] = [
-    {
-        id: '1', statutBadge: '🚨 EN RETARD DE 5 JOURS', statutBadgeColor: '#ef4444',
-        titre: 'EDL - Martin Dupont', lieu: 'Boulogne-Billancourt • Locataire',
-        periode: 'Février 2025', echeance: '01 Fév 2025',
-        montantLoyer: '850 €', charges: '120 €',
-        envoyeLe: 'Envoyé le 25 Jan 2025',
-    },
-    {
-        id: '2', statutBadge: '📧 À ENVOYER', statutBadgeColor: '#f59e0b',
-        titre: 'EDL - Sophia Bernard', lieu: 'Paris 15ème • Locataire',
-        periode: 'Mars 2025', echeance: '01 Mar 2025',
-        montantLoyer: '1 200 €', charges: '180 €',
-        envoyeLe: 'Créé le 06 Fev 2025',
-    },
-    {
-        id: '3', statutBadge: '⏳ EN ATTENTE DE PAIEMENT', statutBadgeColor: '#6b7280',
-        titre: 'EDL - Montée Alba', lieu: 'Villeurbanne • Locataire',
-        periode: 'Février 2025', echeance: '05 Fév 2025',
-        montantLoyer: '720 €', charges: '95 €',
-        envoyeLe: 'Envoyé le 28 Jan 2025',
-    },
-    {
-        id: '4', statutBadge: '✓ PAYÉ LE 29 JAN 2025', statutBadgeColor: '#83C757',
-        titre: 'EDL - Jean-Pierre Roussel', lieu: 'La Rochelle • Locataire',
-        periode: 'Février 2025', echeance: '01 Fév 2025',
-        montantLoyer: '950 €', charges: '110 €',
-        envoyeLe: 'Envoyé le 20 Jan 2025',
-    },
-    {
-        id: '5', statutBadge: '📧 À ENVOYER', statutBadgeColor: '#f59e0b',
-        titre: 'EDL - Marie Lefevre', lieu: 'Lyon 6ème • Locataire',
-        periode: 'Mars 2025', echeance: '01 Mar 2025',
-        montantLoyer: '980 €', charges: '140 €',
-        envoyeLe: 'Créé le 05 Fev 2025',
-    },
-    {
-        id: '6', statutBadge: '⏳ EN ATTENTE DE PAIEMENT', statutBadgeColor: '#6b7280',
-        titre: 'EDL - Thomas Moreau', lieu: 'Marseille • Locataire',
-        periode: 'Février 2025', echeance: '03 Fév 2025',
-        montantLoyer: '1 100 €', charges: '150 €',
-        envoyeLe: 'Envoyé le 27 Jan 2025',
-    },
-];
+// Les données seront chargées depuis l'API
+const STATUT_CONFIG: Record<string, { label: string, color: string }> = {
+    'paid': { label: '✓ PAYÉ', color: '#83C757' },
+    'pending': { label: '⏳ EN ATTENTE', color: '#6b7280' },
+    'overdue': { label: '🚨 EN RETARD', color: '#ef4444' },
+    'partially_paid': { label: '📂 PARTIELLEMENT PAYÉ', color: '#f59e0b' },
+};
 
 interface AvisEcheanceProps {
     notify: (msg: string, type: 'success' | 'info' | 'error') => void;
@@ -66,15 +30,75 @@ interface AvisEcheanceProps {
 const AvisEcheance: React.FC<AvisEcheanceProps> = ({ notify }) => {
     const [activeFilter, setActiveFilter] = useState('Tous');
     const [searchTerm, setSearchTerm] = useState('');
-    const filters = ['Tous', 'A envoyer', 'En attente', 'Payés', 'En retard'];
+    const [avisList, setAvisList] = useState<AvisData[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [kpis, setKpis] = useState({ total: 0, waiting: 0, overdue: 0, count: 0 });
 
-    const filtered = mockAvis.filter(a => a.titre.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filters = ['Tous', 'En attente', 'Payés', 'En retard'];
+
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            const data = await invoiceService.listInvoices();
+            const filteredInvoices = (data || []).filter((inv: any) => inv.type === 'rent');
+
+            let totalAmount = 0;
+            let waitingAmount = 0;
+            let overdueAmount = 0;
+
+            const mapped = filteredInvoices.map((inv: any) => {
+                const config = STATUT_CONFIG[inv.status] || { label: inv.status.toUpperCase(), color: '#6b7280' };
+                const tenantName = inv.lease?.tenant ? `${inv.lease.tenant.first_name || ''} ${inv.lease.tenant.last_name || ''}` : 'Inconnu';
+                const propertyName = inv.lease?.property?.name || inv.lease?.property?.address || 'Bien inconnu';
+
+                const amount = parseFloat(inv.amount_total || 0);
+                totalAmount += amount;
+                if (inv.status === 'pending') waitingAmount += amount;
+                if (inv.status === 'overdue') overdueAmount += amount;
+
+                return {
+                    id: String(inv.id),
+                    statutBadge: config.label,
+                    statutBadgeColor: config.color,
+                    titre: `Avis - ${tenantName.trim()}`,
+                    lieu: propertyName,
+                    periode: inv.period_start ? new Date(inv.period_start).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : '—',
+                    echeance: new Date(inv.due_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
+                    montantLoyer: `${amount.toLocaleString()} FCFA`,
+                    charges: 'Inclues',
+                    envoyeLe: `Créé le ${new Date(inv.created_at).toLocaleDateString('fr-FR')}`,
+                };
+            });
+
+            setAvisList(mapped);
+            setKpis({
+                total: totalAmount,
+                waiting: waitingAmount,
+                overdue: overdueAmount,
+                count: mapped.length
+            });
+        } catch (error) {
+            console.error('Erreur avis:', error);
+            notify('Erreur lors du chargement des avis', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const filtered = avisList.filter(a =>
+        a.titre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        a.lieu.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     const stats = [
-        { label: 'TOTAL À RECEVOIR', value: '8 450 €', color: '#83C757' },
-        { label: 'EN ATTENTE', value: '3 250 €', color: '#f59e0b' },
-        { label: 'EN RETARD', value: '1 200 €', color: '#ef4444' },
-        { label: 'CE MOIS', value: '12 avis', color: '#1a1a1a' },
+        { label: 'TOTAL À RECEVOIR', value: `${kpis.total.toLocaleString()} FCFA`, color: '#83C757' },
+        { label: 'EN ATTENTE', value: `${kpis.waiting.toLocaleString()} FCFA`, color: '#f59e0b' },
+        { label: 'EN RETARD', value: `${kpis.overdue.toLocaleString()} FCFA`, color: '#ef4444' },
+        { label: 'TOTAL AVIS', value: `${kpis.count} avis`, color: '#1a1a1a' },
     ];
 
     return (
@@ -182,31 +206,48 @@ const AvisEcheance: React.FC<AvisEcheanceProps> = ({ notify }) => {
                 </div>
 
                 <div className="ae-grid">
-                    {filtered.map(a => (
-                        <div className="ae-item" key={a.id}>
-                            <div className="ae-item-top">
-                                <span className="ae-status-badge" style={{ background: a.statutBadgeColor + '20', color: a.statutBadgeColor }}>{a.statutBadge}</span>
-                                <p className="ae-item-titre">{a.titre}</p>
-                                <p className="ae-item-lieu">📍 {a.lieu}</p>
-                                <div className="ae-detail-row">
-                                    <div><p className="ae-detail-label">Période</p><p className="ae-detail-value">{a.periode}</p></div>
-                                    <div><p className="ae-detail-label">Échéance</p><p className="ae-detail-value">{a.echeance}</p></div>
-                                </div>
-                                <div className="ae-detail-row">
-                                    <div><p className="ae-detail-label">Montant loyer</p><p className="ae-detail-value" style={{ color: '#83C757' }}>{a.montantLoyer}</p></div>
-                                    <div><p className="ae-detail-label">Charges</p><p className="ae-detail-value">{a.charges}</p></div>
-                                </div>
-                            </div>
-                            <div className="ae-footer">
-                                <span className="ae-footer-date">{a.envoyeLe}</span>
-                                <div className="ae-footer-actions">
-                                    <button className="ae-icon-btn">👁️</button>
-                                    <button className="ae-icon-btn orange">✏️</button>
-                                    <button className="ae-icon-btn green">📥</button>
-                                </div>
-                            </div>
+                    {loading ? (
+                        <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '3rem' }}>
+                            <Loader2 className="animate-spin" size={32} color="#83C757" />
+                            <p style={{ marginTop: '1rem', color: '#6b7280', fontWeight: 600 }}>Chargement des avis...</p>
                         </div>
-                    ))}
+                    ) : filtered.length > 0 ? (
+                        filtered.map(a => (
+                            <div className="ae-item" key={a.id}>
+                                <div className="ae-item-top">
+                                    <span className="ae-status-badge" style={{ background: a.statutBadgeColor + '20', color: a.statutBadgeColor }}>{a.statutBadge}</span>
+                                    <p className="ae-item-titre">{a.titre}</p>
+                                    <p className="ae-item-lieu">📍 {a.lieu}</p>
+                                    <div className="ae-detail-row">
+                                        <div><p className="ae-detail-label">Période</p><p className="ae-detail-value">{a.periode}</p></div>
+                                        <div><p className="ae-detail-label">Échéance</p><p className="ae-detail-value">{a.echeance}</p></div>
+                                    </div>
+                                    <div className="ae-detail-row">
+                                        <div><p className="ae-detail-label">Montant loyer</p><p className="ae-detail-value" style={{ color: '#83C757' }}>{a.montantLoyer}</p></div>
+                                        <div><p className="ae-detail-label">Charges</p><p className="ae-detail-value">{a.charges}</p></div>
+                                    </div>
+                                </div>
+                                <div className="ae-footer">
+                                    <span className="ae-footer-date">{a.envoyeLe}</span>
+                                    <div className="ae-footer-actions">
+                                        <button className="ae-icon-btn">👁️</button>
+                                        <button className="ae-icon-btn orange">✏️</button>
+                                        <button className="ae-icon-btn green">📥</button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '4rem 2rem', background: '#fff', borderRadius: '18px', border: '2px dashed #e5e7eb' }}>
+                            <div style={{ width: '64px', height: '64px', background: '#f0f9eb', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+                                <FileText size={32} color="#83C757" />
+                            </div>
+                            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.5rem' }}>Aucun avis d'échéance</h3>
+                            <p style={{ color: '#6b7280', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                                Vous n'avez pas encore d'avis d'échéance générés.
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
         </>

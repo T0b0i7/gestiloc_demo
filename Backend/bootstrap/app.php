@@ -48,6 +48,32 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function (\Spatie\Permission\Exceptions\RoleDoesNotExist $e, $request) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "Le rôle spécifié n'existe pas dans le système. Veuillez contacter l'administrateur.",
+            ], 400);
+        });
+
+        $exceptions->render(function (\Spatie\Permission\Exceptions\UnauthorizedException $e, $request) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "Vous n'avez pas les permissions nécessaires pour effectuer cette action.",
+            ], 403);
+        });
+
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "Sesssion expirée ou non authentifiée. Veuillez vous connecter.",
+            ], 401);
+        });
+
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, $request) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "La ressource demandée n'existe pas.",
+            ], 404);
+        });
     })
     ->create();
