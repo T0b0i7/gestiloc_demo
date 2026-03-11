@@ -175,6 +175,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <Dashboard onNavigate={handleNavigation} notify={notify} />
           </Layout>
@@ -188,6 +189,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <Biens notify={notify} />
           </Layout>
@@ -201,6 +203,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <TenantsList notify={notify} />
           </Layout>
@@ -214,6 +217,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <Bureau notify={notify} />
           </Layout>
@@ -228,6 +232,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <CreatePaymentRequest />
           </Layout>
@@ -242,6 +247,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <WithdrawalMethod />
           </Layout>
@@ -257,6 +263,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <AjouterBien />
           </Layout>
@@ -271,6 +278,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <ReparationsTravaux notify={notify} />
           </Layout>
@@ -285,6 +293,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <AjouterLocataire />
           </Layout>
@@ -299,6 +308,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <QuittancesLoyersPage notify={notify} />
           </Layout>
@@ -314,6 +324,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <Lease notify={notify} />
           </Layout>
@@ -328,6 +339,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <AvisEcheance notify={notify} />
           </Layout>
@@ -342,6 +354,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <PreavisList notify={notify} />
           </Layout>
@@ -356,6 +369,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <NouvelleLocation />
           </Layout>
@@ -369,6 +383,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <Locations notify={notify} />
           </Layout>
@@ -382,6 +397,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <Payments notify={notify} />
           </Layout>
@@ -396,6 +412,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <EtatsDesLieux notify={notify} />
           </Layout>
@@ -411,6 +428,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <ContratsBaux notify={notify} />
           </Layout>
@@ -426,6 +444,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <DocumentsManager notify={notify} />
           </Layout>
@@ -440,6 +459,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <Documents notify={notify} />
           </Layout>
@@ -454,6 +474,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <EmitInvoice notify={notify} />
           </Layout>
@@ -468,6 +489,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <FacturesDocs notify={notify} />
           </Layout>
@@ -482,6 +504,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <ArchivageDocs notify={notify} />
           </Layout>
@@ -497,6 +520,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <ComptabilitePage notify={notify} />
           </Layout>
@@ -511,6 +535,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <ParametresPage notify={notify} />
           </Layout>
@@ -524,6 +549,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <MonCompte notify={notify} />
           </Layout>
@@ -537,6 +563,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <MesBiens notify={notify} />
           </Layout>
@@ -552,6 +579,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <CoOwnersList notify={notify} />
           </Layout>
@@ -566,6 +594,7 @@ const ProprietaireApp: React.FC = () => {
             onLogout={handleLogout}
             isDarkMode={false}
             toggleTheme={() => { }}
+            notify={notify}
           >
             <InviteCoOwner notify={notify} />
           </Layout>

@@ -16,6 +16,8 @@ import {
 import { Tab, ToastMessage } from '../types';
 import { Toast } from './ui/Toast';
 import { AnimatedPage } from './AnimatedPage';
+import NotificationsModal from './NotificationsModal';
+import api from '@/services/api';
 import '../../Proprietaire/animations.css';
 
 interface UserData {
@@ -26,6 +28,17 @@ interface UserData {
   phone: string | null;
   roles: string[];
   default_role: string | null;
+}
+
+interface MenuItem {
+  id: string;
+  label: string;
+  icon: keyof typeof Icons;
+  path: string;
+  isLaravel?: boolean;
+  isReact?: boolean;
+  isLogout?: boolean;
+  submenu?: MenuItem[];
 }
 
 interface LayoutProps {
@@ -41,9 +54,9 @@ interface LayoutProps {
 
 const CONFIG = {
   LARAVEL_URL: 'http://localhost:8000',
-  REACT_URL:   'http://localhost:8080',
-  LOGIN_URL:   '/login',
-  LOGOUT_URL:  '/logout',
+  REACT_URL: 'http://localhost:8080',
+  LOGIN_URL: '/login',
+  LOGOUT_URL: '/logout',
 };
 
 // ─── COMPOSANTS ET CONSTANTES DU DESIGN HARMONISÉ ───────────────────
@@ -155,7 +168,7 @@ const TEXT_GREEN = "#529D21";
 const GRADIENT_GREEN = "linear-gradient(94.5deg, #8CCC63 5.47%, rgba(82, 157, 33, 0.87) 91.93%)";
 
 // Menu sections avec les icônes adaptées ET les propriétés de navigation conservées
-const menuSections = [
+const menuSections: { title: string; items: MenuItem[] }[] = [
   {
     title: "Menu principal",
     items: [
@@ -165,28 +178,28 @@ const menuSections = [
   {
     title: "GESTIONS DES BIENS",
     items: [
-      { id: "add-property",  label: "Ajouter un bien",  icon: "UserPlus" as keyof typeof Icons, path: "/coproprietaire/biens/create", isLaravel: true },
-      { id: "my-properties", label: "Mes biens",        icon: "House" as keyof typeof Icons, path: "/coproprietaire/biens",        isReact: true  },
+      { id: "add-property", label: "Ajouter un bien", icon: "UserPlus" as keyof typeof Icons, path: "/coproprietaire/biens/create", isLaravel: true },
+      { id: "my-properties", label: "Mes biens", icon: "House" as keyof typeof Icons, path: "/coproprietaire/biens", isReact: true },
     ]
   },
   {
     title: "GESTION LOCATIVE",
     items: [
-      { id: "new-rental",        label: "Nouvelle location",      icon: "Handshake" as keyof typeof Icons, path: "/coproprietaire/assign-property/create", isLaravel: true },
-      { id: "add-tenant",        label: "Ajouter un locataire",   icon: "UserPlus" as keyof typeof Icons, path: "/coproprietaire/tenants/create",          isLaravel: true },
-      { id: "tenant-list",       label: "Liste des locataires",   icon: "People" as keyof typeof Icons, path: "/coproprietaire/tenants",                 isLaravel: true },
-      { id: "payment-management",label: "Gestion des paiements",  icon: "Wallet" as keyof typeof Icons, path: "/coproprietaire/paiements",               isLaravel: true },
+      { id: "new-rental", label: "Nouvelle location", icon: "Handshake" as keyof typeof Icons, path: "/coproprietaire/assign-property/create", isLaravel: true },
+      { id: "add-tenant", label: "Ajouter un locataire", icon: "UserPlus" as keyof typeof Icons, path: "/coproprietaire/tenants/create", isLaravel: true },
+      { id: "tenant-list", label: "Liste des locataires", icon: "People" as keyof typeof Icons, path: "/coproprietaire/tenants", isLaravel: true },
+      { id: "payment-management", label: "Gestion des paiements", icon: "Wallet" as keyof typeof Icons, path: "/coproprietaire/paiements", isLaravel: true },
     ]
   },
   {
     title: "DOCUMENTS",
     items: [
-      { id: "lease-contracts",    label: "Contrats de bail",              icon: "File" as keyof typeof Icons, path: "/coproprietaire/leases",           isLaravel: true },
-      { id: "condition-reports",  label: "Etats de lieux",                icon: "Clipboard" as keyof typeof Icons, path: "/coproprietaire/etats-des-lieux",  isLaravel: true },
-      { id: "due-notices",        label: "Avis d'échéance",               icon: "File" as keyof typeof Icons, path: "/coproprietaire/notices",          isLaravel: true },
-      { id: "rent-receipts",      label: "Quittances de loyers",          icon: "Clipboard" as keyof typeof Icons, path: "/coproprietaire/quittances",       isLaravel: true },
-      { id: "invoices",           label: "Factures et documents divers",  icon: "File" as keyof typeof Icons, path: "/coproprietaire/factures",         isLaravel: true },
-      { id: "document-archiving", label: "Archivage de documents",        icon: "File" as keyof typeof Icons, path: "/coproprietaire/documents",        isReact: true   },
+      { id: "lease-contracts", label: "Contrats de bail", icon: "File" as keyof typeof Icons, path: "/coproprietaire/leases", isLaravel: true },
+      { id: "condition-reports", label: "Etats de lieux", icon: "Clipboard" as keyof typeof Icons, path: "/coproprietaire/etats-des-lieux", isLaravel: true },
+      { id: "due-notices", label: "Avis d'échéance", icon: "File" as keyof typeof Icons, path: "/coproprietaire/notices", isLaravel: true },
+      { id: "rent-receipts", label: "Quittances de loyers", icon: "Clipboard" as keyof typeof Icons, path: "/coproprietaire/quittances", isLaravel: true },
+      { id: "invoices", label: "Factures et documents divers", icon: "File" as keyof typeof Icons, path: "/coproprietaire/factures", isLaravel: true },
+      { id: "document-archiving", label: "Archivage de documents", icon: "File" as keyof typeof Icons, path: "/coproprietaire/documents", isReact: true },
     ]
   },
   {
@@ -204,8 +217,8 @@ const menuSections = [
   {
     title: "GESTION DES COPROPRIÉTAIRES",
     items: [
-      { id: "coowner-list",  label: "Liste des gestionnaires",  icon: "People" as keyof typeof Icons, path: "/coproprietaire/gestionnaires",       isLaravel: true },
-      { id: "invite-coowner",label: "Inviter un gestionnaire",  icon: "UserPlus" as keyof typeof Icons, path: "/coproprietaire/gestionnaires/creer", isLaravel: true },
+      { id: "coowner-list", label: "Liste des gestionnaires", icon: "People" as keyof typeof Icons, path: "/coproprietaire/gestionnaires", isLaravel: true },
+      { id: "invite-coowner", label: "Inviter un gestionnaire", icon: "UserPlus" as keyof typeof Icons, path: "/coproprietaire/gestionnaires/creer", isLaravel: true },
     ]
   },
   {
@@ -230,22 +243,22 @@ const goToLaravel = (path: string) => {
   const token = getToken();
   if (!token) { window.location.href = `${CONFIG.LARAVEL_URL}${CONFIG.LOGIN_URL}`; return; }
   const sep = path.includes('?') ? '&' : '?';
-  window.location.href = `${CONFIG.LARAVEL_URL}${path.startsWith('/') ? path : '/'+path}${sep}api_token=${encodeURIComponent(token)}&_t=${Date.now()}`;
+  window.location.href = `${CONFIG.LARAVEL_URL}${path.startsWith('/') ? path : '/' + path}${sep}api_token=${encodeURIComponent(token)}&_t=${Date.now()}`;
 };
 
 const goToReact = (path: string) => {
   const token = getToken();
-  if (!token) { 
-    window.location.href = `${CONFIG.LARAVEL_URL}${CONFIG.LOGIN_URL}`; 
-    return; 
+  if (!token) {
+    window.location.href = `${CONFIG.LARAVEL_URL}${CONFIG.LOGIN_URL}`;
+    return;
   }
   const sep = path.includes('?') ? '&' : '?';
-  window.location.href = `${CONFIG.REACT_URL}${path.startsWith('/') ? path : '/'+path}${sep}api_token=${encodeURIComponent(token)}&_t=${Date.now()}`;
+  window.location.href = `${CONFIG.REACT_URL}${path.startsWith('/') ? path : '/' + path}${sep}api_token=${encodeURIComponent(token)}&_t=${Date.now()}`;
 };
 
 // ─── NAV ITEM COMPONENT ────────────
 const NavItem: React.FC<{
-  item: any,
+  item: MenuItem,
   activeTab: Tab,
   onNavigate: (tab: Tab) => void,
   onLogout: () => void,
@@ -314,7 +327,7 @@ const NavItem: React.FC<{
 
       {hasSubmenu && isExpanded && (
         <div className="ml-10 pl-4 border-l-2 border-slate-100 mt-1 mb-2 space-y-1">
-          {item.submenu.map((sub: any) => {
+          {item.submenu?.map((sub: any) => {
             const active = isSubActive(sub.id);
             const SubIco = Icons[sub.icon as keyof typeof Icons];
             const handleSubClick = () => {
@@ -413,7 +426,7 @@ const SidebarContent: React.FC<{
                   activeTab={activeTab}
                   onNavigate={onNavigate}
                   onLogout={onLogout}
-                  isExpanded={expandedMenus.includes(item.id) || activeTab === item.id || (item.submenu?.some((s: any) => s.id === activeTab))}
+                  isExpanded={!!(expandedMenus.includes(item.id) || activeTab === item.id || item.submenu?.some((s: any) => s.id === activeTab))}
                   toggleMenu={toggleMenu}
                 />
               ))}
@@ -453,6 +466,22 @@ export const Layout: React.FC<LayoutProps> = ({
   const [showHelp, setShowHelp] = useState(false);
   const [user, setUser] = useState<UserData | null>(null);
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await api.get('/co-owners/me/notifications');
+        setUnreadCount(response.data.unread_count || 0);
+      } catch (error) {
+        console.error('Erreur unread notifications:', error);
+      }
+    };
+
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 60000); // Rafraîchir toutes les minutes
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     try {
@@ -464,9 +493,9 @@ export const Layout: React.FC<LayoutProps> = ({
   }, []);
 
   const handleNavigate = (tab: Tab) => {
-    // Vérifier si c'est une route React qui nécessite une redirection externe
-    const menuItem = menuSections.flatMap(s => s.items).find(item => item.id === tab);
-    
+    const allItems = menuSections.flatMap(s => s.items) as MenuItem[];
+    const menuItem = allItems.find(item => item.id === tab);
+
     if (menuItem?.isLaravel) {
       goToLaravel(menuItem.path);
     } else if (menuItem?.isReact) {
@@ -525,9 +554,11 @@ export const Layout: React.FC<LayoutProps> = ({
           >
             <Bell size={18} fill="#FFC107" stroke="#FFC107" />
             <span className="hidden sm:inline">Notifications</span>
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-400 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-[#8CCC63]">
-              2
-            </span>
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-400 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-[#8CCC63]">
+                {unreadCount}
+              </span>
+            )}
           </button>
 
           <button
@@ -618,6 +649,14 @@ export const Layout: React.FC<LayoutProps> = ({
           />
         ))}
       </div>
+
+      <NotificationsModal
+        isOpen={showNotifications}
+        onClose={() => {
+          setShowNotifications(false);
+          api.get('/co-owners/me/notifications').then(res => setUnreadCount(res.data.unread_count || 0));
+        }}
+      />
     </div>
   );
 };

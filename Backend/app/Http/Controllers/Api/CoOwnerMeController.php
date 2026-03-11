@@ -1205,4 +1205,159 @@ class CoOwnerMeController extends Controller
             'data' => $audits
         ]);
     }
+
+    /**
+     * Récupérer les notifications du co-propriétaire (basé sur les biens délégués)
+     */
+    public function getNotifications(Request $request): JsonResponse
+    {
+        try {
+            $user = $request->user();
+
+            if (!$user || !$user->hasRole('co_owner')) {
+                return response()->json(['message' => 'Accès réservé aux co-propriétaires'], 403);
+            }
+
+            $coOwner = CoOwner::where('user_id', $user->id)->first();
+            if (!$coOwner) {
+                return response()->json(['message' => 'Profil de co-propriétaire introuvable'], 422);
+            }
+
+            // Récupérer les IDs des biens délégués actifs
+            $delegatedPropertyIds = PropertyDelegation::where('co_owner_id', $coOwner->id)
+                ->where('status', 'active')
+                ->pluck('property_id');
+
+            $notifications = [];
+
+            // 1. Délégations EN ATTENTE (Nouvelles délégations)
+            $pendingDelegations = PropertyDelegation::where('co_owner_id', $coOwner->id)
+                ->where('status', 'pending')
+                ->with(['property', 'landlord'])
+                ->get();
+
+            foreach ($pendingDelegations as $delegation) {
+                $notifications[] = [
+                    'id' => 'delegation_pending_' . $delegation->id,
+                    'type' => 'important',
+                    'title' => 'Nouvelle délégation',
+                    'message' => "Le propriétaire " . ($delegation->landlord->first_name ?? '') . " vous a délégué le bien " . ($delegation->property->name ?? 'Inconnu'),
+                    'subtext' => 'Action requise',
+                    'is_read' => false,
+                    'created_at' => $delegation->created_at,
+                    'link' => '/coproprietaire/delegations',
+                    'icon' => 'tenant',
+                ];
+            }
+
+            // 2. Paiements récents sur les biens délégués
+            $recentPayments = Payment::whereIn('lease_id', function($query) use ($delegatedPropertyIds) {
+                    $query->select('id')->from('leases')->whereIn('property_id', $delegatedPropertyIds);
+                })
+                ->where('status', 'approved')
+                ->where('paid_at', '>=', now()->subDays(7))
+                ->with(['lease.property', 'lease.tenant'])
+                ->get();
+
+            foreach ($recentPayments as $payment) {
+                $propertyName = $payment->lease->property->name ?? 'Inconnu';
+                $tenantName = $payment->lease->tenant 
+                    ? ($payment->lease->tenant->first_name . ' ' . $payment->lease->tenant->last_name)
+                    : 'Un locataire';
+                
+                $notifications[] = [
+                    'id' => 'payment_received_' . $payment->id,
+                    'type' => 'info',
+                    'title' => 'Paiement reçu',
+                    'message' => "{$tenantName} a payé son loyer pour {$propertyName}",
+                    'subtext' => 'Transaction confirmée',
+                    'is_read' => false,
+                    'created_at' => $payment->paid_at,
+                    'link' => '/coproprietaire/paiements', 
+                    'icon' => 'payment',
+                ];
+            }
+
+            // 3. Préavis de départ sur les biens délégués
+            $recentNotices = Notice::whereIn('property_id', $delegatedPropertyIds)
+                ->where('created_at', '>=', now()->subDays(15))
+                ->with(['property', 'tenant'])
+                ->get();
+
+            foreach ($recentNotices as $notice) {
+                $notifications[] = [
+                    'id' => 'notice_' . $notice->id,
+                    'type' => 'critical',
+                    'title' => 'Préavis de départ',
+                    'message' => ($notice->tenant->first_name ?? 'Un locataire') . " a déposé son préavis pour " . ($notice->property->name ?? 'un bien'),
+                    'subtext' => 'Effectif le ' . \Carbon\Carbon::parse($notice->effective_date)->format('d/m/Y'),
+                    'is_read' => false,
+                    'created_at' => $notice->created_at,
+                    'link' => '/coproprietaire/preavis',
+                    'icon' => 'alert',
+                ];
+            }
+
+            // 4. Baux expirant bientôt
+            $expiringLeases = Lease::whereIn('property_id', $delegatedPropertyIds)
+                ->where('status', 'active')
+                ->whereNotNull('end_date')
+                ->where('end_date', '>=', now())
+                ->where('end_date', '<=', now()->addDays(30))
+                ->with(['property', 'tenant'])
+                ->get();
+
+            foreach ($expiringLeases as $lease) {
+                $notifications[] = [
+                    'id' => 'lease_expiring_' . $lease->id,
+                    'type' => 'important',
+                    'title' => 'Fin de bail proche',
+                    'message' => "Le bail de " . ($lease->tenant->last_name ?? 'Inconnu') . " se termine bientôt (" . ($lease->property->name ?? '') . ")",
+                    'subtext' => 'Échéance le ' . \Carbon\Carbon::parse($lease->end_date)->format('d/m/Y'),
+                    'is_read' => false,
+                    'created_at' => $lease->updated_at,
+                    'link' => '/coproprietaire/leases',
+                    'icon' => 'info',
+                ];
+            }
+
+            // Trier par date
+            usort($notifications, function($a, $b) {
+                return strtotime($b['created_at']) - strtotime($a['created_at']);
+            });
+
+            return response()->json([
+                'notifications' => array_slice($notifications, 0, 20),
+                'unread_count' => count(array_filter($notifications, fn($n) => !$n['is_read'])),
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erreur lors du chargement des notifications',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Marquer une notification comme lue (Simulé)
+     */
+    public function markNotificationAsRead(Request $request, $id): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'message' => 'Notification marquée comme lue'
+        ]);
+    }
+
+    /**
+     * Marquer toutes les notifications comme lues (Simulé)
+     */
+    public function markAllNotificationsAsRead(Request $request): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'message' => 'Toutes les notifications ont été marquées comme lues'
+        ]);
+    }
 }

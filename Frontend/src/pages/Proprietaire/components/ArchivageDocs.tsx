@@ -45,32 +45,36 @@ const ArchivageDocs: React.FC<ArchiveDocsProps> = ({ notify }) => {
             ]);
 
             const mapped = (docs || []).map((d: any) => {
-                const config = TYPE_CONFIG[d.type] || { label: d.type?.toUpperCase() || 'DOCUMENT', color: '#6b7280' };
+                // Le backend fournit déjà typeBadge et typeBadgeColor dans l'index des archives
+                const label = d.typeBadge || d.type?.toUpperCase() || 'DOCUMENT';
+                const color = d.typeBadgeColor || '#6b7280';
+
                 return {
                     id: String(d.id),
-                    typeBadge: config.label,
-                    typeBadgeColor: config.color,
-                    titre: d.title || 'Sans titre',
-                    bien: d.property?.name || d.property?.address || 'Bien inconnu',
-                    champ1Label: 'DÉPOSÉ LE',
-                    champ1Value: new Date(d.created_at).toLocaleDateString('fr-FR'),
-                    champ2Label: 'TYPE',
-                    champ2Value: d.category || 'Archive',
-                    champ3Label: 'MÉTA',
-                    champ3Value: d.metadata || '—',
-                    champ4Label: 'TAILLE',
-                    champ4Value: d.file_size ? `${(d.file_size / 1024).toFixed(1)} KB` : '—',
-                    dateBas: `Archivé le ${new Date(d.created_at).toLocaleDateString('fr-FR')}`
+                    typeBadge: label,
+                    typeBadgeColor: color,
+                    titre: d.titre || d.title || 'Sans titre',
+                    bien: d.bien || (d.property?.name || d.property?.address || 'Bien inconnu'),
+                    champ1Label: d.champ1Label || 'DÉPOSÉ LE',
+                    champ1Value: d.champ1Value || new Date(d.created_at || d.date_archive).toLocaleDateString('fr-FR'),
+                    champ2Label: d.champ2Label || 'TYPE',
+                    champ2Value: d.champ2Value || d.category || 'Archive',
+                    champ3Label: d.champ3Label || 'MÉTA',
+                    champ3Value: d.champ3Value || d.metadata || '—',
+                    champ4Label: d.champ4Label || 'TAILLE',
+                    champ4Value: d.champ4Value || (d.file_size ? `${(d.file_size / 1024).toFixed(1)} KB` : '—'),
+                    dateBas: d.dateBas || `Archivé le ${new Date(d.created_at || d.date_archive).toLocaleDateString('fr-FR')}`
                 };
             });
 
             setArchiveList(mapped);
-            if (statsData) {
+            if (statsData || (docs && (docs as any).stats)) {
+                const s = statsData || (docs as any).stats;
                 setKpis({
-                    totalDoc: statsData.total_count || 0,
-                    bauxTermines: statsData.expired_leases || 0,
-                    edlArchived: statsData.condition_reports || 0,
-                    storageUsed: statsData.storage_human || '0 MB'
+                    totalDoc: s.total_documents || s.total_count || 0,
+                    bauxTermines: s.baux_termines || s.expired_leases || 0,
+                    edlArchived: s.edl_archives || s.condition_reports || 0,
+                    storageUsed: s.total_size || s.storage_human || '0 MB'
                 });
             }
         } catch (error) {

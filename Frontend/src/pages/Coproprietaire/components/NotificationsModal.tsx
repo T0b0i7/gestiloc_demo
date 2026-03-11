@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { X, Bell, BellOff, Wallet, UserPlus, AlertTriangle, FileText, Loader, Check } from 'lucide-react';
+import api from '@/services/api';
 
 interface Notification {
   id: string;
   icon: 'payment' | 'tenant' | 'alert' | 'info';
-  iconType: string;
+  type: string;
   title: string;
   message: string;
-  time: string;
-  unread: boolean;
+  created_at: string;
+  is_read: boolean;
 }
 
 interface NotificationsModalProps {
@@ -29,63 +30,33 @@ const NotificationsModal: React.FC<NotificationsModalProps> = ({ isOpen, onClose
   const loadNotifications = async () => {
     setLoading(true);
     try {
-      // Simuler un appel API
-      setTimeout(() => {
-        const mockNotifications: Notification[] = [
-          {
-            id: '1',
-            icon: 'payment',
-            iconType: 'wallet',
-            title: 'Paiement en attente',
-            message: 'Un locataire a un paiement en retard',
-            time: 'Il y a 2 heures',
-            unread: true
-          },
-          {
-            id: '2',
-            icon: 'tenant',
-            iconType: 'user-plus',
-            title: 'Nouveau locataire',
-            message: 'Un nouveau locataire a été ajouté à un de vos biens',
-            time: 'Hier',
-            unread: true
-          },
-          {
-            id: '3',
-            icon: 'alert',
-            iconType: 'alert-triangle',
-            title: 'Préavis de départ',
-            message: 'Un locataire a soumis un préavis de départ',
-            time: 'Il y a 3 jours',
-            unread: false
-          },
-          {
-            id: '4',
-            icon: 'info',
-            iconType: 'file-text',
-            title: 'Quittance disponible',
-            message: 'Une nouvelle quittance a été générée',
-            time: 'La semaine dernière',
-            unread: false
-          }
-        ];
-        setNotifications(mockNotifications);
-        setLoading(false);
-      }, 500);
+      const response = await api.get('/co-owners/me/notifications');
+      setNotifications(response.data.notifications || []);
+      setLoading(false);
     } catch (error) {
       console.error('Erreur chargement notifications:', error);
       setLoading(false);
     }
   };
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, unread: false } : n))
-    );
+  const markAsRead = async (id: string) => {
+    try {
+      await api.post(`/co-owners/me/notifications/${id}/read`);
+      setNotifications(prev =>
+        prev.map(n => (n.id === id ? { ...n, is_read: true } : n))
+      );
+    } catch (error) {
+      console.error('Erreur mark as read:', error);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+  const markAllAsRead = async () => {
+    try {
+      await api.post('/co-owners/me/notifications/read-all');
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    } catch (error) {
+      console.error('Erreur mark all as read:', error);
+    }
   };
 
   const getIconComponent = (icon: string) => {
@@ -110,13 +81,13 @@ const NotificationsModal: React.FC<NotificationsModalProps> = ({ isOpen, onClose
 
   if (!isOpen) return null;
 
-  const unreadCount = notifications.filter(n => n.unread).length;
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-      
-      <div 
+
+      <div
         className="relative bg-white rounded-2xl w-full max-w-md max-h-[80vh] overflow-hidden shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
@@ -157,21 +128,22 @@ const NotificationsModal: React.FC<NotificationsModalProps> = ({ isOpen, onClose
                 <div
                   key={notif.id}
                   onClick={() => markAsRead(notif.id)}
-                  className={`flex items-start gap-3 p-3 border-b border-gray-100 cursor-pointer transition-colors ${
-                    notif.unread ? 'bg-green-50 hover:bg-green-100' : 'hover:bg-gray-50'
-                  }`}
+                  className={`flex items-start gap-3 p-3 border-b border-gray-100 cursor-pointer transition-colors ${!notif.is_read ? 'bg-green-50 hover:bg-green-100' : 'hover:bg-gray-50'
+                    }`}
                 >
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${getIconClass(notif.icon)}`}>
                     {getIconComponent(notif.icon)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`text-xs font-medium ${notif.unread ? 'text-gray-900' : 'text-gray-700'}`}>
+                    <p className={`text-xs font-medium ${!notif.is_read ? 'text-gray-900' : 'text-gray-700'}`}>
                       {notif.title}
                     </p>
                     <p className="text-xs text-gray-600 mt-0.5">{notif.message}</p>
-                    <p className="text-xs text-gray-400 mt-1">{notif.time}</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {new Date(notif.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </p>
                   </div>
-                  {notif.unread && (
+                  {!notif.is_read && (
                     <div className="w-1.5 h-1.5 rounded-full bg-green-600 mt-1.5" />
                   )}
                 </div>

@@ -9,6 +9,7 @@ import {
 import { Tab, ToastMessage } from '../types';
 import { Toast } from './ui/Toast';
 import { AnimatedPage } from './AnimatedPage';
+import api from '@/services/api';
 import '../animations.css';
 
 interface UserData {
@@ -30,6 +31,7 @@ interface LayoutProps {
   onLogout: () => void;
   isDarkMode: boolean;
   toggleTheme: () => void;
+  notify?: (message: string, type: 'success' | 'error' | 'info') => void;
 }
 
 const CONFIG = {
@@ -438,24 +440,69 @@ export const Layout: React.FC<LayoutProps> = ({
   toasts,
   removeToast,
   onLogout,
+  notify,
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [user, setUser] = useState<UserData | null>(null);
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);
-  const [notifs, setNotifs] = useState([
-    { id: '1', type: 'critical', message: 'Loyer novembre en retard', subtext: 'Régularisez avant pénalités', isRead: false, time: '2 heures' },
-    { id: '2', type: 'important', message: 'Intervention confirmée', subtext: '22/11 - 14h-16h', isRead: false, time: '1 jour' },
-  ]);
+  const [notifs, setNotifs] = useState<any[]>([]);
+  const lastNotifIds = React.useRef<Set<string>>(new Set());
+  const isFirstLoad = React.useRef(true);
 
-  const notifCount = notifs.filter(n => !n.isRead).length;
+  const fetchNotifications = async () => {
+    try {
+      const response = await api.get('/landlord/notifications');
+      const fetched = response.data.notifications || [];
 
-  const markAllAsRead = () => setNotifs(prev => prev.map(n => ({ ...n, isRead: true })));
+      // Détecter les nouvelles notifications non lues pour afficher un toast
+      if (!isFirstLoad.current && notify) {
+        fetched.forEach((n: any) => {
+          if (!n.is_read && !lastNotifIds.current.has(n.id)) {
+            notify(n.title || n.message, 'info');
+          }
+        });
+      }
+
+      lastNotifIds.current = new Set(fetched.map((n: any) => n.id));
+      isFirstLoad.current = false;
+      setNotifs(fetched);
+    } catch (error) {
+      console.error('Erreur fetching notifications:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000); // 1 min pour plus de réactivité
+    return () => clearInterval(interval);
+  }, []);
+
+  const notifCount = notifs.filter((n: any) => !n.is_read).length;
+
+  const markAllAsRead = async () => {
+    try {
+      await api.post('/landlord/notifications/read-all');
+      setNotifs(prev => prev.map(n => ({ ...n, is_read: true })));
+    } catch (error) {
+      console.error('Erreur mark all as read:', error);
+    }
+  };
+
+  const markAsRead = async (id: string) => {
+    try {
+      await api.post(`/landlord/notifications/${id}/read`);
+      setNotifs(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+    } catch (error) {
+      console.error('Erreur mark as read:', error);
+    }
+  };
 
   const removeNotif = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setNotifs(prev => prev.filter(n => n.id !== id));
+    // Simulate removal or just mark as read
+    markAsRead(id);
   };
 
   const handlePageChange = (page: string) => {
@@ -669,15 +716,17 @@ export const Layout: React.FC<LayoutProps> = ({
             </button>
           </div>
           <div className="flex-1 overflow-y-auto">
-            {notifs.map((notif) => (
+            {notifs.map((notif: any) => (
               <div key={notif.id} className="p-4 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-100 last:border-0 relative group"
-                onClick={() => setNotifs(prev => prev.map(n => n.id === notif.id ? { ...n, isRead: true } : n))}>
+                onClick={() => markAsRead(notif.id)}>
                 <div className="flex items-start gap-4">
-                  <div className={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 ${notif.isRead ? 'bg-gray-300' : notif.type === 'critical' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]'}`} />
+                  <div className={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 ${notif.is_read ? 'bg-gray-300' : notif.type === 'error' || notif.type === 'critical' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]'}`} />
                   <div className="flex-1">
-                    <p className={`text-[0.9rem] leading-tight ${notif.isRead ? 'text-gray-500 font-medium' : 'text-gray-900 font-bold'}`}>{notif.message}</p>
-                    <p className="text-[0.85rem] text-gray-600 mt-1">{notif.subtext}</p>
-                    <p className="text-[0.75rem] text-gray-400 mt-2 font-medium uppercase tracking-wider">Il y a {notif.time}</p>
+                    <p className={`text-[0.9rem] leading-tight ${notif.is_read ? 'text-gray-500 font-medium' : 'text-gray-900 font-bold'}`}>{notif.title || notif.message}</p>
+                    <p className="text-[0.85rem] text-gray-600 mt-1">{notif.message || notif.subtext}</p>
+                    <p className="text-[0.75rem] text-gray-400 mt-2 font-medium uppercase tracking-wider">
+                      {new Date(notif.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </p>
                   </div>
                 </div>
                 <button

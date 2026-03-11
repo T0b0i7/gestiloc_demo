@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Configuration mode standalone/backend
-const IS_STANDALONE = true; // Mettre 'false' pour utiliser le backend Laravel
+const IS_STANDALONE = false; // Mettre 'false' pour utiliser le backend Laravel
 
 export interface User {
   id: number;
@@ -434,6 +434,26 @@ export const authService = {
       localStorage.removeItem('user');
       return null;
     }
+  },
+
+  forgotPassword: async (email: string) => {
+    if (IS_STANDALONE) {
+      await new Promise((r) => setTimeout(r, 1000));
+      return { status: 'success', message: 'Email envoyé (simulé)' };
+    }
+    await initializeCsrfToken();
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data;
+  },
+
+  resetPassword: async (data: any) => {
+    if (IS_STANDALONE) {
+      await new Promise((r) => setTimeout(r, 1000));
+      return { status: 'success', message: 'Mot de passe réinitialisé (simulé)' };
+    }
+    await initializeCsrfToken();
+    const response = await api.post('/auth/reset-password', data);
+    return response.data;
   },
 };
 
@@ -1317,7 +1337,8 @@ export const invoiceService = {
 export const maintenanceService = {
   list: async (): Promise<any[]> => {
     const response = await api.get('/incidents');
-    return response.data;
+    // Le backend utilise la pagination (MaintenanceRequestResource::collection)
+    return response.data.data || response.data;
   },
   create: async (payload: any): Promise<any> => {
     const response = await api.post('/incidents', payload);
@@ -1332,7 +1353,8 @@ export const maintenanceService = {
 export const documentArchiveService = {
   list: async (): Promise<any[]> => {
     const response = await api.get('/archives');
-    return response.data;
+    // Le backend renvoie { archives: [...], stats: {...} }
+    return response.data.archives || [];
   },
   getStats: async (): Promise<any> => {
     const response = await api.get('/archives/stats');

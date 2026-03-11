@@ -51,6 +51,8 @@ use Illuminate\Support\Facades\Route;
 Route::post('auth/register/landlord', [AuthController::class, 'registerLandlord']);
 Route::post('auth/register/co-owner', [AuthController::class, 'registerCoOwner']);
 Route::post('auth/login', [AuthController::class, 'login']);
+Route::post('auth/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('auth/reset-password', [AuthController::class, 'resetPassword']);
 
 // Tenant invitation flow
 Route::post('auth/tenant/set-password', [AuthController::class, 'setPassword']);
@@ -433,6 +435,12 @@ Route::get('condition-reports/{uuid}/download', [\App\Http\Controllers\Api\Tenan
         // Fedapay
         Route::get('fedapay', [CoOwnerFedapayController::class, 'show']);
         Route::post('fedapay/subaccount', [CoOwnerFedapayController::class, 'createOrUpdate']);
+
+        // Notifications
+        Route::get('notifications', [CoOwnerMeController::class, 'getNotifications']);
+        Route::post('notifications/{id}/read', [CoOwnerMeController::class, 'markNotificationAsRead']);
+        Route::post('notifications/read-all', [CoOwnerMeController::class, 'markAllNotificationsAsRead']);
+
     });
 
     /* =========================

@@ -802,4 +802,47 @@ HTML;
             ]);
         }
     }
+
+    /**
+     * Start the forgot password process
+     */
+    public function forgotPassword(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+        $token = $this->authService->createPasswordResetToken($request->email);
+
+        if ($token) {
+            $resetUrl = $this->frontendUrl() . "/reset-password?token=" . $token . "&email=" . urlencode($request->email);
+            $contentHtml = "<p>Bonjour,</p><p>Vous avez demandé la réinitialisation de votre mot de passe pour votre compte Gestiloc.</p>" .
+                "<p>Cliquez sur le bouton ci-dessous pour définir un nouveau mot de passe :</p>" .
+                $this->buttonHtml("Réinitialiser le mot de passe", $resetUrl) .
+                "<p>Si vous n'avez pas demandé cette réinitialisation, vous pouvez ignorer cet email.</p><p>Ce lien expirera dans 60 minutes.</p>";
+
+            $this->trySendMail($request->email, "Réinitialisation de mot de passe", "Réinitialisation de mot de passe", "REF-PW-RESET", $contentHtml);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Si cet email correspond à un compte, un lien de réinitialisation a été envoyé.'
+        ]);
+    }
+
+    /**
+     * Complete the password reset process
+     */
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|min:8|confirmed',
+        ]);
+
+        $this->authService->resetPassword($request->only(['email', 'token', 'password']));
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Votre mot de passe a été réinitialisé avec succès.'
+        ]);
+    }
 }

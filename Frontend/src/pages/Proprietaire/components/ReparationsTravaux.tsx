@@ -24,9 +24,11 @@ interface Intervention {
 // Les données seront chargées depuis l'API
 const STATUS_CONFIG: Record<string, { label: string, color: string, bg: string }> = {
     'pending': { label: 'EN ATTENTE', color: '#f59e0b', bg: '#fffbeb' },
+    'open': { label: 'OUVERT', color: '#83C757', bg: '#f0f9eb' },
     'urgent': { label: 'URGENT', color: '#dc2626', bg: '#fef2f2' },
     'in_progress': { label: 'EN COURS', color: '#3b82f6', bg: '#eff6ff' },
     'completed': { label: 'TERMINÉE', color: '#16a34a', bg: '#f0fdf4' },
+    'resolved': { label: 'RÉSOLU', color: '#16a34a', bg: '#f0fdf4' },
     'cancelled': { label: 'ANNULÉE', color: '#6b7280', bg: '#f3f4f6' },
 };
 
@@ -52,11 +54,11 @@ const ReparationsTravaux: React.FC<RTProps> = ({ notify }) => {
             const mapped = (data || []).map((item: any) => {
                 const config = STATUS_CONFIG[item.status] || { label: item.status?.toUpperCase() || 'INCONNU', color: '#6b7280', bg: '#f3f4f6' };
 
-                if (item.status === 'urgent') urgentCount++;
+                if (item.status === 'urgent' || item.priority === 'emergency') urgentCount++;
                 if (item.status === 'in_progress') inProgressCount++;
-                if (item.status === 'pending') pendingCount++;
+                if (item.status === 'pending' || item.status === 'open') pendingCount++;
 
-                const cost = parseFloat(item.estimated_cost || 0);
+                const cost = item.estimated_cost ? parseFloat(item.estimated_cost) : 0;
                 totalCost += cost;
 
                 return {
@@ -64,8 +66,8 @@ const ReparationsTravaux: React.FC<RTProps> = ({ notify }) => {
                     statusColor: config.color,
                     statusBg: config.bg,
                     title: item.title || 'Intervention sans titre',
-                    locataire: item.lease?.tenant ? `${item.lease.tenant.first_name} ${item.lease.tenant.last_name}` : 'Inconnu',
-                    bien: item.lease?.property?.address || 'Adresse inconnue',
+                    locataire: item.tenant ? `${item.tenant.first_name} ${item.tenant.last_name}` : (item.lease?.tenant ? `${item.lease.tenant.first_name} ${item.lease.tenant.last_name}` : 'Inconnu'),
+                    bien: item.property?.address || item.lease?.property?.address || 'Adresse inconnue',
                     details: [
                         { label: 'TYPE', value: item.category || 'Maintenance' },
                         { label: 'PRIORITÉ', value: item.priority || 'Normale' },

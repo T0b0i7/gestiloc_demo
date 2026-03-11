@@ -454,4 +454,57 @@ class AuthService
 
         return $invitation;
     }
+
+    /**
+     * Generate a password reset token for a user
+     *
+     * @param string $email
+     * @return string|null
+     */
+    public function createPasswordResetToken(string $email): ?string
+    {
+        $user = User::where('email', $email)->first();
+        if (!$user) {
+            return null;
+        }
+
+        $token = Str::random(60);
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $email],
+            ['token' => Hash::make($token), 'created_at' => now()]
+        );
+
+        return $token;
+    }
+
+    /**
+     * Reset the user's password using a valid token
+     *
+     * @param array $data
+     * @return void
+     * @throws ValidationException
+     */
+    public function resetPassword(array $data): void
+    {
+        $record = DB::table('password_reset_tokens')->where('email', $data['email'])->first();
+
+        if (!$record || !Hash::check($data['token'], $record->token)) {
+            throw ValidationException::withMessages(['token' => ['Le jeton de réinitialisation est invalide.']]);
+        }
+
+        if (Carbon::parse($record->created_at)->addMinutes(60)->isPast()) {
+            DB::table('password_reset_tokens')->where('email', $data['email'])->delete();
+            throw ValidationException::withMessages(['token' => ['Le jeton de réinitialisation a expiré.']]);
+        }
+
+        $user = User::where('email', $data['email'])->first();
+        if (!$user) {
+            throw ValidationException::withMessages(['email' => ['Utilisateur non trouvé.']]);
+        }
+
+        $user->password = Hash::make($data['password']);
+        $user->save();
+
+        DB::table('password_reset_tokens')->where('email', $data['email'])->delete();
+    }
 }
