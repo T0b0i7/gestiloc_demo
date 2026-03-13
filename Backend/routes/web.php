@@ -47,7 +47,7 @@ Route::get('/login', function () {
                 if (apiToken) {
                     localStorage.setItem('token', apiToken);
                 }
-                window.location.href = 'http://localhost:8080/dashboard';
+                window.location.href = '/coproprietaire/dashboard';
             </script>
         ";
     }
@@ -105,7 +105,7 @@ Route::get('/logout', function () {
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
                 setTimeout(() => {
-                    window.location.href = 'http://localhost:8080/login';
+                    window.location.href = '/login';
                 }, 1000);
             </script>
         </body>

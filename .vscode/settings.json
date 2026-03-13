@@ -1,45 +1,5 @@
 {
   "css.customData": [
-<<<<<<< HEAD
-    {
-      "version": 1.1,
-      "atDirectives": [
-        {
-          "name": "@tailwind",
-          "description": "Use the @tailwind directive to insert Tailwind's base, components, utilities and variants styles into your CSS.",
-          "references": [
-            {
-              "name": "Tailwind CSS Documentation",
-              "url": "https://tailwindcss.com/docs/functions-and-directives#tailwind"
-            }
-          ]
-        },
-        {
-          "name": "@apply",
-          "description": "Use @apply to inline any existing utility classes into your own custom CSS.",
-          "references": [
-            {
-              "name": "Tailwind CSS Documentation",
-              "url": "https://tailwindcss.com/docs/functions-and-directives#apply"
-            }
-          ]
-        },
-        {
-          "name": "@layer",
-          "description": "Use the @layer directive to tell Tailwind which 'bucket' a set of custom styles belong to.",
-          "references": [
-            {
-              "name": "Tailwind CSS Documentation",
-              "url": "https://tailwindcss.com/docs/functions-and-directives#layer"
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}
-=======
     ".vscode/tailwind-directives.json"
   ]
 }
->>>>>>> 37e0aa21dfac1a2f4a2dd188053a95865f869afd

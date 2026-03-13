@@ -15,62 +15,52 @@ export const LogoutModal: React.FC<LogoutModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Overlay */}
-      <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
-        onClick={onCancel}
-      />
-      
-      {/* Modal */}
-      <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md mx-4 transform transition-all duration-300 scale-100">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
-              <AlertTriangle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4" style={{ animation: 'fadeIn 0.3s ease-out forwards' }}>
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all" style={{ animation: 'slideUp 0.3s ease-out forwards' }}>
+        <div className="p-6">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+              <LogOut size={28} className="text-red-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                Confirmation de déconnexion
-              </h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                Êtes-vous sûr de vouloir vous déconnecter ?
-              </p>
+              <h3 className="text-xl font-bold text-gray-900" style={{ fontFamily: "'Merriweather', serif" }}>Déconnexion</h3>
+              <p className="text-sm text-gray-500">Êtes-vous sûr de vouloir vous déconnecter ?</p>
             </div>
           </div>
-          <button
-            onClick={onCancel}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
-            <X size={20} />
-          </button>
-        </div>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+            <p className="text-sm text-amber-800 flex items-start gap-3 leading-snug">
+              <AlertTriangle size={20} className="shrink-0 mt-0.5" />
+              <span>Vous devrez vous reconnecter pour accéder à votre espace personnel. Toutes les modifications non enregistrées seront perdues.</span>
+            </p>
+          </div>
 
-        {/* Body */}
-        <div className="p-6">
-          <p className="text-slate-600 dark:text-slate-300 text-center mb-6">
-            Vous serez redirigé vers la page de connexion et devrez vous identifier à nouveau pour accéder à votre compte.
-          </p>
-          
-          {/* Actions */}
           <div className="flex gap-3">
             <button
               onClick={onCancel}
-              className="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors duration-200"
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors"
             >
               Annuler
             </button>
             <button
               onClick={onConfirm}
-              className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors duration-200 flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
             >
               <LogOut size={18} />
-              Se déconnecter
+              <span>Se déconnecter</span>
             </button>
           </div>
         </div>
       </div>
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(20px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      `}</style>
     </div>
   );
 };
