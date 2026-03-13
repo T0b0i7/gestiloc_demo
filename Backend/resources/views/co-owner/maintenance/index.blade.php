@@ -107,7 +107,8 @@
 
     <!-- Liste des interventions -->
     <div class="interventions-grid">
-        @forelse($maintenanceRequests as $request)
+        @forelse($maintenanceRequests as $maint)
+            @php $request = $maint; @endphp
             @php
                 $statusClass = match($request->status) {
                     'open' => $request->priority === 'emergency' ? 'urgent' : 'planned',

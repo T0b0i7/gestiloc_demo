@@ -230,6 +230,7 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
   const [coOwners, setCoOwners] = useState<Personne[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showNoPropertyModal, setShowNoPropertyModal] = useState(false);
   const [propertyInfo, setPropertyInfo] = useState<any>(null);
   const [properties, setProperties] = useState<any[]>([]);
   const [selectedProperty, setSelectedProperty] = useState<string>('all');
@@ -271,6 +272,7 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
         // Message clair si aucune donnée
         if (!response.data.creator && !response.data.landlord && response.data.co_owners.length === 0) {
           setError('VOUS N\'AVEZ AUCUN BIEN ASSOCIÉ À VOTRE COMPTE');
+          setShowNoPropertyModal(true);
         }
       } else {
         setError(response.data.message || 'Erreur lors du chargement');
@@ -397,53 +399,6 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
     );
   }
 
-  // Message clair quand aucun bien n'est associé
-  if (error && allPeople.length === 0) {
-    return (
-      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-        <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-12 text-center animate-fadeIn">
-          <div className="w-24 h-24 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <AlertCircle size={48} className="text-amber-600" />
-          </div>
-          <h3 className="text-2xl font-bold text-amber-800 mb-3">
-            {isAuthenticated ? 'VOUS N\'AVEZ AUCUN BIEN ASSOCIÉ' : 'MODE DÉMO'}
-          </h3>
-          <p className="text-amber-700 text-lg mb-4 max-w-lg mx-auto">
-            {isAuthenticated 
-              ? 'Aucun bien n\'est actuellement associé à votre compte locataire.'
-              : 'Vous êtes en mode démonstration. Connectez-vous pour voir vos véritables informations.'}
-          </p>
-          <div className="bg-white/50 rounded-xl p-4 max-w-md mx-auto mb-6">
-            <p className="text-sm text-amber-600 flex items-center justify-center gap-2">
-              <Info size={16} />
-              {isAuthenticated 
-                ? 'Contactez votre propriétaire pour associer un bien à votre compte.'
-                : 'Utilisez les identifiants de test ou créez un compte pour accéder à vos données réelles.'}
-            </p>
-          </div>
-          <div className="flex gap-4 justify-center">
-            {!isAuthenticated && (
-              <button
-                onClick={() => window.location.href = '/login'}
-                className="px-6 py-3 bg-[#529D21] text-white rounded-xl hover:bg-[#529D21]/90 transition-colors inline-flex items-center gap-2 shadow-lg shadow-[#529D21]/20"
-              >
-                <User size={18} />
-                Se connecter
-              </button>
-            )}
-            <button
-              onClick={fetchLandlordInfo}
-              className="px-6 py-3 bg-amber-600 text-white rounded-xl hover:bg-amber-700 transition-colors inline-flex items-center gap-2 shadow-lg shadow-amber-200"
-            >
-              <RefreshCw size={18} />
-              Réessayer
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Message quand il y a des données mais aucune après filtrage
   if (allPeople.length === 0 && !error) {
     return (
@@ -469,7 +424,14 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
 
   return (
     
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto animate-fadeIn"> 
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto animate-fadeIn">
+      {/* ── EN-TÊTE ── */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Mes intervenants</h1>
+          <p className="text-sm text-gray-400 mt-1 font-medium">Propriétaires, copropriétaires et professionnels de la gestion</p>
+        </div>
+      </div>
 
       {/* Bannière mode démo si non authentifié */}
       {!isAuthenticated && (
@@ -744,7 +706,7 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
                 placeholder="Rechercher par nom, email, téléphone, entreprise ou bien..."
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#529D21]/20 focus:border-[#529D21] transition-all"
+                className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#529D21]/20 focus:border-[#529D21] transition-all text-gray-900"
               />
               {searchTerm && (
                 <button onClick={() => setSearchTerm('')} className="absolute inset-y-0 right-0 pr-3 flex items-center">
@@ -886,6 +848,57 @@ export const Landlord: React.FC<LandlordProps> = ({ notify }) => {
             </div>
           </div>
         )}
+
+      {/* ===== MODALE D'ERREUR : AUCUN BIEN ASSOCIÉ ===== */}
+      {showNoPropertyModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl p-8 max-w-lg w-full shadow-2xl animate-slideUp">
+            {/* Bouton fermer */}
+            <button
+              onClick={() => setShowNoPropertyModal(false)}
+              className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X size={24} className="text-gray-500" />
+            </button>
+
+            {/* Contenu */}
+            <div className="text-center">
+              <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <AlertCircle size={48} className="text-amber-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                VOUS N'AVEZ AUCUN BIEN ASSOCIÉ
+              </h2>
+              <p className="text-gray-600 mb-2">
+                Aucun bien n'est actuellement associé à votre compte locataire.
+              </p>
+              <p className="text-gray-500 text-sm mb-6">
+                Contactez votre propriétaire pour associer un bien à votre compte.
+              </p>
+
+              {/* Boutons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowNoPropertyModal(false)}
+                  className="flex-1 px-4 py-3 bg-gray-100 text-gray-900 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                >
+                  Fermer
+                </button>
+                <button
+                  onClick={() => {
+                    setShowNoPropertyModal(false);
+                    fetchLandlordInfo();
+                  }}
+                  className="flex-1 px-4 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium inline-flex items-center justify-center gap-2"
+                >
+                  <RefreshCw size={18} />
+                  Réessayer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );

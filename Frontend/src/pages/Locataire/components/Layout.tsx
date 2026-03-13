@@ -49,6 +49,8 @@ interface MenuItem {
   icon: keyof typeof Icons;
   path?: string;
   isLogout?: boolean;
+  children?: MenuItem[];
+  categoryIcon?: string;
 }
 
 interface LayoutProps {
@@ -70,19 +72,28 @@ const ic = (c: string) => ({ stroke: c, fill: "none", strokeWidth: 2, strokeLine
 const Icons = {
   Dashboard: () => <img src="/Ressource_gestiloc/tb_locataire.png" alt="Tableau de bord" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
   LocationImg: () => <img src="/Ressource_gestiloc/Ma_location.png" alt="Ma location" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
+  LocationCategoryImg: () => <img src="/Ressource_gestiloc/Ma_location.png" alt="Location" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
   ProprioImg: () => <img src="/Ressource_gestiloc/Home.png" alt="Mon propriétaire" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
   QuittancesImg: () => <img src="/Ressource_gestiloc/Mes_quittances.png" alt="Mes quittances" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
   DocumentsImg: () => <img src="/Ressource_gestiloc/document.png" alt="Documents" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
+  DocumentsCategoryImg: () => <img src="/Ressource_gestiloc/Document%20In%20Folder.png" alt="Documents" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
   InterventionsImg: () => <img src="/Ressource_gestiloc/Tools.png" alt="Mes interventions" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
   TasksImg: () => <img src="/Ressource_gestiloc/Nouvelles_taches.png" alt="Mes tâches" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
   NotesImg: () => <img src="/Ressource_gestiloc/Edit%20Property.png" alt="Mes notes" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
   PreavisImg: () => <img src="/Ressource_gestiloc/preavis.png" alt="Préavis" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
   PaiementsImg: () => <img src="/Ressource_gestiloc/paiement.png" alt="Paiements" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
   ParametresImg: () => <img src="/Ressource_gestiloc/parametre_loc.png" alt="Paramètres" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
+  ConfigurationCategoryImg: () => <img src="/Ressource_gestiloc/Tools.png" alt="Configuration" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
   LogOut: ({ c }: { c: string }) => (
     <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#aaa")}>
       <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
       <polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  ),
+  // Category Icons (kept for Services)
+  ToolsIcon: ({ c }: { c: string }) => (
+    <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c)}>
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 1 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
     </svg>
   ),
 };
@@ -90,6 +101,10 @@ const Icons = {
 const iconColors: Record<string, string> = {
   Dashboard: "#e6a817",
   LogOut: "#aaa",
+  LocationCategoryImg: "#529D21",
+  DocumentsCategoryImg: "#529D21",
+  ConfigurationCategoryImg: "#529D21",
+  ToolsIcon: "#529D21",
 };
 
 const TEXT_GREEN = "#529D21";
@@ -97,40 +112,57 @@ const GRADIENT_GREEN = "linear-gradient(94.5deg, #8CCC63 5.47%, rgba(82, 157, 33
 
 const menuSections: { title: string; items: MenuItem[] }[] = [
   {
-    title: "", // MENU PRINCIPAL retiré pour le Locataire comme pour les autres
+    title: "",
     items: [
       { id: 'home', label: 'Tableau de bord', icon: "Dashboard" },
     ]
   },
   {
-    title: "MA LOCATION",
+    title: "",
     items: [
-      { id: 'location', label: 'Ma location', icon: "LocationImg" },
-      { id: 'landlord', label: 'Mon propriétaire', icon: "ProprioImg" },
-      { id: 'payments', label: 'Paiements', icon: "PaiementsImg" },
-      { id: 'notice', label: 'Préavis', icon: "PreavisImg" },
-    ]
-  },
-  {
-    title: "DOCUMENTS",
-    items: [
-      { id: 'receipts', label: 'Mes quittances', icon: "QuittancesImg" },
-      { id: 'documents', label: 'Documents', icon: "DocumentsImg" },
-      { id: 'notes', label: 'Mes notes', icon: "NotesImg" },
-    ]
-  },
-  {
-    title: "SERVICES",
-    items: [
-      { id: 'interventions', label: 'Mes interventions', icon: "InterventionsImg" },
-      { id: 'tasks', label: 'Mes tâches', icon: "TasksImg" },
-    ]
-  },
-  {
-    title: "CONFIGURATION",
-    items: [
-      { id: 'settings', label: 'Paramètres', icon: "ParametresImg" },
-      { id: 'logout', label: 'Déconnexion', icon: "LogOut", isLogout: true },
+      { 
+        id: 'location-section', 
+        label: 'Location', 
+        icon: "LocationCategoryImg",
+        categoryIcon: "LocationCategoryImg",
+        children: [
+          { id: 'location', label: 'Ma location', icon: "LocationImg" },
+          { id: 'landlord', label: 'Mon propriétaire', icon: "ProprioImg" },
+          { id: 'payments', label: 'Paiements', icon: "PaiementsImg" },
+          { id: 'notice', label: 'Préavis', icon: "PreavisImg" },
+        ]
+      },
+      { 
+        id: 'documents-section', 
+        label: 'Documents', 
+        icon: "DocumentsCategoryImg",
+        categoryIcon: "DocumentsCategoryImg",
+        children: [
+          { id: 'receipts', label: 'Mes quittances', icon: "QuittancesImg" },
+          { id: 'documents', label: 'Documents', icon: "DocumentsImg" },
+          { id: 'notes', label: 'Mes notes', icon: "NotesImg" },
+        ]
+      },
+      { 
+        id: 'services-section', 
+        label: 'Services', 
+        icon: "ToolsIcon",
+        categoryIcon: "ToolsIcon",
+        children: [
+          { id: 'interventions', label: 'Mes interventions', icon: "InterventionsImg" },
+          { id: 'tasks', label: 'Mes tâches', icon: "TasksImg" },
+        ]
+      },
+      { 
+        id: 'configuration-section', 
+        label: 'Configuration', 
+        icon: "ConfigurationCategoryImg",
+        categoryIcon: "ConfigurationCategoryImg",
+        children: [
+          { id: 'settings', label: 'Paramètres', icon: "ParametresImg" },
+          { id: 'logout', label: 'Déconnexion', icon: "LogOut", isLogout: true },
+        ]
+      },
     ]
   }
 ];
@@ -143,11 +175,23 @@ const NavItem: React.FC<{
   onLogout: () => void,
 }> = ({ item, activeTab, onNavigate, onLogout }) => {
   const [hovered, setHovered] = useState(false);
+  const hasChildren = item.children && item.children.length > 0;
+  const isChildActive = hasChildren && item.children.some(child => child.id === activeTab);
+  const [isExpanded, setIsExpanded] = useState(isChildActive);
+  
+  useEffect(() => {
+    if (isChildActive) {
+      setIsExpanded(true);
+    }
+  }, [isChildActive]);
+  
   const isActive = activeTab === item.id;
   const Ico = Icons[item.icon as keyof typeof Icons];
 
   const handleClick = () => {
-    if (item.isLogout) {
+    if (hasChildren) {
+      setIsExpanded(!isExpanded);
+    } else if (item.isLogout) {
       onLogout();
     } else {
       onNavigate(item.id as Tab);
@@ -155,37 +199,56 @@ const NavItem: React.FC<{
   };
 
   return (
-    <button
-      onClick={handleClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className="w-full relative flex items-center gap-3 px-6 py-3 transition-all duration-300 group"
-      style={{
-        background: isActive ? 'linear-gradient(90deg, rgba(255, 213, 124, 0.87) 0%, #FFFFFF 100%)' : 'transparent',
-        border: 'none',
-        cursor: 'pointer',
-        borderRadius: '12px',
-        marginBottom: '2px'
-      }}
-    >
-      {isActive && (
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[5px] h-[30px] bg-[#FFB300] rounded-r-full shadow-[0px_0px_10px_rgba(255,179,0,0.4)]" />
-      )}
+    <div>
+      <button
+        onClick={handleClick}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        className="w-full relative flex items-center gap-3 px-6 py-3 transition-all duration-300 group"
+        style={{
+          background: (isActive || isChildActive) ? 'linear-gradient(90deg, rgba(255, 213, 124, 0.87) 0%, #FFFFFF 100%)' : 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          borderRadius: '12px',
+          marginBottom: '2px'
+        }}
+      >
+        {(isActive || isChildActive) && (
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[5px] h-[30px] bg-[#FFB300] rounded-r-full shadow-[0px_0px_10px_rgba(255,179,0,0.4)]" />
+        )}
 
-      <div className={`transition-all duration-300 ${isActive || hovered ? 'scale-110' : 'scale-100 opacity-60'}`}>
-        {Ico ? <Ico c={item.isLogout ? (hovered ? "#e53935" : "#aaa") : isActive ? TEXT_GREEN : iconColors[item.icon] || "#888"} /> : null}
-      </div>
+        <div className={`transition-all duration-300 ${(isActive || isChildActive || hovered) ? 'scale-110' : 'scale-100 opacity-60'}`}>
+          {Ico ? <Ico c={item.isLogout ? (hovered ? "#e53935" : "#aaa") : (isActive || isChildActive) ? TEXT_GREEN : iconColors[item.icon] || "#888"} /> : null}
+        </div>
 
-      <span className="text-[0.9rem] font-bold whitespace-nowrap transition-colors duration-300 text-gray-500" style={{ color: (isActive || hovered) && !item.isLogout ? TEXT_GREEN : undefined }}>
-        {item.label}
-      </span>
+        <span className="text-[0.9rem] font-bold whitespace-nowrap transition-colors duration-300 text-gray-500" style={{ color: ((isActive || isChildActive || hovered) && !item.isLogout) ? TEXT_GREEN : undefined }}>
+          {item.label}
+        </span>
 
-      {isActive && (
-        <div className="ml-auto">
-          <ChevronRight size={14} className="text-[#529D21]" />
+        {hasChildren && (
+          <div className="ml-auto">
+            <svg viewBox="0 0 24 24" width={16} height={16} className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} style={{ stroke: TEXT_GREEN, strokeWidth: 2, fill: 'none' }}>
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </div>
+        )}
+
+        {(!hasChildren && isActive) && (
+          <div className="ml-auto">
+            <ChevronRight size={14} className="text-[#529D21]" />
+          </div>
+        )}
+      </button>
+
+      {/* Dropdown Children */}
+      {hasChildren && isExpanded && (
+        <div className="pl-4 space-y-1 border-l-2 border-gray-200 ml-6 mt-1">
+          {item.children.map((child) => (
+            <NavItem key={child.id} item={child} activeTab={activeTab} onNavigate={onNavigate} onLogout={onLogout} />
+          ))}
         </div>
       )}
-    </button>
+    </div>
   );
 };
 

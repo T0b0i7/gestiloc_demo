@@ -749,6 +749,14 @@ export default function TenantPreavisPage({
         cancelling={cancelling}
       />
 
+      {/* ── EN-TÊTE ── */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Mes préavis</h1>
+          <p className="text-sm text-gray-400 mt-1 font-medium">Signalez et gérez vos préavis de départ</p>
+        </div>
+      </div>
+
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <button
           onClick={handleCreateClick}

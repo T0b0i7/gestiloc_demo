@@ -472,7 +472,7 @@ export const Payments: React.FC<PaymentsProps> = ({ notify }) => {
   // Removed loading state block to ensure immediate rendering as requested by user
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-green-50/30 p-4 sm:p-6">
+    <div className="min-h-screen bg-white p-4 sm:p-6">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
         .payments-page { font-family: 'DM Sans', sans-serif; }

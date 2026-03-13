@@ -1768,7 +1768,7 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
         notify={notify}
       />
 
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6">
+      <div className="min-h-screen bg-white p-4 sm:p-6">
         {/* Tabs */}
         <div className="flex mb-6 max-w-4xl mx-auto">
           <button
@@ -2194,8 +2194,8 @@ export const Documents: React.FC<DocumentsProps> = ({ notify }) => {
             {/* En-tête */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Mes documents</h1>
-                <p className="text-sm text-gray-600 mt-1">
+                <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Mes documents</h1>
+                <p className="text-sm text-gray-400 mt-1 font-medium">
                   Gérez vos documents, contrats de bail et états des lieux
                 </p>
               </div>

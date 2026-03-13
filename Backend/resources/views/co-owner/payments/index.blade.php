@@ -146,7 +146,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($payments as $payment)
+                    @forelse($payments as $pay)
+                        @php $payment = $pay; @endphp
                         <tr>
                             <td>
                                 <div class="tenant-info">

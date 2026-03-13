@@ -56,7 +56,8 @@
 
     <!-- Liste des contrats -->
     <div class="contracts-grid">
-        @forelse($leases as $lease)
+        @forelse($leases as $ls)
+            @php $lease = $ls; @endphp
             <div class="contract-card">
                 <!-- Type de bail -->
                 <div class="contract-type">

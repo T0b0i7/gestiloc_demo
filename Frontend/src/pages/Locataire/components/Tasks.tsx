@@ -431,7 +431,7 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
   // Removed loading indicator as requested by user
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-white p-4 sm:p-6">
       {/* Modal de confirmation de suppression */}
       {showDeleteConfirm && (
         <div
@@ -662,8 +662,8 @@ export const Tasks: React.FC<TasksProps> = ({ notify }) => {
           {/* En-tête avec bouton et compteurs */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Mes tâches</h1>
-              <p className="text-sm text-gray-600 mt-1">
+              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Mes tâches</h1>
+              <p className="text-sm text-gray-400 mt-1 font-medium">
                 Gérez vos tâches et suivez votre progression
               </p>
             </div>

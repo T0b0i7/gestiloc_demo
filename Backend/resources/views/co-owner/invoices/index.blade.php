@@ -499,7 +499,8 @@
 
     <!-- Grille de cartes -->
     <div class="cards-grid">
-        @forelse($invoices as $invoice)
+        @forelse($invoices as $inv)
+        @php $invoice = $inv; @endphp
         <div class="invoice-card">
             <div class="card-type-badge badge-{{ $invoice->type }}">
                 @switch($invoice->type)

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Co-propriétaire')</title>
     <link rel="shortcut icon" href="{{ asset('images/logo.webp') }}" type="image/x-icon">
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         :root {
@@ -32,6 +32,7 @@
             --amber-light: #fef3c7;
             --shadow: 0 22px 70px rgba(0, 0, 0, .18);
             --sidebar-shadow: 0px 0px 20px rgba(0,0,0,0.05), 0px 5px 25px rgba(112, 174, 72, 0.15);
+            --font-manrope: 'Manrope', sans-serif;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -127,7 +128,7 @@
             position: fixed;
             left: 30px;
             top: 100px;
-            width: 310px;
+            width: 400px;
             max-height: calc(100vh - 140px);
             background: white;
             border-radius: 24px;
@@ -175,10 +176,10 @@
             border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s;
-            font-family: 'Merriweather', serif;
-            font-size: 0.9rem;
-            font-weight: 700;
-            color: var(--gray-500);
+            font-family: var(--font-manrope);
+            font-size: 12.5px;
+            font-weight: 500;
+            color: #4B5563;
             text-align: left;
             position: relative;
         }
@@ -189,12 +190,12 @@
 
         .menu-item:hover .menu-icon { opacity: 1; transform: scale(1.1); }
 
-        .menu-item.active {
+        .menu-item.active, .menu-item.active-parent {
             background: linear-gradient(90deg, rgba(255, 213, 124, 0.87) 0%, #FFFFFF 100%);
             color: var(--text-green);
         }
 
-        .menu-item.active::before {
+        .menu-item.active::before, .menu-item.active-parent::before {
             content: '';
             position: absolute;
             left: 0;
@@ -207,17 +208,87 @@
             box-shadow: 0px 0px 10px rgba(255, 179, 0, 0.4);
         }
 
-        .menu-item.active .menu-icon { opacity: 1; transform: scale(1.1); }
+        .menu-item.active .menu-icon, .menu-item.active-parent .menu-icon { opacity: 1; transform: scale(1.1); }
 
         .menu-icon {
             opacity: 0.6;
             transition: all 0.3s;
             flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .menu-icon img {
+            width: 18px;
+            height: 18px;
+            object-contain: contain;
         }
 
         .menu-item-chevron {
             margin-left: auto;
             flex-shrink: 0;
+            transition: transform 0.25s;
+        }
+
+        /* ─── SUBMENU ─── */
+        .submenu {
+            margin-left: 2.5rem;
+            padding-left: 1rem;
+            border-left: 2px solid #f1f5f9;
+            margin-top: 0.25rem;
+            margin-bottom: 0.5rem;
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .submenu.active {
+            display: flex;
+        }
+
+        .submenu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 10px;
+            font-family: var(--font-manrope);
+            font-size: 12px;
+            font-weight: 500;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.3s;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .submenu-item:hover {
+            color: var(--text-green);
+        }
+
+        .submenu-item.active {
+            background: linear-gradient(90deg, rgba(255, 213, 124, 0.87) 0%, #FFFFFF 100%);
+            color: var(--text-green);
+            font-weight: 600;
+        }
+
+        .sub-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.7;
+        }
+
+        .sub-icon img {
+            width: 16px;
+            height: 16px;
         }
 
         /* ─── SIDEBAR FOOTER ─── */
@@ -247,7 +318,7 @@
         /* ─── MAIN CONTENT ─── */
         .main-content {
             flex: 1;
-            margin-left: 390px;
+            margin-left: 460px;
             height: 100%;
             overflow-y: auto;
             overflow-x: hidden;
@@ -610,143 +681,108 @@
 
                 <!-- Menu principal -->
                 <div class="menu-group">
-                    <div class="menu-group-title">Menu principal</div>
                     <button class="menu-item" onclick="goToReact('/coproprietaire/dashboard')">
                         <span class="menu-icon">
-                            <!-- Dashboard icon -->
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#e6a817" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="12" width="4" height="8"/><rect x="10" y="7" width="4" height="13"/><rect x="17" y="3" width="4" height="17"/>
-                            </svg>
+                            <img src="/Ressource_gestiloc/tb_locataire.png" alt="Tableau de bord">
                         </span>
                         <span>Tableau de bord</span>
-                        <span class="menu-item-chevron">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#bbb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                        </span>
                     </button>
                 </div>
 
                 <!-- GESTIONS DES BIENS -->
                 <div class="menu-group">
                     <div class="menu-group-title">GESTIONS DES BIENS</div>
-                    <button class="menu-item" onclick="navigateTo('/coproprietaire/biens/create')">
+                    <button class="menu-item" onclick="toggleSubmenu('biens-sub', this)">
                         <span class="menu-icon">
-                            <!-- UserPlus icon -->
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#8CCC63" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M16 21v-2a4 4 0 00-3-3.87"/><path d="M8 21v-2a4 4 0 014-4h1"/><circle cx="12" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>
-                            </svg>
+                            <img src="/Ressource_gestiloc/Home.png" alt="Biens">
                         </span>
-                        <span>Ajouter un bien</span>
-                    </button>
-                    <button class="menu-item" onclick="goToReact('/coproprietaire/biens')">
-                        <span class="menu-icon">
-                            <!-- House icon -->
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#FF9800" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/>
-                            </svg>
-                        </span>
-                        <span>Mes biens</span>
+                        <span>Gestion des biens</span>
                         <span class="menu-item-chevron">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#bbb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#bbb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                         </span>
                     </button>
+                    <div class="submenu" id="biens-sub">
+                        <button class="submenu-item" onclick="navigateTo('/coproprietaire/biens/create')">
+                            <span class="sub-icon"><img src="/Ressource_gestiloc/Tools.png" alt="Add"></span>
+                            <span>Ajouter un bien</span>
+                        </button>
+                        <button class="submenu-item" onclick="goToReact('/coproprietaire/biens')">
+                            <span class="sub-icon"><img src="/Ressource_gestiloc/Home.png" alt="My"></span>
+                            <span>Mes biens</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- GESTION LOCATIVE -->
                 <div class="menu-group">
                     <div class="menu-group-title">GESTION LOCATIVE</div>
-                    <button class="menu-item" onclick="navigateTo('/coproprietaire/assign-property/create')">
+                    <button class="menu-item" onclick="toggleSubmenu('locative-sub', this)">
                         <span class="menu-icon">
-                            <!-- Handshake icon -->
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#4CAF50" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M17 11h1a3 3 0 010 6h-1"/><path d="M9 12c.66 0 1.33.16 2 .5a5.1 5.1 0 012.5-1.5"/><path d="M6 11H5a3 3 0 000 6h1"/><path d="M6 7h12a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V9a2 2 0 012-2z"/>
-                            </svg>
+                            <img src="/Ressource_gestiloc/Ma_location.png" alt="Locative">
                         </span>
-                        <span>Nouvelle location</span>
-                    </button>
-                    <button class="menu-item" onclick="navigateTo('/coproprietaire/tenants/create')">
-                        <span class="menu-icon">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#8CCC63" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M16 21v-2a4 4 0 00-3-3.87"/><path d="M8 21v-2a4 4 0 014-4h1"/><circle cx="12" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>
-                            </svg>
+                        <span>Gestion locative</span>
+                        <span class="menu-item-chevron">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#bbb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                         </span>
-                        <span>Ajouter un locataire</span>
                     </button>
-                    <button class="menu-item" onclick="navigateTo('/coproprietaire/tenants')">
-                        <span class="menu-icon">
-                            <!-- People icon -->
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#FF7043" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="9" cy="7" r="3"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M21 21v-2a4 4 0 00-3-3.85"/>
-                            </svg>
-                        </span>
-                        <span>Liste des locataires</span>
-                    </button>
-                    <button class="menu-item" onclick="navigateTo('/coproprietaire/paiements')">
-                        <span class="menu-icon">
-                            <!-- Wallet icon -->
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#ffa726" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/>
-                            </svg>
-                        </span>
-                        <span>Gestion des paiements</span>
-                    </button>
+                    <div class="submenu" id="locative-sub">
+                        <button class="submenu-item" onclick="navigateTo('/coproprietaire/assign-property/create')">
+                            <span class="sub-icon"><img src="/Ressource_gestiloc/Ma_location.png" alt="New"></span>
+                            <span>Nouvelle location</span>
+                        </button>
+                        <button class="submenu-item" onclick="navigateTo('/coproprietaire/tenants/create')">
+                            <span class="sub-icon"><img src="/Ressource_gestiloc/customer.png" alt="Add"></span>
+                            <span>Ajouter un locataire</span>
+                        </button>
+                        <button class="submenu-item" onclick="navigateTo('/coproprietaire/tenants')">
+                            <span class="sub-icon"><img src="/Ressource_gestiloc/customer.png" alt="List"></span>
+                            <span>Liste des locataires</span>
+                        </button>
+                        <button class="submenu-item" onclick="navigateTo('/coproprietaire/paiements')">
+                            <span class="sub-icon"><img src="/Ressource_gestiloc/paiement.png" alt="Payments"></span>
+                            <span>Gestion des paiements</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- DOCUMENTS -->
                 <div class="menu-group">
                     <div class="menu-group-title">DOCUMENTS</div>
-                    <button class="menu-item" onclick="navigateTo('/coproprietaire/leases')">
+                    <button class="menu-item" onclick="toggleSubmenu('docs-sub', this)">
                         <span class="menu-icon">
-                            <!-- File icon -->
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#529D21" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/>
-                            </svg>
+                            <img src="/Ressource_gestiloc/document.png" alt="Documents">
                         </span>
-                        <span>Contrats de bail</span>
-                    </button>
-                    <button class="menu-item" onclick="navigateTo('/coproprietaire/etats-des-lieux')">
-                        <span class="menu-icon">
-                            <!-- Clipboard icon -->
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#7b1fa2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="5" y="3" width="14" height="18" rx="2"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/>
-                            </svg>
-                        </span>
-                        <span>Etats de lieux</span>
-                    </button>
-                    <button class="menu-item" onclick="navigateTo('/coproprietaire/notices')">
-                        <span class="menu-icon">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#529D21" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/>
-                            </svg>
-                        </span>
-                        <span>Avis d'échéance</span>
-                    </button>
-                    <button class="menu-item" onclick="navigateTo('/coproprietaire/quittances')">
-                        <span class="menu-icon">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#7b1fa2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="5" y="3" width="14" height="18" rx="2"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="12" y2="16"/>
-                            </svg>
-                        </span>
-                        <span>Quittances de loyers</span>
-                    </button>
-                    <button class="menu-item" onclick="navigateTo('/coproprietaire/factures')">
-                        <span class="menu-icon">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#529D21" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/>
-                            </svg>
-                        </span>
-                        <span>Factures et documents divers</span>
-                    </button>
-                    <button class="menu-item" onclick="goToReact('/coproprietaire/documents')">
-                        <span class="menu-icon">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#529D21" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/>
-                            </svg>
-                        </span>
-                        <span>Archivage de documents</span>
+                        <span>Documents</span>
                         <span class="menu-item-chevron">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#bbb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#bbb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                         </span>
                     </button>
+                    <div class="submenu" id="docs-sub">
+                        <button class="submenu-item" onclick="navigateTo('/coproprietaire/leases')">
+                            <span class="sub-icon"><img src="/Ressource_gestiloc/document.png" alt="File"></span>
+                            <span>Contrats de bail</span>
+                        </button>
+                        <button class="submenu-item" onclick="navigateTo('/coproprietaire/etats-des-lieux')">
+                            <span class="sub-icon"><img src="/Ressource_gestiloc/Mes_quittances.png" alt="Check"></span>
+                            <span>Etats de lieux</span>
+                        </button>
+                        <button class="submenu-item" onclick="navigateTo('/coproprietaire/notices')">
+                            <span class="sub-icon"><img src="/Ressource_gestiloc/document.png" alt="Alert"></span>
+                            <span>Avis d'échéance</span>
+                        </button>
+                        <button class="submenu-item" onclick="navigateTo('/coproprietaire/quittances')">
+                            <span class="sub-icon"><img src="/Ressource_gestiloc/Mes_quittances.png" alt="Receipt"></span>
+                            <span>Quittances de loyers</span>
+                        </button>
+                        <button class="submenu-item" onclick="navigateTo('/coproprietaire/factures')">
+                            <span class="sub-icon"><img src="/Ressource_gestiloc/document.png" alt="Invoice"></span>
+                            <span>Factures et documents divers</span>
+                        </button>
+                        <button class="submenu-item" onclick="goToReact('/coproprietaire/documents')">
+                            <span class="sub-icon"><img src="/Ressource_gestiloc/document.png" alt="Archive"></span>
+                            <span>Archivage de documents</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- REPARATIONS ET TRAVAUX -->
@@ -754,9 +790,7 @@
                     <div class="menu-group-title">REPARATIONS ET TRAVAUX</div>
                     <button class="menu-item" onclick="navigateTo('/coproprietaire/maintenance')">
                         <span class="menu-icon">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#4CAF50" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M17 11h1a3 3 0 010 6h-1"/><path d="M9 12c.66 0 1.33.16 2 .5a5.1 5.1 0 012.5-1.5"/><path d="M6 11H5a3 3 0 000 6h1"/><path d="M6 7h12a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V9a2 2 0 012-2z"/>
-                            </svg>
+                            <img src="/Ressource_gestiloc/Tools.png" alt="Repairs">
                         </span>
                         <span>Réparations et travaux</span>
                     </button>
@@ -767,50 +801,43 @@
                     <div class="menu-group-title">COMPTABILITE ET STATISTIQUES</div>
                     <button class="menu-item" onclick="navigateTo('/coproprietaire/comptabilite')">
                         <span class="menu-icon">
-                            <!-- TrendingUp icon -->
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#4CAF50" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
-                            </svg>
+                            <img src="/Ressource_gestiloc/Accounting.png" alt="Accounting">
                         </span>
                         <span>Comptabilité et statistiques</span>
                     </button>
                 </div>
 
-                <!-- GESTION DES COPROPRIÉTAIRES -->
+                <!-- GESTION DES GESTIONNAIRES -->
                 <div class="menu-group">
-                    <div class="menu-group-title">GESTION DES COPROPRIÉTAIRES</div>
-                    <button class="menu-item" onclick="navigateTo('/coproprietaire/gestionnaires')">
+                    <div class="menu-group-title">GESTION DES GESTIONNAIRES</div>
+                    <button class="menu-item" onclick="toggleSubmenu('coowners-sub', this)">
                         <span class="menu-icon">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#FF7043" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="9" cy="7" r="3"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M21 21v-2a4 4 0 00-3-3.85"/>
-                            </svg>
+                            <img src="/Ressource_gestiloc/customer.png" alt="Coowners">
                         </span>
-                        <span>Liste des gestionnaires</span>
-                    </button>
-                    <button class="menu-item" onclick="navigateTo('/coproprietaire/gestionnaires/creer')">
-                        <span class="menu-icon">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#8CCC63" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M16 21v-2a4 4 0 00-3-3.87"/><path d="M8 21v-2a4 4 0 014-4h1"/><circle cx="12" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>
-                            </svg>
+                        <span>Gestionnaires</span>
+                        <span class="menu-item-chevron">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#bbb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                         </span>
-                        <span>Inviter un gestionnaire</span>
                     </button>
+                    <div class="submenu" id="coowners-sub">
+                        <button class="submenu-item" onclick="navigateTo('/coproprietaire/gestionnaires')">
+                            <span class="sub-icon"><img src="/Ressource_gestiloc/customer.png" alt="List"></span>
+                            <span>Liste des gestionnaires</span>
+                        </button>
+                        <button class="submenu-item" onclick="navigateTo('/coproprietaire/gestionnaires/creer')">
+                            <span class="sub-icon"><img src="/Ressource_gestiloc/customer.png" alt="Invite"></span>
+                            <span>Inviter un gestionnaire</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- CONFIGURATION -->
                 <div class="menu-group">
-                    <div class="menu-group-title">CONFIGURATION</div>
                     <button class="menu-item" onclick="goToReact('/coproprietaire/parametres')">
                         <span class="menu-icon">
-                            <!-- Settings icon -->
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#607d8b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
-                            </svg>
+                            <img src="/Ressource_gestiloc/Gear.png" alt="Settings">
                         </span>
                         <span>Paramètres</span>
-                        <span class="menu-item-chevron">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#bbb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                        </span>
                     </button>
                     <button class="menu-item" onclick="showLogoutModal()">
                         <span class="menu-icon">
@@ -823,47 +850,6 @@
                     </button>
                 </div>
 
-            </div>
-
-            <!-- Footer profil -->
-            <div class="sidebar-footer">
-                <div class="user-profile">
-                    <div class="user-avatar">
-                        <?php
-                        $user = auth()->user();
-                        $initials = 'C';
-                        if ($user) {
-                            $fn = $user->first_name ?? '';
-                            $ln = $user->last_name ?? '';
-                            $name = $user->name ?? '';
-                            $email = $user->email ?? '';
-                            if ($fn || $ln) {
-                                $initials = strtoupper(substr($fn,0,1)) . strtoupper(substr($ln,0,1));
-                            } elseif ($name) {
-                                $initials = strtoupper(substr($name,0,1));
-                            } elseif ($email) {
-                                $initials = strtoupper(substr($email,0,1));
-                            }
-                        }
-                        echo trim($initials) ?: 'C';
-                        ?>
-                    </div>
-                    <div class="user-info">
-                        <div class="user-name">
-                            <?php
-                            if ($user) {
-                                $fn = $user->first_name ?? '';
-                                $ln = $user->last_name ?? '';
-                                $full = trim("$fn $ln");
-                                echo e($full ?: ($user->name ?? ($user->email ?? 'Co-propriétaire')));
-                            } else {
-                                echo 'Co-propriétaire';
-                            }
-                            ?>
-                        </div>
-                        <div class="user-role">Co-propriétaire</div>
-                    </div>
-                </div>
             </div>
         </aside>
 
@@ -1043,10 +1029,28 @@
             overlay.classList.toggle('active');
         }
         document.getElementById('overlay').addEventListener('click', toggleSidebar);
+ 
+        // ─── SUBMENUS ───
+        function toggleSubmenu(id, btn) {
+            const sm = document.getElementById(id);
+            const chevron = btn.querySelector('.menu-item-chevron svg');
+            const isClosing = sm.classList.contains('active');
+            
+            // Close all other submenus if needed (optional, like in React)
+            // document.querySelectorAll('.submenu').forEach(s => { if(s.id !== id) s.classList.remove('active'); });
+
+            sm.classList.toggle('active');
+            if (chevron) {
+                chevron.style.transform = isClosing ? 'rotate(0deg)' : 'rotate(180deg)';
+                chevron.style.transition = 'transform 0.3s';
+            }
+        }
 
         // ─── MENU ACTIF ───
         function markActiveMenu() {
             const currentPath = window.location.pathname;
+            
+            // Pour les items de menu simples
             document.querySelectorAll('.menu-item').forEach(item => {
                 const onclick = item.getAttribute('onclick') || '';
                 const match = onclick.match(/navigateTo\('([^']+)'\)/) || onclick.match(/goToReact\('([^']+)'\)/);
@@ -1054,6 +1058,29 @@
                     const menuPath = match[1];
                     if (currentPath === menuPath || currentPath.startsWith(menuPath + '/')) {
                         item.classList.add('active');
+                    }
+                }
+            });
+
+            // Pour les sous-menus
+            document.querySelectorAll('.submenu-item').forEach(item => {
+                const onclick = item.getAttribute('onclick') || '';
+                const match = onclick.match(/navigateTo\('([^']+)'\)/) || onclick.match(/goToReact\('([^']+)'\)/);
+                if (match && match[1]) {
+                    const menuPath = match[1];
+                    if (currentPath === menuPath || (menuPath !== '/' && currentPath.startsWith(menuPath))) {
+                        item.classList.add('active');
+                        // Ouvrir le parent
+                        const parentSub = item.closest('.submenu');
+                        if (parentSub) {
+                            parentSub.classList.add('active');
+                            const parentBtn = parentSub.previousElementSibling;
+                            if (parentBtn && parentBtn.classList.contains('menu-item')) {
+                                parentBtn.classList.add('active-parent');
+                                const chevron = parentBtn.querySelector('.menu-item-chevron svg');
+                                if (chevron) chevron.style.transform = 'rotate(180deg)';
+                            }
+                        }
                     }
                 }
             });

@@ -138,6 +138,13 @@ export default function RentReceiptsPage() {
 
   return (
     <div className="animate-fadeIn">
+      {/* ── EN-TÊTE ── */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Mes quittances</h1>
+          <p className="text-sm text-gray-400 mt-1 font-medium">Téléchargez vos quittances de loyer</p>
+        </div>
+      </div>
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Filtrer les quittances</h2>
         

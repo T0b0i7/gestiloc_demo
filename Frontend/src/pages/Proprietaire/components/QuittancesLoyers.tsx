@@ -1,6 +1,6 @@
 // src/pages/Proprietaire/components/QuittancesLoyers.tsx
 import { useState, useEffect } from "react";
-import { Plus, Check, Search } from "lucide-react";
+import { Plus, Check, Search, FileText, TrendingUp, Clock, Wallet } from "lucide-react";
 import setting from "@/assets/Settings.png";
 import monIcone from "@/assets/downloadIcon.svg";
 import sucette from "@/assets/SuccetteIcon.svg";
@@ -35,6 +35,15 @@ export default function QuittancesLoyers() {
   const [filterBien, setFilterBien] = useState("Tous les biens");
   const [search, setSearch] = useState("");
   const { toast } = useToast();
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'XOF',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount).replace('XOF', 'FCFA');
+  };
 
   const fetchData = async () => {
     try {
@@ -147,13 +156,11 @@ export default function QuittancesLoyers() {
             } transition-opacity duration-500`}
         >
           <div>
-            <h1 className="font-merriweather text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-tight">
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
               Quittances de loyers
             </h1>
-            <p className="pt-5 text-sm text-gray-600">
+            <p className="text-sm text-gray-400 mt-1 font-medium">
               Gérez et générez vos quittances de loyer après réception des paiements.
-              <br />
-              Envoyez automatiquement les quittances à vos locataires.
             </p>
           </div>
 
@@ -164,72 +171,60 @@ export default function QuittancesLoyers() {
         </div>
 
         {/* ── Stats cards ── */}
-        <div
-          className={`grid gap-2 sm:grid-cols-2 lg:grid-cols-4 bg-secondary rounded-lg ${loading ? "opacity-50" : "opacity-100"
-            } transition-opacity duration-500`}
-        >
+        <div className={`grid gap-4 sm:grid-cols-2 lg:grid-cols-4 ${loading ? "opacity-50" : "opacity-100"} transition-opacity duration-500`}>
           {loading ? (
             [1, 2, 3, 4].map((i) => (
-              <Card key={i} className="py-2">
-                <CardHeader className="py-0">
-                  <Skeleton className="h-4 w-24" />
-                </CardHeader>
-                <CardContent className="py-0">
-                  <Skeleton className="h-8 w-12" />
-                </CardContent>
-              </Card>
+              <div key={i} className="bg-gray-100 rounded-xl p-4 h-24 animate-pulse"></div>
             ))
           ) : (
             <>
-              <Card className="py-2">
-                <CardHeader className="py-0">
-                  <CardTitle className="text-sm font-medium text-gray-400">
-                    Quittances émises
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="py-0">
-                  <div className="text-2xl font-bold">{stats.envoyees}</div>
-                </CardContent>
-              </Card>
-
-              <Card className="py-2">
-                <CardHeader className="py-0">
-                  <CardTitle className="text-sm font-medium text-gray-400">
-                    Ce mois-ci
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="py-0">
-                  <div className="text-2xl font-bold text-primary">
-                    {stats.ceMois}
+              <div className="stat-card bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-4 border border-blue-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center text-white shrink-0">
+                    <FileText size={19} />
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card className="py-2">
-                <CardHeader className="py-0">
-                  <CardTitle className="text-sm font-medium text-gray-400">
-                    En attente d'envoi
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="py-0">
-                  <div className="text-2xl text-orange-500 font-bold">
-                    {stats.enAttente}
+                  <div>
+                    <p className="text-xs text-blue-600 font-semibold">Quittances émises</p>
+                    <p className="text-lg font-bold text-gray-900">{stats.envoyees}</p>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
-              <Card className="py-2">
-                <CardHeader className="py-0">
-                  <CardTitle className="text-sm font-medium text-gray-400">
-                    Total encaissé
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="py-0">
-                  <div className="text-2xl font-bold text-primary">
-                    {stats.totalEncaisse.toLocaleString("fr-FR")} FCFA
+              <div className="stat-card bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4 border border-emerald-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white shrink-0">
+                    <TrendingUp size={19} />
                   </div>
-                </CardContent>
-              </Card>
+                  <div>
+                    <p className="text-xs text-emerald-600 font-semibold">Ce mois-ci</p>
+                    <p className="text-lg font-bold text-gray-900">{stats.ceMois}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="stat-card bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-xl p-4 border border-amber-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-white shrink-0">
+                    <Clock size={19} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-amber-600 font-semibold">En attente d'envoi</p>
+                    <p className="text-lg font-bold text-gray-900">{stats.enAttente}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="stat-card bg-gradient-to-br from-green-50 to-green-100/50 rounded-xl p-4 border border-green-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center text-white shrink-0">
+                    <Wallet size={19} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-green-600 font-semibold">Total encaissé</p>
+                    <p className="text-lg font-bold text-gray-900">{formatCurrency(stats.totalEncaisse)}</p>
+                  </div>
+                </div>
+              </div>
             </>
           )}
         </div>
@@ -357,14 +352,14 @@ export default function QuittancesLoyers() {
                       <div className="grid grid-cols-2 text-xs gap-x-4 gap-y-1">
                         <div className="text-xs uppercase font-bold text-gray-500">Loyer</div>
                         <div className="text-xs uppercase font-bold text-gray-500">Charges</div>
-                        <div className="font-bold">{q.loyer.toLocaleString("fr-FR")} FCFA</div>
-                        <div className="font-bold">{q.charges.toLocaleString("fr-FR")} FCFA</div>
+                        <div className="font-bold">{formatCurrency(q.loyer)}</div>
+                        <div className="font-bold">{formatCurrency(q.charges)}</div>
                       </div>
 
                       <div>
                         <div className="text-xs uppercase text-gray-500 font-bold">Total payé</div>
                         <div className="text-base font-bold text-green-600">
-                          {q.total.toLocaleString("fr-FR")} FCFA
+                          {formatCurrency(q.total)}
                         </div>
                       </div>
 

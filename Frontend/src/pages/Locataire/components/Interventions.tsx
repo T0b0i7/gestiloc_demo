@@ -423,7 +423,7 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4 sm:p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-white p-4 sm:p-6 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" style={{ color: PRIMARY_COLOR }} />
           <p className="text-gray-600">Chargement des interventions...</p>
@@ -433,7 +433,7 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
+    <div className="min-h-screen bg-white p-4 sm:p-6">
       {/* Modal de confirmation de suppression */}
       {showDeleteConfirm && (
         <div
@@ -844,8 +844,17 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
         </div>
       ) : (
         // Liste des interventions
-        <div className="space-y-4">
-          <div className="flex justify-end">
+        <>
+          {/* ── EN-TÊTE ── */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Mes interventions</h1>
+              <p className="text-sm text-gray-400 mt-1 font-medium">Signalez et suivez vos demandes d'intervention</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex justify-end">
             <button
               onClick={handleNewInterventionClick}
               className="flex items-center gap-2 px-4 py-2.5 text-white text-sm font-medium rounded-lg transition-colors hover:opacity-90"
@@ -1027,6 +1036,7 @@ export const Interventions: React.FC<InterventionsProps> = ({ notify }) => {
             )}
           </Card>
         </div>
+        </>
       )}
 
       {/* Styles pour les animations */}

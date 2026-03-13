@@ -244,8 +244,9 @@
                     </tr>
                 </thead>
                 <tbody id="transactionsBody">
-                    @forelse($transactions as $transaction)
+                    @forelse($transactions as $trans)
                         @php
+                            $transaction = $trans;
                             $isRevenu = $transaction->type === 'REVENU';
                             $amountClass = $isRevenu ? 'text-green' : 'text-red';
                             $sign = $isRevenu ? '+' : '-';

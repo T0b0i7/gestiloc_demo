@@ -643,7 +643,7 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4" style={{ color: PRIMARY_COLOR }} />
           <p className="text-gray-600 font-serif">{t.loading}</p>
@@ -653,7 +653,7 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12 transition-colors duration-200">
+    <div className="min-h-screen bg-white dark:bg-gray-900 pb-12 transition-colors duration-200">
       {/* Modal 2FA */}
       {showTwoFAConfirm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -750,7 +750,15 @@ export const Settings: React.FC<SettingsProps> = ({ notify }) => {
 
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+      <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+        
+        {/* ── EN-TÊTE ── */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{t.title}</h1>
+            <p className="text-sm text-gray-400 mt-1 font-medium">{t.subtitle}</p>
+          </div>
+        </div>
 
         {/* 1. Compte et sécurité */}
         <Card className="overflow-hidden dark:bg-gray-800 dark:border-gray-700">

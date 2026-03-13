@@ -186,9 +186,11 @@ Cordialement`
       } else {
         notify?.(response.data.message || "Erreur lors de l'envoi", 'error');
       }
-    } catch (error: any) {
-      console.error('Erreur envoi invitation:', error);
-      notify?.(error.response?.data?.message || "Erreur lors de l'envoi de l'invitation", 'error');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erreur lors de l\'envoi de l\'invitation';
+      const apiError = error as { response?: { data?: { message?: string } } };
+      const apiErrorMessage = apiError?.response?.data?.message;
+      notify?.(apiErrorMessage || errorMessage, 'error');
     } finally {
       setSendingInvite(false);
     }
@@ -241,16 +243,21 @@ Cordialement`
       return matchesSearch;
     })
     .sort((a, b) => {
-      let aValue: any = a[sortField as keyof Location];
-      let bValue: any = b[sortField as keyof Location];
-      if (sortField === 'property') aValue = a.property.name;
-      if (sortField === 'landlord') aValue = a.landlord.name;
-      if (sortField === 'rent_amount') aValue = a.rent_amount;
-      if (sortField === 'end_date') aValue = a.end_date || '9999-12-31';
-      if (sortField === 'property') bValue = b.property.name;
-      if (sortField === 'landlord') bValue = b.landlord.name;
-      if (sortField === 'rent_amount') bValue = b.rent_amount;
-      if (sortField === 'end_date') bValue = b.end_date || '9999-12-31';
+      let aValue: string | number = '';
+      let bValue: string | number = '';
+      if (sortField === 'property') {
+        aValue = a.property.name;
+        bValue = b.property.name;
+      } else if (sortField === 'landlord') {
+        aValue = a.landlord.name;
+        bValue = b.landlord.name;
+      } else if (sortField === 'rent_amount') {
+        aValue = a.rent_amount;
+        bValue = b.rent_amount;
+      } else if (sortField === 'end_date') {
+        aValue = a.end_date || '9999-12-31';
+        bValue = b.end_date || '9999-12-31';
+      }
       if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
       if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
       return 0;
@@ -320,6 +327,13 @@ Cordialement`
 
   return (
     <div className="animate-fadeIn">
+      {/* ── EN-TÊTE ── */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Ma location</h1>
+          <p className="text-sm text-gray-400 mt-1 font-medium">Consultez les détails de votre location</p>
+        </div>
+      </div>
 
       {/* Modal Détails du bien et du propriétaire */}
       {showDetailsModal && selectedLocation && (
