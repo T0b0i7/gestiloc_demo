@@ -45,70 +45,25 @@ const CONFIG = {
 const ic = (c: string) => ({ stroke: c, fill: "none", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const });
 
 const Icons = {
-  Dashboard: ({ c }: { c: string }) => (
-    <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke={c || "#e6a817"} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="12" width="4" height="8" /><rect x="10" y="7" width="4" height="13" /><rect x="17" y="3" width="4" height="17" />
-    </svg>
-  ),
-  People: ({ c }: { c: string }) => (
-    <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#FF7043")}>
-      <circle cx="9" cy="7" r="3" /><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2" />
-      <path d="M16 3.13a4 4 0 010 7.75" /><path d="M21 21v-2a4 4 0 00-3-3.85" />
-    </svg>
-  ),
-  PersonHouse: ({ c }: { c: string }) => (
-    <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#00897b")}>
-      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" /><circle cx="12" cy="13" r="2.5" />
-    </svg>
-  ),
-  Handshake: ({ c }: { c: string }) => (
-    <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#4CAF50")}>
-      <path d="M17 11h1a3 3 0 010 6h-1" /><path d="M9 12c.66 0 1.33.16 2 .5a5.1 5.1 0 012.5-1.5" /><path d="M6 11H5a3 3 0 000 6h1" /><path d="M6 7h12a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V9a2 2 0 012-2z" />
-    </svg>
-  ),
-  Eye: ({ c }: { c: string }) => (
-    <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#FF9800")}>
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
-    </svg>
-  ),
+  Dashboard: () => <img src="/Ressource_gestiloc/tb_locataire.png" alt="Tableau de bord" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
+  People: ({ c }: { c: string }) => <img src="/Ressource_gestiloc/customer.png" alt="Locataires" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
+  Handshake: ({ c }: { c: string }) => <img src="/Ressource_gestiloc/Ma_location.png" alt="Location" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
+  Tools: ({ c }: { c: string }) => <img src="/Ressource_gestiloc/Tools.png" alt="Outils" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
+  House: ({ c }: { c: string }) => <img src="/Ressource_gestiloc/Home.png" alt="Biens" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
   UserPlus: ({ c }: { c: string }) => (
     <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#8CCC63")}>
       <path d="M16 21v-2a4 4 0 00-3-3.87" /><path d="M8 21v-2a4 4 0 014-4h1" /><circle cx="12" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" />
     </svg>
   ),
-  House: ({ c }: { c: string }) => (
-    <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#FF9800")}>
-      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" /><path d="M9 21V12h6v9" />
-    </svg>
-  ),
-  File: ({ c }: { c: string }) => (
-    <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#529D21")}>
-      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-      <polyline points="14 2 14 8 20 8" /><line x1="9" y1="13" x2="15" y2="13" /><line x1="9" y1="17" x2="15" y2="17" />
-    </svg>
-  ),
-  Clipboard: ({ c }: { c: string }) => (
-    <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#7b1fa2")}>
-      <rect x="5" y="3" width="14" height="18" rx="2" />
-      <line x1="9" y1="8" x2="15" y2="8" /><line x1="9" y1="12" x2="15" y2="12" /><line x1="9" y1="16" x2="12" y2="16" />
-    </svg>
-  ),
-  Wallet: ({ c }: { c: string }) => (
-    <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#ffa726")}>
-      <rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" />
-    </svg>
-  ),
+  File: ({ c }: { c: string }) => <img src="/Ressource_gestiloc/document.png" alt="Documents" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
+  Clipboard: ({ c }: { c: string }) => <img src="/Ressource_gestiloc/Mes_quittances.png" alt="Quittances" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
+  Wallet: ({ c }: { c: string }) => <img src="/Ressource_gestiloc/paiement.png" alt="Paiements" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" />,
   TrendingUp: ({ c }: { c: string }) => (
     <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#4CAF50")}>
       <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" />
     </svg>
   ),
-  Settings: ({ c }: { c: string }) => (
-    <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#607d8b")}>
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
-    </svg>
-  ),
+  Settings: ({ c }: { c: string }) => <img src="/Ressource_gestiloc/parametres.png" alt="Paramètres" className="w-[18px] h-[18px] object-contain transition-transform group-hover:scale-110" onError={(e) => (e.currentTarget.src="/Ressource_gestiloc/customer.png")} />,
   LogOut: ({ c }: { c: string }) => (
     <svg viewBox="0 0 24 24" width={18} height={18} {...ic(c || "#aaa")}>
       <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
@@ -142,65 +97,93 @@ const iconColors: Record<string, string> = {
 const TEXT_GREEN = "#529D21";
 const GRADIENT_GREEN = "linear-gradient(94.5deg, #8CCC63 5.47%, rgba(82, 157, 33, 0.87) 91.93%)";
 
-// ─── MENU SECTIONS — routes propriétaire + section gestionnaires ─────
+// ─── MENU SECTIONS — Structure hiérarchisée demandée ──────────────────
 const menuSections = [
   {
-    title: "Menu principal",
+    title: "",
     items: [
-      { id: 'dashboard', label: 'Tableau de bord', icon: "Dashboard" as keyof typeof Icons, path: "/proprietaire/dashboard", isReact: true },
+      { id: 'dashboard', label: 'Tableau de bord', icon: "Dashboard", path: "/proprietaire/dashboard", isReact: true, submenu: [] },
     ]
   },
   {
     title: "GESTION DES BIENS",
     items: [
-      { id: "ajouter-bien", label: "Ajouter un bien", icon: "UserPlus" as keyof typeof Icons, path: "/proprietaire/ajouter-bien", isReact: true },
-      { id: "mes-biens", label: "Mes biens", icon: "House" as keyof typeof Icons, path: "/proprietaire/mes-biens", isReact: true },
+      {
+        id: "biens-parent",
+        label: "Gestion des biens",
+        icon: "House",
+        submenu: [
+          { id: "ajouter-bien", label: "Ajouter un bien", icon: "UserPlus", path: "/proprietaire/ajouter-bien", isReact: true },
+          { id: "mes-biens", label: "Mes biens", icon: "House", path: "/proprietaire/mes-biens", isReact: true },
+        ]
+      }
     ]
   },
   {
     title: "GESTION LOCATIVE",
     items: [
-      { id: "nouvelle-location", label: "Nouvelle location", icon: "Handshake" as keyof typeof Icons, path: "/proprietaire/nouvelle-location", isReact: true },
-      { id: "ajouter-locataire", label: "Ajouter un locataire", icon: "UserPlus" as keyof typeof Icons, path: "/proprietaire/ajouter-locataire", isReact: true },
-      { id: "locataires", label: "Liste des locataires", icon: "People" as keyof typeof Icons, path: "/proprietaire/locataires", isReact: true },
-      { id: "paiements", label: "Gestion des paiements", icon: "Wallet" as keyof typeof Icons, path: "/proprietaire/paiements", isReact: true },
+      {
+        id: "locative-parent",
+        label: "Gestion locative",
+        icon: "Handshake",
+        submenu: [
+          { id: "nouvelle-location", label: "Nouvelle location", icon: "Handshake", path: "/proprietaire/nouvelle-location", isReact: true },
+          { id: "ajouter-locataire", label: "Ajouter un locataire", icon: "UserPlus", path: "/proprietaire/ajouter-locataire", isReact: true },
+          { id: "locataires", label: "Liste des locataires", icon: "People", path: "/proprietaire/locataires", isReact: true },
+          { id: "paiements", label: "Gestion des paiements", icon: "Wallet", path: "/proprietaire/paiements", isReact: true },
+        ]
+      }
     ]
   },
   {
     title: "DOCUMENTS",
     items: [
-      { id: "baux", label: "Contrats de bail", icon: "File" as keyof typeof Icons, path: "/proprietaire/baux", isReact: true },
-      { id: "etats-lieux", label: "Etats de lieux", icon: "Clipboard" as keyof typeof Icons, path: "/proprietaire/etats-lieux", isReact: true },
-      { id: "avis-echeance", label: "Avis d'échéance", icon: "File" as keyof typeof Icons, path: "/proprietaire/avis-echeance", isReact: true },
-      { id: "quittances", label: "Quittances de loyers", icon: "Clipboard" as keyof typeof Icons, path: "/proprietaire/quittances", isReact: true },
-      { id: "factures", label: "Factures et documents divers", icon: "File" as keyof typeof Icons, path: "/proprietaire/factures", isReact: true },
-      { id: "archives", label: "Archivage de documents", icon: "File" as keyof typeof Icons, path: "/proprietaire/archives", isReact: true },
+      {
+        id: "documents-parent",
+        label: "Documents",
+        icon: "File",
+        submenu: [
+          { id: "baux", label: "Contrats de bail", icon: "File" , path: "/proprietaire/baux", isReact: true },
+          { id: "etats-lieux", label: "Etats de lieux", icon: "Clipboard", path: "/proprietaire/etats-lieux", isReact: true },
+          { id: "avis-echeance", label: "Avis d'échéance", icon: "File", path: "/proprietaire/avis-echeance", isReact: true },
+          { id: "quittances", label: "Quittances de loyers", icon: "Clipboard", path: "/proprietaire/quittances", isReact: true },
+          { id: "factures", label: "Factures et documents divers", icon: "File", path: "/proprietaire/factures", isReact: true },
+          { id: "archives", label: "Archivage de documents", icon: "File", path: "/proprietaire/archives", isReact: true },
+        ]
+      }
     ]
   },
   {
-    title: "REPARATIONS ET TRAVAUX",
+    title: "RÉPARATIONS ET TRAVAUX",
     items: [
-      { id: "incidents", label: "Réparations et travaux", icon: "Handshake" as keyof typeof Icons, path: "/proprietaire/incidents", isReact: true },
+      { id: "incidents", label: "Réparations et travaux", icon: "Tools", path: "/proprietaire/incidents", isReact: true, submenu: [] },
     ]
   },
   {
     title: "COMPTABILITE ET STATISTIQUES",
     items: [
-      { id: "comptabilite", label: "Comptabilité et statistiques", icon: "TrendingUp" as keyof typeof Icons, path: "/proprietaire/comptabilite", isReact: true },
+      { id: "comptabilite", label: "Comptabilité et statistiques", icon: "TrendingUp", path: "/proprietaire/comptabilite", isReact: true, submenu: [] },
     ]
   },
   {
     title: "GESTION DES GESTIONNAIRES",
     items: [
-      { id: "coproprietaires", label: "Liste des gestionnaires", icon: "People" as keyof typeof Icons, path: "/proprietaire/coproprietaires", isReact: true },
-      { id: "inviter-coproprietaire", label: "Inviter un gestionnaire", icon: "UserPlus" as keyof typeof Icons, path: "/proprietaire/inviter-coproprietaire", isReact: true },
+      {
+        id: "gestionnaires-parent",
+        label: "Gestionnaires",
+        icon: "People",
+        submenu: [
+          { id: "coproprietaires", label: "Liste des gestionnaires", icon: "People", path: "/proprietaire/coproprietaires", isReact: true },
+          { id: "inviter-coproprietaire", label: "Inviter un gestionnaire", icon: "UserPlus", path: "/proprietaire/inviter-coproprietaire", isReact: true },
+        ]
+      }
     ]
   },
   {
     title: "CONFIGURATION",
     items: [
-      { id: "parametres", label: "Paramètres", icon: "Settings" as keyof typeof Icons, path: "/proprietaire/parametres", isReact: true },
-      { id: "logout", label: "Déconnexion", icon: "LogOut" as keyof typeof Icons, path: "", isLogout: true },
+      { id: "parametres", label: "Paramètres", icon: "Settings", path: "/proprietaire/parametres", isReact: true, submenu: [] },
+      { id: "logout", label: "Déconnexion", icon: "LogOut", path: "", isLogout: true, submenu: [] },
     ]
   }
 ];
@@ -238,8 +221,8 @@ const NavItem: React.FC<{
 }> = ({ item, activeTab, onNavigate, onLogout, isExpanded, toggleMenu }) => {
   const [hovered, setHovered] = useState(false);
 
-  const hasSubmenu = false;
-  const isActive = activeTab === item.id;
+  const hasSubmenu = item.submenu && item.submenu.length > 0;
+  const isActive = activeTab === item.id || (item.submenu?.some((s: any) => s.id === activeTab));
   const Ico = Icons[item.icon as keyof typeof Icons];
 
   const handleClick = () => {
@@ -263,7 +246,7 @@ const NavItem: React.FC<{
         className="w-full relative flex items-center gap-3 px-6 py-3 transition-all duration-300"
         style={{
           background: isActive && !hasSubmenu
-            ? 'linear-gradient(90deg, rgba(255, 213, 124, 0.87) 0%, #FFFFFF 100%)'
+            ? 'linear-gradient(90deg, rgba(255, 213, 124, 0.87) 0%, #FFFFFF 100%)' 
             : 'transparent',
           border: 'none',
           cursor: 'pointer',
@@ -272,10 +255,10 @@ const NavItem: React.FC<{
         }}
       >
         {isActive && !hasSubmenu && (
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[5px] h-[30px] bg-[#FFB300] rounded-r-full shadow-[0px_0px_10px_rgba(255,179,0,0.4)]" />
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[24px] bg-[#FFB300] rounded-r-full shadow-[0px_0px_8px_rgba(255,179,0,0.3)]" />
         )}
 
-        <div className={`transition-all duration-300 ${isActive || hovered ? 'scale-110' : 'scale-100 opacity-60'}`}>
+        <div className={`transition-all duration-300 ${isActive || hovered ? 'scale-110' : 'scale-100 opacity-60'} flex items-center justify-center w-[32px] h-[32px]`}>
           {Ico ? (
             <Ico
               c={
@@ -283,15 +266,20 @@ const NavItem: React.FC<{
                   ? hovered ? "#e53935" : "#aaa"
                   : isActive
                     ? TEXT_GREEN
-                    : iconColors[item.icon] || "#888"
+                    : "#9CA3AF"
               }
             />
           ) : null}
         </div>
 
         <span
-          className="text-[0.9rem] font-bold whitespace-nowrap transition-colors duration-300"
-          style={{ color: (isActive || hovered) && !item.isLogout ? TEXT_GREEN : '#6B7280' }}
+          className="text-left whitespace-nowrap transition-colors duration-300"
+          style={{ 
+            fontSize: '12.5px',
+            fontWeight: 500,
+            color: (isActive || hovered) && !item.isLogout ? TEXT_GREEN : '#4B5563',
+            fontFamily: "'Manrope', sans-serif"
+          }}
         >
           {item.label}
         </span>
@@ -318,23 +306,24 @@ const NavItem: React.FC<{
                 onClick={() => navigateTo(sub.path, onNavigate)}
                 className="w-full relative flex items-center gap-3 px-3 py-2 transition-all duration-300"
                 style={{
-                  fontSize: "0.85rem",
-                  fontWeight: subActive ? 700 : 500,
+                  fontSize: '12px',
+                  fontWeight: subActive ? 600 : 500,
                   color: subActive ? TEXT_GREEN : "#666",
-                  background: subActive ? 'linear-gradient(90deg, rgba(255,213,124,0.4) 0%, #FFFFFF 100%)' : 'transparent',
+                  background: subActive ? 'linear-gradient(90deg, rgba(255, 213, 124, 0.87) 0%, #FFFFFF 100%)' : 'transparent',
                   borderRadius: 10,
                   textAlign: "left",
                   border: 'none',
                   cursor: 'pointer',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {subActive && (
                   <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-[18px] bg-[#FFB300] rounded-r-full" />
                 )}
-                <span className="scale-90 opacity-70">
+                <span className="scale-90 opacity-70 w-[24px] flex items-center justify-center">
                   {SubIco ? <SubIco c={subActive ? TEXT_GREEN : "#aaa"} /> : null}
                 </span>
-                <span className="truncate">{sub.label}</span>
+                <span className="truncate" style={{ fontFamily: "'Manrope', sans-serif" }}>{sub.label}</span>
               </button>
             );
           })}
@@ -379,20 +368,22 @@ const SidebarContent: React.FC<{
         `}</style>
 
         {menuSections.map((section) => (
-          <div key={section.title} className="mb-4">
-            <div style={{
-              fontSize: '0.62rem',
-              fontWeight: 800,
-              letterSpacing: '0.12em',
-              color: '#BDBDBD',
-              padding: '1.2rem 1.4rem 0.6rem',
-              textAlign: 'left',
-              fontFamily: "'Merriweather', serif",
-              lineHeight: '100%',
-              textTransform: 'uppercase',
-            }}>
-              {section.title}
-            </div>
+          <div key={section.title || "main-menu-top"} className={section.title ? "mb-4" : "mb-2"}>
+            {section.title && (
+              <div style={{
+                fontSize: '9.5px',
+                fontWeight: 600,
+                color: '#9CA3AF',
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                padding: '1.2rem 1.4rem 0.6rem',
+                textAlign: 'left',
+                fontFamily: "'Manrope', sans-serif",
+                whiteSpace: 'nowrap',
+              }}>
+                {section.title}
+              </div>
+            )}
             <div className="space-y-0.5">
               {section.items.map((item) => (
                 <NavItem
@@ -403,7 +394,8 @@ const SidebarContent: React.FC<{
                   onLogout={onLogout}
                   isExpanded={
                     expandedMenus.includes(item.id) ||
-                    activeTab === item.id
+                    activeTab === item.id ||
+                    item.submenu?.some((s: any) => s.id === activeTab)
                   }
                   toggleMenu={toggleMenu}
                 />
@@ -411,22 +403,6 @@ const SidebarContent: React.FC<{
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Footer profil */}
-      <div className="p-4 border-t border-gray-200 flex-shrink-0 bg-white">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-            style={{ background: 'linear-gradient(to right, #70AE48, #8BC34A)' }}
-          >
-            {ownerInitials}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-semibold text-gray-900 truncate">{ownerName}</div>
-            <div className="text-xs text-gray-500">Propriétaire</div>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -621,7 +597,7 @@ export const Layout: React.FC<LayoutProps> = ({
         {/* Backdrop mobile */}
         {isMobileMenuOpen && (
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[90] lg:hidden"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] lg:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           />
         )}
@@ -632,8 +608,8 @@ export const Layout: React.FC<LayoutProps> = ({
             fixed h-auto z-[120] bg-white flex flex-col
             transition-all duration-300 ease-in-out
             ${isMobileMenuOpen
-              ? 'translate-x-0 bottom-0 top-0 left-0 w-[280px]'
-              : '-translate-x-full lg:translate-x-0 lg:left-[30px] lg:top-[100px] lg:w-[310px]'
+              ? 'translate-x-0 bottom-0 top-0 left-0 w-[320px]'
+              : '-translate-x-full lg:translate-x-0 lg:left-[30px] lg:top-[100px] lg:w-[400px]'
             }
           `}
           style={
@@ -678,7 +654,7 @@ export const Layout: React.FC<LayoutProps> = ({
         </aside>
 
         {/* ── CONTENU ── */}
-        <div className="flex-1 lg:ml-[390px] bg-white">
+        <div className="flex-1 lg:ml-[460px] bg-white">
           <div
             id="app-scroll-container"
             className="flex-1 h-full overflow-y-auto overflow-x-hidden bg-white scroll-smooth"

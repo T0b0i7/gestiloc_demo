@@ -67,7 +67,11 @@ const ProprietaireApp: React.FC = () => {
         const userStr = localStorage.getItem('user');
 
         if (!token || !userStr) {
-          navigate('/login');
+          // MODE DÉMO : Ne pas rediriger, laisser l'accès libre mais sans données réelles
+          // On set simplement l'onglet actif et on termine le loader
+          const path = location.pathname.split('/').pop() || 'dashboard';
+          setActiveTab(path as Tab);
+          setIsLoading(false);
           return;
         }
 
@@ -79,7 +83,7 @@ const ProprietaireApp: React.FC = () => {
           mainRole === 'proprietaire' || mainRole === 'landlord';
 
         if (!isProprietaire) {
-          // Rediriger vers le tableau de bord approprié en fonction du rôle
+          // Redirections pour les autres rôles
           if (user.roles?.includes('admin')) {
             navigate('/admin');
           } else if (user.roles?.includes('locataire') || user.roles?.includes('tenant')) {
@@ -95,7 +99,9 @@ const ProprietaireApp: React.FC = () => {
         setActiveTab(path as Tab);
       } catch (error) {
         console.error('Erreur de vérification de l\'authentification:', error);
-        navigate('/login');
+        // En cas d'erreur de parsage du state local par exemple, on active quand même le mode démo
+        const path = location.pathname.split('/').pop() || 'dashboard';
+        setActiveTab(path as Tab);
       } finally {
         setIsLoading(false);
       }
