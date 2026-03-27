@@ -41,7 +41,7 @@ export function Header() {
           <img
             src="/Ressource_gestiloc/IMONA.png"
             alt="IMONA"
-            className={`w-auto transition-all ${!isScrolled ? "h-12" : "h-10"}`}
+            className={`w-auto transition-all ${!isScrolled ? "h-16" : "h-12"}`}
           />
         </Link>
 

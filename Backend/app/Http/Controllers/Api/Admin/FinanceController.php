@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class FinanceController extends Controller
 {
@@ -146,7 +147,7 @@ class FinanceController extends Controller
         ]);
     }
 
-    public function reports(Request $request): JsonResponse
+    public function reports(Request $request): Response
     {
         $request->validate([
             'type' => 'required|in:revenue,transactions,commissions',
@@ -165,6 +166,8 @@ class FinanceController extends Controller
                 return $this->generateTransactionReport($dateRange, $request->format);
             case 'commissions':
                 return $this->generateCommissionReport($dateRange, $request->format);
+            default:
+                return response()->json(['message' => 'Type de rapport non supporté'], 400);
         }
     }
 
@@ -404,7 +407,7 @@ class FinanceController extends Controller
             ->count() / 30;
     }
 
-    private function generateRevenueReport(array $dateRange, string $format): StreamedResponse
+    private function generateRevenueReport(array $dateRange, string $format): Response
     {
         $data = Invoice::where('status', 'paid')
             ->whereBetween('updated_at', [$dateRange['start'], $dateRange['end']])
@@ -427,7 +430,7 @@ class FinanceController extends Controller
         return $this->exportData($data, $filename, $format);
     }
 
-    private function generateTransactionReport(array $dateRange, string $format): StreamedResponse
+    private function generateTransactionReport(array $dateRange, string $format): Response
     {
         $data = Payment::where('payment_method', 'fedapay')
             ->whereBetween('created_at', [$dateRange['start'], $dateRange['end']])
@@ -452,7 +455,7 @@ class FinanceController extends Controller
         return $this->exportData($data, $filename, $format);
     }
 
-    private function generateCommissionReport(array $dateRange, string $format): StreamedResponse
+    private function generateCommissionReport(array $dateRange, string $format): Response
     {
         $commissionRate = config('gestiloc.commission_rate', 0.05);
         
@@ -461,7 +464,7 @@ class FinanceController extends Controller
             ->with(['lease.property.landlord.user'])
             ->get()
             ->groupBy('lease.property.landlord_id')
-            ->map(function ($invoices, $landlordId) {
+            ->map(function ($invoices, $landlordId) use ($commissionRate) {
                 $landlord = $invoices->first()->lease->property->landlord;
                 $totalRevenue = $invoices->sum('amount_paid');
                 $commission = $totalRevenue * $commissionRate;
@@ -482,7 +485,7 @@ class FinanceController extends Controller
         return $this->exportData($data, $filename, $format);
     }
 
-    private function exportData($data, string $filename, string $format): StreamedResponse
+    private function exportData($data, string $filename, string $format): Response
     {
         if ($format === 'csv') {
             $headers = [

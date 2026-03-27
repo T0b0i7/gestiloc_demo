@@ -31,13 +31,13 @@ class QuittanceController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'id' => $payment->id,
-                    'tenant_name' => trim($payment->lease->tenant->first_name . ' ' . $payment->lease->tenant->last_name) ?: 'Locataire',
-                    'tenant_email' => $payment->lease->tenant->user->email ?? '',
-                    'property_name' => $payment->lease->property->name ?? 'Bien',
-                    'amount' => $payment->amount,
-                    'date' => $payment->created_at->format('d/m/Y'),
-                    'month' => $payment->created_at->format('m/Y'),
+                    'id' => $payment?->id,
+                    'tenant_name' => trim(($payment?->lease?->tenant?->first_name ?? '') . ' ' . ($payment?->lease?->tenant?->last_name ?? '')) ?: 'Locataire',
+                    'tenant_email' => $payment?->lease?->tenant?->user?->email ?? '',
+                    'property_name' => $payment?->lease?->property?->name ?? 'Bien',
+                    'amount' => $payment?->amount,
+                    'date' => $payment?->created_at?->format('d/m/Y'),
+                    'month' => $payment?->created_at?->format('m/Y'),
                 ]
             ]);
         }
@@ -51,13 +51,13 @@ class QuittanceController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'id' => $invoice->id,
-                    'tenant_name' => trim($invoice->lease->tenant->first_name . ' ' . $invoice->lease->tenant->last_name) ?: 'Locataire',
-                    'tenant_email' => $invoice->lease->tenant->user->email ?? '',
-                    'property_name' => $invoice->lease->property->name ?? 'Bien',
-                    'amount' => $invoice->amount_total,
-                    'date' => $invoice->created_at->format('d/m/Y'),
-                    'month' => $invoice->due_date->format('m/Y'),
+                    'id' => $invoice?->id,
+                    'tenant_name' => trim(($invoice?->lease?->tenant?->first_name ?? '') . ' ' . ($invoice?->lease?->tenant?->last_name ?? '')) ?: 'Locataire',
+                    'tenant_email' => $invoice?->lease?->tenant?->user?->email ?? '',
+                    'property_name' => $invoice?->lease?->property?->name ?? 'Bien',
+                    'amount' => $invoice?->amount_total,
+                    'date' => $invoice?->created_at?->format('d/m/Y'),
+                    'month' => $invoice?->due_date?->format('m/Y'),
                 ]
             ]);
         }
@@ -82,18 +82,18 @@ class QuittanceController extends Controller
 
         if ($payment) {
             $data = [
-                'numero' => 'QUIT-' . str_pad($payment->id, 6, '0', STR_PAD_LEFT),
-                'tenant_name' => trim($payment->lease->tenant->first_name . ' ' . $payment->lease->tenant->last_name) ?: 'Locataire',
-                'tenant_address' => $payment->lease->tenant->address ?? '',
-                'property_address' => $payment->lease->property->address ?? '',
-                'period' => $payment->created_at->format('m/Y'),
-                'amount' => number_format($payment->amount, 0, ',', ' ') . ' FCFA',
-                'amount_letters' => $this->numberToWords($payment->amount) . ' francs CFA',
-                'date' => $payment->created_at->format('d/m/Y'),
+                'numero' => 'QUIT-' . str_pad($payment?->id ?? 0, 6, '0', STR_PAD_LEFT),
+                'tenant_name' => trim(($payment?->lease?->tenant?->first_name ?? '') . ' ' . ($payment?->lease?->tenant?->last_name ?? '')) ?: 'Locataire',
+                'tenant_address' => $payment?->lease?->tenant?->address ?? '',
+                'property_address' => $payment?->lease?->property?->address ?? '',
+                'period' => $payment?->created_at?->format('m/Y'),
+                'amount' => number_format($payment?->amount ?? 0, 0, ',', ' ') . ' FCFA',
+                'amount_letters' => $this->numberToWords($payment?->amount ?? 0) . ' francs CFA',
+                'date' => $payment?->created_at?->format('d/m/Y'),
             ];
 
             $pdf = Pdf::loadView('pdf.quittances', $data);
-            return $pdf->download('quittance-' . $payment->id . '.pdf');
+            return $pdf->download('quittance-' . ($payment?->id ?? 'unknown') . '.pdf');
         }
 
         // Chercher dans les factures
@@ -103,18 +103,18 @@ class QuittanceController extends Controller
 
         if ($invoice) {
             $data = [
-                'numero' => 'FACT-' . str_pad($invoice->id, 6, '0', STR_PAD_LEFT),
-                'tenant_name' => trim($invoice->lease->tenant->first_name . ' ' . $invoice->lease->tenant->last_name) ?: 'Locataire',
-                'tenant_address' => $invoice->lease->tenant->address ?? '',
-                'property_address' => $invoice->lease->property->address ?? '',
-                'period' => $invoice->due_date->format('m/Y'),
-                'amount' => number_format($invoice->amount_total, 0, ',', ' ') . ' FCFA',
-                'amount_letters' => $this->numberToWords($invoice->amount_total) . ' francs CFA',
-                'date' => $invoice->created_at->format('d/m/Y'),
+                'numero' => 'FACT-' . str_pad($invoice?->id ?? 0, 6, '0', STR_PAD_LEFT),
+                'tenant_name' => trim(($invoice?->lease?->tenant?->first_name ?? '') . ' ' . ($invoice?->lease?->tenant?->last_name ?? '')) ?: 'Locataire',
+                'tenant_address' => $invoice?->lease?->tenant?->address ?? '',
+                'property_address' => $invoice?->lease?->property?->address ?? '',
+                'period' => $invoice?->due_date?->format('m/Y'),
+                'amount' => number_format($invoice?->amount_total ?? 0, 0, ',', ' ') . ' FCFA',
+                'amount_letters' => $this->numberToWords($invoice?->amount_total ?? 0) . ' francs CFA',
+                'date' => $invoice?->created_at?->format('d/m/Y'),
             ];
 
             $pdf = Pdf::loadView('pdf.quittances', $data);
-            return $pdf->download('quittance-' . $invoice->id . '.pdf');
+            return $pdf->download('quittance-' . ($invoice?->id ?? 'unknown') . '.pdf');
         }
 
         return response()->json([
@@ -137,7 +137,7 @@ class QuittanceController extends Controller
                 ->first();
 
             if ($payment) {
-                $tenantEmail = $payment->lease->tenant->user->email ?? null;
+                $tenantEmail = $payment?->lease?->tenant?->user?->email ?? null;
 
                 if (!$tenantEmail) {
                     return response()->json([
@@ -148,14 +148,14 @@ class QuittanceController extends Controller
 
                 // Générer le PDF
                 $data = [
-                    'numero' => 'QUIT-' . str_pad($payment->id, 6, '0', STR_PAD_LEFT),
-                    'tenant_name' => trim($payment->lease->tenant->first_name . ' ' . $payment->lease->tenant->last_name) ?: 'Locataire',
-                    'tenant_address' => $payment->lease->tenant->address ?? '',
-                    'property_address' => $payment->lease->property->address ?? '',
-                    'period' => $payment->created_at->format('m/Y'),
-                    'amount' => number_format($payment->amount, 0, ',', ' ') . ' FCFA',
-                    'amount_letters' => $this->numberToWords($payment->amount) . ' francs CFA',
-                    'date' => $payment->created_at->format('d/m/Y'),
+                    'numero' => 'QUIT-' . str_pad($payment?->id ?? 0, 6, '0', STR_PAD_LEFT),
+                    'tenant_name' => trim(($payment?->lease?->tenant?->first_name ?? '') . ' ' . ($payment?->lease?->tenant?->last_name ?? '')) ?: 'Locataire',
+                    'tenant_address' => $payment?->lease?->tenant?->address ?? '',
+                    'property_address' => $payment?->lease?->property?->address ?? '',
+                    'period' => $payment?->created_at?->format('m/Y'),
+                    'amount' => number_format($payment?->amount ?? 0, 0, ',', ' ') . ' FCFA',
+                    'amount_letters' => $this->numberToWords($payment?->amount ?? 0) . ' francs CFA',
+                    'date' => $payment?->created_at?->format('d/m/Y'),
                 ];
 
                 $pdf = Pdf::loadView('pdf.quittances', $data);
@@ -166,7 +166,7 @@ class QuittanceController extends Controller
                     mkdir($tempPath, 0755, true);
                 }
 
-                $pdfPath = $tempPath . '/quittance-' . $payment->id . '.pdf';
+                $pdfPath = $tempPath . '/quittance-' . ($payment?->id ?? 'unknown') . '.pdf';
                 $pdf->save($pdfPath);
 
                 // Envoyer l'email
@@ -174,7 +174,7 @@ class QuittanceController extends Controller
                     $message->to($tenantEmail)
                         ->subject('Votre quittance de loyer')
                         ->attach($pdfPath, [
-                            'as' => 'quittance-' . $payment->id . '.pdf',
+                            'as' => 'quittance-' . ($payment?->id ?? 'unknown') . '.pdf',
                             'mime' => 'application/pdf',
                         ]);
                 });
@@ -196,7 +196,7 @@ class QuittanceController extends Controller
                 ->first();
 
             if ($invoice) {
-                $tenantEmail = $invoice->lease->tenant->user->email ?? null;
+                $tenantEmail = $invoice?->lease?->tenant?->user?->email ?? null;
 
                 if (!$tenantEmail) {
                     return response()->json([
@@ -207,14 +207,14 @@ class QuittanceController extends Controller
 
                 // Générer le PDF
                 $data = [
-                    'numero' => 'FACT-' . str_pad($invoice->id, 6, '0', STR_PAD_LEFT),
-                    'tenant_name' => trim($invoice->lease->tenant->first_name . ' ' . $invoice->lease->tenant->last_name) ?: 'Locataire',
-                    'tenant_address' => $invoice->lease->tenant->address ?? '',
-                    'property_address' => $invoice->lease->property->address ?? '',
-                    'period' => $invoice->due_date->format('m/Y'),
-                    'amount' => number_format($invoice->amount_total, 0, ',', ' ') . ' FCFA',
-                    'amount_letters' => $this->numberToWords($invoice->amount_total) . ' francs CFA',
-                    'date' => $invoice->created_at->format('d/m/Y'),
+                    'numero' => 'FACT-' . str_pad($invoice?->id ?? 0, 6, '0', STR_PAD_LEFT),
+                    'tenant_name' => trim(($invoice?->lease?->tenant?->first_name ?? '') . ' ' . ($invoice?->lease?->tenant?->last_name ?? '')) ?: 'Locataire',
+                    'tenant_address' => $invoice?->lease?->tenant?->address ?? '',
+                    'property_address' => $invoice?->lease?->property?->address ?? '',
+                    'period' => $invoice?->due_date?->format('m/Y'),
+                    'amount' => number_format($invoice?->amount_total ?? 0, 0, ',', ' ') . ' FCFA',
+                    'amount_letters' => $this->numberToWords($invoice?->amount_total ?? 0) . ' francs CFA',
+                    'date' => $invoice?->created_at?->format('d/m/Y'),
                 ];
 
                 $pdf = Pdf::loadView('pdfs.quittance', $data);
@@ -225,7 +225,7 @@ class QuittanceController extends Controller
                     mkdir($tempPath, 0755, true);
                 }
 
-                $pdfPath = $tempPath . '/quittance-' . $invoice->id . '.pdf';
+                $pdfPath = $tempPath . '/quittance-' . ($invoice?->id ?? 'unknown') . '.pdf';
                 $pdf->save($pdfPath);
 
                 // Envoyer l'email
@@ -233,7 +233,7 @@ class QuittanceController extends Controller
                     $message->to($tenantEmail)
                         ->subject('Votre quittance de loyer')
                         ->attach($pdfPath, [
-                            'as' => 'quittance-' . $invoice->id . '.pdf',
+                            'as' => 'quittance-' . ($invoice?->id ?? 'unknown') . '.pdf',
                             'mime' => 'application/pdf',
                         ]);
                 });

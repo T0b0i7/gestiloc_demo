@@ -184,7 +184,7 @@ export function Footer() {
         <div className="grid gap-8 md:grid-cols-3 mb-12 mt-20">
           <div className="text-center md:text-left">
             <div className="mb-4">
-              <img src="/Ressource_gestiloc/IMONA.png" alt="IMONA" className="h-10 w-auto mx-auto md:mx-0" />
+              <img src="/Ressource_gestiloc/IMONA.png" alt="IMONA" className="h-16 w-auto mx-auto md:mx-0" />
             </div>
             <ul className="space-y-2 text-sm text-gray-700">
               <li><Link to="/about" className="hover:text-gray-900">Qui sommes nous ?</Link></li>

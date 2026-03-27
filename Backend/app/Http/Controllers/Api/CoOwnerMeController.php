@@ -552,7 +552,6 @@ public function updateProfile(Request $request): JsonResponse
                 'has_balcony' => $property->has_balcony,
                 'has_terrace' => $property->has_terrace,
                 'has_cellar' => $property->has_cellar,
-                'charges_amount' => $property->charges_amount,
                 'amenities' => $property->amenities ?? [],
             ];
         })->filter()->values();

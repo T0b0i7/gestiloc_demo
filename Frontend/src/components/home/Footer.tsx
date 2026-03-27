@@ -42,7 +42,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 lg:gap-12 mb-8 md:mb-12">
           {/* Brand Info */}
           <div className="col-span-1 sm:col-span-2 lg:col-span-1">
-            <h3 className="text-xl md:text-2xl font-bold text-green-400 mb-3 md:mb-4">Imona</h3>
+            <h3 className="text-2xl md:text-4xl font-bold text-green-400 mb-3 md:mb-4">Imona</h3>
             <p className="text-gray-400 text-sm md:text-base mb-4 md:mb-6">
               La plateforme de gestion immobilière #1 en Afrique de l'Ouest
             </p>

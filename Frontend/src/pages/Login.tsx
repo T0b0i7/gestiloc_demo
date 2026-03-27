@@ -182,7 +182,7 @@ export default function Login() {
         {/* En-tête : logo, titre et sous-titre (aligné Register) */}
         <CardHeader className="space-y-1">
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-primary">Imona</h1>
+            <h1 className="text-6xl font-bold text-primary">Imona</h1>
           </div>
           <CardTitle className="text-center text-lg font-semibold text-foreground">
             Connexion à votre compte

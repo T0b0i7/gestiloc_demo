@@ -417,7 +417,7 @@ export const Layout: React.FC<LayoutProps> = ({
           >
             <Menu size={24} className="text-white" />
           </button>
-          <img src="/Ressource_gestiloc/IMONA.png" alt="IMONA" className="h-12 w-auto" />
+          <img src="/Ressource_gestiloc/IMONA_SBLack.png" alt="IMONA" className="h-[75px] w-auto drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)] filter brightness-0 invert" />
         </div>
 
         {/* Boutons header */}
